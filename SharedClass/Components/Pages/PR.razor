@@ -1,0 +1,80 @@
+@page "/purchaserequisition"
+
+<h3>Purchase Requisition</h3>
+
+<!-- Search and Filter Section -->
+<div class="search-filter">
+    <input type="text" placeholder="Search..." />
+    <select>
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+    </select>
+    <button class="btn btn-primary">Filter</button>
+</div>
+
+<!-- Purchase Requisition List -->
+<div class="purchase-requisition-list">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Requisition ID</th>
+                <th>Requested By</th>
+                <th>Request Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var requisition in PurchaseRequisitions)
+            {
+                <tr>
+                    <td>@requisition.RequisitionID</td>
+                    <td>@requisition.RequestedBy</td>
+                    <td>@requisition.RequestDate.ToShortDateString()</td>
+                    <td>@requisition.Status</td>
+                    <td>
+                        <button class="btn btn-secondary">View</button>
+                        <button class="btn btn-primary">Edit</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination Section -->
+<div class="pagination">
+    <button class="btn btn-secondary">Previous</button>
+    <span>Page @CurrentPage of @TotalPages</span>
+    <button class="btn btn-secondary">Next</button>
+</div>
+
+<!-- Create New Requisition Button -->
+<div class="create-requisition">
+    <a href="/purchaserequisition/create" class="btn btn-success">Create New Requisition</a>
+</div>
+
+@code {
+    // Sample data, replace with your data source
+    List<PurchaseRequisition> PurchaseRequisitions = new List<PurchaseRequisition>
+    {
+        new PurchaseRequisition { RequisitionID = 1, RequestedBy = "John Doe", RequestDate = DateTime.Now, Status = "Pending" },
+        new PurchaseRequisition { RequisitionID = 2, RequestedBy = "Jane Smith", RequestDate = DateTime.Now, Status = "Approved" },
+        new PurchaseRequisition { RequisitionID = 3, RequestedBy = "Bob Johnson", RequestDate = DateTime.Now, Status = "Rejected" },
+    };
+
+    // Pagination variables (replace with actual pagination logic)
+    int CurrentPage = 1;
+    int TotalPages = 3;
+
+    // Sample PurchaseRequisition model, customize as needed
+    public class PurchaseRequisition
+    {
+        public int RequisitionID { get; set; }
+        public string RequestedBy { get; set; }
+        public DateTime RequestDate { get; set; }
+        public string Status { get; set; }
+    }
+}

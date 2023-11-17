@@ -1,0 +1,61 @@
+﻿@inject SharedClass.Components.Data.Select select;
+@inject SharedClass.Components.Data.Insert insert;
+
+
+<section>
+    <div class="container py-5">
+        @if (IStorage != null)
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+                @foreach (var values in IStorage)
+                {
+                    <div class="col mb-4">
+                        <div class="card text-black">
+                            <div class="card-body">
+                                <h5 class="card-title">@values.Brand</h5>
+                                <h5 class="card-title">@values.Model</h5>
+                                <div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Capacity</span><span>@values.Capacity</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Form Factor</span><span>@values.Form_Factor</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Interface</span><span>@values.Interface</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btnpc btn-primary m-1" @onclick="() => Select(values)">Select</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+
+@code {
+    public int Id { get; set; }
+    public string Brand { get; set; }
+    public string Model { get; set; }
+    public float Capacity { get; set; }
+    public string Form_Factor { get; set; }
+    public string Interface { get; set; }
+
+    private IEnumerable<Storage> IStorage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IStorage = await select.GetStorageAsync();
+    }
+    private async Task Select(Storage selectedStorage)
+    {
+        string component = "Storage";
+        string combinedValue = $"{selectedStorage.Brand} {selectedStorage.Model}";
+        await insert.InsertIntoCustomBuilt(combinedValue, component);
+    }
+}

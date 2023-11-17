@@ -1,0 +1,62 @@
+﻿@inject SharedClass.Components.Data.Select select;
+@inject SharedClass.Components.Data.Insert insert;
+
+<section>
+    <div class="container py-5">
+        @if (Motherboards != null && Motherboards.Any())
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+                @foreach (var values in Motherboards)
+                {
+                    <div class="col mb-4">
+                        <div class="card text-black">
+                            <div class="card-body">
+                                <h5 class="card-title">@values.Brand</h5>
+                                <h5 class="card-title">@values.Model</h5>
+                                <div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Socket</span><span>@values.Socket</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Chipset</span><span>@values.Chipset</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Form Factor</span><span>@values.Form_Factor</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btnpc btn-primary m-1" @onclick="() => Select(values)">Select</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+
+
+@code {
+    public int Id { get; set; }
+    public string Brand { get; set; }
+    public string Model { get; set; }
+    public string Socket { get; set; }
+    public string Chipset { get; set; }
+    public string Form_Factor { get; set; }
+
+    private IEnumerable<Motherboard> Motherboards;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Motherboards = await select.GetMotherboardsAsync();
+    }
+    
+    private async Task Select(Motherboard selectedMotherboard)
+    {
+        string component = "Motherboard";
+        string combinedValue = $"{selectedMotherboard.Brand} {selectedMotherboard.Model}";
+        await insert.InsertIntoCustomBuilt(combinedValue, component);
+    }
+}

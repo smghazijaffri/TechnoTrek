@@ -1,0 +1,93 @@
+﻿@using System.ComponentModel.DataAnnotations;
+<!-- Modal -->
+<div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
+    <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
+        <div class="modal-content" style="border-radius: 30px;">
+            <div class="modal-header">
+                <h2 class="modal-title heading">@ComponentName  </h2>
+                <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if(ComponentName == "Motherboard")
+                {
+                    <Motherboard />
+                }
+                @if (ComponentName == "Processor")
+                {
+                    <Processor />
+                }
+                @if (ComponentName == "Graphics Card")
+                {
+                    <GPU />
+                }
+                @if (ComponentName == "Gaming Case")
+                {
+                    <Case />
+                }
+                @if (ComponentName == "Memory")
+                {
+                    <Memory />
+                }
+                @if (ComponentName == "Storage")
+                {
+                    <Storage />
+                }
+                @if (ComponentName == "Power Supply")
+                {
+                    <PSU />
+                }
+                @if (ComponentName == "Cooler")
+                {
+                    <Cooler />
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btnpc m-1" @onclick="CloseQuickView" aria-label="Close">Cancel</button>
+                <button type="button" class="btn btn-primary btnpc m-1" @onclick="CloseQuickView">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+
+@code {
+    public class BuildPcViewModel
+    {
+        public bool IsModalOpen { get; set; }
+        public string selectedComponentName { get; set; }
+        public string Id { get; set; }
+        [Required]
+        public string Contact { get; set; }
+        [Required]
+        public string Name { get; set; }
+    }
+
+    [Parameter]
+    public BuildPcViewModel Model { get; set; }
+
+    [Parameter]
+    public bool IsVisible
+    {
+        get => Model.IsModalOpen;
+        set => Model.IsModalOpen = value;
+    }
+
+    [Parameter]
+    public string ComponentName
+    {
+        get => Model.selectedComponentName;
+        set => Model.selectedComponentName = value;
+    }
+
+    // Function to open the Quick View Modal
+    private void ShowQuickView()
+    {
+        Model.IsModalOpen = true;
+    }
+
+    // Function to close the Quick View Modal
+    private void CloseQuickView()
+    {
+        Model.IsModalOpen = false;
+    }
+}
