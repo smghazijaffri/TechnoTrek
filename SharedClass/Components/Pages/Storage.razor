@@ -1,6 +1,6 @@
 ﻿@inject SharedClass.Components.Data.Select select;
 @inject SharedClass.Components.Data.Insert insert;
-
+@inject IJSRuntime JSRuntime;
 
 <section>
     <div class="container py-5">
@@ -56,6 +56,6 @@
     {
         string component = "Storage";
         string combinedValue = $"{selectedStorage.Brand} {selectedStorage.Model}";
-        await insert.InsertIntoCustomBuilt(combinedValue, component);
+        await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }
 }

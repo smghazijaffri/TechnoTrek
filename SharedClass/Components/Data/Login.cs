@@ -23,34 +23,42 @@ namespace SharedClass.Components.Data
         {
             try
             {
-                using (SqlConnection con = GetSqlConnection())
+                if (Username != "" && Password != "")
                 {
-                    con.Open();
-                    using (cmd = new SqlCommand("SELECT * FROM [Users] WHERE Username = @Username AND Password = @Password", con))
+                    using (SqlConnection con = GetSqlConnection())
                     {
-                        cmd.Parameters.AddWithValue("@Username", Username);
-                        cmd.Parameters.AddWithValue("@Password", Password);
-
-                        using (dr = cmd.ExecuteReader())
+                        using (cmd = new SqlCommand("SELECT * FROM [Users] WHERE Username = @Username AND Password = @Password", con))
                         {
-                            if (dr.Read())
+                            cmd.Parameters.AddWithValue("@Username", Username);
+                            cmd.Parameters.AddWithValue("@Password", Password);
+                            con.Open();
+                            using (dr = cmd.ExecuteReader())
                             {
-                                await JSRuntime.InvokeVoidAsync("alert", "Login successful!");
-                                NavigateToPage(navigationManager);
-                                return true;
-                            }
-                            else
-                            {
-                                await JSRuntime.InvokeVoidAsync("alert", "Invalid credentials.");
-                                return false;
+                                if (dr.Read())
+                                {
+                                    await JSRuntime.InvokeVoidAsync("alert", "Login successful!");
+                                    NavigateToPage(navigationManager);
+                                    return true;
+                                }
+                                else
+                                {
+                                    await JSRuntime.InvokeVoidAsync("alert", "Invalid credentials.");
+                                    return false;
+                                }
                             }
                         }
                     }
                 }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Please enter credentials");
+                    return false;
+                }
+
             }
             catch (SqlException ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message);
+                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message.ToString());
                 return false;
             }
         }

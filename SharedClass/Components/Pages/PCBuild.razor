@@ -1,7 +1,8 @@
 ﻿@page "/buildpc";
 @using static SharedClass.Components.Pages.CustomModal
 @using static SharedClass.Components.Pages.CustomerModal
-@inject SharedClass.Components.Data.Insert insert
+@inject SharedClass.Components.Data.Insert insert;
+@inject IJSRuntime JSRuntime;
 
 <div class="container">
     <div class="row justify-content-center">
@@ -166,6 +167,6 @@
 
     private async void HandleInputModalSaveChanges(BuildPcViewModel model)
     {
-        await insert.InsertIntoCustomBuilt(model.Id, model.Name, model.Contact);
+        await insert.InsertIntoCustomBuilt(model.Id, model.Name, model.Contact, JSRuntime);
     }
 }

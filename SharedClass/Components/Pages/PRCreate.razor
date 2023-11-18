@@ -173,7 +173,7 @@
             {
                 if (!string.IsNullOrEmpty(data.Name) && !string.IsNullOrEmpty(data.Quantity) && !string.IsNullOrEmpty(data.UOM))
                 {
-                    await insert.PRInsert(PurchaseRequisitionNumber, Vendor, data.Name, data.Quantity, data.UOM, CreationDate, data.RequiredBy);
+                    await insert.PRInsert(PurchaseRequisitionNumber, Vendor, data.Name, data.Quantity, data.UOM, CreationDate, data.RequiredBy, JSRuntime);
                 }
             }
         }
