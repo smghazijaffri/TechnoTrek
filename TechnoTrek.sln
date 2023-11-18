@@ -9,11 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharedClass", "SharedClass\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MauiMobileApp", "MauiMobileApp\MauiMobileApp.csproj", "{A89E2EA4-C08D-45CF-A344-A11D36C3DE24}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database File", "Database File", "{F5E2E16C-B2C4-40BD-B869-1DA779176DC8}"
-	ProjectSection(SolutionItems) = preProject
-		E:\SQL Server\MSSQL16.SQLEXPRESS\MSSQL\Backup\Example.bak = E:\SQL Server\MSSQL16.SQLEXPRESS\MSSQL\Backup\Example.bak
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
