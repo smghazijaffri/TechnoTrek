@@ -21,6 +21,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Connection>();
             builder.Services.AddScoped<Insert>();
             builder.Services.AddScoped<Select>();
+            builder.Services.AddScoped<Delete>();
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();
