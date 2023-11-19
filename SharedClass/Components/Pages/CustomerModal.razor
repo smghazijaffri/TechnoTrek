@@ -54,8 +54,9 @@
     function validateForm() {
         var name = document.getElementById('name').value;
         var contact = document.getElementById('contact').value;
+        var id = document.getElementById('id').value;
 
-        if (name.trim() === '' || contact.trim() === '') {
+        if (name.trim() === '' || contact.trim() === '' && id.trim() == '') {
             alert('Name and Contact cannot be empty');
             return false;
         }

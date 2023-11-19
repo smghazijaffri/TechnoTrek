@@ -1,15 +1,10 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SharedClass.Components.Data
 {
-    public class Delete : Insert
+    public class Delete : Select
     {
         public async Task DeleteFromCustomBuilt(string id, string component, IJSRuntime JSRuntime)
         {

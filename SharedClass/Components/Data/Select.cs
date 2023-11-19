@@ -4,7 +4,7 @@ using SharedClass.Components.Pages;
 
 namespace SharedClass.Components.Data
 {
-    public class Select : Connection
+    public class Select : Update
     {
         public async Task<IEnumerable<Motherboard>> GetMotherboardsAsync()
         {

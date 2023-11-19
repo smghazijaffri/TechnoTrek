@@ -6,9 +6,9 @@ namespace SharedClass.Components.Data
 {
     public class Insert : Connection
     {
-        string Customer_Name { get; set; }
-        string Customer_Contact { get; set; }
-        string Customer_Id { get; set; }
+        protected string Customer_Name { get; set; }
+        protected string Customer_Contact { get; set; }
+        protected string Customer_Id { get; set; }
         public async Task InsertIntoCustomBuilt(string id, string name, string contact, IJSRuntime JSRuntime)
         {
             try

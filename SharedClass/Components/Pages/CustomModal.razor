@@ -1,9 +1,12 @@
 ﻿@using System.ComponentModel.DataAnnotations;
+@inject SharedClass.Components.Data.Update update;
+@inject IJSRuntime JSRuntime;
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
         <div class="modal-content" style="border-radius: 30px;">
             <div class="modal-header">
+                <h2 class="modal-title heading">@CustID</h2>
                 <h2 class="modal-title heading">@ComponentName  </h2>
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
             </div>
@@ -42,7 +45,7 @@
                 }
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btnpc m-1" @onclick="CloseQuickView" aria-label="Close">Cancel</button>
+                <button type="button" class="btn btn-secondary btnpc m-1" @onclick="Cancel" aria-label="Close">Cancel</button>
                 <button type="button" class="btn btn-primary btnpc m-1" @onclick="CloseQuickView">Submit</button>
             </div>
         </div>
@@ -79,9 +82,17 @@
         set => Model.selectedComponentName = value;
     }
 
-    // Function to open the Quick View Modal
-    private void ShowQuickView()
+    [Parameter]
+    public string CustID
     {
+        get => Model.Id;
+        set => Model.Id = value;
+    }
+
+    // Function to open the Quick View Modal
+    private void ShowQuickView(string id)
+    {
+        Model.Id = id;
         Model.IsModalOpen = true;
     }
 
@@ -89,5 +100,10 @@
     private void CloseQuickView()
     {
         Model.IsModalOpen = false;
+    }
+    private async void Cancel()
+    {
+        await update.UpdateCustomBuilt(Model.Id, Model.selectedComponentName, JSRuntime);
+        CloseQuickView();
     }
 }
