@@ -11,6 +11,7 @@ builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<Insert>();
 builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Delete>();
+builder.Services.AddScoped<Update>();
 builder.Services.AddBlazorBootstrap();
 var app = builder.Build();
 

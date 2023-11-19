@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SharedClass.Components.Data
 {
-    public class Delete : Connection
+    public class Delete : Insert
     {
         public async Task DeleteFromCustomBuilt(string id, string component, IJSRuntime JSRuntime)
         {
@@ -20,7 +20,7 @@ namespace SharedClass.Components.Data
                     con.Open();
 
                     // Delete the record based on the provided 'id' and 'component'
-                    string deleteQuery = $"DELETE [{component}] FROM Custom_Built WHERE Id = @Id";
+                    string deleteQuery = $"DELETE FROM Custom_Built WHERE Id = @Id";
                     await con.ExecuteAsync(deleteQuery, new { Id = id });
                 }
             }
