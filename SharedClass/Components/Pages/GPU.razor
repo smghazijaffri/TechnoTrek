@@ -57,7 +57,7 @@
     }
     private async Task Select(GPU selectedGPU)
     {
-        string component = "Graphics_Card";
+        string component = "[Graphics Card]";
         string combinedValue = $"{selectedGPU.Brand} {selectedGPU.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }

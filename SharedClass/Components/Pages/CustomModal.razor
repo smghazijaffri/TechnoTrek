@@ -6,7 +6,6 @@
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
         <div class="modal-content" style="border-radius: 30px;">
             <div class="modal-header">
-                <h2 class="modal-title heading">@CustID</h2>
                 <h2 class="modal-title heading">@ComponentName  </h2>
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
             </div>
@@ -82,17 +81,9 @@
         set => Model.selectedComponentName = value;
     }
 
-    [Parameter]
-    public string CustID
-    {
-        get => Model.Id;
-        set => Model.Id = value;
-    }
-
     // Function to open the Quick View Modal
-    private void ShowQuickView(string id)
+    private void ShowQuickView()
     {
-        Model.Id = id;
         Model.IsModalOpen = true;
     }
 
@@ -103,7 +94,7 @@
     }
     private async void Cancel()
     {
-        await update.UpdateCustomBuilt(Model.Id, Model.selectedComponentName, JSRuntime);
+        await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
         CloseQuickView();
     }
 }

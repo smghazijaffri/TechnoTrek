@@ -54,7 +54,7 @@
     }
     private async Task Select(Case selectedCase)
     {
-        string component = "Gaming_Case";
+        string component = "[Gaming Case]";
         string combinedValue = $"{selectedCase.Brand} {selectedCase.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }
