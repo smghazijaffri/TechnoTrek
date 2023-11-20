@@ -1,6 +1,7 @@
 ﻿@using static SharedClass.Components.Pages.CustomModal
 @inject NavigationManager navigationManager;
 @inject IJSRuntime JSRuntime;
+@inject SharedClass.Components.Data.Update update;
 <!-- InputModal.razor -->
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
@@ -108,6 +109,7 @@
             int randomNumber = random.Next(101);
             model.Id = (model.Name + "#" + model.Contact + "#" + Convert.ToString(randomNumber));
         }
+        update.Uupdate(model.Id);
         OnSaveChanges.InvokeAsync(model);
         // Close the modal after saving changes
         CloseModal();
