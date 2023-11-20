@@ -18,7 +18,7 @@ namespace SharedClass.Components.Data
                 {
                     con.Open();
                     // Record exists, update the Name and Contact
-                    string updateQuery = $"UPDATE Custom_Built SET {comp} = null WHERE Id = @Id";
+                    string updateQuery = $"UPDATE Custom_Built SET [{comp}] = null WHERE Id = @Id";
                     await con.ExecuteAsync(updateQuery, new { Id = Iid });
                 }
             }

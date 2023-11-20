@@ -54,7 +54,7 @@
     }
     private async Task Select(PSU selectedPSU)
     {
-        string component = "Power_Supply";
+        string component = "[Power Supply]";
         string combinedValue = $"{selectedPSU.Brand} {selectedPSU.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }
