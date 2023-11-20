@@ -90,4 +90,6 @@
     <ProjectReference Include="..\SharedClass\SharedClass.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties XamarinHotReloadDebuggerTimeoutExceptionMauiMobileAppHideInfoBar="True" /></VisualStudio></ProjectExtensions>
+
 </Project>
