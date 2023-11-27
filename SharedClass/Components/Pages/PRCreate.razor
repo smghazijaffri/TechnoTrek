@@ -104,7 +104,7 @@
                             </datalist>
                         </td>
                         <td>
-                            <input type="date" class="form-control" @bind="item.RequiredBy" min="@DateTime.Now.ToString("dd-MM-yyyy")" readonly="@IsApproved" />
+                            <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
                         </td>
                     </tr>
                 }
@@ -117,11 +117,11 @@
 </div>
 
 <script defer>
-    // JavaScript method to store values in an array and log to console
+    @* JavaScript method to store values in an array and log to console *@
     function storeAndCallCSharpMethod() {
         var dataArray = [];
 
-        // Loop through each dynamically added row
+        @* Loop through each dynamically added row *@
         var tableBody = document.getElementById('table-body');
         var rows = tableBody.getElementsByTagName('tr');
 
@@ -129,13 +129,13 @@
             var row = rows[i];
             var inputs = row.getElementsByTagName('input');
 
-            // Get values from input fields
+            @* Get values from input fields *@
             var name = inputs[1].value;
             var quantity = inputs[2].value;
             var uom = inputs[3].value;
             var requiredBy = inputs[4].value;
 
-            // Store values in an object
+            @* Store values in an object *@
             var rowData = {
                 Name: name,
                 Quantity: quantity,
@@ -143,11 +143,11 @@
                 RequiredBy: requiredBy
             };
 
-            // Add the object to the array
+            @* Add the object to the array *@
             dataArray.push(rowData);
         }
-        // Log the array to the console
-        console.log(dataArray);
+        @* Log the array to the console *@
+        @* console.log(dataArray); *@
 
         return dataArray;
     }
@@ -252,7 +252,7 @@
         public string Name { get; set; }
         public string Quantity { get; set; }
         public string UOM { get; set; }
-        public DateTime RequiredBy { get; set; }
+        public DateTime RequiredBy { get; set; } = DateTime.Now;
         public bool Selected { get; set; }
     }
 }

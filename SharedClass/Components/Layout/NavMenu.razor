@@ -2,9 +2,11 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using SharedClass.Components
 @using SharedClass.Components.Data
-@inject NavigationManager NavigationManager
-@inject Login login
-@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager;
+@inject ExampleJsInterop Example;
+@inject Login login;
+@inject IJSRuntime JSRuntime;
+@inject DialogService DialogService
 
 @* <!-- Topbar Start -->
 <div class="container-fluid bg-light text-info ps-5 pe-0 d-none d-lg-block">
@@ -35,6 +37,7 @@
     </div>
 </div>
 <!-- Topbar End --> *@
+
 <nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand m-0" id="Logo"><img src="_content/SharedClass/Images/techlogo.png" alt="Logo" style="width: 200px" /></a>
@@ -66,7 +69,7 @@
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="/" style="color: #5535F0;">
+                    <NavLink class="nav-item nav-link" href="/test" style="color: #5535F0;">
                         <Icon Name="IconName.ArrowReturnLeft" /> Returns
                     </NavLink>
                 </li>
@@ -109,7 +112,6 @@
     private string Username = string.Empty;
     private string Password = string.Empty;
     private bool IsLoginSuccessful = false;
-
     private async Task Pagelogin()
     {
         IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, NavigationManager);

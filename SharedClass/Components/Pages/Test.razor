@@ -1,0 +1,9 @@
+﻿@page "/test"
+@using Radzen
+
+@inject DialogService DialogService
+
+<div class="rz-p-12 rz-text-align-center">
+    <RadzenButton Text="Alert dialog" ButtonStyle="ButtonStyle.Success"
+                  Click=@(args => DialogService.Alert("Some message!", "MyTitle", new AlertOptions() { OkButtonText = "Yes" })) />
+</div>

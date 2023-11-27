@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Radzen;
+using SharedClass;
 using SharedClass.Components.Data;
 
 namespace MauiMobileApp
@@ -23,6 +25,8 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
+            builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddRadzenComponents();
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();
