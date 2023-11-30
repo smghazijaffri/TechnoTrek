@@ -15,7 +15,7 @@
     <div class="col-6 d-flex justify-content-end">
         @if (!IsApproved)
         {
-            <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="ToggleApproval">
+            <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
                 @GetSubmitButtonText()
             </button>
         }
@@ -89,7 +89,7 @@
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" readonly="@IsApproved"/>
                                 @(index + 1)
-                                <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" readonly="@IsApproved">Delete</button>
+                                <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" readonly="@IsApproved">Delete</button>
                             </div>
                         </td>
                         <td><input type="text" class="form-control" @bind="item.Name" readonly="@IsApproved" /></td>
@@ -112,7 +112,7 @@
         </table>
     </form>
     <div class="col-12">
-        <button class="btn btn-primary rounded-pill" @onclick="AddRow" disabled="@IsApproved">Add Row</button>
+        <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" disabled="@IsApproved">Add Row</button>
     </div>
 </div>
 

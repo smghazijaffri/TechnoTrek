@@ -38,6 +38,31 @@
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
     <DefaultLanguage>en</DefaultLanguage>
+    <SignAssembly>False</SignAssembly>
+    <PackageIcon>techlogo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/smghazijaffri/TechnoTrek</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
+    <Optimize>True</Optimize>
+    <AndroidKeyStore>False</AndroidKeyStore>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-ios|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-maccatalyst|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-windows10.0.19041.0|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android|AnyCPU'">
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,7 +85,6 @@
 
   <ItemGroup>
     <None Remove="Resources\AppIcon\techlogo.ico" />
-    <None Remove="Resources\AppIcon\techlogo.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -84,13 +108,24 @@
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
-    <PackageReference Include="Radzen.Blazor" Version="4.21.4" />
+    <PackageReference Include="Radzen.Blazor" Version="4.22.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SharedClass\SharedClass.csproj" />
   </ItemGroup>
 
-  <ProjectExtensions><VisualStudio><UserProperties XamarinHotReloadDebuggerTimeoutExceptionMauiMobileAppHideInfoBar="True" /></VisualStudio></ProjectExtensions>
+  <ItemGroup>
+    <None Update="Resources\AppIcon\techlogo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties XamarinHotReloadDebuggerTimeoutExceptionMauiMobileAppHideInfoBar="True" />
+    </VisualStudio>
+  </ProjectExtensions>
 
 </Project>

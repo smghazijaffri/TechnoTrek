@@ -6,7 +6,7 @@
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="card col-12 col-md-12 col-lg-6 p-5 border-danger bg-gradient shadow" style="border-radius: 2rem;">
+        <div class="card col-12 col-md-12 col-lg-6 p-5 border-danger bg-gradient shadow rz-border-radius-10">
             <div class="card-wrapper">
                 <div class="card-box align-center">
                     <h1 class="card-title mbr-fonts-style mb-4 display-1" style="font-family: 'Arial Rounded MT'; font-weight: 400; color: black;">
@@ -23,7 +23,7 @@
                 <div class="card-body m-2">
                     <h5 class="card-title">Pre-Builts</h5>
                     <p class="card-text">Choose from pre-built configurations</p>
-                    <NavLink href="#" class="btn btnpc btn-primary m-1" Match="NavLinkMatch.All">Buy</NavLink>
+                    <NavLink href="#" class="btn btnpc btn-primary m-1 rz-ripple" Match="NavLinkMatch.All">Buy</NavLink>
                 </div>
             </div>
         </div>
@@ -33,20 +33,20 @@
 <div class="container col-auto m-auto mb-4">
     <div class="row justify-content-center p-0 me-auto">
         <div class="col-md-3" title="Motherboard">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/motherboard.jpg" class="card-img-top" alt="...">
                 </div>
                 <div class="card-body m-2">
                     <h5 class="card-title text-truncate">Motherboard</h5>
                     <p class="card-text">Choose your desired Motherboard</p>
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Motherboard"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Motherboard"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3" title="Processor">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/processor.jpg" class="card-img-top " alt="...">
                 </div>
@@ -54,12 +54,12 @@
                     <h5 class="card-title text-truncate">Processor</h5>
                     <p class="card-text">Choose your desired Processor</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Processor"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Processor"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
         <div class="col-md-3" title="Graphics Card">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/gpu.jpg" class="card-img-top " alt="...">
                 </div>
@@ -67,12 +67,12 @@
                     <h5 class="card-title text-truncate">Graphics Card</h5>
                     <p class="card-text">Choose your desired GPU</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Graphics Card"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Graphics Card"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
         <div class="col-md-3" title="Gaming Case">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/case.jpg" class="card-img-top " alt="...">
                 </div>
@@ -80,12 +80,12 @@
                     <h5 class="card-title text-truncate">Gaming Case</h5>
                     <p class="card-text">Choose your desired Case</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Gaming Case"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Gaming Case"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
         <div class="col-md-3" title="Memory">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/ram.jpg" class="card-img-top" alt="...">
                 </div>
@@ -93,12 +93,12 @@
                     <h5 class="card-title text-truncate">Memory</h5>
                     <p class="card-text">Choose your desired Memory</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Memory"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Memory"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
         <div class="col-md-3" title="Storage">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/ssd.jpg" class="card-img-top " alt="...">
                 </div>
@@ -106,12 +106,12 @@
                     <h5 class="card-title text-truncate">Storage</h5>
                     <p class="card-text">Choose your desired Storage</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Storage"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Storage"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
         <div class="col-md-3" title="Power Supply">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/psu.jpg" class="card-img-top " alt="...">
                 </div>
@@ -119,12 +119,12 @@
                     <h5 class="card-title text-truncate">Power Supply</h5>
                     <p class="card-text">Choose your desired PSU</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Power Supply"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Power Supply"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
         <div class="col-md-3" title="Cooler">
-            <div class="shadow" style="border-radius: 2rem;">
+            <div class="shadow rz-border-radius-10">
                 <div class="container p-4">
                     <img src="_content/SharedClass/Images/cooler.jpg" class="card-img-top " alt="...">
                 </div>
@@ -132,7 +132,7 @@
                     <h5 class="card-title text-truncate">Cooler</h5>
                     <p class="card-text">Choose your desired Fans</p>
 
-                    <NavLink class="btn btnpc btn-primary m-1" @onclick="@(args => ShowQuickView("Cooler"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <NavLink class="btn btnpc btn-primary m-1 rz-ripple" @onclick="@(args => ShowQuickView("Cooler"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>

@@ -4,7 +4,23 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PackageProjectUrl></PackageProjectUrl>
+    <Copyright>All Rights Reserved.</Copyright>
+    <PackageIcon>techlogo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/smghazijaffri/TechnoTrek</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\MauiMobileApp\Resources\AppIcon\techlogo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SharedClass\SharedClass.csproj" />
@@ -20,7 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Radzen.Blazor" Version="4.21.4" />
+    <PackageReference Include="Radzen.Blazor" Version="4.22.1" />
   </ItemGroup>
 
 </Project>
