@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
+using Radzen;
 
 namespace SharedClass.Components.Data
 {
@@ -25,33 +26,28 @@ namespace SharedClass.Components.Data
             {
                 if (Username != "" && Password != "")
                 {
-                    using (SqlConnection con = GetSqlConnection())
+                    using SqlConnection con = GetSqlConnection();
+                    using (cmd = new SqlCommand("SELECT * FROM [Users] WHERE Username = @Username AND Password = @Password", con))
                     {
-                        using (cmd = new SqlCommand("SELECT * FROM [Users] WHERE Username = @Username AND Password = @Password", con))
+                        cmd.Parameters.AddWithValue("@Username", Username);
+                        cmd.Parameters.AddWithValue("@Password", Password);
+                        con.Open();
+                        using (dr = cmd.ExecuteReader())
                         {
-                            cmd.Parameters.AddWithValue("@Username", Username);
-                            cmd.Parameters.AddWithValue("@Password", Password);
-                            con.Open();
-                            using (dr = cmd.ExecuteReader())
+                            if (dr.Read())
                             {
-                                if (dr.Read())
-                                {
-                                    await JSRuntime.InvokeVoidAsync("alert", "Login successful!");
-                                    NavigateToPage(navigationManager);
-                                    return true;
-                                }
-                                else
-                                {
-                                    await JSRuntime.InvokeVoidAsync("alert", "Invalid credentials.");
-                                    return false;
-                                }
+                                NavigateToPage(navigationManager);
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
                             }
                         }
                     }
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Please enter credentials");
                     return false;
                 }
 
@@ -66,7 +62,7 @@ namespace SharedClass.Components.Data
         private void NavigateToPage(NavigationManager navigationManager)
         {
             CloseLoginPopup();
-            navigationManager.NavigateTo("/purchaserequisition");
+            navigationManager.NavigateTo("/dashboard");
         }
     }
 }
