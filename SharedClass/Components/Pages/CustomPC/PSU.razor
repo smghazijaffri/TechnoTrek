@@ -4,10 +4,10 @@
 
 <section>
     <div class="container py-5">
-        @if (Cases != null)
+        @if (PSUs != null)
         {
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
-                @foreach (var values in Cases)
+                @foreach (var values in PSUs)
                 {
                     <div class="col mb-4">
                         <div class="card text-black">
@@ -16,17 +16,17 @@
                                 <h5 class="card-title">@values.Model</h5>
                                 <div>
                                     <div class="d-flex justify-content-between">
+                                        <span>Wattage</span><span>@values.Wattage</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
                                         <span>Form Factor</span><span>@values.Form_Factor</span>
                                     </div>
                                     <div class="d-flex justify-content-between">
-                                        <span>Material</span><span>@values.Material</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Color</span><span>@values.Color</span>
+                                        <span>Certification</span><span>@values.Certification</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btnpc btn-primary m-1" @onclick="() => Select(values)">Select</button>
+                                    <button class="btn btnpc btn-primary m-1 rz-ripple" @onclick="() => Select(values)">Select</button>
                                 </div>
                             </div>
                         </div>
@@ -42,20 +42,20 @@
     public int Id { get; set; }
     public string Brand { get; set; }
     public string Model { get; set; }
+    public int Wattage { get; set; }
     public string Form_Factor { get; set; }
-    public string Material { get; set; }
-    public string Color { get; set; }
+    public string Certification { get; set; }
 
-    private IEnumerable<Case> Cases;
+    private IEnumerable<PSU> PSUs;
 
     protected override async Task OnInitializedAsync()
     {
-        Cases = await select.GetCaseAsync();
+        PSUs = await select.GetPSUAsync();
     }
-    private async Task Select(Case selectedCase)
+    private async Task Select(PSU selectedPSU)
     {
-        string component = "[Gaming Case]";
-        string combinedValue = $"{selectedCase.Brand} {selectedCase.Model}";
+        string component = "[Power Supply]";
+        string combinedValue = $"{selectedPSU.Brand} {selectedPSU.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }
 }

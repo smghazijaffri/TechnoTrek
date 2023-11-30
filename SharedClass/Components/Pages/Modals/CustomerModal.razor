@@ -1,4 +1,4 @@
-﻿@using static SharedClass.Components.Pages.CustomModal
+﻿@using static SharedClass.Components.Pages.Modals.CustomModal
 @inject NavigationManager navigationManager;
 @inject IJSRuntime JSRuntime;
 @inject SharedClass.Components.Data.Update update;
@@ -39,8 +39,8 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btnpc btn-secondary m-1" @onclick="CloseInputModal" aria-label="Close">Cancel</button>
-                                    <button type="button" class="btn btnpc btn-primary m-1" @onclick="SubmitForm">Continue</button>
+                                    <button type="button" class="btn btnpc btn-secondary m-1 rz-ripple" @onclick="CloseInputModal" aria-label="Close">Cancel</button>
+                                    <button type="button" class="btn btnpc btn-primary m-1 rz-ripple" @onclick="SubmitForm">Continue</button>
                                 </div>
                             </div>
                         </div>

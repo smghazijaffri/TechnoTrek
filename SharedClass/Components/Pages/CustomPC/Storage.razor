@@ -4,10 +4,10 @@
 
 <section>
     <div class="container py-5">
-        @if (Coolers != null)
+        @if (IStorage != null)
         {
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
-                @foreach (var values in Coolers)
+                @foreach (var values in IStorage)
                 {
                     <div class="col mb-4">
                         <div class="card text-black">
@@ -16,17 +16,17 @@
                                 <h5 class="card-title">@values.Model</h5>
                                 <div>
                                     <div class="d-flex justify-content-between">
-                                        <span>Type</span><span>@values.Type</span>
+                                        <span>Capacity</span><span>@values.Capacity</span>
                                     </div>
                                     <div class="d-flex justify-content-between">
-                                        <span>Tdp</span><span>@values.Tdp</span>
+                                        <span>Form Factor</span><span>@values.Form_Factor</span>
                                     </div>
                                     <div class="d-flex justify-content-between">
-                                        <span>Socket</span><span>@values.Socket</span>
+                                        <span>Interface</span><span>@values.Interface</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btnpc btn-primary m-1" @onclick="() => Select(values)">Select</button>
+                                    <button class="btn btnpc btn-primary m-1 rz-ripple" @onclick="() => Select(values)">Select</button>
                                 </div>
                             </div>
                         </div>
@@ -42,20 +42,20 @@
     public int Id { get; set; }
     public string Brand { get; set; }
     public string Model { get; set; }
-    public string Type { get; set; }
-    public int Tdp { get; set; }
-    public string Socket { get; set; }
+    public float Capacity { get; set; }
+    public string Form_Factor { get; set; }
+    public string Interface { get; set; }
 
-    private IEnumerable<Cooler> Coolers;
+    private IEnumerable<Storage> IStorage;
 
     protected override async Task OnInitializedAsync()
     {
-        Coolers = await select.GetCoolerAsync();
+        IStorage = await select.GetStorageAsync();
     }
-    private async Task Select(Cooler selectedCooler)
+    private async Task Select(Storage selectedStorage)
     {
-        string component = "Cooler";
-        string combinedValue = $"{selectedCooler.Brand} {selectedCooler.Model}";
+        string component = "Storage";
+        string combinedValue = $"{selectedStorage.Brand} {selectedStorage.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }
 }

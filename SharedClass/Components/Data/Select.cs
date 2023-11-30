@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using SharedClass.Components.Pages;
+using SharedClass.Components.Pages.CustomPC;
 
 namespace SharedClass.Components.Data
 {
