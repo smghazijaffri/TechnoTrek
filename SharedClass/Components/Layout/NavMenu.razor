@@ -113,9 +113,9 @@
     private string Username = string.Empty;
     private string Password = string.Empty;
     private bool IsLoginSuccessful = false;
-    private async Task Pagelogin()
+    private void Pagelogin()
     {
-        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, NavigationManager);
+        IsLoginSuccessful = login.Access(Username, Password, JSRuntime, NavigationManager);
         if (IsLoginSuccessful)
         {
             // Call the ShowNotification method with a success message

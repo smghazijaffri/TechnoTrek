@@ -20,7 +20,7 @@ namespace SharedClass.Components.Data
         {
             showLoginPopup = false;
         }
-        public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime, NavigationManager navigationManager)
+        public bool Access(string Username, string Password, IJSRuntime JSRuntime, NavigationManager navigationManager)
         {
             try
             {
@@ -36,7 +36,8 @@ namespace SharedClass.Components.Data
                         {
                             if (dr.Read())
                             {
-                                NavigateToPage(navigationManager);
+                                CloseLoginPopup();
+                                navigationManager.NavigateTo("/dashboard");
                                 return true;
                             }
                             else
@@ -54,15 +55,15 @@ namespace SharedClass.Components.Data
             }
             catch (SqlException ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message.ToString());
+                JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message.ToString());
                 return false;
             }
         }
 
-        private void NavigateToPage(NavigationManager navigationManager)
-        {
-            CloseLoginPopup();
-            navigationManager.NavigateTo("/dashboard");
-        }
+        //private void NavigateToPage(NavigationManager navigationManager)
+        //{
+        //    CloseLoginPopup();
+        //    navigationManager.NavigateTo("/dashboard");
+        //}
     }
 }

@@ -26,6 +26,11 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddScoped<ContextMenuService>();
+            builder.Services.AddScoped<DialogService>();
+            builder.Services.AddScoped<NotificationService>();
+            builder.Services.AddScoped<TooltipService>();
+            builder.Services.AddBlazorBootstrap();
             builder.Services.AddRadzenComponents();
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
