@@ -86,15 +86,20 @@
 
     void SelectMenuItem(string menuItem)
     {
-        selectedMenuItem = menuItem;
-
         if (!items.Contains(menuItem))
         {
+            // If the menu item is not in the items list, add it and reload the tabs
             items.Add(menuItem);
+            tabs?.Reload();
         }
 
-        // Reload tabs after updating items
-        tabs?.Reload();
+        // Set the selected index to the index of the selected menu item
+        selectedIndex = items.IndexOf(menuItem);
+
+        // Set the selected menu item
+        selectedMenuItem = menuItem;
+
+        sidebarExpanded = false;
     }
 
     void AddItem()
