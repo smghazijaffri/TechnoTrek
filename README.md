@@ -57,7 +57,8 @@ Technology:
   • .NET 8.0 MAUI Blazor Hybrid App 
   • Blazor Web App 
   • Razor Class Library 
-  Packages: 
-    • Dapper
-    • Radzen
-    • Blazor Bootstrap
+
+Packages: 
+  • Dapper
+  • Radzen
+  • Blazor Bootstrap
