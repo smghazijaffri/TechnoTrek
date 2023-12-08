@@ -1,17 +1,16 @@
 #TechnoTrek
 
-Introduction: 
-  TechnoTrek is comprehensive solution for managing day-to-day operations in the computer 
-  retail business. It comprises essential modules such as Sales and Distribution, Customer 
-  Relationship Management, Production Planning, and Material Management. This system 
-  helps you streamline daily sales activities and manage vital customer data. Production 
-  Planning facilitates the efficient creation of custom PCs, supported by an Automated 
-  Compatibility Checker that ensures selected components are compatible, minimizing errors 
-  during assembly. Additionally Material Management functionalities helps you manage 
-  inventory and procurement activities. A unique feature we offer is the ability to create 
-  bundles, allowing customers to easily purchase entire PC setups including mouse, keyboard, 
-  and other accessories. 
-  
+TechnoTrek is comprehensive solution for managing day-to-day operations in the computer 
+retail business. It comprises essential modules such as Sales and Distribution, Customer 
+Relationship Management, Production Planning, and Material Management. This system 
+helps you streamline daily sales activities and manage vital customer data. Production 
+Planning facilitates the efficient creation of custom PCs, supported by an Automated 
+Compatibility Checker that ensures selected components are compatible, minimizing errors 
+during assembly. Additionally Material Management functionalities helps you manage 
+inventory and procurement activities. A unique feature we offer is the ability to create 
+bundles, allowing customers to easily purchase entire PC setups including mouse, keyboard, 
+and other accessories. 
+
 Domain: 
   • Production Planning 
   • Material Management 
