@@ -3,104 +3,14 @@
 @using System.Globalization
 @layout AdminLayout;
 
-<div class="container">
-    <div class="row">
-        <div class="col-sm-12">
-            <RadzenCard class="w-100 mb-4">
-                <RadzenCheckBox @bind-Value="@showDataLabels" Name="dataLabels"></RadzenCheckBox>
-                <RadzenLabel Text="Show Data Labels" Component="dataLabels" Style="margin-left: 8px; vertical-align: middle;" />
-            </RadzenCard>
-            <h4>Auto-size stacked bar series</h4>
-            <RadzenChart style="height: 400px">
-                <RadzenStackedBarSeries Data="@revenue2020" CategoryProperty="Quarter" Title="2020" LineType="LineType.Dashed" ValueProperty="Revenue">
-                    <RadzenSeriesDataLabels Visible="@showDataLabels" />
-                </RadzenStackedBarSeries>
-                <RadzenStackedBarSeries Data="@revenue2019" CategoryProperty="Quarter" Title="2019" ValueProperty="Revenue">
-                    <RadzenSeriesDataLabels Visible="@showDataLabels" />
-                </RadzenStackedBarSeries>
-                <RadzenValueAxis Formatter="@FormatAsUSD" Min="0" Max="800000" Step="100000">
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisTitle Text="Revenue in USD" />
-                </RadzenValueAxis>
-                <RadzenBarOptions Radius="5" />
-            </RadzenChart>
-            <h4>Custom size stacked bar series</h4>
-            <RadzenChart style="height: 400px">
-                <RadzenStackedBarSeries Data="@revenue2020" CategoryProperty="Quarter" Title="2020" LineType="LineType.Dashed" ValueProperty="Revenue" />
-                <RadzenStackedBarSeries Data="@revenue2019" CategoryProperty="Quarter" Title="2019" ValueProperty="Revenue" />
-                <RadzenValueAxis Formatter="@FormatAsUSD" Min="0" Max="800000" Step="100000">
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisTitle Text="Revenue in USD" />
-                </RadzenValueAxis>
-                <RadzenBarOptions Radius="5" Height="20" />
-            </RadzenChart>
-        </div>
-    </div>
-</div>
+<p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras a diam tempor, ullamcorper quam sed, consequat sem. In vitae ultricies leo. Proin vitae tellus libero. Morbi mattis, nibh varius maximus dictum, eros sapien blandit lorem, imperdiet mattis tellus lorem sit amet sem. Duis commodo blandit mi sit amet interdum. Maecenas scelerisque ligula ac rhoncus lobortis. Aenean nec est venenatis, molestie leo eget, aliquam nulla. Fusce semper neque vitae mauris elementum mattis. Phasellus a neque et ligula scelerisque maximus eleifend non neque. Quisque molestie semper elit, eget tincidunt nibh laoreet vitae. Fusce aliquam hendrerit lacus, tristique faucibus lectus vestibulum vehicula. Aenean nisi urna, tristique sed porttitor quis, vulputate in est. Sed id erat justo. Sed nisl lorem, elementum a nulla sit amet, tincidunt vestibulum est.
 
+    Cras ac lobortis neque. Pellentesque quis laoreet mi, elementum egestas mi. Etiam rutrum sollicitudin ligula, eget facilisis justo dignissim quis. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Fusce lobortis, nisi vehicula tempor euismod, dui sapien posuere tortor, in vulputate massa tortor sit amet nulla. Sed dapibus sapien pulvinar, euismod urna eu, sodales orci. Nulla facilisi. Nunc rutrum felis sed sem commodo, a volutpat velit sodales. Sed facilisis eleifend imperdiet. Ut sodales lobortis lectus eget tincidunt. In et sollicitudin diam, at tempor magna. Vivamus ultrices mauris arcu, eu varius lacus hendrerit at. Pellentesque quis faucibus urna. Ut quis sapien ac ante vestibulum elementum. Vestibulum ullamcorper nisl at lacus suscipit, at tincidunt urna sagittis.
 
-@code {
-    bool showDataLabels;
+    Integer orci purus, aliquam nec sapien non, gravida condimentum risus. Integer ut ex ac purus porta suscipit ac nec sem. Praesent condimentum quis augue eu posuere. Proin imperdiet gravida metus, ut fermentum felis rutrum nec. Quisque at commodo arcu. Aliquam pretium est sit amet risus placerat condimentum. Nunc finibus diam sed libero viverra, vel ultricies purus lobortis. Sed tempus est id tellus dapibus imperdiet. Duis sollicitudin ante congue dui ullamcorper, quis rutrum nunc facilisis.
 
+    Fusce quis sodales purus, id hendrerit elit. Donec id convallis lectus. Pellentesque efficitur leo justo, sed venenatis eros tempor sit amet. Integer dignissim nisl eu mi fermentum, venenatis mattis libero blandit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Morbi consectetur id magna vel vestibulum. Quisque sed imperdiet elit. Nunc consectetur elit ac varius mattis. In dignissim tellus egestas, commodo sapien vel, viverra urna. Sed maximus, sapien ac condimentum mattis, ante tortor commodo elit, non vestibulum ligula nisi non mauris. Sed et mauris vel est sagittis blandit. Mauris porta vestibulum velit non commodo. Phasellus laoreet ex vel efficitur cursus. Curabitur venenatis quam augue, id dapibus magna elementum quis. Ut ultrices id lorem vitae efficitur. Sed lectus nisi, vulputate sit amet tempor sit amet, tincidunt sollicitudin mauris.
 
-    class DataItem
-    {
-        public string Quarter { get; set; }
-        public double Revenue { get; set; }
-    }
-
-    string FormatAsUSD(object value)
-    {
-        double num = (double)value / 1000;
-
-        return num.ToString("$0K");
-    }
-
-    DataItem[] revenue2019 = new DataItem[]
-    {
-    new DataItem
-    {
-        Quarter = "Q1",
-        Revenue = 234000
-    },
-    new DataItem
-    {
-        Quarter = "Q2",
-        Revenue = 284000
-    },
-    new DataItem
-    {
-        Quarter = "Q3",
-        Revenue = 274000
-    },
-    new DataItem
-    {
-        Quarter = "Q4",
-        Revenue = 294000
-    },
-    };
-
-    DataItem[] revenue2020 = new DataItem[] {
-    new DataItem
-    {
-    Quarter = "Q1",
-    Revenue = 254000
-    },
-    new DataItem
-    {
-    Quarter = "Q2",
-    Revenue = 324000
-    },
-    new DataItem
-    {
-    Quarter = "Q3",
-    Revenue = 354000
-    },
-    new DataItem
-    {
-    Quarter = "Q4",
-    Revenue = 394000
-    },
-
-    };
-}
+    Cras at viverra velit. Donec luctus quam interdum metus faucibus, non placerat justo fermentum. Aenean ultricies luctus varius. Aenean eu accumsan nisi, eu fringilla odio. Suspendisse sagittis tortor at interdum vestibulum. Proin lorem nunc, dictum eu rhoncus at, tempus non diam. Duis ut tincidunt lectus. Donec vulputate felis vel lacus imperdiet varius. Quisque elit lectus, blandit sit amet convallis ac, iaculis a arcu. Sed semper pulvinar neque volutpat sollicitudin. Curabitur vehicula, nisl et porttitor vehicula, lectus libero volutpat velit, bibendum ornare mi metus quis odio. Duis posuere ac tellus ac condimentum.
+</p>

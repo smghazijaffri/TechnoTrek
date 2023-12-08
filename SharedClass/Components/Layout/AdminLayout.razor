@@ -4,35 +4,23 @@
 @inject NavigationManager navigationManager
 @inherits LayoutComponentBase
 
-<style>
-    .rz-tabview-panels {
-        display: none;
-    }
-</style>
-
 <RadzenLayout class="bg-white">
-    <RadzenHeader class="bg-transparent text-black shadow-none rz-border-radius-8">
+    <RadzenHeader class="bg-transparent text-black shadow-sm" Style="border-bottom-right-radius: 30px; border-bottom-left-radius: 30px;">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
             <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" class="text-black" Style="font-size:20px" />
-            <!-- Initialize tabs -->
-            <RadzenTabs @ref="tabs" class="bg-transparent rz-border-radius-3 shadow-sm" RenderMode="TabRenderMode.Client" @bind-SelectedIndex="@selectedIndex">
-                <Tabs>
-                    @foreach (var item in items)
-                    {
-                        <RadzenTabsItem Text="@item"/>
-                    }
-                </Tabs>
-            </RadzenTabs>
+            <div class="mx-auto">
+                <RadzenImage Path="_content/SharedClass/Images/techlogo.png" Style="width: 200px; align-content:center;" />
+            </div>
         </RadzenStack>
     </RadzenHeader>
-    <RadzenSidebar Responsive="false" @bind-Expanded="@sidebarExpanded" Style="position: absolute; z-index: 3; backdrop-filter: blur(8px);" class="rz-border-radius-8 bg-opacity-50 shadow-lg">
+    <RadzenSidebar Responsive="false" @bind-Expanded="@sidebarExpanded" Style="position: absolute; z-index: 3; backdrop-filter: blur(8px); border-top-right-radius: 30px; border-bottom-right-radius: 30px;" class="bg-opacity-50 shadow-lg">
         <RadzenStack AlignItems="AlignItems.End" Class="rz-p-2">
             <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
         </RadzenStack>
         <RadzenPanelMenu class="bg-transparent rz-border-radius-8">
-            <RadzenPanelMenuItem Text="Home" Icon="home" Style="color:rebeccapurple; font-size: 15px" Click="@(args => SelectMenuItem("Home"))" />
-            <RadzenPanelMenuItem Text="Dashboard 2" Icon="home" Style="color:rebeccapurple; font-size: 15px" Click="@(args => SelectMenuItem("Dash2"))" />
-            <RadzenPanelMenuItem Text="Sign Out" Icon="lock" Style="color:rebeccapurple; font-size: 15px" Click="SignOut" />
+            <RadzenPanelMenuItem Text="Home" Icon="home" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/dashboard"))" />
+            <RadzenPanelMenuItem Text="Dashboard 2" Icon="home" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/dashboard2"))" />
+            <RadzenPanelMenuItem Text="Sign Out" Icon="lock" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/"))" />
         </RadzenPanelMenu>
     </RadzenSidebar>
     <RadzenBody>
@@ -41,19 +29,7 @@
             <RadzenDialog />
             <RadzenNotification />
             <RadzenTooltip />
-
-            @if (selectedMenuItem == "Home")
-            {
-                <Dashboard />
-            }
-            @if (selectedMenuItem == "Dash2")
-            {
-                <Dashboard2/>
-            }
-            else
-            {
-                @Body
-            }
+            @Body
         </main>
     </RadzenBody>
     @if (sidebarExpanded)
@@ -64,62 +40,9 @@
 
 @code {
     bool sidebarExpanded = false;
-    string selectedMenuItem = "";
-    RadzenTabs tabs;
-    int selectedIndex = 0;
-    List<string> items = new List<string> { };
 
-    // Initialize the Dashboard component when the page loads
-    protected override void OnInitialized()
+    void Navigate(string nav)
     {
-        base.OnInitialized();
-
-        // Set the initial selected tab to "Home"
-        selectedMenuItem = "Home";
-
-        // Add the "Home" tab to the items list
-        if (!items.Contains(selectedMenuItem))
-        {
-            items.Add(selectedMenuItem);
-        }
-    }
-
-    void SelectMenuItem(string menuItem)
-    {
-        if (!items.Contains(menuItem))
-        {
-            // If the menu item is not in the items list, add it and reload the tabs
-            items.Add(menuItem);
-            tabs?.Reload();
-        }
-
-        // Set the selected index to the index of the selected menu item
-        selectedIndex = items.IndexOf(menuItem);
-
-        // Set the selected menu item
-        selectedMenuItem = menuItem;
-
-        sidebarExpanded = false;
-    }
-
-    void AddItem()
-    {
-        if (!items.Contains(selectedMenuItem))
-        {
-            items.Add(selectedMenuItem);
-            tabs?.Reload();
-        }
-    }
-
-    void RemoveItem()
-    {
-        items.Remove(selectedMenuItem);
-        if (selectedIndex >= items.Count) selectedIndex = items.Count - 1;
-        tabs?.Reload();
-    }
-
-    void SignOut()
-    {
-        navigationManager.NavigateTo("/");
+        navigationManager.NavigateTo(nav);
     }
 }
