@@ -12,9 +12,7 @@
             <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
             <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
         </MudAppBar>
-        @* <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" Style="margin-left:10px"/> *@
         <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 30px; border-bottom-right-radius:30px">
-            @* <MudIconButton Icon="@Icons.Material.Outlined.ArrowBack" Color="Color.Error" OnClick="@ToggleDrawer"/> *@
             <MudNavMenu>
                 <MudNavLink Match="NavLinkMatch.All">
                     <MudButton Href="/dashboard"
@@ -22,8 +20,36 @@
                                StartIcon="@Icons.Material.Outlined.SpaceDashboard"
                                Color="Color.Primary">Dashboard</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All">Library</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All">Community</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/buying"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.ShoppingBag"
+                               Color="Color.Primary">Buying</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/selling"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Sell"
+                               Color="Color.Primary">Selling</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/inventory"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Inventory2"
+                               Color="Color.Primary">Inventory</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/returns"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.KeyboardReturn"
+                               Color="Color.Primary">Returns</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/pos"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Store"
+                               Color="Color.Primary">Point of Sale</MudButton>
+                </MudNavLink>
             </MudNavMenu>
         </MudDrawer>
     </div>
