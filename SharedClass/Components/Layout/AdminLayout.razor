@@ -2,50 +2,46 @@
 @inject NavigationManager navigationManager
 @inherits LayoutComponentBase
 
-<RadzenLayout class="bg-white">
-    <RadzenHeader class="bg-transparent text-black shadow-sm" Style="border-bottom-right-radius: 30px; border-bottom-left-radius: 30px;">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
-            <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" class="text-black" Style="font-size:20px" />
-            <div class="mx-auto">
-                <RadzenImage Path="_content/SharedClass/Images/techlogo.png" Style="width: 200px; align-content:center;" />
-            </div>
-        </RadzenStack>
-    </RadzenHeader>
-    <RadzenSidebar Responsive="false" @bind-Expanded="@sidebarExpanded" Style="position: absolute; z-index: 3; backdrop-filter: blur(8px); border-top-right-radius: 30px; border-bottom-right-radius: 30px;" class="bg-opacity-50 shadow-lg">
-        <RadzenStack AlignItems="AlignItems.End" Class="rz-p-2">
-            <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
-        </RadzenStack>
-        <RadzenPanelMenu class="bg-transparent rz-border-radius-8">
-            <RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" IconColor="@Colors.Primary" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/dashboard"))" />
-            <RadzenPanelMenuItem Text="Buying" Icon="home" IconColor="gray" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/buying"))" />
-            <RadzenPanelMenuItem Text="Selling" Icon="home" IconColor="gray" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/selling"))" />
-            <RadzenPanelMenuItem Text="Inventory" Icon="home" IconColor="gray" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/inventory"))" />
-            <RadzenPanelMenuItem Text="Returns" Icon="home" IconColor="@Colors.DangerLight" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/returns"))" />
-            <RadzenPanelMenuItem Text="POS" Icon="home" IconColor="@Colors.Success" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/pos"))" />
-            <RadzenPanelMenuItem Text="Sign Out" IconColor="@Colors.Danger" Icon="exit_to_app" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/"))" />
-        </RadzenPanelMenu>
-    </RadzenSidebar>
-    <RadzenBody>
-        <main class="p-1">
-            <RadzenContextMenu />
-            <RadzenDialog />
-            <RadzenNotification />
-            <RadzenTooltip />
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+
+<MudLayout>
+    <div style="display:flex;">
+        <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black;">
+            <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+        </MudAppBar>
+        @* <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" Style="margin-left:10px"/> *@
+        <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 30px; border-bottom-right-radius:30px">
+            @* <MudIconButton Icon="@Icons.Material.Outlined.ArrowBack" Color="Color.Error" OnClick="@ToggleDrawer"/> *@
+            <MudNavMenu>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/dashboard"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.SpaceDashboard"
+                               Color="Color.Primary">Dashboard</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">Library</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">Community</MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+    </div>
+    <MudMainContent Class="p-4" Style="margin-top:50px;">
+            <MudThemeProvider />
+            <MudDialogProvider />
+            <MudSnackbarProvider />
             @Body
-        </main>
-    </RadzenBody>
-    @if (sidebarExpanded)
-    {
-        <div @onclick="@(() => sidebarExpanded = false)" class="rz-dialog-mask" style="position: absolute; z-index: 2"></div>
-    }
-</RadzenLayout>
+    </MudMainContent>
+</MudLayout>
 
 @code {
-    bool sidebarExpanded = false;
+    bool open = false;
+    bool preserveOpenState = false;
+    Breakpoint breakpoint = Breakpoint.Lg;
 
-    void Navigate(string nav)
+    void ToggleDrawer()
     {
-        sidebarExpanded = false;
-        navigationManager.NavigateTo(nav);
+        open = !open;
     }
 }
