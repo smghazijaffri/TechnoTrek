@@ -2,8 +2,46 @@
 @inject NavigationManager navigationManager
 @inherits LayoutComponentBase
 
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
 
+<MudLayout>
+    <div style="display:flex;">
+        <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black;">
+            <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+        </MudAppBar>
+        @* <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" Style="margin-left:10px"/> *@
+        <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 30px; border-bottom-right-radius:30px">
+            @* <MudIconButton Icon="@Icons.Material.Outlined.ArrowBack" Color="Color.Error" OnClick="@ToggleDrawer"/> *@
+            <MudNavMenu>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/dashboard"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.SpaceDashboard"
+                               Color="Color.Primary">Dashboard</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">Library</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">Community</MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+    </div>
+    <MudMainContent Class="p-4" Style="margin-top:50px;">
+            <MudThemeProvider />
+            <MudDialogProvider />
+            <MudSnackbarProvider />
+            @Body
+    </MudMainContent>
+</MudLayout>
 
 @code {
-    
+    bool open = false;
+    bool preserveOpenState = false;
+    Breakpoint breakpoint = Breakpoint.Lg;
+
+    void ToggleDrawer()
+    {
+        open = !open;
+    }
 }

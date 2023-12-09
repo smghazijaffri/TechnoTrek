@@ -5,8 +5,8 @@
 <!-- InputModal.razor -->
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
-    <div class="modal-dialog modal-sm p-4">
-        <div class="modal-content" style="border-radius: 30px;">
+    <div class="modal-dialog modal-sm p-4 border-0">
+        <div class="modal-content bg-white shadow-lg border-0" style="border-radius: 30px;">
             <div class="modal-header heading">
                 <h2 class="modal-title">Customer Details</h2>
                 <button type="button" class="btn-close" @onclick="CloseInputModal" aria-label="Close" style="font-size: 15px"></button>
@@ -24,16 +24,16 @@
                                 <div class="modal-body">
                                     <!-- Input form for Name, Contact, and Date -->
                                     <div class="form-group">
-                                        <label for="name">Customer ID:</label>
+                                        <label for="name">Customer ID</label>
                                         <input type="text" class="form-control" id="id" @bind="model.Id" />
                                     </div>
                                     <div class="form-group">
-                                        <label for="name">Name:</label>
+                                        <label for="name">Name</label>
                                         <InputText class="form-control" id="name" @bind-Value="model.Name" />
                                         <ValidationMessage For="@(() => model.Name)" />
                                     </div>
                                     <div class="form-group">
-                                        <label for="contact">Contact:</label>
+                                        <label for="contact">Contact</label>
                                         <InputText class="form-control" id="contact" @bind-Value="model.Contact" />
                                         <ValidationMessage For="@(() => model.Contact)" />
                                     </div>
