@@ -1,6 +1,4 @@
-﻿@using BlazorBootstrap
-@using Radzen.Blazor
-@using SharedClass.Components.Pages.AdminView
+﻿@using SharedClass.Components.Pages.AdminView
 @inject NavigationManager navigationManager
 @inherits LayoutComponentBase
 
@@ -18,9 +16,13 @@
             <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
         </RadzenStack>
         <RadzenPanelMenu class="bg-transparent rz-border-radius-8">
-            <RadzenPanelMenuItem Text="Home" Icon="home" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/dashboard"))" />
-            <RadzenPanelMenuItem Text="Dashboard 2" Icon="home" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/dashboard2"))" />
-            <RadzenPanelMenuItem Text="Sign Out" Icon="lock" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/"))" />
+            <RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" IconColor="@Colors.Primary" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/dashboard"))" />
+            <RadzenPanelMenuItem Text="Buying" Icon="home" IconColor="gray" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/buying"))" />
+            <RadzenPanelMenuItem Text="Selling" Icon="home" IconColor="gray" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/selling"))" />
+            <RadzenPanelMenuItem Text="Inventory" Icon="home" IconColor="gray" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/inventory"))" />
+            <RadzenPanelMenuItem Text="Returns" Icon="home" IconColor="@Colors.DangerLight" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/returns"))" />
+            <RadzenPanelMenuItem Text="POS" Icon="home" IconColor="@Colors.Success" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/pos"))" />
+            <RadzenPanelMenuItem Text="Sign Out" IconColor="@Colors.Danger" Icon="exit_to_app" Style="color:rebeccapurple; font-size: 15px" Click="@(args => Navigate("/"))" />
         </RadzenPanelMenu>
     </RadzenSidebar>
     <RadzenBody>
@@ -43,6 +45,7 @@
 
     void Navigate(string nav)
     {
+        sidebarExpanded = false;
         navigationManager.NavigateTo(nav);
     }
 }

@@ -6,7 +6,7 @@
 @inject ExampleJsInterop Example;
 @inject Login login;
 @inject IJSRuntime JSRuntime;
-@inject DialogService DialogService
+@inject Radzen.DialogService DialogService
 @inject NotificationService NotificationService
 
 @* <!-- Topbar Start -->
@@ -60,18 +60,13 @@
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link rz-ripple" href="/purchaserequisition" style="color: #5535F0;">
+                    <NavLink class="nav-item nav-link rz-ripple" href="#" style="color: #5535F0;">
                         <Icon Name="IconName.ViewList" /> Products
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link rz-ripple" href="/purchaserequisition/create" style="color: #5535F0;">
+                    <NavLink class="nav-item nav-link rz-ripple" href="#" style="color: #5535F0;">
                         <Icon Name="IconName.Subtract" /> Bundles
-                    </NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-item nav-link rz-ripple" href="/" style="color: #5535F0;">
-                        <Icon Name="IconName.ArrowReturnLeft" /> Returns
                     </NavLink>
                 </li>
                 <a class="text-decoration-none py-2 px-4 ms-4 shadow rounded-pill bg-gradient rz-ripple" @onclick:preventDefault @onclick="login.OpenLoginPopup"
