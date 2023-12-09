@@ -1,13 +1,10 @@
-﻿@using BlazorBootstrap
-@using Microsoft.AspNetCore.Components.Forms
+﻿@using Microsoft.AspNetCore.Components.Forms
 @using SharedClass.Components
 @using SharedClass.Components.Data
 @inject NavigationManager NavigationManager;
 @inject ExampleJsInterop Example;
 @inject Login login;
 @inject IJSRuntime JSRuntime;
-@inject Radzen.DialogService DialogService
-@inject NotificationService NotificationService
 
 @* <!-- Topbar Start -->
 <div class="container-fluid bg-light text-info ps-5 pe-0 d-none d-lg-block">
@@ -51,22 +48,22 @@
                 <!-- Add ms-auto class here -->
                 <li class="nav-item">
                     <NavLink class="nav-item nav-link rz-ripple" href="/" style="color: #5535F0;" Match="NavLinkMatch.All">
-                        <Icon Name="IconName.House" /> Home
+                        Home
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-item nav-link rz-ripple" href="buildpc" style="color: #5535F0;">
-                        <Icon Name="IconName.Tv" /> Build your PC
+                        Build your PC
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-item nav-link rz-ripple" href="#" style="color: #5535F0;">
-                        <Icon Name="IconName.ViewList" /> Products
+                        Products
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-item nav-link rz-ripple" href="#" style="color: #5535F0;">
-                        <Icon Name="IconName.Subtract" /> Bundles
+                        Bundles
                     </NavLink>
                 </li>
                 <a class="text-decoration-none py-2 px-4 ms-4 shadow rounded-pill bg-gradient rz-ripple" @onclick:preventDefault @onclick="login.OpenLoginPopup"
@@ -78,7 +75,7 @@
         {
             <div class="position-fixed top-0 start-50 translate-middle-x ">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content rz-border-radius-6">
+                    <div class="modal-content" style="border-radius:30px;">
                         <div class="modal-header">
                             <h5 class="modal-title heading">Login</h5>
                             <button type="button" class="btn-close" @onclick="login.CloseLoginPopup" style="font-size: 15px"></button>
@@ -114,24 +111,24 @@
         if (IsLoginSuccessful)
         {
             // Call the ShowNotification method with a success message
-            ShowNotification(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Welcome",
-                    Detail = "Successfully Logged In",
-                    Duration = 4000
-                });
+            // ShowNotification(new NotificationMessage
+            //     {
+            //         Severity = NotificationSeverity.Success,
+            //         Summary = "Welcome",
+            //         Detail = "Successfully Logged In",
+            //         Duration = 4000
+            //     });
         }
         else
         {
             // Call the ShowNotification method with a success message
-            ShowNotification(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error Occured",
-                    Detail = "Invalid Credentials",
-                    Duration = 4000
-                });
+            // ShowNotification(new NotificationMessage
+            //     {
+            //         Severity = NotificationSeverity.Error,
+            //         Summary = "Error Occured",
+            //         Detail = "Invalid Credentials",
+            //         Duration = 4000
+            //     });
         }
     }
 
@@ -143,8 +140,8 @@
     {
         collapseNavMenu = !collapseNavMenu;
     }
-    void ShowNotification(NotificationMessage message)
-    {
-        NotificationService.Notify(message);
-    }
+    // void ShowNotification(NotificationMessage message)
+    // {
+    //     NotificationService.Notify(message);
+    // }
 }

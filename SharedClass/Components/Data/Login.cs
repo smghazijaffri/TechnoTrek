@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
-using Radzen;
 
 namespace SharedClass.Components.Data
 {

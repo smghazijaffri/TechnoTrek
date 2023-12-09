@@ -1,4 +1,3 @@
-using Radzen;
 using SharedClass;
 using SharedClass.Components;
 using SharedClass.Components.Data;
@@ -15,12 +14,6 @@ builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Delete>();
 builder.Services.AddScoped<Update>();
 builder.Services.AddScoped<ExampleJsInterop>();
-builder.Services.AddScoped<ContextMenuService>();
-builder.Services.AddScoped<DialogService>();
-builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<TooltipService>();
-builder.Services.AddBlazorBootstrap();
-builder.Services.AddRadzenComponents();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 var app = builder.Build();
 
