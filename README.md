@@ -60,5 +60,4 @@ Technology:
 
 Packages: 
   • Dapper
-  • Radzen
-  • Blazor Bootstrap
+  • MudBlazor
