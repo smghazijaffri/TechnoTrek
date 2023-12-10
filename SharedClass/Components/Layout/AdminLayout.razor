@@ -1,6 +1,9 @@
 ﻿@using SharedClass.Components.Pages.AdminView
-@inject NavigationManager navigationManager
-@inherits LayoutComponentBase
+@using SharedClass.Components.Data
+@inject ISnackbar Snackbar;
+@inject NavigationManager navigationManager;
+@inherits LayoutComponentBase;
+@inject CustomAuthenticationStateProvider AuthStateProvider;
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -61,10 +64,9 @@
                                Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.Logout"
                                Style="background-color:transparent;"
+                               OnClick="Logout"
                                Color="Color.Default">Sign Out</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All">Library</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All">Community</MudNavLink>
             </MudNavMenu>
         </MudDrawer>
     </div>
@@ -84,5 +86,12 @@
     void ToggleDrawer()
     {
         open = !open;
+    }
+    private void Logout()
+    {
+        AuthStateProvider.Logout();
+        Snackbar.Clear();
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        Snackbar.Add("Logged Out", Severity.Error);
     }
 }

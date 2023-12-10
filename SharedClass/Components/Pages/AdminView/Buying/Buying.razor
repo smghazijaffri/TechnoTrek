@@ -1,7 +1,9 @@
 ﻿@page "/buying";
 @using SharedClass.Components.Layout
 @using System.Globalization
+@using Microsoft.AspNetCore.Authorization
 @layout AdminLayout;
+@attribute [Authorize]
 
 <h3>Buying</h3>
 

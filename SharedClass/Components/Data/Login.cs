@@ -9,7 +9,6 @@ namespace SharedClass.Components.Data
         public bool showLoginPopup = false;
         private SqlCommand? cmd;
         private SqlDataReader? dr;
-
         public void OpenLoginPopup()
         {
             showLoginPopup = true;
@@ -58,11 +57,5 @@ namespace SharedClass.Components.Data
                 return false;
             }
         }
-
-        //private void NavigateToPage(NavigationManager navigationManager)
-        //{
-        //    CloseLoginPopup();
-        //    navigationManager.NavigateTo("/dashboard");
-        //}
     }
 }

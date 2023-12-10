@@ -3,6 +3,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using SharedClass;
 using SharedClass.Components.Data;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace MauiMobileApp
 {
@@ -26,6 +27,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddScoped<CustomAuthenticationStateProvider>();
             builder.Services.AddMudServices();
             builder.Services.AddMudServices(config =>
             {
@@ -39,6 +41,7 @@ namespace MauiMobileApp
                 config.SnackbarConfiguration.ShowTransitionDuration = 500;
                 config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
             });
+            builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();

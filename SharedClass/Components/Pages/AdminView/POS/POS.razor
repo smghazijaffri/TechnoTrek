@@ -1,6 +1,8 @@
 ﻿@page "/pos";
 @using SharedClass.Components.Layout
+@using Microsoft.AspNetCore.Authorization
 @layout AdminLayout;
+@attribute [Authorize]
 
 <h3>POS</h3>
 

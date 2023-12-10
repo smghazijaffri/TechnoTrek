@@ -1,6 +1,8 @@
 @page "/purchaserequisition"
 @using SharedClass.Components.Layout
+@using Microsoft.AspNetCore.Authorization
 @layout AdminLayout;
+@attribute [Authorize]
 
 <h3>Purchase Requisition</h3>
 

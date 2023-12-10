@@ -3,7 +3,9 @@
 @inject SharedClass.Components.Data.Insert insert;
 @inject IJSRuntime JSRuntime;
 @using SharedClass.Components.Layout
+@using Microsoft.AspNetCore.Authorization
 @layout AdminLayout;
+@attribute [Authorize]
 
 <div class="row p-3 align-items-center">
     <div class="col-6">

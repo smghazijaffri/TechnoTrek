@@ -1,7 +1,10 @@
 ﻿@page "/dashboard";
 @using SharedClass.Components.Layout
 @using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@inject IJSRuntime JSRuntime;
 @layout AdminLayout;
+@attribute [Authorize]
 
 <p>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vehicula tellus sed lacus semper, nec lobortis velit iaculis. Duis quis ultrices neque. Vestibulum vulputate lectus in posuere gravida. Aenean eu tortor sapien. Duis et egestas felis. Vivamus in felis nulla. Ut varius nunc blandit, egestas sapien sit amet, consequat sapien. Ut sit amet nunc vitae massa luctus lacinia. Phasellus porttitor, est id mollis commodo, leo nisi vestibulum lorem, dignissim tristique erat lectus non sem. Etiam mauris dui, viverra sit amet turpis et, tristique bibendum nunc. Aenean cursus bibendum nisl, a rhoncus augue. Mauris quis fringilla nunc. Cras sit amet sem et purus interdum tincidunt. Nunc vehicula porttitor erat, scelerisque lobortis justo semper id. Duis urna nunc, suscipit ac magna vitae, elementum rutrum felis. Integer maximus tincidunt vulputate.
@@ -16,5 +19,5 @@
 </p>
 
 @code {
-    
+
 }
