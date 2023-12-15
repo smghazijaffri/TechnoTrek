@@ -4,10 +4,10 @@
 
 <section>
     <div class="container py-5">
-        @if (Motherboards != null && Motherboards.Any())
+        @if (PSUs != null)
         {
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
-                @foreach (var values in Motherboards)
+                @foreach (var values in PSUs)
                 {
                     <div class="col mb-4">
                         <div class="card text-black">
@@ -16,17 +16,17 @@
                                 <h5 class="card-title">@values.Model</h5>
                                 <div>
                                     <div class="d-flex justify-content-between">
-                                        <span>Socket</span><span>@values.Socket</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Chipset</span><span>@values.Chipset</span>
+                                        <span>Wattage</span><span>@values.Wattage</span>
                                     </div>
                                     <div class="d-flex justify-content-between">
                                         <span>Form Factor</span><span>@values.Form_Factor</span>
                                     </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Certification</span><span>@values.Certification</span>
+                                    </div>
                                 </div>
                                 <div>
-                                    <button class="btn btnpc btn-primary m-1" @onclick="() => Select(values)">Select</button>
+                                    <button class="btn btnpc btn-primary m-1 rz-ripple" @onclick="() => Select(values)">Select</button>
                                 </div>
                             </div>
                         </div>
@@ -38,26 +38,24 @@
 </section>
 
 
-
 @code {
     public int Id { get; set; }
     public string Brand { get; set; }
     public string Model { get; set; }
-    public string Socket { get; set; }
-    public string Chipset { get; set; }
+    public int Wattage { get; set; }
     public string Form_Factor { get; set; }
+    public string Certification { get; set; }
 
-    private IEnumerable<Motherboard> Motherboards;
+    private IEnumerable<PSU> PSUs;
 
     protected override async Task OnInitializedAsync()
     {
-        Motherboards = await select.GetMotherboardsAsync();
+        PSUs = await select.GetPSUAsync();
     }
-    
-    private async Task Select(Motherboard selectedMotherboard)
+    private async Task Select(PSU selectedPSU)
     {
-        string component = "Motherboard";
-        string combinedValue = $"{selectedMotherboard.Brand} {selectedMotherboard.Model}";
+        string component = "[Power Supply]";
+        string combinedValue = $"{selectedPSU.Brand} {selectedPSU.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
     }
 }

@@ -1,10 +1,11 @@
 ﻿@using System.ComponentModel.DataAnnotations;
+@using SharedClass.Components.Pages.CustomPC;
 @inject SharedClass.Components.Data.Update update;
 @inject IJSRuntime JSRuntime;
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
-        <div class="modal-content" style="border-radius: 30px;">
+        <div class="modal-content" style="border-radius:30px;">
             <div class="modal-header">
                 <h2 class="modal-title heading">@ComponentName  </h2>
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
@@ -44,8 +45,7 @@
                 }
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btnpc m-1" @onclick="Cancel" aria-label="Close">Cancel</button>
-                <button type="button" class="btn btn-primary btnpc m-1" @onclick="CloseQuickView">Submit</button>
+                <button type="button" class="btn btn-secondary btnpc m-1 rz-ripple" @onclick="Cancel" aria-label="Close">Cancel</button>
             </div>
         </div>
     </div>
@@ -94,7 +94,7 @@
     }
     private async void Cancel()
     {
-        await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
         CloseQuickView();
+        await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime); 
     }
 }

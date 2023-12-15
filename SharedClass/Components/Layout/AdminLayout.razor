@@ -1,0 +1,97 @@
+﻿@using SharedClass.Components.Pages.AdminView
+@using SharedClass.Components.Data
+@inject ISnackbar Snackbar;
+@inject NavigationManager navigationManager;
+@inherits LayoutComponentBase;
+@inject CustomAuthenticationStateProvider AuthStateProvider;
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+
+<MudLayout>
+    <div style="display:flex;">
+        <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black;">
+            <MudIconButton Icon="@(open ? Icons.Material.Outlined.Close : Icons.Material.Outlined.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+        </MudAppBar>
+        <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 15px; border-bottom-right-radius:15px">
+            <MudNavMenu Class="mb-5">
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/dashboard"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.SpaceDashboard"
+                               Style="background-color:transparent;"
+                               Color="Color.Info">Dashboard</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/buying"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.ShoppingBag"
+                               Style="background-color:transparent;"
+                               Color="Color.Warning">Buying</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/selling"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Sell"
+                               Style="background-color:transparent;"
+                               Color="Color.Warning">Selling</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/inventory"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Inventory2"
+                               Style="background-color:transparent;"
+                               Color="Color.Warning">Inventory</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/returns"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.KeyboardReturn"
+                               Style="background-color:transparent;"
+                               Color="Color.Error">Returns</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/pos"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Store"
+                               Style="background-color:transparent;"
+                               Color="Color.Success">Point of Sale</MudButton>
+                </MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">
+                    <MudButton Href="/"
+                               Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Outlined.Logout"
+                               Style="background-color:transparent;"
+                               OnClick="Logout"
+                               Color="Color.Default">Sign Out</MudButton>
+                </MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+    </div>
+    <MudMainContent Class="p-4" Style="margin-top:50px;">
+            <MudThemeProvider />
+            <MudDialogProvider />
+            <MudSnackbarProvider />
+            @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool open = false;
+    bool preserveOpenState = false;
+    Breakpoint breakpoint = Breakpoint.Lg;
+
+    void ToggleDrawer()
+    {
+        open = !open;
+    }
+    private void Logout()
+    {
+        AuthStateProvider.Logout();
+        Snackbar.Clear();
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        Snackbar.Add("Logged Out", Severity.Error);
+    }
+}

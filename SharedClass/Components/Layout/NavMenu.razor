@@ -1,41 +1,13 @@
-﻿@using BlazorBootstrap
-@using Microsoft.AspNetCore.Components.Forms
+﻿@using Microsoft.AspNetCore.Components.Forms
 @using SharedClass.Components
 @using SharedClass.Components.Data
-@inject NavigationManager NavigationManager
-@inject Login login
-@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar;
+@inject NavigationManager NavigationManager;
+@inject ExampleJsInterop Example;
+@inject Login login;
+@inject IJSRuntime JSRuntime;
 
-@* <!-- Topbar Start -->
-<div class="container-fluid bg-light text-info ps-5 pe-0 d-none d-lg-block">
-    <div class="row gx-0">
-        <div class="col-md-6 text-center text-lg-start mb-2 mb-lg-0">
-            <div class="d-inline-flex align-items-center">
-                <small class="py-2">
-                    <i class="bi bi-clock text-dark me-2"></i>Opening Hours: Mon -
-                    Sat : 4.00 pm - 9.00 pm, Sunday Closed
-                </small>
-            </div>
-        </div>
-        <div class="col-md-6 text-center text-lg-end">
-            <div class="position-relative d-inline-flex align-items-center bg-success text-white top-shape px-5 rounded-pill">
-                <div class="me-3 pe-3 border-end py-2">
-                    <p class="m-0">
-                        <i class="bi bi-envelope-open me-2"></i>thedentalhealers@gmail.com
-                    </p>
-                </div>
-                <div class="me-3 pe-3 border-end py-2">
-                    <p class="m-0"><i class="bi bi-phone me-2"></i>0336 3809324</p>
-                </div>
-                <div class="py-2">
-                    <p class="m-0"><i class="bi bi-phone me-2"></i>0321 2679957</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Topbar End --> *@
-<nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 30px; border-bottom-left-radius: 30px;">
     <div class="container-fluid">
         <a class="navbar-brand m-0" id="Logo"><img src="_content/SharedClass/Images/techlogo.png" alt="Logo" style="width: 200px" /></a>
         <button class="navbar-toggler @NavButtonCssClass" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
@@ -44,47 +16,44 @@
         </button>
         <div class="collapse navbar-collapse @NavBarCssClass bg-transparent text-white" id="navbarCollapse content" @onclick="ToggleNavMenu">
             <ul class="navbar-nav ms-auto py-0">
-                <!-- Add ms-auto class here -->
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="/" style="color: #5535F0;" Match="NavLinkMatch.All">
-                        <Icon Name="IconName.House" /> Home
+                    <NavLink class="nav-item nav-link" href="/" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;" Match="NavLinkMatch.All">
+                        <span class="bi bi-house"></span> Home
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="buildpc" style="color: #5535F0;">
-                        <Icon Name="IconName.Tv" /> Build your PC
+                    <NavLink class="nav-item nav-link" href="buildpc" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;">
+                        <span class="bi bi-tv"></span> Build your PC
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="/purchaserequisition" style="color: #5535F0;">
-                        <Icon Name="IconName.ViewList" /> Products
+                    <NavLink class="nav-item nav-link" href="#" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;">
+                        <MudIcon Icon="@Icons.Material.Outlined.ShoppingBag" Style="font-size: 22px; padding-bottom: 5px" />Products
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="/purchaserequisition/create" style="color: #5535F0;">
-                        <Icon Name="IconName.Subtract" /> Bundles
+                    <NavLink class="nav-item nav-link" href="#" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;">
+                        <span class="bi bi-stack"></span> Bundles
                     </NavLink>
                 </li>
-                <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="/" style="color: #5535F0;">
-                        <Icon Name="IconName.ArrowReturnLeft" /> Returns
+                <li class="nav-item" style="padding-top: 7px;">
+                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" @onclick="login.OpenLoginPopup" style="color: #5535F0; font-size:16px; cursor: pointer;">
+                        <MudIcon Icon="@Icons.Material.Outlined.Dashboard" Style="font-size: 21px;padding-bottom: 4px;" />Portal
                     </NavLink>
                 </li>
-                <a class="text-decoration-none py-2 px-4 ms-4 shadow rounded-pill bg-gradient" @onclick:preventDefault @onclick="login.OpenLoginPopup"
-                   href="#"><b style="color: #5535F0;">Portal</b></a>
             </ul>
         </div>
         <!-- Popup -->
         @if (login.showLoginPopup)
         {
-            <div class="position-fixed top-0 start-50 translate-middle-x ">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content" style="border-radius: 30px;">
+            <div class="position-fixed top-50 start-50 translate-middle-x bg-white shadow-lg rounded-5 p-1 m-auto">
+                <div class="modal-dialog modal-dialog-centered p-1 m-auto">
+                    <div class="modal-content p-1 m-auto" style="border-radius:30px;">
                         <div class="modal-header">
                             <h5 class="modal-title heading">Login</h5>
                             <button type="button" class="btn-close" @onclick="login.CloseLoginPopup" style="font-size: 15px"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body p-1 m-auto">
                             <EditForm Model="@login">
                                 <div class="mb-3">
                                     <label for="usernameInput" class="form-label text-black">Username</label>
@@ -94,7 +63,7 @@
                                     <label for="passwordInput" class="form-label text-black">Password</label>
                                     <InputText id="passwordInput" type="password" class="form-control" @bind-Value="Password" />
                                 </div>
-                                <button type="submit" class="btn btnpc btn-primary m-1" @onclick="Pagelogin">Login</button>
+                                <button type="submit" class="btn btnpc btn-primary m-1 " @onclick="Pagelogin">Login</button>
                             </EditForm>
                         </div>
                     </div>
@@ -109,10 +78,27 @@
     private string Username = string.Empty;
     private string Password = string.Empty;
     private bool IsLoginSuccessful = false;
+    // Inject the CustomAuthenticationStateProvider
+    [Inject] private CustomAuthenticationStateProvider AuthStateProvider { get; set; }
 
-    private async Task Pagelogin()
+    private void Pagelogin()
     {
-        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, NavigationManager);
+        IsLoginSuccessful = login.Access(Username, Password, JSRuntime, NavigationManager);
+        if (IsLoginSuccessful)
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add("Login Successful", Severity.Success);
+
+            // Mark the user as authenticated
+            AuthStateProvider.MarkUserAsAuthenticated(Username);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add("Invalid Credentials", Severity.Error);
+        }
     }
 
     private bool collapseNavMenu = true;

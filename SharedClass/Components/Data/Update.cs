@@ -6,7 +6,11 @@ namespace SharedClass.Components.Data
 {
     public class Update : Insert
     {
-        public async Task UpdateCustomBuilt(string id, string comp, IJSRuntime JSRuntime)
+        string Iid;
+        public void Uupdate(string id) { 
+            Iid = id;
+        }
+        public async Task UpdateCustomBuilt(string comp, IJSRuntime JSRuntime)
         {
             try
             {
@@ -14,8 +18,8 @@ namespace SharedClass.Components.Data
                 {
                     con.Open();
                     // Record exists, update the Name and Contact
-                    string updateQuery = $"UPDATE Custom_Built SET {comp} = {null} WHERE Id = @Id";
-                    await con.ExecuteAsync(updateQuery, new { Id = id });
+                    string updateQuery = $"UPDATE Custom_Built SET [{comp}] = null WHERE Id = @Id";
+                    await con.ExecuteAsync(updateQuery, new { Id = Iid });
                 }
             }
             catch (SqlException ex)

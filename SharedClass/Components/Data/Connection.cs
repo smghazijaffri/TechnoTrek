@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
@@ -10,54 +11,47 @@ namespace SharedClass.Components.Data
 
         public Connection()
         {
-            string ipAddress = GetLocalIPv4Address();
-            int sqlServerPort = GetSqlServerPort();
-            connectionString = $"Data Source={ipAddress},{sqlServerPort};Initial Catalog=Example;Integrated Security = True; Encrypt=True;Trust Server Certificate=True";
+            //string ipAddress = GetIPv4Addresses();
+            connectionString = $"Data Source=192.168.100.97,1433;Initial Catalog=Example;User Id=Ghazi;Password=fC5y2qRU;Encrypt=False;";
+            //connectionString = $"Data Source={ipAddress},1433;Initial Catalog=Example;User Id=Ghazi;Password=fC5y2qRU;Encrypt=False;";
         }
         public SqlConnection GetSqlConnection()
         {
             return new SqlConnection(connectionString);
         }
-        private static string GetLocalIPv4Address()
-        {
-            string ipAddress = "";
-            foreach (var netInterface in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (netInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || netInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
-                {
-                    foreach (var addressInfo in netInterface.GetIPProperties().UnicastAddresses)
-                    {
-                        if (addressInfo.Address.AddressFamily == AddressFamily.InterNetwork)
-                        {
-                            ipAddress = addressInfo.Address.ToString();
-                            break;
-                        }
-                    }
-                }
-            }
-            return ipAddress;
-        }
-        private static int GetSqlServerPort()
-        {
-            // Replace "SQLEXPRESS" with your actual SQL Server instance name
-            string instanceName = "SQLEXPRESS";
+        //private static string GetIPv4Addresses()
+        //{
+        //    string ipAddress = "";
+        //    // Get all network interfaces on the machine
+        //    NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 
-            string registryPath = $@"SOFTWARE\Microsoft\Microsoft SQL Server\{instanceName}\MSSQLServer\SuperSocketNetLib\Tcp";
+        //    foreach (NetworkInterface networkInterface in networkInterfaces)
+        //    {
+        //        // Filter out loopback and non-operational interfaces
+        //        if (networkInterface.NetworkInterfaceType != NetworkInterfaceType.Loopback
+        //            && networkInterface.OperationalStatus == OperationalStatus.Up)
+        //        {
+        //            // Get the IP properties of the current interface
+        //            IPInterfaceProperties ipProperties = networkInterface.GetIPProperties();
 
-            using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(registryPath))
-            {
-                if (key != null)
-                {
-                    object value = key.GetValue("TcpPort");
-                    if (value != null && int.TryParse(value.ToString(), out int port))
-                    {
-                        return port;
-                    }
-                }
-            }
+        //            // Filter out IPv6 addresses and get the IPv4 addresses
+        //            IPAddress[] ipv4Addresses = ipProperties
+        //                .UnicastAddresses
+        //                .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork)
+        //                .Select(addr => addr.Address)
+        //                .ToArray();
 
-            // Default port if registry read fails
-            return 1433;
-        }
+        //            Console.WriteLine($"Interface: {networkInterface.Description}");
+        //            Console.WriteLine("IPv4 Addresses:");
+
+        //            foreach (IPAddress ipv4Address in ipv4Addresses)
+        //            {
+        //                ipAddress = ipv4Address.ToString();
+        //            }
+        //        }
+
+        //    }
+        //    return ipAddress;
+        //}
     }
 }
