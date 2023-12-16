@@ -31,7 +31,6 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
 });
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
