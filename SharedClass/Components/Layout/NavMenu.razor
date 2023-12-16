@@ -78,8 +78,6 @@
     private string Username = string.Empty;
     private string Password = string.Empty;
     private bool IsLoginSuccessful = false;
-    // Inject the CustomAuthenticationStateProvider
-    [Inject] private CustomAuthenticationStateProvider AuthStateProvider { get; set; }
 
     private void Pagelogin()
     {
@@ -89,9 +87,6 @@
             Snackbar.Clear();
             Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Login Successful", Severity.Success);
-
-            // Mark the user as authenticated
-            AuthStateProvider.MarkUserAsAuthenticated(Username);
         }
         else
         {

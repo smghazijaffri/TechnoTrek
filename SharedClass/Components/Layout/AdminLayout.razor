@@ -3,7 +3,6 @@
 @inject ISnackbar Snackbar;
 @inject NavigationManager navigationManager;
 @inherits LayoutComponentBase;
-@inject CustomAuthenticationStateProvider AuthStateProvider;
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -89,7 +88,6 @@
     }
     private void Logout()
     {
-        AuthStateProvider.Logout();
         Snackbar.Clear();
         Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Logged Out", Severity.Error);
