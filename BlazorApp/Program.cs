@@ -1,3 +1,4 @@
+using Auth0.AspNetCore.Authentication;
 using MudBlazor;
 using MudBlazor.Services;
 using SharedClass;
@@ -30,6 +31,13 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.ShowTransitionDuration = 500;
     config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
 });
+
+builder.Services.AddAuth0WebAppAuthentication(options =>
+{
+    options.Domain = builder.Configuration["dev-w4snfzrqgf123gdh.us.auth0.com"];
+    options.ClientId = builder.Configuration["prjfxACBcXw2RdYDr8a57JF4X0Ky8Egb"];
+});
+
 
 var app = builder.Build();
 

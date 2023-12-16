@@ -1,13 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Forms
-@using SharedClass.Components
-@using SharedClass.Components.Data
-@inject ISnackbar Snackbar;
-@inject NavigationManager NavigationManager;
-@inject ExampleJsInterop Example;
-@inject Login login;
-@inject IJSRuntime JSRuntime;
-
-<nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 30px; border-bottom-left-radius: 30px;">
+﻿<nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 30px; border-bottom-left-radius: 30px;">
     <div class="container-fluid">
         <a class="navbar-brand m-0" id="Logo"><img src="_content/SharedClass/Images/techlogo.png" alt="Logo" style="width: 200px" /></a>
         <button class="navbar-toggler @NavButtonCssClass" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
@@ -17,85 +8,36 @@
         <div class="collapse navbar-collapse @NavBarCssClass bg-transparent text-white" id="navbarCollapse content" @onclick="ToggleNavMenu">
             <ul class="navbar-nav ms-auto py-0">
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="/" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;" Match="NavLinkMatch.All">
+                    <NavLink class="nav-item nav-link" href="/" style="color: #5535F0; font-size:16px;" Match="NavLinkMatch.All">
                         <span class="bi bi-house"></span> Home
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="buildpc" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;">
+                    <NavLink class="nav-item nav-link" href="buildpc" style="color: #5535F0; font-size:16px;">
                         <span class="bi bi-tv"></span> Build your PC
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="#" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;">
+                    <NavLink class="nav-item nav-link" href="#" style="color: #5535F0; font-size:16px;">
                         <MudIcon Icon="@Icons.Material.Outlined.ShoppingBag" Style="font-size: 22px; padding-bottom: 5px" />Products
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="#" @onclick="login.CloseLoginPopup" style="color: #5535F0; font-size:16px;">
+                    <NavLink class="nav-item nav-link" href="#" style="color: #5535F0; font-size:16px;">
                         <span class="bi bi-stack"></span> Bundles
                     </NavLink>
                 </li>
                 <li class="nav-item" style="padding-top: 7px;">
-                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" @onclick="login.OpenLoginPopup" style="color: #5535F0; font-size:16px; cursor: pointer;">
+                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" href="adminlogin" style="color: #5535F0; font-size:16px; cursor: pointer;">
                         <MudIcon Icon="@Icons.Material.Outlined.Dashboard" Style="font-size: 21px;padding-bottom: 4px;" />Portal
                     </NavLink>
                 </li>
             </ul>
         </div>
-        <!-- Popup -->
-        @if (login.showLoginPopup)
-        {
-            <div class="position-fixed top-50 start-50 translate-middle-x bg-white shadow-lg rounded-5 p-1 m-auto">
-                <div class="modal-dialog modal-dialog-centered p-1 m-auto">
-                    <div class="modal-content p-1 m-auto" style="border-radius:30px;">
-                        <div class="modal-header">
-                            <h5 class="modal-title heading">Login</h5>
-                            <button type="button" class="btn-close" @onclick="login.CloseLoginPopup" style="font-size: 15px"></button>
-                        </div>
-                        <div class="modal-body p-1 m-auto">
-                            <EditForm Model="@login">
-                                <div class="mb-3">
-                                    <label for="usernameInput" class="form-label text-black">Username</label>
-                                    <InputText id="usernameInput" class="form-control" @bind-Value="Username" />
-                                </div>
-                                <div class="mb-3">
-                                    <label for="passwordInput" class="form-label text-black">Password</label>
-                                    <InputText id="passwordInput" type="password" class="form-control" @bind-Value="Password" />
-                                </div>
-                                <button type="submit" class="btn btnpc btn-primary m-1 " @onclick="Pagelogin">Login</button>
-                            </EditForm>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-        <!-- End Popup -->
     </div>
 </nav>
 
 @code {
-    private string Username = string.Empty;
-    private string Password = string.Empty;
-    private bool IsLoginSuccessful = false;
-
-    private void Pagelogin()
-    {
-        IsLoginSuccessful = login.Access(Username, Password, JSRuntime, NavigationManager);
-        if (IsLoginSuccessful)
-        {
-            Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
-            Snackbar.Add("Login Successful", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
-            Snackbar.Add("Invalid Credentials", Severity.Error);
-        }
-    }
-
     private bool collapseNavMenu = true;
     private string? NavBarCssClass => collapseNavMenu ? null : "show";
     private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
