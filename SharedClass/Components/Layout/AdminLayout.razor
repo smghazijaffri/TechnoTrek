@@ -1,7 +1,11 @@
 ﻿@using SharedClass.Components.Pages.AdminView
 @using SharedClass.Components.Data
+@inject Connection conn;
+@inject IJSRuntime JSRuntime;
+@inject Login login;
 @inject ISnackbar Snackbar;
 @inject NavigationManager navigationManager;
+@inject ILocalStorageService localStorage;
 @inherits LayoutComponentBase;
 
 <head>
@@ -10,11 +14,11 @@
 
 <MudLayout>
     <div style="display:flex;">
-        <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black;">
+        <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
             <MudIconButton Icon="@(open ? Icons.Material.Outlined.Close : Icons.Material.Outlined.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
             <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
         </MudAppBar>
-        <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 15px; border-bottom-right-radius:15px">
+        <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
             <MudNavMenu Class="mb-5">
                 <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">
                     <MudButton Variant="Variant.Text"
@@ -55,6 +59,7 @@
                 <MudNavLink Match="NavLinkMatch.All" OnClick="Logout">
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.Logout"
+                               OnClick="Logout"
                                Style="background-color:transparent;"
                                Color="Color.Default">Sign Out</MudButton>
                 </MudNavLink>
@@ -69,17 +74,28 @@
     </MudMainContent>
 </MudLayout>
 
+<script>
+    function ExpireCookie() {
+        let RemoveCookie = document.cookie = "Authorized=false";
+        return RemoveCookie;
+    }
+</script>
+
 @code {
     bool open = false;
     bool preserveOpenState = false;
     Breakpoint breakpoint = Breakpoint.Lg;
 
-    void ToggleDrawer()
+    private void ToggleDrawer()
     {
         open = !open;
     }
-    private void Logout()
+    private async void Logout()
     {
+        await localStorage.SetItemAsync("Authorized", false);
+        string User = await localStorage.GetItemAsync<string>("Username");
+        await JSRuntime.InvokeAsync<string>("ExpireCookie");
+        login.LogOut(User);
         Snackbar.Clear();
         Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Logged Out", Severity.Error);

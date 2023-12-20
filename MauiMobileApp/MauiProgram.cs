@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Blazored.LocalStorage;
+using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
 using SharedClass;
 using SharedClass.Components.Data;
-using Microsoft.AspNetCore.Components.Authorization;
 
 namespace MauiMobileApp
 {
@@ -40,6 +40,9 @@ namespace MauiMobileApp
                 config.SnackbarConfiguration.ShowTransitionDuration = 500;
                 config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
             });
+            builder.Services.AddBlazoredLocalStorage();   // local storage
+            builder.Services.AddBlazoredLocalStorage(config =>
+                config.JsonSerializerOptions.WriteIndented = true);  // local storage
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();

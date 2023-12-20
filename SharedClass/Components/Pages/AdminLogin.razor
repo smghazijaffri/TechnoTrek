@@ -6,6 +6,7 @@
 @inject NavigationManager NavigationManager;
 @inject ExampleJsInterop Example;
 @inject Login login;
+@inject ILocalStorageService localStorage;
 @inject IJSRuntime JSRuntime;
 
 <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:30px;max-inline-size: fit-content;">
@@ -27,19 +28,30 @@
     </div>
 </div>
 
+<script defer>
+    function CreateCookie() {
+        let CCookie = document.cookie = "Authorized=true";
+        return CCookie;
+    }
+</script>
+
 @code {
     private string Username = string.Empty;
     private string Password = string.Empty;
     private bool IsLoginSuccessful = false;
 
-    private void Pagelogin()
+    private async void Pagelogin()
     {
-        IsLoginSuccessful = login.Access(Username, Password, JSRuntime, NavigationManager);
+        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, NavigationManager);
         if (IsLoginSuccessful)
         {
+            await localStorage.SetItemAsync("Authorized", true);
+            await localStorage.SetItemAsync("Username", Username);
+            await JSRuntime.InvokeAsync<string>("CreateCookie");
+            NavigationManager.NavigateTo("/dashboard");
             Snackbar.Clear();
             Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
-            Snackbar.Add("Login Successful", Severity.Success);
+            Snackbar.Add("Welcome " + Username, Severity.Success);
         }
         else
         {

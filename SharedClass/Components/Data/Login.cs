@@ -6,19 +6,11 @@ namespace SharedClass.Components.Data
 {
     public class Login : Connection
     {
-        public bool showLoginPopup = false;
         private SqlCommand? cmd;
         private SqlDataReader? dr;
-        public void OpenLoginPopup()
-        {
-            showLoginPopup = true;
-        }
-
-        public void CloseLoginPopup()
-        {
-            showLoginPopup = false;
-        }
-        public bool Access(string Username, string Password, IJSRuntime JSRuntime, NavigationManager navigationManager)
+        protected bool Authorized { get; set; }
+        //public required string AuthUser { get; set; }
+        public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime, NavigationManager navigationManager)
         {
             try
             {
@@ -34,8 +26,11 @@ namespace SharedClass.Components.Data
                         {
                             if (dr.Read())
                             {
-                                CloseLoginPopup();
-                                navigationManager.NavigateTo("/dashboard");
+                                // Read the "Authorized" column value
+                                Authorized = dr.GetBoolean(dr.GetOrdinal("Authorized"));
+                                //AuthUser = Username;
+
+                                UpdateAuthorizationStatus(con, Username, true);
                                 return true;
                             }
                             else
@@ -49,13 +44,30 @@ namespace SharedClass.Components.Data
                 {
                     return false;
                 }
-
             }
             catch (SqlException ex)
             {
-                JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message.ToString());
+                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message.ToString());
                 return false;
             }
+        }
+
+        private void UpdateAuthorizationStatus(SqlConnection con, string username, bool isAuthorized)
+        {
+            con.Close();
+            con.Open();
+            using (SqlCommand updateCmd = new("UPDATE [Users] SET Authorized = @Authorized WHERE Username = @Username", con))
+            {
+                updateCmd.Parameters.AddWithValue("@Authorized", isAuthorized);
+                updateCmd.Parameters.AddWithValue("@Username", username);
+                updateCmd.ExecuteNonQuery();
+            }
+            con.Close();
+        }
+        public void LogOut(string AuthUser)
+        {
+            using SqlConnection conn = GetSqlConnection();
+            UpdateAuthorizationStatus(conn, AuthUser, false);
         }
     }
 }

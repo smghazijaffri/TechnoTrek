@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using MudBlazor;
 using MudBlazor.Services;
 using SharedClass;
@@ -30,7 +31,9 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.ShowTransitionDuration = 500;
     config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
 });
-
+builder.Services.AddBlazoredLocalStorage();   // local storage
+builder.Services.AddBlazoredLocalStorage(config =>
+    config.JsonSerializerOptions.WriteIndented = true);  // local storage
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

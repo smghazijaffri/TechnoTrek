@@ -1,34 +1,40 @@
 ﻿@page "/purchaserequisition/create"
 @using System.Reflection;
-@inject SharedClass.Components.Data.Insert insert;
-@inject IJSRuntime JSRuntime;
+@using SharedClass.Components.Data
 @using SharedClass.Components.Layout
-@using Microsoft.AspNetCore.Authorization
+@using System.Globalization
+@inject Insert insert;
+@inject IJSRuntime JSRuntime;
+@inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar;
+@inject NavigationManager NavigationManager;
+@inject ILocalStorageService localStorage;
 @layout AdminLayout;
-@attribute [Authorize]
 
-<div class="row p-3 align-items-center">
-    <div class="col-6">
-        <h3>
-            Create Purchase Requisition
-            <span class="@(IsApproved ? "indicator-pill whitespace-nowrap green" : (IsDraft ? "indicator-pill whitespace-nowrap red" : "indicator-pill whitespace-nowrap orange"))">
-                <span>@(IsApproved ? "Submitted" : (IsDraft ? "Draft" : "Not Saved"))</span>
-            </span>
-        </h3>
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                Create Purchase Requisition
+                <span class="@(IsApproved ? "indicator-pill whitespace-nowrap green" : (IsDraft ? "indicator-pill whitespace-nowrap red" : "indicator-pill whitespace-nowrap orange"))">
+                    <span>@(IsApproved ? "Submitted" : (IsDraft ? "Draft" : "Not Saved"))</span>
+                </span>
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!IsApproved)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
+                    @GetSubmitButtonText()
+                </button>
+            }
+        </div>
     </div>
-    <div class="col-6 d-flex justify-content-end">
-        @if (!IsApproved)
-        {
-            <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
-                @GetSubmitButtonText()
-            </button>
-        }
-    </div>
-</div>
 
 
-<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-    @* <!-- Purchase Requisition Form -->
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        @* <!-- Purchase Requisition Form -->
     <form class="row g-3">
         <div class="col-md-6">
             <label class="form-label">Purchase Requisition Number</label>
@@ -43,83 +49,83 @@
             <input type="text" class="form-control" @bind="Vendor">
         </div>
     </form> *@
-    <!-- Purchase Requisition Form -->
-    <form class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label">Purchase Requisition Number</label>
-            <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly="@IsApproved">
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">Creation Date</label>
-            <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="CreationDate" readonly="@IsApproved">
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">Vendor</label>
-            <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
-        </div>
-    </form>
-</div>
-
-<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-    <h5>Items</h5>
-    <form class="row g-3">
-        <table class="table table-bordered border-primary">
-            <thead>
-                <tr>
-                    <th class="col col-auto" style="width: 50px;">
-                        No.
-                    </th>
-                    <th class="col col-auto">
-                        Item
-                    </th>
-                    <th class="col col-auto" style="width: 70px;">
-                        Quantity
-                    </th>
-                    <th class="col col-auto text-center" style="width: 150px;">
-                        UOM
-                    </th>
-                    <th class="col col-auto" style="width: 150px;">
-                        Required By
-                    </th>
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <!-- Rows will be added here dynamically -->
-                @for (int index = 0; index < Items.Count; index++)
-                {
-                    var item = Items[index];
-                    <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
-                                <input type="checkbox" class="me-1" @bind="item.Selected" readonly="@IsApproved"/>
-                                @(index + 1)
-                                <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" readonly="@IsApproved">Delete</button>
-                            </div>
-                        </td>
-                        <td><input type="text" class="form-control" @bind="item.Name" readonly="@IsApproved" /></td>
-                        <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
-                        <td>
-                            <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
-                            <datalist id="uomOptions">
-                                <option value="Piece"></option>
-                                <option value="Each"></option>
-                                <option value="Box"></option>
-                                <!-- Add more UOM options as needed -->
-                            </datalist>
-                        </td>
-                        <td>
-                            <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </form>
-    <div class="col-12">
-        <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" disabled="@IsApproved">Add Row</button>
+        <!-- Purchase Requisition Form -->
+        <form class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Purchase Requisition Number</label>
+                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Creation Date</label>
+                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="CreationDate" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor</label>
+                <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
+            </div>
+        </form>
     </div>
-</div>
 
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3">
+            <table class="table table-bordered border-primary">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            UOM
+                        </th>
+                        <th class="col col-auto" style="width: 150px;">
+                            Required By
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Rows will be added here dynamically -->
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" readonly="@IsApproved"/>
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" readonly="@IsApproved">Delete</button>
+                                </div>
+                            </td>
+                            <td><input type="text" class="form-control" @bind="item.Name" readonly="@IsApproved" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
+                            <td>
+                                <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
+                                <datalist id="uomOptions">
+                                    <option value="Piece"></option>
+                                    <option value="Each"></option>
+                                    <option value="Box"></option>
+                                    <!-- Add more UOM options as needed -->
+                                </datalist>
+                            </td>
+                            <td>
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" disabled="@IsApproved">Add Row</button>
+        </div>
+    </div>
+}
 <script defer>
     @* JavaScript method to store values in an array and log to console *@
     function storeAndCallCSharpMethod() {
@@ -158,6 +164,28 @@
 </script>
 
 @code {
+    bool isLoading = false;
+    public bool isAuthorized { get; set; }
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            StateHasChanged();
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+        base.OnInitialized();
+    }
+
     private int PurchaseRequisitionNumber { get; set; }
     private DateTime CreationDate { get; set; } = DateTime.Now;
     private string Vendor { get; set; }
