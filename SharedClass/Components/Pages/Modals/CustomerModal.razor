@@ -1,7 +1,8 @@
 ﻿@using static SharedClass.Components.Pages.Modals.CustomModal
+@using SharedClass.Components.Data;
 @inject NavigationManager navigationManager;
 @inject IJSRuntime JSRuntime;
-@inject SharedClass.Components.Data.Update update;
+@inject Update update;
 <!-- InputModal.razor -->
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
@@ -22,19 +23,18 @@
                                     <button type="button" class="btn-close" @onclick="CloseInputModal" aria-label="Close" style="font-size: 15px"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <!-- Input form for Name, Contact, and Date -->
-                                    <div class="form-group">
+                                    @* <div class="form-group">
                                         <label for="name">Customer ID</label>
                                         <input type="text" class="form-control" id="id" @bind="model.Id" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="name">Name</label>
-                                        <InputText class="form-control" id="name" @bind-Value="model.Name" />
+                                    </div> *@
+                                    <div class="form-group pb-4">
+                                        @* <label for="name">Name</label> *@
+                                        <InputText class="form-control" placeholder="Name" id="name" @bind-Value="model.Name" />
                                         <ValidationMessage For="@(() => model.Name)" />
                                     </div>
                                     <div class="form-group">
-                                        <label for="contact">Contact</label>
-                                        <InputText class="form-control" id="contact" @bind-Value="model.Contact" />
+                                        @* <label for="contact">Contact</label> *@
+                                        <InputText class="form-control" placeholder="Contact" id="contact" @bind-Value="model.Contact" />
                                         <ValidationMessage For="@(() => model.Contact)" />
                                     </div>
                                 </div>
@@ -55,7 +55,7 @@
     function validateForm() {
         var name = document.getElementById('name').value;
         var contact = document.getElementById('contact').value;
-        var id = document.getElementById('id').value;
+        // var id = document.getElementById('id').value;
 
         if (name.trim() === '' || contact.trim() === '' && id.trim() == '') {
             alert('Name and Contact cannot be empty');

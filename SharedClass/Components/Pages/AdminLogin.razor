@@ -16,12 +16,12 @@
     <div class="modal-body p-1 m-auto">
         <EditForm Model="@login">
             <div class="mb-3">
-                <label for="usernameInput" class="form-label text-black">Username</label>
-                <InputText id="usernameInput" class="form-control" @bind-Value="Username" />
+                @* <label for="usernameInput" class="form-label text-black">Username</label> *@
+                <InputText id="usernameInput" placeholder="Username" class="form-control" @bind-Value="Username" />
             </div>
             <div class="mb-3">
-                <label for="passwordInput" class="form-label text-black">Password</label>
-                <InputText id="passwordInput" type="password" class="form-control" @bind-Value="Password" />
+                @* <label for="passwordInput" class="form-label text-black">Password</label> *@
+                <InputText id="passwordInput" placeholder="Password" type="password" class="form-control" @bind-Value="Password" />
             </div>
             <button type="submit" class="btn btnpc btn-primary m-1" @onclick="Pagelogin">Login</button>
         </EditForm>
