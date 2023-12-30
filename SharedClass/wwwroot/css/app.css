@@ -315,3 +315,23 @@ h1:focus {
 #sidebar-nav {
     width: 160px;
 }
+
+
+/*MAUI Best Practice*/
+*:not(input) {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+* {
+    -webkit-user-drag: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-right: env(safe-area-inset-right);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+    }
+}
