@@ -2,6 +2,8 @@
 @using SharedClass.Components.Pages.CustomPC;
 @inject SharedClass.Components.Data.Update update;
 @inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar;
+
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
@@ -95,6 +97,9 @@
     private async void Cancel()
     {
         CloseQuickView();
-        await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime); 
+        await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
+        Snackbar.Clear();
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        Snackbar.Add("Cancelled", Severity.Error);
     }
 }

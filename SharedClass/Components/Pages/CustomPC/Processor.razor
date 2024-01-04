@@ -1,6 +1,8 @@
 ﻿@inject SharedClass.Components.Data.Select select;
 @inject SharedClass.Components.Data.Insert insert;
 @inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar;
+
 
 <section>
     <div class="container py-5">
@@ -60,5 +62,8 @@
         string component = "Processor";
         string combinedValue = $"{selectedProcessor.Brand} {selectedProcessor.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
+        Snackbar.Clear();
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        Snackbar.Add("Selection Saved", Severity.Success);
     }
 }
