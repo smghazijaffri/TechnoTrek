@@ -8,7 +8,7 @@
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ILocalStorageService localStorage;
+@inject ISessionStorageService sessionStorage;
 @layout AdminLayout;
 
 @if (isLoading)
@@ -17,9 +17,18 @@
         <div class="col-6">
             <h3>
                 Create Purchase Requisition
-                <span class="@(IsApproved ? "indicator-pill whitespace-nowrap green" : (IsDraft ? "indicator-pill whitespace-nowrap red" : "indicator-pill whitespace-nowrap orange"))">
-                    <span>@(IsApproved ? "Submitted" : (IsDraft ? "Draft" : "Not Saved"))</span>
-                </span>
+                @if(status == "Save" && !IsDraft)
+                {
+                    <MudChip Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsDraft)
+                {
+                    <MudChip Color="Color.Error">Draft</MudChip>
+                }
+                @if (IsApproved)
+                {
+                    <MudChip Color="Color.Success">Submitted</MudChip>
+                }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
@@ -127,7 +136,6 @@
     </div>
 }
 <script defer>
-    @* JavaScript method to store values in an array and log to console *@
     function storeAndCallCSharpMethod() {
         var dataArray = [];
 
@@ -156,8 +164,6 @@
             @* Add the object to the array *@
             dataArray.push(rowData);
         }
-        @* Log the array to the console *@
-        @* console.log(dataArray); *@
 
         return dataArray;
     }
@@ -168,7 +174,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -190,6 +196,7 @@
     private DateTime CreationDate { get; set; } = DateTime.Now;
     private string Vendor { get; set; }
     private bool IsApproved { get; set; } = false;
+    private string status;
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
     private List<Item> Items { get; set; } = new List<Item>();
@@ -215,14 +222,17 @@
     {
         if (IsApproved)
         {
+            status = "Submitted";
             return "Submitted";
         }
         else if (IsDraft)
         {
+            status = "Submit";
             return "Submit";
         }
         else
         {
+            status = "Save";
             return "Save";
         }
     }
@@ -247,7 +257,6 @@
     {
         IsDraft = true;
         IsSaving = true;
-
         IsSaving = false;
     }
 

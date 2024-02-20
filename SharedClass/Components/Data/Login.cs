@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
 
 namespace SharedClass.Components.Data
@@ -10,7 +9,7 @@ namespace SharedClass.Components.Data
         private SqlDataReader? dr;
         protected bool Authorized { get; set; }
         //public required string AuthUser { get; set; }
-        public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime, NavigationManager navigationManager)
+        public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime)
         {
             try
             {

@@ -1,9 +1,11 @@
 ﻿using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
 using SharedClass;
 using SharedClass.Components.Data;
+using System.Text.Json;
 
 namespace MauiMobileApp
 {
@@ -26,6 +28,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
+            builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddMudServices();
             builder.Services.AddMudServices(config =>
@@ -40,6 +43,17 @@ namespace MauiMobileApp
                 config.SnackbarConfiguration.ShowTransitionDuration = 500;
                 config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
             });
+            builder.Services.AddBlazoredSessionStorage();
+            builder.Services.AddBlazoredSessionStorage(config => {
+                config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+                config.JsonSerializerOptions.IgnoreNullValues = true;
+                config.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
+                config.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                config.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                config.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
+                config.JsonSerializerOptions.WriteIndented = false;
+                }
+            );
             builder.Services.AddBlazoredLocalStorage();   // local storage
             builder.Services.AddBlazoredLocalStorage(config =>
                 config.JsonSerializerOptions.WriteIndented = true);  // local storage
