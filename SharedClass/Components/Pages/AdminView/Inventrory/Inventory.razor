@@ -5,7 +5,7 @@
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ILocalStorageService localStorage;
+@inject ISessionStorageService sessionStorage
 @layout AdminLayout;
 
 @if (isLoading)
@@ -28,7 +28,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {

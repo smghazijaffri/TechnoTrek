@@ -6,7 +6,7 @@
 @inject NavigationManager NavigationManager;
 @inject ExampleJsInterop Example;
 @inject Login login;
-@inject ILocalStorageService localStorage;
+@inject ISessionStorageService sessionStorage
 @inject IJSRuntime JSRuntime;
 
 <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:30px;max-inline-size: fit-content;">
@@ -42,11 +42,11 @@
 
     private async void Pagelogin()
     {
-        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, NavigationManager);
+        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime);
         if (IsLoginSuccessful)
         {
-            await localStorage.SetItemAsync("Authorized", true);
-            await localStorage.SetItemAsync("Username", Username);
+            await sessionStorage.SetItemAsync("Authorized", true);
+            await sessionStorage.SetItemAsync("Username", Username);
             await JSRuntime.InvokeAsync<string>("CreateCookie");
             NavigationManager.NavigateTo("/dashboard");
             Snackbar.Clear();
