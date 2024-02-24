@@ -72,7 +72,7 @@ namespace SharedClass.Components.Data
         {
             con.Close();
             con.Open();
-            return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PR1");
+            return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest");
         }
     }
 }

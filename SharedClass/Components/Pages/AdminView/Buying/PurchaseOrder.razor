@@ -1,0 +1,43 @@
+﻿@page "/purchaseorder"
+@using SharedClass.Components.Layout
+@using System.Globalization
+@using SharedClass.Components.Data
+@using System.Net.Http.Json
+@using static MudBlazor.CategoryTypes
+@inject Select select;
+@inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar;
+@inject NavigationManager NavigationManager;
+@inject ISessionStorageService sessionStorage;
+@layout AdminLayout;
+
+@if (isLoading)
+{
+    
+}
+
+@code {
+    //authorization
+    bool isLoading = false;
+    public bool isAuthorized { get; set; }
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            StateHasChanged();
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+        base.OnInitialized();
+    }
+        //authorization
+}

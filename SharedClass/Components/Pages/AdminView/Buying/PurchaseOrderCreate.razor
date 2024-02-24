@@ -1,4 +1,4 @@
-﻿@page "/purchaserequisition/create"
+﻿@page "/purchaseorder/create"
 @using System.Reflection;
 @using Blazored.SessionStorage
 @using SharedClass.Components.Data
@@ -12,7 +12,7 @@
 @inject NavigationManager NavigationManager;
 @inject ISessionStorageService sessionStorage;
 @inject CRUD crud;
-@inject Purchase purchase;
+@inject PurchaseOrders purchaseorders;
 @layout AdminLayout;
 
 @if (isLoading)
@@ -21,7 +21,7 @@
         <div class="col-6">
             <h3>
                 Create Purchase Requisition
-                @if(status == "Save" && !IsDraft)
+                @if (status == "Save" && !IsDraft)
                 {
                     <MudChip Color="Color.Warning">Not Saved</MudChip>
                 }
@@ -49,7 +49,7 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly="@IsApproved">
+                <input type="text" class="form-control" @bind="PurchaseOrderNumber" readonly="@IsApproved">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
@@ -58,6 +58,27 @@
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
                 <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Supplier Address</label>
+                <input type="text" class="form-control" @bind="supplierAddress" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Supplier Contact</label>
+                <input type="text" @bind="supplierContact" class="form-control" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Company Shipping Address</label>
+                <input type="text" class="form-control" @bind="companyShippingAddress" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Company Billing Address</label>
+                <input type="text" class="form-control" @bind="companyBillingAddress" readonly="@IsApproved">
             </div>
         </form>
     </div>
@@ -80,6 +101,12 @@
                         <th class="col col-auto text-center" style="width: 150px;">
                             UOM
                         </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
                         <th class="col col-auto" style="width: 150px;">
                             Required By
                         </th>
@@ -90,10 +117,11 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
+                        Amount = (item.Rate * item.Quantity);
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved"/>
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
                                     @(index + 1)
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
@@ -108,6 +136,8 @@
                                     <option value="Box"></option>
                                 </datalist>
                             </td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly="@IsApproved" /></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="Amount" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
                             </td>
@@ -119,6 +149,19 @@
         <div class="col-12">
             <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
         </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" class="form-control" @bind="totalQuantity" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" class="form-control" @bind="totalPrice" readonly="@IsApproved">
+            </div>
+        </form>
     </div>
 }
 
@@ -133,7 +176,7 @@
         {
             isLoading = true;
             StateHasChanged();
-            PurchaseRequisitionNumber = 1;
+            PurchaseOrderNumber = 1;
         }
         else
         {
@@ -152,36 +195,48 @@
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
     private bool IsApproved { get; set; } = false;
-    private int PurchaseRequisitionNumber { get; set; }
-    private List<Purchase> Items  = new List<Purchase>();
+    private int PurchaseOrderNumber { get; set; }
+    private string supplierAddress { get; set; }
+    private string supplierContact { get; set; }
+    private string companyShippingAddress { get; set; }
+    private string companyBillingAddress { get; set; }
+    private int totalQuantity { get; set; }
+    private int totalPrice { get; set; }
+    private int rate { get; set; }
+    private int Amount { get; set; }
+    private List<PurchaseOrders> Items = new List<PurchaseOrders>();
     private DateTime CreationDate { get; set; } = DateTime.Now;
 
     public void createPurchase()
     {
-        if (PurchaseRequisitionNumber != 0 && !string.IsNullOrEmpty(Vendor))
+        if (PurchaseOrderNumber != 0 && !string.IsNullOrEmpty(Vendor))
         {
             foreach (var data in Items)
             {
 
                 foreach (int del in IsDelete)
                 {
-                    if (data.RowID ==  del)
+                    if (data.RowID == del)
                     {
                         IsDelete.Remove(del);
-                    }   
+                    }
                 }
-                data.PRNumber = PurchaseRequisitionNumber;
+                data.PONumber = PurchaseOrderNumber;
                 data.Vendor = Vendor;
 
-                crud.CRD(data, "CreatePurchaseRequest");
+                Snackbar.Clear();
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+                Snackbar.Add(data.ToString(), Severity.Info);
+
+                // crud.CRD(data, "CreatePurchaseRequest");
             }
-            foreach (var del in IsDelete)
-            {
-                purchase.PRNumber = PurchaseRequisitionNumber;
-                purchase.RowID = del;
-                purchase.RequiredBy = DateTime.Now;
-                crud.CRD(purchase, "CreatePurchaseRequest",System.Data.CommandType.StoredProcedure,true);
-            }
+            // foreach (var del in IsDelete)
+            // {
+            //     purchaseorders.PONumber = PurchaseOrderNumber;
+            //     purchaseorders.RowID = del;
+            //     purchaseorders.RequiredBy = DateTime.Now;
+            //     crud.CRD(purchaseorders, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
+            // }
         }
     }
 
@@ -229,7 +284,7 @@
 
     private void AddRow()
     {
-        Items.Add(new Purchase
+        Items.Add(new PurchaseOrders
             {
                 RequiredBy = DateTime.Now,
                 Quantity = 1
@@ -251,13 +306,23 @@
 
     private void HandleFormInput()
     {
+        totalQuantity = Items.Sum(item => item.Quantity);
+        totalPrice = Items.Sum(item => item.Rate * item.Quantity);
+        StateHasChanged();
+
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        Snackbar.Add(totalQuantity.ToString(), Severity.Info);
+        Snackbar.Add(totalPrice.ToString(), Severity.Info);
+
         if (IsDraft)
         {
             // Update MudChip and Save button text when any field is edited
             status = "Not Saved";
             IsDraft = false;
+
+
             GetSubmitButtonText();
-            StateHasChanged();
         }
+        StateHasChanged();
     }
 }

@@ -30,6 +30,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<CRUD>();
+            builder.Services.AddScoped<PurchaseOrders>();
             builder.Services.AddScoped<Purchase>();
             builder.Services.AddScoped<BaseRecord>();
             builder.Services.AddScoped<PurchaseRequisition>();
