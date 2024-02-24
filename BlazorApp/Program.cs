@@ -5,6 +5,7 @@ using MudBlazor.Services;
 using SharedClass;
 using SharedClass.Components;
 using SharedClass.Components.Data;
+using SharedClass.Components.Model;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,9 +16,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<Login>();
 builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<Insert>();
+builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Delete>();
 builder.Services.AddScoped<Update>();
+builder.Services.AddScoped<Purchase>();
+builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<ExampleJsInterop>();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });

@@ -9,10 +9,10 @@ namespace SharedClass.Components.Data
     {
         private readonly string connectionString;
 
-        public Connection()
+            public Connection()
         {
             //string ipAddress = GetIPv4Addresses();
-            connectionString = $"Data Source=192.168.2.107,1433;Initial Catalog=Example;User Id=Admin;Password=12345678;Encrypt=False;";
+            connectionString = $"Data Source=192.168.1.104,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;";
             //connectionString = $"Data Source={ipAddress},1433;Initial Catalog=Example;User Id=Ghazi;Password=fC5y2qRU;Encrypt=False;";
         }
         public SqlConnection GetSqlConnection()

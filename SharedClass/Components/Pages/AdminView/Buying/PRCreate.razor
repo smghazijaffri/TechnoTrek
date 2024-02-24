@@ -1,14 +1,18 @@
 ﻿@page "/purchaserequisition/create"
 @using System.Reflection;
+@using Blazored.SessionStorage
 @using SharedClass.Components.Data
 @using SharedClass.Components.Layout
 @using System.Globalization
+@using SharedClass.Components.Model
 @inject Insert insert;
 @inject IJSRuntime JSRuntime;
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject ISessionStorageService sessionStorage;
+@inject CRUD crud;
+@inject Purchase purchase;
 @layout AdminLayout;
 
 @if (isLoading)
@@ -60,13 +64,14 @@
     </form> *@
         <!-- Purchase Requisition Form -->
         <form class="row g-3">
+            
             <div class="col-md-6">
                 <label class="form-label">Purchase Requisition Number</label>
                 <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly="@IsApproved">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
-                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="CreationDate" readonly="@IsApproved">
+                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" @bind="CreationDate" class="form-control" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -111,7 +116,7 @@
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" readonly="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" @bind="item.Name" readonly="@IsApproved" /></td>
+                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -174,6 +179,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
+
         var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
@@ -199,21 +205,41 @@
     private string status;
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
-    private List<Item> Items { get; set; } = new List<Item>();
-    List<Item> dataArray = new List<Item>();
+    private List<Purchase> Items  = new List<Purchase>();
 
-    async Task StoreAndCallCSharpMethod()
+    List<Item> dataArray = new List<Item>();
+    List<string> IsDelete = new List<string>();
+
+
+    public void StoreAndCallCSharpMethod()
     {
-        var dataArray = await JSRuntime.InvokeAsync<List<Item>>("storeAndCallCSharpMethod");
+        // var dataArray = await JSRuntime.InvokeAsync<List<Item>>("storeAndCallCSharpMethod");
 
         if (PurchaseRequisitionNumber != 0 && !string.IsNullOrEmpty(Vendor))
         {
-            foreach (var data in dataArray)
+            foreach (var data in Items)
             {
-                if (!string.IsNullOrEmpty(data.Name) && !string.IsNullOrEmpty(data.Quantity) && !string.IsNullOrEmpty(data.UOM))
+                // if (!string.IsNullOrEmpty(data.Name) && !string.IsNullOrEmpty(data.Quantity) && !string.IsNullOrEmpty(data.UOM))
+                // {
+                foreach (string del in IsDelete)
                 {
-                    await insert.PRInsert(PurchaseRequisitionNumber, Vendor, data.Name, data.Quantity, data.UOM, CreationDate, data.RequiredBy, JSRuntime);
+                    if (data.Item ==  del)
+                    {
+                        IsDelete.Remove(del);
+                    }   
                 }
+                data.PRNumber = PurchaseRequisitionNumber;
+                data.Vendor = Vendor;
+
+                crud.CRD(data, "CreatePurchaseRequest");
+                // }
+            }
+            foreach (var del in IsDelete)
+            {
+                purchase.PRNumber = PurchaseRequisitionNumber;
+                purchase.Item = del;
+                purchase.RequiredBy = DateTime.Now;
+                crud.CRD(purchase, "CreatePurchaseRequest",System.Data.CommandType.StoredProcedure,true);
             }
         }
     }
@@ -237,19 +263,21 @@
         }
     }
 
-    private async void ToggleApproval()
+    private void ToggleApproval()
     {
-        if (IsDraft)
-        {
-            IsDraft = false;
-            IsApproved = true;
-            IsSaving = false;
-            await StoreAndCallCSharpMethod();
-        }
-        else if (!IsSaving)
-        {
-            IsDraft = true;
-        }
+        StoreAndCallCSharpMethod();
+    //     if (IsDraft)
+    //     {
+    //         IsDraft = false;
+    //         IsApproved = true;
+    //         IsSaving = false;
+    //         StoreAndCallCSharpMethod();
+    //     }
+    //     else if (!IsSaving)
+    //     {
+    //         IsDraft = true;
+    //         StoreAndCallCSharpMethod();
+    //     }
     }
 
     // You can update the IsDraft and IsSaving flags accordingly.
@@ -262,7 +290,7 @@
 
     private void AddRow()
     {
-        Items.Add(new Item
+        Items.Add(new Purchase
             {
                 RequiredBy = DateTime.Now, // Set the default date to the current date
             });
@@ -270,10 +298,12 @@
 
     private void DeleteRow(int index)
     {
+
         for (int i = Items.Count - 1; i >= 0; i--)
         {
             if (Items[i].Selected)
             {
+                IsDelete.Add(Items[i].Item);
                 Items.RemoveAt(i);
             }
         }

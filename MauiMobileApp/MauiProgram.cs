@@ -5,6 +5,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using SharedClass;
 using SharedClass.Components.Data;
+using SharedClass.Components.Model;
 using System.Text.Json;
 
 namespace MauiMobileApp
@@ -28,6 +29,9 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
+            builder.Services.AddScoped<CRUD>();
+            builder.Services.AddScoped<Purchase>();
+            builder.Services.AddScoped<BaseRecord>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddMudServices();
