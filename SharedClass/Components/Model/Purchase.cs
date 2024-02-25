@@ -16,5 +16,6 @@ namespace SharedClass.Components.Model
         public string UOM { get; set; }
         public DateTime RequiredBy { get; set; }
         public int RowID { get; set; }
+        public string Status { get; set; }
     }
 }

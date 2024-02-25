@@ -149,6 +149,11 @@
                 PurchaseRequisitionNumber = Items[0].PRNumber;
                 Vendor = Items[0].Vendor;
                 CreationDate = Items[0].CreationDate;
+                if (Items[0].Status == "Approved")
+                {
+                    IsApproved = true;
+                    DisplayPR = false;
+                }
             }
             // else
             // {
@@ -181,70 +186,118 @@
     List<int> IsDelete = new List<int>();
 
 
-    public void createPurchase()
+    public string createPurchase()
     {
 
-
-        if (!string.IsNullOrEmpty(Vendor))
+        try
         {
-            var CountPR = select.PurhcaseRequest(PurchaseRequisitionNumber);
-            if (CountPR.Count == 0)
+            if (!string.IsNullOrEmpty(Vendor))
             {
-                PurchaseRequisitionNumber = "PR";
-                var CountNo = "";
-                int data = select.CountPRnumber();
-                if (data != 0)
+                var CountPR = select.PurhcaseRequest(PurchaseRequisitionNumber);
+                if (CountPR.Count == 0)
                 {
-                    data += 1;
-                    var itr = data.ToString();
-                    var itNum = itr.Length;
-                    if (itNum == 1)
+                    PurchaseRequisitionNumber = "PR";
+                    var CountNo = "";
+                    int data = select.CountPRnumber();
+                    if (data != 0)
                     {
-                        CountNo += "00" + itr;
-                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
-                    }
-                    else if (itNum == 2)
-                    {
-                        CountNo += "0" + itr;
-                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                        data += 1;
+                        var itr = data.ToString();
+                        var itNum = itr.Length;
+                        if (itNum == 1)
+                        {
+                            CountNo += "00" + itr;
+                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                        }
+                        else if (itNum == 2)
+                        {
+                            CountNo += "0" + itr;
+                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                        }
+                        else
+                        {
+                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + itr;
+                        }
+
                     }
                     else
                     {
-                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + itr;
+                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + "001";
                     }
+                }
+                foreach (var PR in Items)
+                {
+                    foreach (int del in IsDelete)
+                    {
+                        if (PR.RowID == del)
+                        {
+                            IsDelete.Remove(del);
+                        }
+                    }
+                    PR.PRNumber = PurchaseRequisitionNumber;
+                    PR.Vendor = Vendor;
+                    if (IsDraft)
+                    {
+                        PR.Status = "Draft";
+                    }
+                    if (IsApproved)
+                    {
+                        PR.Status = "Approved";
+                    }
+                    DisplayPR = false;
+                    crud.CRD(PR, "CreatePurchaseRequest");
 
+                }
+                foreach (var del in IsDelete)
+                {
+                    purchase.PRNumber = PurchaseRequisitionNumber;
+                    purchase.RowID = del;
+                    purchase.RequiredBy = DateTime.Now;
+                    crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
+                }
+                if (IsDraft)
+                {
+                    return "Purchase Request Saved Successfully";
+                }
+                else if (IsApproved)
+                {
+                    return "Purchase Request Submitted Successfully";
                 }
                 else
                 {
-                    PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + "001";
+                    return null; 
                 }
             }
-            foreach (var PR in Items)
+            else
             {
-                foreach (int del in IsDelete)
-                {
-                    if (PR.RowID == del)
-                    {
-                        IsDelete.Remove(del);
-                    }
-                }
-                PR.PRNumber = PurchaseRequisitionNumber;
-                PR.Vendor = Vendor;
-
-                crud.CRD(PR, "CreatePurchaseRequest");
-                if (IsDraft || IsApproved)
-                {
-                    DisplayPR = false;
-                }
-            }
-            foreach (var del in IsDelete)
-            {
-                purchase.PRNumber = PurchaseRequisitionNumber;
-                purchase.RowID = del;
-                purchase.RequiredBy = DateTime.Now;
-                crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
+                IsDraft = false;
+                return "Error in saving request";
             }
         }
+
+        catch (Exception ex) 
+        {
+
+            return ex.ToString();
+        }
+    }
+    public void Shownotification()
+    {
+        string notification = createPurchase();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add(notification, Severity.Error);
+        }
+      
+
     }
 
     private string GetSubmitButtonText()
@@ -273,12 +326,12 @@
                 IsDraft = false;
                 IsApproved = true;
                 IsSaving = false;
-                createPurchase();
+            Shownotification();
             }
             else if (!IsSaving)
             {
                 IsDraft = true;
-            createPurchase();
+            Shownotification();
             }
     }
 
