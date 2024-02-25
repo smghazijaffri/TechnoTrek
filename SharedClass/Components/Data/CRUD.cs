@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using MudBlazor;
 
 namespace SharedClass.Components.Data
 {
@@ -43,6 +44,7 @@ namespace SharedClass.Components.Data
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
             }
            
         }

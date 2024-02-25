@@ -21,6 +21,7 @@ builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Delete>();
 builder.Services.AddScoped<Update>();
 builder.Services.AddScoped<Purchase>();
+builder.Services.AddScoped<PurchaseOrders>();
 builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<ExampleJsInterop>();

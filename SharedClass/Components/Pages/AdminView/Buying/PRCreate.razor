@@ -1,54 +1,49 @@
-﻿    @page "/purchaserequisition/create"
-    @using System.Reflection;
-    @using Blazored.SessionStorage
-    @using Dapper
-    @using SharedClass.Components.Data
-    @using SharedClass.Components.Layout
-    @using System.Globalization
-    @using SharedClass.Components.Model
-    @using Microsoft.Data.SqlClient
-    @inject Insert insert;
-    @inject Select select;
-    @inject IJSRuntime JSRuntime;
-    @inject IJSRuntime JSRuntime;
-    @inject ISnackbar Snackbar;
-    @inject NavigationManager NavigationManager;
-    @inject ISessionStorageService sessionStorage;
-    @inject CRUD crud;
-    @inject Purchase purchase;
-    @inject Connection con;
-    @layout AdminLayout;
+﻿@page "/purchaserequisition/create"
+@using System.Reflection;
+@using Blazored.SessionStorage
+@using SharedClass.Components.Data
+@using SharedClass.Components.Layout
+@using System.Globalization
+@using SharedClass.Components.Model
+@inject Insert insert;
+@inject IJSRuntime JSRuntime;
+@inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar;
+@inject NavigationManager NavigationManager;
+@inject ISessionStorageService sessionStorage;
+@inject CRUD crud;
+@inject Purchase purchase;
+@layout AdminLayout;
 
-
-    @if (isLoading)
-    {
-        <div class="row p-3 align-items-center">
-            <div class="col-6">
-                <h3>
-                    Create Purchase Requisition
-                    @if (status == "Save" && !IsDraft)
-                    {
-                        <MudChip Color="Color.Warning">Not Saved</MudChip>
-                    }
-                    @if (IsDraft)
-                    {
-                        <MudChip Color="Color.Error">Draft</MudChip>
-                    }
-                    @if (IsApproved)
-                    {
-                        <MudChip Color="Color.Success">Submitted</MudChip>
-                    }
-                </h3>
-            </div>
-            <div class="col-6 d-flex justify-content-end">
-                @if (!IsApproved)
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                Create Purchase Requisition
+                @if(status == "Save" && !IsDraft)
                 {
-                    <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
-                        @GetSubmitButtonText()
-                    </button>
+                    <MudChip Color="Color.Warning">Not Saved</MudChip>
                 }
-            </div>
+                @if (IsDraft)
+                {
+                    <MudChip Color="Color.Error">Draft</MudChip>
+                }
+                @if (IsApproved)
+                {
+                    <MudChip Color="Color.Success">Submitted</MudChip>
+                }
+            </h3>
         </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!IsApproved)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
+                    @GetSubmitButtonText()
+                </button>
+            }
+        </div>
+    </div>
 
 
         <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
@@ -187,7 +182,6 @@
 
     protected override async void OnInitialized()
     {
-
         var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
@@ -222,18 +216,20 @@
     private string Vendor { get; set; }
     private bool IsApproved { get; set; } = false;
     private string status;
+    private string Vendor { get; set; }
+    List<int> IsDelete = new List<int>();
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
+    private bool IsApproved { get; set; } = false;
+    private int PurchaseRequisitionNumber { get; set; }
     private List<Purchase> Items  = new List<Purchase>();
 
     List<Item> dataArray = new List<Item>();
     List<int> IsDelete = new List<int>();
 
 
-    public void StoreAndCallCSharpMethod()
+    public void createPurchase()
     {
-        // var dataArray = await JSRuntime.InvokeAsync<List<Item>>("storeAndCallCSharpMethod");
-
         if (PurchaseRequisitionNumber != 0 && !string.IsNullOrEmpty(Vendor))
         {
             foreach (var data in Items)
@@ -251,7 +247,6 @@
                 data.Vendor = Vendor;
 
                 crud.CRD(data, "CreatePurchaseRequest");
-                // }
             }
             foreach (var del in IsDelete)
             {
@@ -284,22 +279,20 @@
 
     private void ToggleApproval()
     {
-        StoreAndCallCSharpMethod();
-    //     if (IsDraft)
-    //     {
-    //         IsDraft = false;
-    //         IsApproved = true;
-    //         IsSaving = false;
-    //         StoreAndCallCSharpMethod();
-    //     }
-    //     else if (!IsSaving)
-    //     {
-    //         IsDraft = true;
-    //         StoreAndCallCSharpMethod();
-    //     }
+        if (IsDraft)
+        {
+            IsDraft = false;
+            IsApproved = true;
+            IsSaving = false;
+            createPurchase();
+        }
+        else if (!IsSaving)
+        {
+            IsDraft = true;
+            createPurchase();
+        }
     }
 
-    // You can update the IsDraft and IsSaving flags accordingly.
     private void Save()
     {
         IsDraft = true;
@@ -311,7 +304,8 @@
     {
         Items.Add(new Purchase
             {
-                RequiredBy = DateTime.Now, // Set the default date to the current date
+                RequiredBy = DateTime.Now,
+                Quantity = 1
             });
     }
 

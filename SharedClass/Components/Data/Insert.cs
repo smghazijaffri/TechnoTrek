@@ -65,25 +65,5 @@ namespace SharedClass.Components.Data
                 await JSRuntime.InvokeVoidAsync("alert", ex.Message.ToString());
             }
         }
-
-        public async Task PRInsert(int prnum, string vendor, string item, string quantity, string uom, DateTime creationdate, DateTime reqdat, IJSRuntime JSRuntime)
-        {
-            try
-            {
-                con.Open();
-
-                string formattedDate = reqdat.ToString("yyyy-MM-dd");
-                string format = creationdate.ToString("yyyy-MM-dd");
-
-                string sqlQuery = $"INSERT INTO PR1 (PRnumber, Vendor, Item, Quantity, UOM, CreationDate, Reqdate) VALUES (@PRNum, @Vend, @Item, @Quantity, @UOM, @Creation, @Date)";
-                await con.ExecuteAsync(sqlQuery, new { PRNum = prnum, Vend = vendor, Item = item, Quantity = quantity, UOM = uom, Creation = format, Date = reqdat });
-                con.Close();
-            }
-            catch (SqlException ex)
-            {
-                con.Close();
-                await JSRuntime.InvokeVoidAsync("alert", ex.Message.ToString());
-            }
-        }
     }
 }

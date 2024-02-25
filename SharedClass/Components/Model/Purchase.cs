@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SharedClass.Components.Model
 {
-    public class Purchase: BaseRecord
+    public class Purchase : BaseRecord
     {
         public bool Selected { get; set; }
         public int PRNumber { get; set; }

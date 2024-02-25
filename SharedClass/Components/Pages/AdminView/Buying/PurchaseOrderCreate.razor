@@ -1,0 +1,328 @@
+﻿@page "/purchaseorder/create"
+@using System.Reflection;
+@using Blazored.SessionStorage
+@using SharedClass.Components.Data
+@using SharedClass.Components.Layout
+@using System.Globalization
+@using SharedClass.Components.Model
+@inject Insert insert;
+@inject IJSRuntime JSRuntime;
+@inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar;
+@inject NavigationManager NavigationManager;
+@inject ISessionStorageService sessionStorage;
+@inject CRUD crud;
+@inject PurchaseOrders purchaseorders;
+@layout AdminLayout;
+
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                Create Purchase Requisition
+                @if (status == "Save" && !IsDraft)
+                {
+                    <MudChip Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsDraft)
+                {
+                    <MudChip Color="Color.Error">Draft</MudChip>
+                }
+                @if (IsApproved)
+                {
+                    <MudChip Color="Color.Success">Submitted</MudChip>
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!IsApproved)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
+                    @GetSubmitButtonText()
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Purchase Requisition Number</label>
+                <input type="text" class="form-control" @bind="PurchaseOrderNumber" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Creation Date</label>
+                <input type="date" min="@DateTime.Now.ToString("dd-MM-yyyy")" @bind="CreationDate" class="form-control" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor</label>
+                <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Supplier Address</label>
+                <input type="text" class="form-control" @bind="supplierAddress" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Supplier Contact</label>
+                <input type="text" @bind="supplierContact" class="form-control" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Company Shipping Address</label>
+                <input type="text" class="form-control" @bind="companyShippingAddress" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Company Billing Address</label>
+                <input type="text" class="form-control" @bind="companyBillingAddress" readonly="@IsApproved">
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <table class="table table-bordered border-primary">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            UOM
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                        <th class="col col-auto" style="width: 150px;">
+                            Required By
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        item.RowID = index + 1;
+                        Amount = (item.Rate * item.Quantity);
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
+                                </div>
+                            </td>
+                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
+                            <td>
+                                <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
+                                <datalist id="uomOptions">
+                                    <option value="Piece"></option>
+                                    <option value="Each"></option>
+                                    <option value="Box"></option>
+                                </datalist>
+                            </td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly="@IsApproved" /></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="Amount" readonly="@IsApproved" /></td>
+                            <td>
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" class="form-control" @bind="totalQuantity" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" class="form-control" @bind="totalPrice" readonly="@IsApproved">
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    bool isLoading = false;
+    public bool isAuthorized { get; set; }
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            StateHasChanged();
+            PurchaseOrderNumber = 1;
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+        base.OnInitialized();
+    }
+
+    private string status;
+    private string Vendor { get; set; }
+    List<int> IsDelete = new List<int>();
+    private bool IsDraft { get; set; } = false;
+    private bool IsSaving { get; set; } = false;
+    private bool IsApproved { get; set; } = false;
+    private int PurchaseOrderNumber { get; set; }
+    private string supplierAddress { get; set; }
+    private string supplierContact { get; set; }
+    private string companyShippingAddress { get; set; }
+    private string companyBillingAddress { get; set; }
+    private int totalQuantity { get; set; }
+    private int totalPrice { get; set; }
+    private int rate { get; set; }
+    private int Amount { get; set; }
+    private List<PurchaseOrders> Items = new List<PurchaseOrders>();
+    private DateTime CreationDate { get; set; } = DateTime.Now;
+
+    public void createPurchase()
+    {
+        if (PurchaseOrderNumber != 0 && !string.IsNullOrEmpty(Vendor))
+        {
+            foreach (var data in Items)
+            {
+
+                foreach (int del in IsDelete)
+                {
+                    if (data.RowID == del)
+                    {
+                        IsDelete.Remove(del);
+                    }
+                }
+                data.PONumber = PurchaseOrderNumber;
+                data.Vendor = Vendor;
+
+                Snackbar.Clear();
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+                Snackbar.Add(data.ToString(), Severity.Info);
+
+                // crud.CRD(data, "CreatePurchaseRequest");
+            }
+            // foreach (var del in IsDelete)
+            // {
+            //     purchaseorders.PONumber = PurchaseOrderNumber;
+            //     purchaseorders.RowID = del;
+            //     purchaseorders.RequiredBy = DateTime.Now;
+            //     crud.CRD(purchaseorders, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
+            // }
+        }
+    }
+
+    private string GetSubmitButtonText()
+    {
+        if (IsApproved)
+        {
+            status = "Submitted";
+            return "Submitted";
+        }
+        else if (IsDraft)
+        {
+            status = "Submit";
+            return "Submit";
+        }
+        else
+        {
+            status = "Save";
+            return "Save";
+        }
+    }
+
+    private void ToggleApproval()
+    {
+        if (IsDraft)
+        {
+            IsDraft = false;
+            IsApproved = true;
+            IsSaving = false;
+            createPurchase();
+        }
+        else if (!IsSaving)
+        {
+            IsDraft = true;
+            createPurchase();
+        }
+    }
+
+    private void Save()
+    {
+        IsDraft = true;
+        IsSaving = true;
+        IsSaving = false;
+    }
+
+    private void AddRow()
+    {
+        Items.Add(new PurchaseOrders
+            {
+                RequiredBy = DateTime.Now,
+                Quantity = 1
+            });
+    }
+
+    private void DeleteRow(int index)
+    {
+
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                IsDelete.Add(Items[i].RowID);
+                Items.RemoveAt(i);
+            }
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        totalQuantity = Items.Sum(item => item.Quantity);
+        totalPrice = Items.Sum(item => item.Rate * item.Quantity);
+        StateHasChanged();
+
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        Snackbar.Add(totalQuantity.ToString(), Severity.Info);
+        Snackbar.Add(totalPrice.ToString(), Severity.Info);
+
+        if (IsDraft)
+        {
+            // Update MudChip and Save button text when any field is edited
+            status = "Not Saved";
+            IsDraft = false;
+
+
+            GetSubmitButtonText();
+        }
+        StateHasChanged();
+    }
+}
