@@ -1,7 +1,8 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using SharedClass.Components.Pages.CustomPC;
-
+using SharedClass.Components.Model;
+using static MudBlazor.CategoryTypes;
 namespace SharedClass.Components.Data
 {
     public class Select : Update
@@ -72,7 +73,13 @@ namespace SharedClass.Components.Data
         {
             con.Close();
             con.Open();
-            return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PR1");
+            return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest");
+        }
+        public  List<Purchase>  PurhcaseRequest(int PRNumber)
+        { 
+            con.Close(); con.Open();
+            return con.Query<Purchase>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = PRNumber }).ToList();
+
         }
     }
 }

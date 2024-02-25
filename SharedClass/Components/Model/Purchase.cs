@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SharedClass.Components.Model
 {
-    public class Purchase
+    public class Purchase: BaseRecord
     {
         public bool Selected { get; set; }
         public int PRNumber { get; set; }
@@ -15,7 +15,6 @@ namespace SharedClass.Components.Model
         public int Quantity { get; set; }
         public string UOM { get; set; }
         public DateTime RequiredBy { get; set; }
-        public int ForInsert { get; set; }
-        public DateTime CreationDate { get; set; }
+        public int RowID { get; set; }
     }
 }

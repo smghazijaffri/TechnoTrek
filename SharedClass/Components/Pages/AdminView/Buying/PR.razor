@@ -1,7 +1,9 @@
 @page "/purchaserequisition"
+@using Blazored.SessionStorage
 @using SharedClass.Components.Layout
 @using System.Globalization
 @using SharedClass.Components.Data
+@using SharedClass.Components.Model
 @using System.Net.Http.Json
 @using static MudBlazor.CategoryTypes
 @inject Select select;
@@ -9,6 +11,7 @@
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject ISessionStorageService sessionStorage;
+@inject Purchase purchase
 @layout AdminLayout;
 
 @if (isLoading)
@@ -94,6 +97,12 @@
     void OnRowClick(TableRowClickEventArgs<PurchaseRequisition> args)
     {
         _selectedItemText = $"{args.Item.Item} ({args.Item.Vendor})";
+        purchase.PRNumber = args.Item.PRNumber;
+        // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+        // Snackbar.Add(purchase.PRNumber.ToString(), Severity.Error);
+        // Snackbar.Add(args.Item.PRNumber.ToString(), Severity.Error);
+        NavigationManager.NavigateTo("/purchaserequisition/create");
+
     }
 
     private bool FilterFunc1(PurchaseRequisition element) => FilterFunc(element, searchString1);
