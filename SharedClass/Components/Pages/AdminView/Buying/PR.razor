@@ -16,7 +16,7 @@
 
 @if (isLoading)
 {
-    <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" Filter="new Func<PurchaseRequisition, bool>(FilterFunc1)" MultiSelection="true"
+    <MudTable @ref="_table" T="Purchase" Items="@Elements" Filter="new Func<Purchase, bool>(FilterFunc1)" MultiSelection="true"
               @bind-SelectedItem="selectedItem1" @bind-SelectedItems="selectedItems" Hover="true" OnRowClick="@OnRowClick"
               @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="1" Style="border-radius:10px">
         <ToolBarContent>
@@ -40,7 +40,7 @@
                 <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
                 <MudTd DataLabel="UOM">@context.UOM</MudTd>
                 <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
-                <MudTd DataLabel="Required By">@context.Reqdate</MudTd>
+                <MudTd DataLabel="Required By">@context.RequiredBy</MudTd>
             </RowTemplate>
             <PagerContent>
                 <MudTablePager />
@@ -82,11 +82,11 @@
 
     private bool hover = true;
     private string searchString1;
-    private HashSet<PurchaseRequisition> selectedItems = new HashSet<PurchaseRequisition>();
+    private HashSet<Purchase> selectedItems = new HashSet<Purchase>();
     private bool _selectOnRowClick = true;
-    private MudTable<PurchaseRequisition> _table;
-    private PurchaseRequisition selectedItem1 = null;
-    private IEnumerable<PurchaseRequisition> Elements = new List<PurchaseRequisition>();
+    private MudTable<Purchase> _table;
+    private Purchase selectedItem1 = null;
+    private IEnumerable<Purchase> Elements = new List<Purchase>();
     private string _selectedItemText = "No row clicked";
 
     protected override async Task OnInitializedAsync()
@@ -94,7 +94,7 @@
         Elements = await select.GetPR1DataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<PurchaseRequisition> args)
+    void OnRowClick(TableRowClickEventArgs<Purchase> args)
     {
         _selectedItemText = $"{args.Item.Item} ({args.Item.Vendor})";
         purchase.PRNumber = args.Item.PRNumber;
@@ -105,9 +105,9 @@
 
     }
 
-    private bool FilterFunc1(PurchaseRequisition element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(Purchase element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(PurchaseRequisition element, string searchString)
+    private bool FilterFunc(Purchase element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString))
         {
@@ -128,7 +128,7 @@
         }
 
         string creationDateString = element.CreationDate.ToString("dd/MM/yyyy");
-        string reqDateString = element.Reqdate.ToString("dd/MM/yyyy");
+        string reqDateString = element.RequiredBy.ToString("dd/MM/yyyy");
 
         if (IsDate(creationDateString) && IsDate(reqDateString) && $"{creationDateString} {reqDateString}".Contains(searchString))
         {

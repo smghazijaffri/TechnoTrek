@@ -9,7 +9,7 @@ namespace SharedClass.Components.Model
     public class Purchase : BaseRecord
     {
         public bool Selected { get; set; }
-        public int PRNumber { get; set; }
+        public string PRNumber { get; set; }
         public string Vendor { get; set; }
         public string Item { get; set; }
         public int Quantity { get; set; }

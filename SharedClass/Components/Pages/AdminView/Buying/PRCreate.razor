@@ -53,9 +53,9 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
+            <div class="col-md-6" hidden="@DisplayPR">
                 <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly="@IsApproved">
+                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber"  readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
@@ -150,10 +150,10 @@
                 Vendor = Items[0].Vendor;
                 CreationDate = Items[0].CreationDate;
             }
-            else
-            {
-                PurchaseRequisitionNumber = 1;
-            }
+            // else
+            // {
+            //     PurchaseRequisitionNumber = 1;
+            // }
             StateHasChanged();
 
         }
@@ -168,8 +168,8 @@
         base.OnInitialized();
     }
 
-
-    private int PurchaseRequisitionNumber { get; set; }
+    private bool DisplayPR = true;
+    private string PurchaseRequisitionNumber { get; set; }
     private DateTime CreationDate { get; set; } = DateTime.Now;
     private string Vendor { get; set; }
     private bool IsApproved { get; set; } = false;
@@ -184,21 +184,58 @@
     public void createPurchase()
     {
 
-        if (PurchaseRequisitionNumber != 0 && !string.IsNullOrEmpty(Vendor))
+
+        if (!string.IsNullOrEmpty(Vendor))
         {
-            foreach (var data in Items)
+            var CountPR = select.PurhcaseRequest(PurchaseRequisitionNumber);
+            if (CountPR.Count == 0)
+            {
+                PurchaseRequisitionNumber = "PR";
+                var CountNo = "";
+                int data = select.CountPRnumber();
+                if (data != 0)
+                {
+                    data += 1;
+                    var itr = data.ToString();
+                    var itNum = itr.Length;
+                    if (itNum == 1)
+                    {
+                        CountNo += "00" + itr;
+                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                    }
+                    else if (itNum == 2)
+                    {
+                        CountNo += "0" + itr;
+                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                    }
+                    else
+                    {
+                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + itr;
+                    }
+
+                }
+                else
+                {
+                    PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + "001";
+                }
+            }
+            foreach (var PR in Items)
             {
                 foreach (int del in IsDelete)
                 {
-                    if (data.RowID == del)
+                    if (PR.RowID == del)
                     {
                         IsDelete.Remove(del);
                     }
                 }
-                data.PRNumber = PurchaseRequisitionNumber;
-                data.Vendor = Vendor;
+                PR.PRNumber = PurchaseRequisitionNumber;
+                PR.Vendor = Vendor;
 
-                crud.CRD(data, "CreatePurchaseRequest");
+                crud.CRD(PR, "CreatePurchaseRequest");
+                if (IsDraft || IsApproved)
+                {
+                    DisplayPR = false;
+                }
             }
             foreach (var del in IsDelete)
             {
