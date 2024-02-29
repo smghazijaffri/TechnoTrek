@@ -86,5 +86,19 @@ namespace SharedClass.Components.Data
             con.Close();con.Open();
             return con.QueryFirstOrDefault<int>("Select COUNT(1)PRnumber from PurchaseRequest");
         }
+
+        public List<PurchaseOrders> PurhcaseOrderNumber(string PONumber)
+        {
+            con.Close();
+            con.Open();
+            return con.Query<PurchaseOrders>("select * from PurchaseOrder where POnumber = @POnumber", new { POnumber = PONumber }).ToList();
+
+        }
+        public int CountPOnumber()
+        {
+            con.Close();
+            con.Open();
+            return con.QueryFirstOrDefault<int>("Select COUNT(1)POnumber from PurchaseOrder");
+        }
     }
 }

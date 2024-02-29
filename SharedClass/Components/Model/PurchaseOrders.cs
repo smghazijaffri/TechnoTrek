@@ -15,7 +15,7 @@ namespace SharedClass.Components.Model
         public string UOM { get; set; }
         public DateTime RequiredBy { get; set; }
         public int RowID { get; set; }
-        public int PONumber { get; set; }
+        public string PONumber { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
         public string SupplierAddress { get; set; }
@@ -24,5 +24,6 @@ namespace SharedClass.Components.Model
         public string CompanyBillingAddress { get; set; }
         public int TotalQuantity { get; set; }
         public int TotalPrice { get; set; }
+        public string Status { get; set; }
     }
 }

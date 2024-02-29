@@ -6,7 +6,7 @@
 @using System.Globalization
 @using SharedClass.Components.Model
 @inject Insert insert;
-@inject IJSRuntime JSRuntime;
+@inject Select select;
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
@@ -20,7 +20,7 @@
     <div class="row p-3 align-items-center">
         <div class="col-6">
             <h3>
-                Create Purchase Requisition
+                New Purchase Order
                 @if (status == "Save" && !IsDraft)
                 {
                     <MudChip Color="Color.Warning">Not Saved</MudChip>
@@ -47,13 +47,13 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
-                <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="PurchaseOrderNumber" readonly="@IsApproved">
+            <div class="col-md-6" hidden="@DisplayPR">
+                <label class="form-label">Purchase Order Number</label>
+                <input type="text" class="form-control" @bind="PurchaseOrderNumber" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
-                <input type="date" min="@DateTime.Now.ToString("dd-MM-yyyy")" @bind="CreationDate" class="form-control" readonly="@IsApproved">
+                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" @bind="CreationDate" class="form-control" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -175,8 +175,19 @@
         if (isAuthorized)
         {
             isLoading = true;
+            Items = select.PurhcaseOrderNumber(purchaseorders.PONumber);
+            if (Items.Count > 0)
+            {
+                PurchaseOrderNumber = Items[0].PONumber;
+                Vendor = Items[0].Vendor;
+                CreationDate = Items[0].CreationDate;
+                if (Items[0].Status == "Approved")
+                {
+                    IsApproved = true;
+                    DisplayPR = false;
+                }
+            }
             StateHasChanged();
-            PurchaseOrderNumber = 1;
         }
         else
         {
@@ -188,14 +199,14 @@
         }
         base.OnInitialized();
     }
-
+    private bool DisplayPR = true;
     private string status;
     private string Vendor { get; set; }
     List<int> IsDelete = new List<int>();
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
     private bool IsApproved { get; set; } = false;
-    private int PurchaseOrderNumber { get; set; }
+    private string PurchaseOrderNumber { get; set; }
     private string supplierAddress { get; set; }
     private string supplierContact { get; set; }
     private string companyShippingAddress { get; set; }
@@ -207,36 +218,114 @@
     private List<PurchaseOrders> Items = new List<PurchaseOrders>();
     private DateTime CreationDate { get; set; } = DateTime.Now;
 
-    public void createPurchase()
+    public string createPurchase()
     {
-        if (PurchaseOrderNumber != 0 && !string.IsNullOrEmpty(Vendor))
+        try
         {
-            foreach (var data in Items)
+            if (!string.IsNullOrEmpty(Vendor))
             {
-
-                foreach (int del in IsDelete)
+                var CountPR = select.PurhcaseOrderNumber(PurchaseOrderNumber);
+                if (CountPR.Count == 0)
                 {
-                    if (data.RowID == del)
+                    PurchaseOrderNumber = "PO";
+                    var CountNo = "";
+                    int data = select.CountPOnumber();
+                    if (data != 0)
                     {
-                        IsDelete.Remove(del);
+                        data += 1;
+                        var itr = data.ToString();
+                        var itNum = itr.Length;
+                        if (itNum == 1)
+                        {
+                            CountNo += "00" + itr;
+                            PurchaseOrderNumber = PurchaseOrderNumber + "-" + CountNo;
+                        }
+                        else if (itNum == 2)
+                        {
+                            CountNo += "0" + itr;
+                            PurchaseOrderNumber = PurchaseOrderNumber + "-" + CountNo;
+                        }
+                        else
+                        {
+                            PurchaseOrderNumber = PurchaseOrderNumber + "-" + itr;
+                        }
+
+                    }
+                    else
+                    {
+                        PurchaseOrderNumber = PurchaseOrderNumber + "-" + "001";
                     }
                 }
-                data.PONumber = PurchaseOrderNumber;
-                data.Vendor = Vendor;
+                foreach (var PR in Items)
+                {
+                    foreach (int del in IsDelete)
+                    {
+                        if (PR.RowID == del)
+                        {
+                            IsDelete.Remove(del);
+                        }
+                    }
+                    PR.PONumber = PurchaseOrderNumber;
+                    PR.Vendor = Vendor;
+                    if (IsDraft)
+                    {
+                        PR.Status = "Draft";
+                    }
+                    if (IsApproved)
+                    {
+                        PR.Status = "Approved";
+                    }
+                    DisplayPR = false;
+                    crud.CRD(PR, "CreatePurchaseOrder");
 
-                Snackbar.Clear();
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
-                Snackbar.Add(data.ToString(), Severity.Info);
-
-                // crud.CRD(data, "CreatePurchaseRequest");
+                }
+                foreach (var del in IsDelete)
+                {
+                    purchaseorders.PONumber = PurchaseOrderNumber;
+                    purchaseorders.RowID = del;
+                    purchaseorders.RequiredBy = DateTime.Now;
+                    crud.CRD(purchaseorders, "CreatePurchaseOrder", System.Data.CommandType.StoredProcedure, true);
+                }
+                if (IsDraft)
+                {
+                    return "Purchase Order Saved Successfully";
+                }
+                else if (IsApproved)
+                {
+                    return "Purchase Order Submitted Successfully";
+                }
+                else
+                {
+                    return null;
+                }
             }
-            // foreach (var del in IsDelete)
-            // {
-            //     purchaseorders.PONumber = PurchaseOrderNumber;
-            //     purchaseorders.RowID = del;
-            //     purchaseorders.RequiredBy = DateTime.Now;
-            //     crud.CRD(purchaseorders, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
-            // }
+            else
+            {
+                IsDraft = false;
+                return "Error in saving request";
+            }
+        }
+
+        catch (Exception ex)
+        {
+            return ex.ToString();
+        }
+    }
+
+    public void Shownotification()
+    {
+        string notification = createPurchase();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
+            Snackbar.Add(notification, Severity.Error);
         }
     }
 
@@ -266,12 +355,12 @@
             IsDraft = false;
             IsApproved = true;
             IsSaving = false;
-            createPurchase();
+            Shownotification();
         }
         else if (!IsSaving)
         {
             IsDraft = true;
-            createPurchase();
+            Shownotification();
         }
     }
 
@@ -319,8 +408,6 @@
             // Update MudChip and Save button text when any field is edited
             status = "Not Saved";
             IsDraft = false;
-
-
             GetSubmitButtonText();
         }
         StateHasChanged();
