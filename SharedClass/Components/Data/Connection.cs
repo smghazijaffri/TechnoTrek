@@ -7,14 +7,14 @@ namespace SharedClass.Components.Data
 {
     public class Connection
     {
-        private readonly string connectionString;
+        public readonly string connectionString;
 
             public Connection()
         {
             //string ipAddress = GetIPv4Addresses();
-            connectionString = $"Data Source=192.168.2.107,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;";
+            //connectionString = $"Data Source=192.168.2.107,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;";
             //connectionString = $"Data Source={ipAddress},1433;Initial Catalog=Example;User Id=Ghazi;Password=fC5y2qRU;Encrypt=False;";
-            //connectionString = $"Data Source=DESKTOP-M62686B\\SQLEXPRESS;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;";
+            connectionString = $"Data Source=DESKTOP-M62686B\\SQLEXPRESS;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;";
 
         }
         public SqlConnection GetSqlConnection()

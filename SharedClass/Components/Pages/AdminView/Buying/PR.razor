@@ -11,12 +11,12 @@
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject ISessionStorageService sessionStorage;
-@inject Purchase purchase
+@inject PurchaseRequisition purchaserequisition
 @layout AdminLayout;
 
 @if (isLoading)
 {
-    <MudTable @ref="_table" T="Purchase" Items="@Elements" Filter="new Func<Purchase, bool>(FilterFunc1)" MultiSelection="true"
+    <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" Filter="new Func<PurchaseRequisition, bool>(FilterFunc1)" MultiSelection="true"
               @bind-SelectedItem="selectedItem1" @bind-SelectedItems="selectedItems" Hover="true" OnRowClick="@OnRowClick"
               @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="1" Style="border-radius:10px">
         <ToolBarContent>
@@ -26,33 +26,27 @@
         </ToolBarContent>
         <HeaderContent>
             <MudTh>PR Number</MudTh>
-            <MudTh>Vendor</MudTh>
-            <MudTh>Item</MudTh>
-            <MudTh>Quantity</MudTh>
-            <MudTh>UOM</MudTh>
-            <MudTh>Creation Date</MudTh>
-            <MudTh>Required By</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Document Date</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="PR Number">@context.PRNumber</MudTd>
-                <MudTd DataLabel="Vendor">@context.Vendor</MudTd>
-                <MudTd DataLabel="Item">@context.Item</MudTd>
-                <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
-                <MudTd DataLabel="UOM">@context.UOM</MudTd>
-                <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
-                <MudTd DataLabel="Required By">@context.RequiredBy</MudTd>
+                <MudTd DataLabel="Name">@context.PRname</MudTd>
+                <MudTd DataLabel="Status">@context.Status</MudTd>
+                <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
             </RowTemplate>
             <PagerContent>
                 <MudTablePager />
             </PagerContent>
-    </MudTable>
+        </MudTable>
 
     <div class="d-flex flex-wrap mt-4">
         <MudSpacer />
         <div style="min-width:200px;">
-            <MudText Inline="true" Class="align-self-center">Selected: @selectedItem1?.Item</MudText>
+            <MudText Inline="true" Class="align-self-center">Selected: @selectedItem1?.PRname</MudText>
+            </div>
         </div>
-    </div>
 }
 
 @code {
@@ -82,11 +76,11 @@
 
     private bool hover = true;
     private string searchString1;
-    private HashSet<Purchase> selectedItems = new HashSet<Purchase>();
+    private HashSet<PurchaseRequisition> selectedItems = new HashSet<PurchaseRequisition>();
     private bool _selectOnRowClick = true;
-    private MudTable<Purchase> _table;
-    private Purchase selectedItem1 = null;
-    private IEnumerable<Purchase> Elements = new List<Purchase>();
+    private MudTable<PurchaseRequisition> _table;
+    private PurchaseRequisition selectedItem1 = null;
+    private IEnumerable<PurchaseRequisition> Elements = new List<PurchaseRequisition>();
     private string _selectedItemText = "No row clicked";
 
     protected override async Task OnInitializedAsync()
@@ -94,43 +88,42 @@
         Elements = await select.GetPR1DataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<Purchase> args)
+    void OnRowClick(TableRowClickEventArgs<PurchaseRequisition> args)
     {
-        _selectedItemText = $"{args.Item.Item} ({args.Item.Vendor})";
-        purchase.PRNumber = args.Item.PRNumber;
+        _selectedItemText = $"{args.Item.PRNumber} ({args.Item.PRNumber})";
+        purchaserequisition.PRNumber = args.Item.PRNumber;
         // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
-        // Snackbar.Add(purchase.PRNumber.ToString(), Severity.Error);
+        // Snackbar.Add(PurchaseRequisition.PRNumber.ToString(), Severity.Error);
         // Snackbar.Add(args.Item.PRNumber.ToString(), Severity.Error);
-        NavigationManager.NavigateTo("/purchaserequisition/create");
+        NavigationManager.NavigateTo($"/PurchaseRequisition/{purchaserequisition.PRNumber}");
 
     }
 
-    private bool FilterFunc1(Purchase element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(PurchaseRequisition element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(Purchase element, string searchString)
+    private bool FilterFunc(PurchaseRequisition element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString))
         {
             return true;
         }
 
-        if ($"{element.Item} {element.Vendor} {element.UOM}".Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if ($"{element.PRNumber} {element.PRname} {element.DocumentDate}".Contains(searchString, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
         string prNumberString = element.PRNumber.ToString();
-        string quantityString = element.Quantity.ToString();
+        string quantityString = element.PRname.ToString();
 
         if (IsNumeric(prNumberString) && IsNumeric(quantityString) && $"{prNumberString} {quantityString}".ToString().Contains(searchString))
         {
             return true;
         }
 
-        string creationDateString = element.CreationDate.ToString("dd/MM/yyyy");
-        string reqDateString = element.RequiredBy.ToString("dd/MM/yyyy");
+        string reqDateString = element.DocumentDate.Value.ToString("dd/MM/yyyy");
 
-        if (IsDate(creationDateString) && IsDate(reqDateString) && $"{creationDateString} {reqDateString}".Contains(searchString))
+        if (IsDate(reqDateString) && $"{reqDateString}".Contains(searchString))
         {
             return true;
         }

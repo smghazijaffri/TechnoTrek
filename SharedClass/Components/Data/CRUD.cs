@@ -16,19 +16,15 @@ using MudBlazor;
 namespace SharedClass.Components.Data
 {
 
-    public  class CRUD: Connection
+    public class CRUD : Connection
     {
-        private readonly SqlConnection con;
-        public CRUD()
-        {
-            con = GetSqlConnection();
-        }
+
         public void CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
         {
-            try
+
+            using (SqlConnection db = new SqlConnection(connectionString))
             {
-                con.Close();
-                con.Open();
+
                 if (IsDelete)
                 {
                     Model.ForInsert = 0;
@@ -38,15 +34,12 @@ namespace SharedClass.Components.Data
                     Model.ForInsert = 1;
                 }
                 Model.CreationDate = DateTime.Now;
-                con.Execute(SP, (object)Model, commandType: commandType);
-                con.Close();
+                db.Execute(SP, (object)Model, commandType: commandType);
 
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-           
+
+
+
         }
 
     }

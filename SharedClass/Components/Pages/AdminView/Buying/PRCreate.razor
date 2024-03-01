@@ -1,4 +1,5 @@
-﻿    @page "/purchaserequisition/create"
+﻿    @page "/purchaserequisition/{PRNumber?}"
+    @page "/purchaserequisition/new-purchase-request"
     @using System.Reflection;
     @using Blazored.SessionStorage
     @using Dapper
@@ -15,7 +16,8 @@
     @inject NavigationManager NavigationManager;
     @inject ISessionStorageService sessionStorage;
     @inject CRUD crud;
-    @inject Purchase purchase;
+    @inject PurchaseRequisition purchase;
+    @inject PR_Items pritem;
     @inject Connection con;
     @layout AdminLayout;
 
@@ -55,15 +57,15 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPR">
                 <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber"  readonly>
+                <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" @bind="purchase.PRname" readonly="@IsApproved">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
-                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" @bind="CreationDate" class="form-control" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor</label>
-                <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
         </form>
     </div>
@@ -142,19 +144,39 @@
         {
 
             isLoading = true;
-
-            Items = select.PurhcaseRequest(purchase.PRNumber);
-            if (Items.Count > 0)
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                PurchaseRequisitionNumber = Items[0].PRNumber;
-                Vendor = Items[0].Vendor;
-                CreationDate = Items[0].CreationDate;
-                if (Items[0].Status == "Approved")
+                purchase.DocumentDate = DateTime.Now;
+                if (PRNumber != null)
                 {
-                    IsApproved = true;
-                    DisplayPR = false;
+                    purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
+                    if (purchase == null)
+                    {
+                        NavigationManager.NavigateTo("/PurchaseRequisition/");
+                    }
+                    Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    if (Items.Count > 0)
+                    {
+                        if (purchase.Status == "Approved")
+                        {
+                            IsApproved = true;
+                            DisplayPR = false;
+                        }
+                    }
                 }
             }
+
+            // Items = select.PurhcaseRequest(purchase.PRNumber);
+            // if (Items.Count > 0)
+            // {
+            //     PurchaseRequisitionNumber = Items[0].PRNumber;
+            //     DocumentDate = Items[0].CreationDate;
+            //     if (purchase.Status == "Approved")
+            //     {
+            //         IsApproved = true;
+            //         DisplayPR = false;
+            //     }
+            // }
             // else
             // {
             //     PurchaseRequisitionNumber = 1;
@@ -173,30 +195,37 @@
         base.OnInitialized();
     }
 
+    [Parameter]
+    public string PRNumber { get; set; }
+
     private bool DisplayPR = true;
-    private string PurchaseRequisitionNumber { get; set; }
-    private DateTime CreationDate { get; set; } = DateTime.Now;
+    public string PurchaseRequisitionNumber { get; set; }
+    private DateTime DocumentDate { get; set; } = DateTime.Now;
     private string Vendor { get; set; }
     private bool IsApproved { get; set; } = false;
     private string status;
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
-    private List<Purchase> Items = new List<Purchase>();
+    private List<PR_Items> Items = new List<PR_Items>();
 
     List<int> IsDelete = new List<int>();
 
 
     public string createPurchase()
     {
-
         try
         {
-            if (!string.IsNullOrEmpty(Vendor))
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                var CountPR = select.PurhcaseRequest(PurchaseRequisitionNumber);
-                if (CountPR.Count == 0)
+                string validate = ValidatePR();
+                if (validate != null)
                 {
-                    PurchaseRequisitionNumber = "PR";
+                    return validate;
+                }
+                int CountPR = db.QueryFirstOrDefault<int>("select count(1) from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+                if (CountPR == 0)
+                {
+                    purchase.PRNumber = "PR";
                     var CountNo = "";
                     int data = select.CountPRnumber();
                     if (data != 0)
@@ -207,24 +236,33 @@
                         if (itNum == 1)
                         {
                             CountNo += "00" + itr;
-                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                            purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
                         }
                         else if (itNum == 2)
                         {
                             CountNo += "0" + itr;
-                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                            purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
                         }
                         else
                         {
-                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + itr;
+                            purchase.PRNumber = purchase.PRNumber + "-" + itr;
                         }
 
                     }
                     else
                     {
-                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + "001";
+                        purchase.PRNumber = purchase.PRNumber + "-" + "001";
                     }
                 }
+                if (IsDraft)
+                {
+                    purchase.Status = "Draft";
+                }
+                else if (IsApproved)
+                {
+                    purchase.Status = "Approved";
+                }
+                crud.CRD(purchase, "CreatePurchaseRequest");
                 foreach (var PR in Items)
                 {
                     foreach (int del in IsDelete)
@@ -234,25 +272,24 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PR.PRNumber = PurchaseRequisitionNumber;
-                    PR.Vendor = Vendor;
-                    if (IsDraft)
-                    {
-                        PR.Status = "Draft";
-                    }
-                    if (IsApproved)
-                    {
-                        PR.Status = "Approved";
-                    }
-                    DisplayPR = false;
-                    crud.CRD(PR, "CreatePurchaseRequest");
+                    PR.PRNumber = purchase.PRNumber;
 
+                    // if (IsDraft)
+                    // {
+                    //     PR.Status = "Draft";
+                    // }
+                    // if (IsApproved)
+                    // {
+                    //     PR.Status = "Approved";
+                    // }
+                    DisplayPR = false;
+                    crud.CRD(PR, "PurhcaseRequestItems");
                 }
                 foreach (var del in IsDelete)
                 {
-                    purchase.PRNumber = PurchaseRequisitionNumber;
-                    purchase.RowID = del;
-                    purchase.RequiredBy = DateTime.Now;
+                    pritem.PRNumber = PurchaseRequisitionNumber;
+                    pritem.RowID = del;
+                    pritem.RequiredBy = DateTime.Now.Date;
                     crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
                 }
                 if (IsDraft)
@@ -265,21 +302,43 @@
                 }
                 else
                 {
-                    return null; 
+                    IsDraft = false;
+                    return "Error in saving request";
                 }
             }
-            else
-            {
-                IsDraft = false;
-                return "Error in saving request";
-            }
         }
 
-        catch (Exception ex) 
+        catch (Exception ex)
         {
 
-            return ex.ToString();
+            return ex.Message;
         }
+    }
+    public string ValidatePR()
+    {
+        // if (string.IsNullOrWhiteSpace(purchase.PRNumber))
+        // { return "Please Enter Purchase Request Number"; }
+        if (purchase.DocumentDate == null)
+        { return "Please Enter Document Date"; }
+        else if (string.IsNullOrWhiteSpace(purchase.PRname))
+        { return "Please Enter Title"; }
+        else if (Items.Count > 0)
+        {
+            foreach (var PR in Items)
+            {
+                if (string.IsNullOrWhiteSpace(PR.Item))
+                { return "Please Enter Item on No:" + PR.RowID + ""; }
+                else if (string.IsNullOrWhiteSpace(PR.UOM))
+                { return "Please Enter UOM on No:" + PR.RowID + ""; }
+                else if (PR.Quantity == 0)
+                { return "Please Enter Quantity on No:" + PR.RowID + ""; }
+                else if (PR.RequiredBy == null)
+                { return "Please Enter Required By date on No:" + PR.RowID + ""; }
+            }
+            return null;
+        }
+        else
+        { return null; }
     }
     public void Shownotification()
     {
@@ -296,7 +355,7 @@
             Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Error);
         }
-      
+
 
     }
 
@@ -321,18 +380,18 @@
 
     private void ToggleApproval()
     {
-            if (IsDraft)
-            {
-                IsDraft = false;
-                IsApproved = true;
-                IsSaving = false;
+        if (IsDraft)
+        {
+            IsDraft = false;
+            IsApproved = true;
+            IsSaving = false;
             Shownotification();
-            }
-            else if (!IsSaving)
-            {
-                IsDraft = true;
+        }
+        else if (!IsSaving)
+        {
+            IsDraft = true;
             Shownotification();
-            }
+        }
     }
 
     private void Save()
@@ -344,7 +403,7 @@
 
     private void AddRow()
     {
-        Items.Add(new Purchase
+        Items.Add(new PR_Items
             {
                 RequiredBy = DateTime.Now,
                 Quantity = 1
