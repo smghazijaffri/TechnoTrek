@@ -1,25 +1,26 @@
-﻿    @page "/purchaserequisition/{PRNumber?}"
-    @page "/purchaserequisition/new-purchase-request"
-    @using System.Reflection;
-    @using Blazored.SessionStorage
-    @using Dapper
-    @using SharedClass.Components.Data
-    @using SharedClass.Components.Layout
-    @using System.Globalization
-    @using SharedClass.Components.Model
-    @using Microsoft.Data.SqlClient
-    @inject Insert insert;
-    @inject Select select;
-    @inject IJSRuntime JSRuntime;
-    @inject IJSRuntime JSRuntime;
-    @inject ISnackbar Snackbar;
-    @inject NavigationManager NavigationManager;
-    @inject ISessionStorageService sessionStorage;
-    @inject CRUD crud;
-    @inject PurchaseRequisition purchase;
-    @inject PR_Items pritem;
-    @inject Connection con;
-    @layout AdminLayout;
+﻿        @page "/purchaserequisition/{PRNumber?}"
+        @page "/purchaserequisition/new-purchase-request"
+        @using System.Reflection;
+        @using Blazored.SessionStorage
+        @using Dapper
+        @using SharedClass.Components.Data
+        @using SharedClass.Components.Layout
+        @using System.Globalization
+        @using SharedClass.Components.Model
+        @using Microsoft.Data.SqlClient
+        @using System.Text
+        @inject Insert insert;
+        @inject Select select;
+        @inject IJSRuntime JSRuntime;
+        @inject IJSRuntime JSRuntime;
+        @inject ISnackbar Snackbar;
+        @inject NavigationManager NavigationManager;
+        @inject ISessionStorageService sessionStorage;
+        @inject CRUD crud;
+        @inject PurchaseRequisition purchase;
+        @inject PR_Items pritem;
+        @inject Connection con;
+        @layout AdminLayout;
 
 
 @if (isLoading)
@@ -27,7 +28,7 @@
     <div class="row p-3 align-items-center">
         <div class="col-6">
             <h3>
-                Create Purchase Requisition
+                @header
                 @if (status == "Save" && !IsDraft)
                 {
                     <MudChip Color="Color.Warning">Not Saved</MudChip>
@@ -41,11 +42,12 @@
                     <MudChip Color="Color.Success">Submitted</MudChip>
                 }
             </h3>
+
         </div>
         <div class="col-6 d-flex justify-content-end">
             @if (!IsApproved)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
                     @GetSubmitButtonText()
                 </button>
             }
@@ -56,13 +58,14 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPR">
+
                 <label class="form-label">Purchase Requisition Number</label>
                 <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-control" @bind="purchase.PRname" readonly="@IsApproved">
-            </div>
+            @*   <div class="col-md-6">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-control" @bind="purchase.PRname" readonly="@IsApproved">
+        </div> *@
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
                 <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
@@ -150,19 +153,21 @@
                 if (PRNumber != null)
                 {
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
-                    if (purchase == null)
-                    {
-                        NavigationManager.NavigateTo("/PurchaseRequisition/");
-                    }
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                    if (Items.Count > 0)
+                    if (purchase == null || Items.Count == 0)
+                        NavigationManager.NavigateTo("/PurchaseRequisition/");
+
+                    DisplayPR = false;
+                    header = purchase.PRname;
+                    if (purchase.Status == "Approved")
                     {
-                        if (purchase.Status == "Approved")
-                        {
-                            IsApproved = true;
-                            DisplayPR = false;
-                        }
+                        IsApproved = true;
                     }
+                    else if (purchase.Status == "Draft")
+                    {
+                        IsDraft = true;
+                    }
+
                 }
             }
 
@@ -199,6 +204,7 @@
     public string PRNumber { get; set; }
 
     private bool DisplayPR = true;
+    private string header = "Create Purchase Request";
     public string PurchaseRequisitionNumber { get; set; }
     private DateTime DocumentDate { get; set; } = DateTime.Now;
     private string Vendor { get; set; }
@@ -254,13 +260,31 @@
                         purchase.PRNumber = purchase.PRNumber + "-" + "001";
                     }
                 }
-                if (IsDraft)
+
+                StringBuilder titleBuilder = new StringBuilder("Purhcase Request for ");
+
+                foreach (var data in Items)
+                {
+                    titleBuilder.Append(data.Item);
+                    titleBuilder.Append(", ");
+                }
+
+                if (Items.Count > 0)
+                {
+                    // Remove the trailing comma and add a period
+                    titleBuilder.Length -= 2; // Subtract 2 to remove the last comma and space
+                    titleBuilder.Append(".");
+                }
+
+                purchase.PRname = titleBuilder.ToString();
+                header = titleBuilder.ToString();
+                if (status == "Save")
                 {
                     purchase.Status = "Draft";
                 }
-                else if (IsApproved)
+                else if (status == "Submit")
                 {
-                    purchase.Status = "Approved";
+                    purchase.Status = "Submitted";
                 }
                 crud.CRD(purchase, "CreatePurchaseRequest");
                 foreach (var PR in Items)
@@ -284,6 +308,7 @@
                     // }
                     DisplayPR = false;
                     crud.CRD(PR, "PurhcaseRequestItems");
+                    NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PRNumber}", forceLoad: true);
                 }
                 foreach (var del in IsDelete)
                 {
@@ -292,6 +317,7 @@
                     pritem.RequiredBy = DateTime.Now.Date;
                     crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
                 }
+                ToggleApproval();
                 if (IsDraft)
                 {
                     return "Purchase Request Saved Successfully";
@@ -320,8 +346,6 @@
         // { return "Please Enter Purchase Request Number"; }
         if (purchase.DocumentDate == null)
         { return "Please Enter Document Date"; }
-        else if (string.IsNullOrWhiteSpace(purchase.PRname))
-        { return "Please Enter Title"; }
         else if (Items.Count > 0)
         {
             foreach (var PR in Items)
@@ -340,7 +364,7 @@
         else
         { return null; }
     }
-    public void Shownotification()
+    public void SavePR()
     {
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
@@ -385,12 +409,10 @@
             IsDraft = false;
             IsApproved = true;
             IsSaving = false;
-            Shownotification();
         }
         else if (!IsSaving)
         {
             IsDraft = true;
-            Shownotification();
         }
     }
 
