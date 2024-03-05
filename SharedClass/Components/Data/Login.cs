@@ -8,7 +8,7 @@ namespace SharedClass.Components.Data
         private SqlCommand? cmd;
         private SqlDataReader? dr;
         protected bool Authorized { get; set; }
-        //public required string AuthUser { get; set; }
+
         public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime)
         {
             try
@@ -25,10 +25,7 @@ namespace SharedClass.Components.Data
                         {
                             if (dr.Read())
                             {
-                                // Read the "Authorized" column value
                                 Authorized = dr.GetBoolean(dr.GetOrdinal("Authorized"));
-                                //AuthUser = Username;
-
                                 UpdateAuthorizationStatus(con, Username, true);
                                 return true;
                             }
@@ -51,7 +48,7 @@ namespace SharedClass.Components.Data
             }
         }
 
-        private void UpdateAuthorizationStatus(SqlConnection con, string username, bool isAuthorized)
+        private static void UpdateAuthorizationStatus(SqlConnection con, string username, bool isAuthorized)
         {
             con.Close();
             con.Open();
@@ -63,6 +60,7 @@ namespace SharedClass.Components.Data
             }
             con.Close();
         }
+
         public void LogOut(string AuthUser)
         {
             using SqlConnection conn = GetSqlConnection();
