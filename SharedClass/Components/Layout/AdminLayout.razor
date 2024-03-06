@@ -104,7 +104,6 @@
         await JSRuntime.InvokeAsync<string>("ExpireCookie");
         login.LogOut(User);
         Snackbar.Clear();
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Logged Out", Severity.Error);
         navigationManager.NavigateTo("/");
     }

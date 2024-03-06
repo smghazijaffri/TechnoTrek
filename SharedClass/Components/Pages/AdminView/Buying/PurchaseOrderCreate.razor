@@ -1,173 +1,90 @@
-﻿@page "/purchaseorder/create"
-@using System.Reflection;
-@using Blazored.SessionStorage
-@using SharedClass.Components.Data
+﻿@page "/purchaseorder/new-purchase-order"
+@page "/purchaseorder/{PONumber?}"
+
 @using SharedClass.Components.Layout
-@using System.Globalization
 @using SharedClass.Components.Model
-@inject Insert insert;
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using Blazored.SessionStorage
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
 @inject Select select;
-@inject IJSRuntime JSRuntime;
+@inject Connection con;
 @inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject PurchaseOrders purchase;
+@inject PurchaseOrderItems POItem;
 @inject NavigationManager NavigationManager;
 @inject ISessionStorageService sessionStorage;
-@inject CRUD crud;
-@inject PurchaseOrders purchaseorders;
-@layout AdminLayout;
 
 @if (isLoading)
 {
     <div class="row p-3 align-items-center">
         <div class="col-6">
             <h3>
-                New Purchase Order
+                @Header
                 @if (status == "Save" && !IsDraft)
                 {
-                    <MudChip Color="Color.Warning">Not Saved</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsDraft)
                 {
-                    <MudChip Color="Color.Error">Draft</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Color="Color.Success">Submitted</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
                 }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
             @if (!IsApproved)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
-                    @GetSubmitButtonText()
-                </button>
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">@GetSubmitButtonText()</button>
             }
         </div>
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6" hidden="@DisplayPR">
-                <label class="form-label">Purchase Order Number</label>
-                <input type="text" class="form-control" @bind="PurchaseOrderNumber" readonly>
+            <div class="col-md-6" hidden="@DisplayPO">
+                <label class="form-label">PurchaseORequisition Number</label>
+                <input type="text" class="form-control" @bind="purchase.PONumber" readonly>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Creation Date</label>
-                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" @bind="CreationDate" class="form-control" readonly>
+                <label class="form-label">Date</label>
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
-                <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
-            </div>
-        </form>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
-                <label class="form-label">Supplier Address</label>
-                <input type="text" class="form-control" @bind="supplierAddress" readonly="@IsApproved">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Supplier Contact</label>
-                <input type="text" @bind="supplierContact" class="form-control" readonly="@IsApproved">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Company Shipping Address</label>
-                <input type="text" class="form-control" @bind="companyShippingAddress" readonly="@IsApproved">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Company Billing Address</label>
-                <input type="text" class="form-control" @bind="companyBillingAddress" readonly="@IsApproved">
-            </div>
-        </form>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
-            <table class="table table-bordered border-primary">
-                <thead>
-                    <tr>
-                        <th class="col col-auto" style="width: 50px;">
-                            No.
-                        </th>
-                        <th class="col col-auto">
-                            Item
-                        </th>
-                        <th class="col col-auto" style="width: 70px;">
-                            Quantity
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            UOM
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            Rate
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            Amount
-                        </th>
-                        <th class="col col-auto" style="width: 150px;">
-                            Required By
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    @for (int index = 0; index < Items.Count; index++)
-                    {
-                        var item = Items[index];
-                        item.RowID = index + 1;
-                        Amount = (item.Rate * item.Quantity);
-                        <tr>
-                            <td>
-                                <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
-                                    @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
-                                </div>
-                            </td>
-                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
-                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
-                            <td>
-                                <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
-                                <datalist id="uomOptions">
-                                    <option value="Piece"></option>
-                                    <option value="Each"></option>
-                                    <option value="Box"></option>
-                                </datalist>
-                            </td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly="@IsApproved" /></td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="Amount" readonly="@IsApproved" /></td>
-                            <td>
-                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </form>
-        <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
-        </div>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
-                <label class="form-label">Total Quantity</label>
-                <input type="text" class="form-control" @bind="totalQuantity" readonly="@IsApproved">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Total Amount</label>
-                <input type="text" class="form-control" @bind="totalPrice" readonly="@IsApproved">
+                <input type="text" @bind="purchase.Vendor" class="form-control" readonly="@IsApproved">
             </div>
         </form>
     </div>
 }
 
 @code {
+    [Parameter]
+    public string? PONumber { get; set; }
+
+    private string? status;
     bool isLoading = false;
+    private bool DisplayPO = true;
+    List<int> IsDelete = new List<int>();
     public bool isAuthorized { get; set; }
+    private bool IsDraft { get; set; } = false;
+    private bool IsSaving { get; set; } = false;
+    private string Header = "New Purchase Order";
+    private bool IsApproved { get; set; } = false;
+    private bool IsRejected { get; set; } = false;
+    private bool IsSubmitted { get; set; } = false;
+    private List<PurchaseOrderItems> Items = new List<PurchaseOrderItems>();
+
     protected override async void OnInitialized()
     {
         var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
@@ -175,18 +92,7 @@
         if (isAuthorized)
         {
             isLoading = true;
-            Items = select.PurhcaseOrderNumber(purchaseorders.PONumber);
-            if (Items.Count > 0)
-            {
-                PurchaseOrderNumber = Items[0].PONumber;
-                Vendor = Items[0].Vendor;
-                CreationDate = Items[0].CreationDate;
-                if (Items[0].Status == "Approved")
-                {
-                    IsApproved = true;
-                    DisplayPR = false;
-                }
-            }
+            purchase.DocumentDate = DateTime.Now;
             StateHasChanged();
         }
         else
@@ -194,137 +100,170 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();
     }
-    private bool DisplayPR = true;
-    private string status;
-    private string Vendor { get; set; }
-    List<int> IsDelete = new List<int>();
-    private bool IsDraft { get; set; } = false;
-    private bool IsSaving { get; set; } = false;
-    private bool IsApproved { get; set; } = false;
-    private string PurchaseOrderNumber { get; set; }
-    private string supplierAddress { get; set; }
-    private string supplierContact { get; set; }
-    private string companyShippingAddress { get; set; }
-    private string companyBillingAddress { get; set; }
-    private int totalQuantity { get; set; }
-    private int totalPrice { get; set; }
-    private int rate { get; set; }
-    private int Amount { get; set; }
-    private List<PurchaseOrders> Items = new List<PurchaseOrders>();
-    private DateTime CreationDate { get; set; } = DateTime.Now;
 
     public string createPurchase()
     {
         try
         {
-            if (!string.IsNullOrEmpty(Vendor))
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                var CountPR = select.PurhcaseOrderNumber(PurchaseOrderNumber);
-                if (CountPR.Count == 0)
+                string validate = ValidatePO();
+                if (validate != null)
                 {
-                    PurchaseOrderNumber = "PO";
-                    var CountNo = "";
-                    int data = select.CountPOnumber();
-                    if (data != 0)
-                    {
-                        data += 1;
-                        var itr = data.ToString();
-                        var itNum = itr.Length;
-                        if (itNum == 1)
-                        {
-                            CountNo += "00" + itr;
-                            PurchaseOrderNumber = PurchaseOrderNumber + "-" + CountNo;
-                        }
-                        else if (itNum == 2)
-                        {
-                            CountNo += "0" + itr;
-                            PurchaseOrderNumber = PurchaseOrderNumber + "-" + CountNo;
-                        }
-                        else
-                        {
-                            PurchaseOrderNumber = PurchaseOrderNumber + "-" + itr;
-                        }
-
-                    }
-                    else
-                    {
-                        PurchaseOrderNumber = PurchaseOrderNumber + "-" + "001";
-                    }
+                    return validate;
                 }
-                foreach (var PR in Items)
+                // int CountPO = db.QueryFirstOrDefault<int>("select count(1) from PurchaseOrder where PONumber = @POnumber", new { PONumber = purchase.PONumber });
+                // if (CountPO == 0)
+                // {
+                    purchase.PONumber = "PO-001";
+                    // var CountNo = "";
+                    // int data = select.CountPOnumber();
+                    // if (data != 0)
+                    // {
+                    //     data += 1;
+                    //     var itr = data.ToString();
+                    //     var itNum = itr.Length;
+                    //     if (itNum == 1)
+                    //     {
+                    //         CountNo += "00" + itr;
+                    //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
+                    //     }
+                    //     else if (itNum == 2)
+                    //     {
+                    //         CountNo += "0" + itr;
+                    //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
+                    //     }
+                    //     else
+                    //     {
+                    //         purchase.PONumber = purchase.PONumber + "-" + itr;
+                    //     }
+                    // }
+                    // else
+                    // {
+                    //     purchase.PONumber = purchase.PONumber + "-" + "001";
+                    // }
+                // }
+
+                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
+
+                foreach (var data in Items)
+                {
+                    titleBuilder.Append(data.Item);
+                    titleBuilder.Append(", ");
+                }
+
+                if (Items.Count > 0)
+                {
+                    titleBuilder.Length -= 2;
+                    titleBuilder.Append("...");
+                }
+
+                purchase.POName = titleBuilder.ToString();
+                Header = titleBuilder.ToString();
+
+                if (status == "Save")
+                {
+                    purchase.Status = "Draft";
+                }
+
+                else if (status == "Submit")
+                {
+                    purchase.Status = "Submitted";
+                }
+
+                // crud.CRD(purchase, "CreatePurchaseRequest");
+
+                foreach (var PO in Items)
                 {
                     foreach (int del in IsDelete)
                     {
-                        if (PR.RowID == del)
+                        if (PO.RowID == del)
                         {
                             IsDelete.Remove(del);
                         }
                     }
-                    PR.PONumber = PurchaseOrderNumber;
-                    PR.Vendor = Vendor;
-                    if (IsDraft)
-                    {
-                        PR.Status = "Draft";
-                    }
-                    if (IsApproved)
-                    {
-                        PR.Status = "Approved";
-                    }
-                    DisplayPR = false;
-                    crud.CRD(PR, "CreatePurchaseOrder");
-
+                    PO.PONumber = purchase.PONumber;
+                    DisplayPO = false;
+                    // crud.CRD(PO, "PurhcaseRequestItems");
+                    // NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PONumber}", forceLoad: true);
                 }
+
                 foreach (var del in IsDelete)
                 {
-                    purchaseorders.PONumber = PurchaseOrderNumber;
-                    purchaseorders.RowID = del;
-                    purchaseorders.RequiredBy = DateTime.Now;
-                    crud.CRD(purchaseorders, "CreatePurchaseOrder", System.Data.CommandType.StoredProcedure, true);
+                    // pritem.PRNumber = PurchaseRequisitionNumber;
+                    POItem.RowID = del;
+                    POItem.RequiredBy = DateOnly.Parse((DateTime.Today).ToString());
+                    // crud.CRD(purchase, "CreatePurchaseOrder", System.Data.CommandType.StoredProcedure, true);
                 }
+
+                ToggleApproval();
+
                 if (IsDraft)
                 {
-                    return "Purchase Order Saved Successfully";
+                    return "Purchase Request Saved Successfully";
                 }
+
                 else if (IsApproved)
                 {
-                    return "Purchase Order Submitted Successfully";
+                    return "Purchase Request Submitted Successfully";
                 }
+
                 else
                 {
-                    return null;
+                    IsDraft = false;
+                    return "Error in saving request";
                 }
-            }
-            else
-            {
-                IsDraft = false;
-                return "Error in saving request";
+
+                return null;
             }
         }
-
         catch (Exception ex)
         {
-            return ex.ToString();
+            return ex.Message;
         }
     }
 
-    public void Shownotification()
+    public string ValidatePO()
+    {
+        if (purchase.DocumentDate == null) return $"Please Enter Document Date";
+
+        else if (purchase.Vendor == null) return $"Please Select a Vendor";
+
+        else if (Items.Count > 0)
+        {
+            foreach (var PO in Items)
+            {
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please Enter Item on No. { PO.RowID}";
+
+                else if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on No. { PO.RowID}";
+
+                else if (PO.Quantity == 0) return $"Please Enter Quantity on No. { PO.RowID}";
+
+                else if (PO.RequiredBy == null) return $"Please Enter Required By date on Row No. { PO.RowID}"; 
+            }
+            return null;
+        }
+
+        else return null;
+    }
+
+    public void SavePO()
     {
         string notification = createPurchase();
+
         if (notification.Contains("Successfully"))
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Success);
         }
+
         else
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Error);
         }
     }
@@ -336,11 +275,13 @@
             status = "Submitted";
             return "Submitted";
         }
+
         else if (IsDraft)
         {
             status = "Submit";
             return "Submit";
         }
+
         else
         {
             status = "Save";
@@ -355,12 +296,11 @@
             IsDraft = false;
             IsApproved = true;
             IsSaving = false;
-            Shownotification();
         }
+
         else if (!IsSaving)
         {
             IsDraft = true;
-            Shownotification();
         }
     }
 
@@ -373,16 +313,15 @@
 
     private void AddRow()
     {
-        Items.Add(new PurchaseOrders
+        Items.Add(new PurchaseOrderItems
             {
-                RequiredBy = DateTime.Now,
+                RequiredBy = DateOnly.Parse((DateTime.Today).ToString()),
                 Quantity = 1
             });
     }
 
     private void DeleteRow(int index)
     {
-
         for (int i = Items.Count - 1; i >= 0; i--)
         {
             if (Items[i].Selected)
@@ -395,21 +334,12 @@
 
     private void HandleFormInput()
     {
-        totalQuantity = Items.Sum(item => item.Quantity);
-        totalPrice = Items.Sum(item => item.Rate * item.Quantity);
-        StateHasChanged();
-
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
-        Snackbar.Add(totalQuantity.ToString(), Severity.Info);
-        Snackbar.Add(totalPrice.ToString(), Severity.Info);
-
         if (IsDraft)
         {
-            // Update MudChip and Save button text when any field is edited
             status = "Not Saved";
             IsDraft = false;
             GetSubmitButtonText();
+            StateHasChanged();
         }
-        StateHasChanged();
     }
 }

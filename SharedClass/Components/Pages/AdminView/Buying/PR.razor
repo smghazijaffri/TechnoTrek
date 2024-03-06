@@ -67,7 +67,6 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();
@@ -92,7 +91,6 @@
     {
         _selectedItemText = $"{args.Item.PRNumber} ({args.Item.PRNumber})";
         purchaserequisition.PRNumber = args.Item.PRNumber;
-        // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         // Snackbar.Add(PurchaseRequisition.PRNumber.ToString(), Severity.Error);
         // Snackbar.Add(args.Item.PRNumber.ToString(), Severity.Error);
         NavigationManager.NavigateTo($"/PurchaseRequisition/{purchaserequisition.PRNumber}");

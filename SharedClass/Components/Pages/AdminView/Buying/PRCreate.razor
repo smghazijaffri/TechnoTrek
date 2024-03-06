@@ -1,25 +1,27 @@
-﻿@page "/purchaserequisition/{PRNumber?}"
-@page "/purchaserequisition/new-purchase-request"
-@using System.Reflection;
-@using Blazored.SessionStorage
-@using Dapper
-@using SharedClass.Components.Data
+﻿@page "/purchaserequisition/new-purchase-request"
+@page "/purchaserequisition/{PRNumber?}"
+
 @using SharedClass.Components.Layout
-@using System.Globalization
 @using SharedClass.Components.Model
+@using SharedClass.Components.Data
 @using Microsoft.Data.SqlClient
+@using Blazored.SessionStorage
+@using System.Globalization
+@using Blzr.BootstrapSelect
+@using System.Reflection
 @using System.Text
-@inject Insert insert;
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
 @inject Select select;
-@inject IJSRuntime JSRuntime;
+@inject Connection con;
+@inject PR_Items pritem;
 @inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject PurchaseRequisition purchase;
 @inject NavigationManager NavigationManager;
 @inject ISessionStorageService sessionStorage;
-@inject CRUD crud;
-@inject PurchaseRequisition purchase;
-@inject PR_Items pritem;
-@inject Connection con;
-@layout AdminLayout;
 
 @if (isLoading)
 {
@@ -29,15 +31,15 @@
                 @header
                 @if (status == "Save" && !IsDraft)
                 {
-                    <MudChip Color="Color.Warning">Not Saved</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsDraft)
                 {
-                    <MudChip Color="Color.Error">Draft</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Color="Color.Success">Submitted</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
                 }
             </h3>
         </div>
@@ -54,7 +56,6 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPR">
-
                 <label class="form-label">Purchase Requisition Number</label>
                 <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
             </div>
@@ -102,6 +103,11 @@
                                 </div>
                             </td>
                             <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
+                            @* <td readonly="@IsApproved">
+                                <BootstrapSelect TItem="Country" Data="@countries" TextField="@((items) => items.Name)" @bind-Value="selectedOption" Width="100%"
+                                                 ValueField="@((items) => items.Id.ToString())" TType="string" PlaceholderText="Select Item"
+                                                 ButtonStyle="ButtonStyles.Default" />
+                            </td> *@
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -125,10 +131,64 @@
     </div>
 }
 
-@code {
-    bool isLoading = false;
+<script>
+    window.initializeAwesomplete = function (elementId) {
+        var inputElement = document.getElementById(elementId);
 
+        if (inputElement) {
+            var listId = "awesomplete_list_" + elementId.split("_")[1];
+            var listElement = document.getElementById(listId);
+
+            if (listElement) {
+                new Awesomplete(inputElement, { list: listElement });
+            }
+        }
+    };
+</script>
+
+@code {
+    [Parameter]
+    public string? PRNumber { get; set; }
+
+    private IList<Country> countries;
+
+    private string searchInput = "";
+    private List<string> options = new List<string> { "Option 1", "Option 2", "Option 3", "Option 4", "Option 5" };
+    private List<string> filteredOptions = new List<string>();
+
+    private void UpdateList()
+    {
+        filteredOptions = options.Where(option => option.ToLower().Contains(searchInput.ToLower())).ToList();
+    }
+
+    private void SetSelectedOption(string option)
+    {
+        searchInput = option;
+        filteredOptions.Clear(); // Clear the filtered options
+    }
+
+    private string? status;
+    bool isLoading = false;
+    private string selectedOption;
+    private bool DisplayPR = true;
+    List<int> IsDelete = new List<int>();
     public bool isAuthorized { get; set; }
+    private bool IsDraft { get; set; } = false;
+    private bool IsSaving { get; set; } = false;
+    private bool IsApproved { get; set; } = false;
+    private bool IsRejected { get; set; } = false;
+    private bool IsSubmitted { get; set; } = false;
+    private string header = "Create Purchase Request";
+    private List<PR_Items> Items = new List<PR_Items>();
+    // public string PurchaseRequisitionNumber { get; set; }
+    // private DateTime DocumentDate { get; set; } = DateTime.Now;
+
+    public class Country
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+    }
 
     protected override async void OnInitialized()
     {
@@ -139,13 +199,22 @@
             isLoading = true;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
+                countries = new List<Country> {
+                    new Country { Id = 1, Name = "United Kingdom" },
+                    new Country { Id = 2, Name = "United States" },
+                    new Country { Id = 3, Name = "Germany" },
+                    new Country { Id = 4, Name = "France" },
+                    new Country { Id = 5, Name = "China" },
+                    new Country { Id = 0, Name = "Create New Item" } // Add this line
+                };
+
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     if (purchase == null || Items.Count == 0)
-                        NavigationManager.NavigateTo("/PurchaseRequisition/");
+                        NavigationManager.NavigateTo("/purchaserequisition/");
 
                     DisplayPR = false;
                     header = purchase.PRname;
@@ -166,26 +235,10 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();
     }
-
-    [Parameter]
-    public string PRNumber { get; set; }
-
-    private bool DisplayPR = true;
-    private string header = "Create Purchase Request";
-    public string PurchaseRequisitionNumber { get; set; }
-    private DateTime DocumentDate { get; set; } = DateTime.Now;
-    private string Vendor { get; set; }
-    private bool IsApproved { get; set; } = false;
-    private string status;
-    private bool IsDraft { get; set; } = false;
-    private bool IsSaving { get; set; } = false;
-    private List<PR_Items> Items = new List<PR_Items>();
-    List<int> IsDelete = new List<int>();
 
     public string createPurchase()
     {
@@ -276,7 +329,7 @@
 
                 foreach (var del in IsDelete)
                 {
-                    pritem.PRNumber = PurchaseRequisitionNumber;
+                    // pritem.PRNumber = PurchaseRequisitionNumber;
                     pritem.RowID = del;
                     pritem.RequiredBy = DateTime.Now.Date;
                     crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
@@ -336,13 +389,11 @@
         if (notification.Contains("Successfully"))
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Success);
         }
         else
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Error);
         }
     }
@@ -416,6 +467,16 @@
             IsDraft = false;
             GetSubmitButtonText();
             StateHasChanged();
+        }
+    }
+
+    private void HandleSelectionChange(ChangeEventArgs e)
+    {
+        selectedOption = e.Value?.ToString();
+
+        if (selectedOption == "0") // Check if the selected option is "Create New Item"
+        {
+            JSRuntime.InvokeVoidAsync("open", "/dashboard", "_blank"); ; // Change "/create-new-item" to your desired URL
         }
     }
 }

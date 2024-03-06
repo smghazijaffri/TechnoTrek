@@ -8,20 +8,20 @@ namespace SharedClass.Components.Model
 {
     public class PurchaseRequisition : BaseRecord
     {
-
         public string PRNumber { get; set; }
         public string PRname { get; set; }
         public string Status { get; set; }
         public DateTime? DocumentDate { get; set; }
     }
+
     public class PR_Items : BaseRecord
     {
-        public bool Selected { get; set; }
-        public string PRNumber { get; set; }
+        public int RowID { get; set; }
+        public string UOM { get; set; }
         public string Item { get; set; }
         public int Quantity { get; set; }
-        public string UOM { get; set; }
+        public bool Selected { get; set; }
+        public string PRNumber { get; set; }
         public DateTime? RequiredBy { get; set; }
-        public int RowID { get; set; }
     }
 }

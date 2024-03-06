@@ -107,8 +107,7 @@ namespace SharedClass.Components.Data
 
         public int CountPOnumber()
         {
-            con.Close();
-            con.Open();
+            con.Close(); con.Open();
             return con.QueryFirstOrDefault<int>("Select COUNT(1)POnumber from PurchaseOrder");
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Blazored.LocalStorage;
 using Blazored.SessionStorage;
+using Blzr.BootstrapSelect;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
@@ -39,7 +40,7 @@ namespace MauiMobileApp
             builder.Services.AddMudServices();
             builder.Services.AddMudServices(config =>
             {
-                config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;
 
                 config.SnackbarConfiguration.PreventDuplicates = false;
                 config.SnackbarConfiguration.NewestOnTop = false;
@@ -50,7 +51,8 @@ namespace MauiMobileApp
                 config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
             });
             builder.Services.AddBlazoredSessionStorage();
-            builder.Services.AddBlazoredSessionStorage(config => {
+            builder.Services.AddBlazoredSessionStorage(config =>
+            {
                 config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
                 config.JsonSerializerOptions.IgnoreNullValues = true;
                 config.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
@@ -58,8 +60,22 @@ namespace MauiMobileApp
                 config.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 config.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
                 config.JsonSerializerOptions.WriteIndented = false;
-                }
+            }
             );
+
+            builder.Services.AddBootstrapSelect();
+            builder.Services.AddBootstrapSelect(defaults =>
+            {
+                defaults.ShowSearch = true;
+                defaults.SearchPlaceholderText = "Search";
+                defaults.SearchNotFoundText = "Can't find any";
+                defaults.DelayValueChangedCallUntilClose = true;
+                defaults.SelectedTextFormat = SelectedTextFormats.CountGreaterThan;
+                defaults.SelectedTextFormatCount = 2;
+                defaults.ShowPlaceholder = false;
+                defaults.SearchStyle = SearchStyles.Contains;
+            });
+
             builder.Services.AddBlazoredLocalStorage();   // local storage
             builder.Services.AddBlazoredLocalStorage(config =>
                 config.JsonSerializerOptions.WriteIndented = true);  // local storage

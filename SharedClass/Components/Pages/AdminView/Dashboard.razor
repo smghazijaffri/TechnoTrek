@@ -56,7 +56,6 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();

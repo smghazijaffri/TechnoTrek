@@ -164,6 +164,7 @@
   <ItemGroup>
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
+    <PackageReference Include="Blzr.BootstrapSelect" Version="0.3.0" />
     <PackageReference Include="Dapper" Version="2.1.28" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
@@ -173,7 +174,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MudBlazor" Version="6.16.0" />
+    <PackageReference Include="MudBlazor" Version="6.17.0" />
   </ItemGroup>
 
 </Project>

@@ -99,7 +99,6 @@
         CloseQuickView();
         await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
         Snackbar.Clear();
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Cancelled", Severity.Error);
     }
 }

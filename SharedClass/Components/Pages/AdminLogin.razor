@@ -40,7 +40,6 @@
 
     private async void Pagelogin()
     {
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         IsLoginSuccessful = await login.Access(Username, Password, JSRuntime);
         if (IsLoginSuccessful)
         {
