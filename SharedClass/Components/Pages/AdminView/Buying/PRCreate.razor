@@ -102,12 +102,16 @@
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
-                            @* <td readonly="@IsApproved">
-                                <BootstrapSelect TItem="Country" Data="@countries" TextField="@((items) => items.Name)" @bind-Value="selectedOption" Width="100%"
-                                                 ValueField="@((items) => items.Id.ToString())" TType="string" PlaceholderText="Select Item"
-                                                 ButtonStyle="ButtonStyles.Default" />
-                            </td> *@
+                            <td>
+                                <select class="form-select" id="single-select-field" data-placeholder="Choose one thing" @onclick="Select2" @bind="item.Item" readonly="@IsApproved">
+                                    <option></option>
+                                    <option>Reactive</option>
+                                    <option>Solution</option>
+                                    <option>Conglomeration</option>
+                                    <option>Algoritm</option>
+                                    <option>Holistic</option>
+                                </select>
+                            </td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -131,40 +135,32 @@
     </div>
 }
 
-<script>
-    window.initializeAwesomplete = function (elementId) {
-        var inputElement = document.getElementById(elementId);
-
-        if (inputElement) {
-            var listId = "awesomplete_list_" + elementId.split("_")[1];
-            var listElement = document.getElementById(listId);
-
-            if (listElement) {
-                new Awesomplete(inputElement, { list: listElement });
-            }
-        }
-    };
+<script defer>
+    async function initSelect2() {
+        await new Promise(resolve => setTimeout(resolve, 0));  // Ensure the component is fully rendered
+        $('#single-select-field').select2({
+            theme: "bootstrap-5",
+            width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ? '100%' : 'style',
+            placeholder: $(this).data('placeholder'),
+        });
+    }
 </script>
 
 @code {
     [Parameter]
     public string? PRNumber { get; set; }
 
-    private IList<Country> countries;
-
-    private string searchInput = "";
-    private List<string> options = new List<string> { "Option 1", "Option 2", "Option 3", "Option 4", "Option 5" };
-    private List<string> filteredOptions = new List<string>();
-
-    private void UpdateList()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        filteredOptions = options.Where(option => option.ToLower().Contains(searchInput.ToLower())).ToList();
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initSelect2");
+        }
     }
 
-    private void SetSelectedOption(string option)
+    private async void Select2()
     {
-        searchInput = option;
-        filteredOptions.Clear(); // Clear the filtered options
+        await JSRuntime.InvokeVoidAsync("initSelect2");
     }
 
     private string? status;
@@ -199,15 +195,6 @@
             isLoading = true;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                countries = new List<Country> {
-                    new Country { Id = 1, Name = "United Kingdom" },
-                    new Country { Id = 2, Name = "United States" },
-                    new Country { Id = 3, Name = "Germany" },
-                    new Country { Id = 4, Name = "France" },
-                    new Country { Id = 5, Name = "China" },
-                    new Country { Id = 0, Name = "Create New Item" } // Add this line
-                };
-
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
@@ -228,6 +215,7 @@
                     }
                 }
             }
+            await JSRuntime.InvokeVoidAsync("initSelect2");
             StateHasChanged();
         }
         else
