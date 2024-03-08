@@ -7,7 +7,6 @@
 @using Microsoft.Data.SqlClient
 @using Blazored.SessionStorage
 @using System.Globalization
-@using Blzr.BootstrapSelect
 @using System.Reflection
 @using System.Text
 @using Dapper
@@ -102,16 +101,8 @@
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            <td>
-                                <select class="form-select" id="single-select-field" data-placeholder="Choose one thing" @onclick="Select2" @bind="item.Item" readonly="@IsApproved">
-                                    <option></option>
-                                    <option>Reactive</option>
-                                    <option>Solution</option>
-                                    <option>Conglomeration</option>
-                                    <option>Algoritm</option>
-                                    <option>Holistic</option>
-                                </select>
-                            </td>
+                            @* <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td> *@
+                            <td> <Select2 IsApproved="@IsApproved" Items="@item.Item"/> </td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -135,39 +126,13 @@
     </div>
 }
 
-<script defer>
-    async function initSelect2() {
-        await new Promise(resolve => setTimeout(resolve, 0));  // Ensure the component is fully rendered
-        $('#single-select-field').select2({
-            theme: "bootstrap-5",
-            width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ? '100%' : 'style',
-            placeholder: $(this).data('placeholder'),
-        });
-    }
-</script>
-
 @code {
-    [Parameter]
-    public string? PRNumber { get; set; }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("initSelect2");
-        }
-    }
-
-    private async void Select2()
-    {
-        await JSRuntime.InvokeVoidAsync("initSelect2");
-    }
-
     private string? status;
     bool isLoading = false;
-    private string selectedOption;
     private bool DisplayPR = true;
     List<int> IsDelete = new List<int>();
+    [Parameter]
+    public string? PRNumber { get; set; }
     public bool isAuthorized { get; set; }
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
@@ -178,13 +143,6 @@
     private List<PR_Items> Items = new List<PR_Items>();
     // public string PurchaseRequisitionNumber { get; set; }
     // private DateTime DocumentDate { get; set; } = DateTime.Now;
-
-    public class Country
-    {
-        public int Id { get; set; }
-
-        public string Name { get; set; }
-    }
 
     protected override async void OnInitialized()
     {
@@ -213,9 +171,13 @@
                     {
                         IsDraft = true;
                     }
+                    await JSRuntime.InvokeVoidAsync("console.log", Items);
+                }
+                else
+                {
+                    AddRow();
                 }
             }
-            await JSRuntime.InvokeVoidAsync("initSelect2");
             StateHasChanged();
         }
         else
@@ -225,6 +187,7 @@
             Snackbar.Clear();
             Snackbar.Add("Not Authorized", Severity.Error);
         }
+
         base.OnInitialized();
     }
 
@@ -455,16 +418,6 @@
             IsDraft = false;
             GetSubmitButtonText();
             StateHasChanged();
-        }
-    }
-
-    private void HandleSelectionChange(ChangeEventArgs e)
-    {
-        selectedOption = e.Value?.ToString();
-
-        if (selectedOption == "0") // Check if the selected option is "Create New Item"
-        {
-            JSRuntime.InvokeVoidAsync("open", "/dashboard", "_blank"); ; // Change "/create-new-item" to your desired URL
         }
     }
 }
