@@ -1,6 +1,5 @@
 ﻿using Blazored.LocalStorage;
 using Blazored.SessionStorage;
-using Blzr.BootstrapSelect;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
@@ -62,19 +61,6 @@ namespace MauiMobileApp
                 config.JsonSerializerOptions.WriteIndented = false;
             }
             );
-
-            builder.Services.AddBootstrapSelect();
-            builder.Services.AddBootstrapSelect(defaults =>
-            {
-                defaults.ShowSearch = true;
-                defaults.SearchPlaceholderText = "Search";
-                defaults.SearchNotFoundText = "Can't find any";
-                defaults.DelayValueChangedCallUntilClose = true;
-                defaults.SelectedTextFormat = SelectedTextFormats.CountGreaterThan;
-                defaults.SelectedTextFormatCount = 2;
-                defaults.ShowPlaceholder = false;
-                defaults.SearchStyle = SearchStyles.Contains;
-            });
 
             builder.Services.AddBlazoredLocalStorage();   // local storage
             builder.Services.AddBlazoredLocalStorage(config =>

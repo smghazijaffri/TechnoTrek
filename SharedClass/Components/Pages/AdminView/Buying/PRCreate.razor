@@ -7,7 +7,6 @@
 @using Microsoft.Data.SqlClient
 @using Blazored.SessionStorage
 @using System.Globalization
-@using Blzr.BootstrapSelect
 @using System.Reflection
 @using System.Text
 @using Dapper
@@ -102,12 +101,8 @@
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
-                            @* <td readonly="@IsApproved">
-                                <BootstrapSelect TItem="Country" Data="@countries" TextField="@((items) => items.Name)" @bind-Value="selectedOption" Width="100%"
-                                                 ValueField="@((items) => items.Id.ToString())" TType="string" PlaceholderText="Select Item"
-                                                 ButtonStyle="ButtonStyles.Default" />
-                            </td> *@
+                            @* <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td> *@
+                            <td> <Select2 IsApproved="@IsApproved" Items="@item.Item"/> </td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -131,47 +126,13 @@
     </div>
 }
 
-<script>
-    window.initializeAwesomplete = function (elementId) {
-        var inputElement = document.getElementById(elementId);
-
-        if (inputElement) {
-            var listId = "awesomplete_list_" + elementId.split("_")[1];
-            var listElement = document.getElementById(listId);
-
-            if (listElement) {
-                new Awesomplete(inputElement, { list: listElement });
-            }
-        }
-    };
-</script>
-
 @code {
-    [Parameter]
-    public string? PRNumber { get; set; }
-
-    private IList<Country> countries;
-
-    private string searchInput = "";
-    private List<string> options = new List<string> { "Option 1", "Option 2", "Option 3", "Option 4", "Option 5" };
-    private List<string> filteredOptions = new List<string>();
-
-    private void UpdateList()
-    {
-        filteredOptions = options.Where(option => option.ToLower().Contains(searchInput.ToLower())).ToList();
-    }
-
-    private void SetSelectedOption(string option)
-    {
-        searchInput = option;
-        filteredOptions.Clear(); // Clear the filtered options
-    }
-
     private string? status;
     bool isLoading = false;
-    private string selectedOption;
     private bool DisplayPR = true;
     List<int> IsDelete = new List<int>();
+    [Parameter]
+    public string? PRNumber { get; set; }
     public bool isAuthorized { get; set; }
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
@@ -183,13 +144,6 @@
     // public string PurchaseRequisitionNumber { get; set; }
     // private DateTime DocumentDate { get; set; } = DateTime.Now;
 
-    public class Country
-    {
-        public int Id { get; set; }
-
-        public string Name { get; set; }
-    }
-
     protected override async void OnInitialized()
     {
         var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
@@ -199,15 +153,6 @@
             isLoading = true;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                countries = new List<Country> {
-                    new Country { Id = 1, Name = "United Kingdom" },
-                    new Country { Id = 2, Name = "United States" },
-                    new Country { Id = 3, Name = "Germany" },
-                    new Country { Id = 4, Name = "France" },
-                    new Country { Id = 5, Name = "China" },
-                    new Country { Id = 0, Name = "Create New Item" } // Add this line
-                };
-
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
@@ -226,6 +171,11 @@
                     {
                         IsDraft = true;
                     }
+                    await JSRuntime.InvokeVoidAsync("console.log", Items);
+                }
+                else
+                {
+                    AddRow();
                 }
             }
             StateHasChanged();
@@ -237,6 +187,7 @@
             Snackbar.Clear();
             Snackbar.Add("Not Authorized", Severity.Error);
         }
+
         base.OnInitialized();
     }
 
@@ -467,16 +418,6 @@
             IsDraft = false;
             GetSubmitButtonText();
             StateHasChanged();
-        }
-    }
-
-    private void HandleSelectionChange(ChangeEventArgs e)
-    {
-        selectedOption = e.Value?.ToString();
-
-        if (selectedOption == "0") // Check if the selected option is "Create New Item"
-        {
-            JSRuntime.InvokeVoidAsync("open", "/dashboard", "_blank"); ; // Change "/create-new-item" to your desired URL
         }
     }
 }

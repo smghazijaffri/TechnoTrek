@@ -1,0 +1,123 @@
+<div class="dropdown" id="dropdown" @onkeydown="CloseDropdown">
+    <input type="text" readonly="@IsApproved" @onclick="ToggleDropdown" @bind="@SelectedOption" placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="FilterOptions" />
+    <ul class="dropdown-menu w-100" id="ul" style="display: @(IsDropdownOpen ? "block" : "none");" aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+        @if (FilteredOptions != null)
+        {
+            @foreach (var option in FilteredOptions)
+            {
+                <li><a class="dropdown-item" @onclick="(() => SelectOption(option))">@option</a></li>
+                <hr class="m-1 border-primary" />
+            }
+        }
+        <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+    </ul>
+</div>
+
+@* <script defer>
+    function closeFunc(e) {
+        let x = document.getElementById('dropdown')
+        let y = document.getElementById('ul')
+        if (!x.contains(e.target)) {
+            y.style.display = 'none'
+        }
+        else {
+            y.style.display = 'block'
+        }
+    }
+    document.addEventListener('click', closeFunc)
+</script> *@
+
+@code {
+    [Parameter]
+    public bool IsApproved { get; set; }
+
+    [Parameter]
+    public string Items { get; set; }
+
+    private string SelectedOption = "";
+    public bool IsDropdownOpen { get; set; }
+    private string? SearchTerm { get; set; }
+    private List<string> FilteredOptions { get; set; }
+    private List<string> Options { get; set; } = new List<string> { "Option Ghazi 1", "Option 2", "Option 3" };
+
+    protected override void OnInitialized()
+    {
+        if (Items != null)
+        {
+            SelectedOption = Items;
+        }
+    }
+
+    public void ToggleDropdown()
+    {
+        if (IsApproved)
+        {
+            IsDropdownOpen = false;
+            return;
+        }
+
+        IsDropdownOpen = !IsDropdownOpen;
+
+        if (!IsDropdownOpen)
+        {
+            if (!Options.Contains(SelectedOption))
+            {
+                SelectedOption = "";
+            }
+        }
+
+        if (IsDropdownOpen)
+        {
+            FilteredOptions = Options;
+        }
+    }
+
+    private void CloseDropdown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            IsDropdownOpen = false;
+        }
+    }
+
+    private void SelectOption(string option)
+    {
+        if (!SelectedOption.Contains(option))
+        {
+            SelectedOption = option;
+        }
+        SearchTerm = string.Empty;
+        IsDropdownOpen = false;
+    }
+
+    private async Task FilterOptions(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value.ToString();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            FilteredOptions = FilterList(Options, SearchTerm);
+        }
+        else
+        {
+            FilteredOptions = Options;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private List<string> FilterList(List<string> items, string searchTerm)
+    {
+        List<string> filteredItems = new List<string>();
+
+        foreach (string item in items)
+        {
+            if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            {
+                filteredItems.Add(item);
+            }
+        }
+
+        return filteredItems;
+    }
+}
