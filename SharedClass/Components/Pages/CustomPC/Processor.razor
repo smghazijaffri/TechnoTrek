@@ -63,7 +63,6 @@
         string combinedValue = $"{selectedProcessor.Brand} {selectedProcessor.Model}";
         await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
         Snackbar.Clear();
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 }

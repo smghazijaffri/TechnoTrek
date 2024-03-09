@@ -8,7 +8,7 @@
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ISessionStorageService sessionStorage;
+@inject ILocalStorageService localStorage;
 @layout AdminLayout;
 
 @if (isLoading)
@@ -22,7 +22,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -34,7 +34,6 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();

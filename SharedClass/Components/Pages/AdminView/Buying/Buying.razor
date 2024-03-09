@@ -5,7 +5,7 @@
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ISessionStorageService sessionStorage
+@inject ILocalStorageService localStorage;
 @layout AdminLayout;
 
 @if (isLoading)
@@ -29,7 +29,7 @@
 
         <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px">
             <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaserequisition/create" Style="border-radius:10px">
+                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaserequisition/new-purchase-request" Style="border-radius:10px">
                     Purchase Order
                 </MudListItem>
             </MudList>
@@ -37,7 +37,7 @@
 
         <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px">
             <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/purchaseorder/create" Style="border-radius:10px">
+                <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/purchaseorder/new-purchase-order" Style="border-radius:10px">
                     Purchase Invoice
                 </MudListItem>
             </MudList>
@@ -50,7 +50,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -62,7 +62,6 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();

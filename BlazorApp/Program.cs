@@ -23,6 +23,7 @@ builder.Services.AddScoped<Update>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PR_Items>();
 builder.Services.AddScoped<PurchaseOrders>();
+builder.Services.AddScoped<PurchaseOrderItems>();
 builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<ExampleJsInterop>();
@@ -30,7 +31,7 @@ builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.De
 builder.Services.AddMudServices();
 builder.Services.AddMudServices(config =>
 {
-    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;
 
     config.SnackbarConfiguration.PreventDuplicates = false;
     config.SnackbarConfiguration.NewestOnTop = false;
@@ -42,15 +43,16 @@ builder.Services.AddMudServices(config =>
 });
 
 builder.Services.AddBlazoredSessionStorage();
-builder.Services.AddBlazoredSessionStorage(config => {
-        config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-        config.JsonSerializerOptions.IgnoreNullValues = true;
-        config.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
-        config.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        config.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        config.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
-        config.JsonSerializerOptions.WriteIndented = false;
-    }
+builder.Services.AddBlazoredSessionStorage(config =>
+{
+    config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+    config.JsonSerializerOptions.IgnoreNullValues = true;
+    config.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
+    config.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    config.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    config.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
+    config.JsonSerializerOptions.WriteIndented = false;
+}
 );
 
 builder.Services.AddBlazoredLocalStorage();   // local storage

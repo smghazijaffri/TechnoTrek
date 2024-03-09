@@ -6,12 +6,12 @@
 @inject ISnackbar Snackbar;
 @inject Login login;
 @inject NavigationManager NavigationManager;
-@inject ISessionStorageService sessionStorage;
+@inject ILocalStorageService localStorage;
 @layout AdminLayout;
 
 @if (isLoading)
 {
-    <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:30px;max-inline-size: fit-content;">
+    <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:20px;max-inline-size: fit-content;">
         <div class="modal-header text-center" style="align-self: center;">
             <h5 class="modal-title heading text-center p-1">Create User</h5>
         </div>
@@ -44,7 +44,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -56,7 +56,6 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();

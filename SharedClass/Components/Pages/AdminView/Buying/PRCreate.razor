@@ -1,62 +1,61 @@
-﻿    @page "/purchaserequisition/create"
-    @using System.Reflection;
-    @using Blazored.SessionStorage
-    @using Dapper
-    @using SharedClass.Components.Data
-    @using SharedClass.Components.Layout
-    @using System.Globalization
-    @using SharedClass.Components.Model
-    @using Microsoft.Data.SqlClient
-    @inject Insert insert;
-    @inject Select select;
-    @inject IJSRuntime JSRuntime;
-    @inject IJSRuntime JSRuntime;
-    @inject ISnackbar Snackbar;
-    @inject NavigationManager NavigationManager;
-    @inject ISessionStorageService sessionStorage;
-    @inject CRUD crud;
-    @inject PurchaseRequisition purchase;
-    @inject PR_Items pritem;
-    @inject Connection con;
-    @layout AdminLayout;
+﻿@page "/purchaserequisition/new-purchase-request"
+@page "/purchaserequisition/{PRNumber?}"
 
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Select select;
+@inject Connection con;
+@inject PR_Items pritem;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject PurchaseRequisition purchase;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
 
 @if (isLoading)
 {
     <div class="row p-3 align-items-center">
         <div class="col-6">
             <h3>
-                Create Purchase Requisition
+                @header
                 @if (status == "Save" && !IsDraft)
                 {
-                    <MudChip Color="Color.Warning">Not Saved</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsDraft)
                 {
-                    <MudChip Color="Color.Error">Draft</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Color="Color.Success">Submitted</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
                 }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
             @if (!IsApproved)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="ToggleApproval">
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
                     @GetSubmitButtonText()
                 </button>
             }
         </div>
     </div>
 
-
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPR">
                 <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber"  readonly>
+                <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Title</label>
@@ -64,11 +63,7 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
-                <input type="date" @bind="DocumentDate" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor</label>
-                <input type="text" class="form-control" @bind="Vendor" readonly="@IsApproved">
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
         </form>
     </div>
@@ -76,7 +71,7 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Items</h5>
         <form class="row g-3" @oninput="HandleFormInput">
-            <table class="table table-bordered border-primary">
+            <table class="table size table-hover">
                 <thead>
                     <tr>
                         <th class="col col-auto" style="width: 50px;">
@@ -101,6 +96,7 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
@@ -109,7 +105,43 @@
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
+                            @* <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td> *@
+                            @* <td> <Select2 IsApproved="@IsApproved" Items="@item.Item"/> </td> *@
+                            @* <td>
+                    <div class="dropdown" id="dropdown" @onkeydown="CloseDropdown">
+                    <input type="text" id="Item" readonly="@IsApproved" @onclick="ToggleDropdown" @bind="item.Item" placeholder="Select an Item"
+                    class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="FilterOptions" />
+                    <ul class="dropdown-menu w-100" id="ul" style="display: @(IsDropdownOpen ? "block" : "none");" aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                    @if (FilteredOptions != null)
+                    {
+                    @foreach (var option in FilteredOptions)
+                    {
+                    <li><a class="dropdown-item" bind="@SelectedOption" @onclick="(() => SelectOption(option))">@option</a></li>
+                    <hr class="m-1 border-primary" />
+                    }
+                    }
+                    <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+                    </ul>
+                    </div>
+                    </td> *@
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => ToggleDropdown(rowIndex)" @bind="item.Item"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(item.IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                                        @if (item.FilteredOptions != null)
+                                        {
+                                            @foreach (var option in item.FilteredOptions)
+                                            {
+                                                <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
+                                                <hr class="m-1 border-primary" />
+                                            }
+                                        }
+                                        <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+                                    </ul>
+                                </div>
+                            </td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -134,73 +166,103 @@
 }
 
 @code {
+    private string? status;
     bool isLoading = false;
-
+    private bool DisplayPR = true;
+    List<int> IsDelete = new List<int>();
+    [Parameter]
+    public string? PRNumber { get; set; }
+    private int? openDropdownIndex = null; //Select2
     public bool isAuthorized { get; set; }
+    public bool IsDropdownOpen { get; set; } //Select2
+    private string? SearchTerm { get; set; } //Select2
+    private string SelectedOption { get; set; } //Select2
+    private bool IsDraft { get; set; } = false;
+    private bool IsSaving { get; set; } = false;
+    private bool IsApproved { get; set; } = false;
+    private bool IsRejected { get; set; } = false;
+    private bool IsSubmitted { get; set; } = false;
+    private string header = "Create Purchase Request";
+    private List<string> FilteredOptions { get; set; } //Select2
+    private List<PR_Items> Items = new List<PR_Items>();
+    private List<string> Options { get; set; } = new List<string>(); //Select2
 
     protected override async void OnInitialized()
     {
-
-        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
-
             isLoading = true;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                purchase.DocumentDate = DateTime.Now;
+                if (PRNumber != null)
+                {
+                    purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
+                    Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    if (purchase == null || Items.Count == 0)
+                        NavigationManager.NavigateTo("/purchaserequisition/");
 
-            // Items = select.PurhcaseRequest(purchase.PRNumber);
-            // if (Items.Count > 0)
-            // {
-            //     PurchaseRequisitionNumber = Items[0].PRNumber;
-            //     DocumentDate = Items[0].CreationDate;
-            //     if (purchase.Status == "Approved")
-            //     {
-            //         IsApproved = true;
-            //         DisplayPR = false;
-            //     }
-            // }
-            // else
-            // {
-            //     PurchaseRequisitionNumber = 1;
-            // }
+                    DisplayPR = false;
+                    header = purchase.PRname;
+                    if (purchase.Status == "Approved")
+                    {
+                        IsApproved = true;
+                    }
+                    else if (purchase.Status == "Draft")
+                    {
+                        IsDraft = true;
+                    }
+                    await JSRuntime.InvokeVoidAsync("console.log", Items);
+                }
+                else
+                {
+                    db.Close();
+                    db.Open();
+                    using (SqlCommand command = new SqlCommand("SELECT model FROM motherboards", db))
+                    {
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string value = reader.GetString(0);
+                                Options.Add(value);
+                            }
+                        }
+                    }
+                    db.Close();
+                    AddRow();
+                }
+            }
             StateHasChanged();
-
         }
         else
         {
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
+
         base.OnInitialized();
     }
 
-    private bool DisplayPR = true;
-    private string PurchaseRequisitionNumber { get; set; }
-    private DateTime DocumentDate { get; set; } = DateTime.Now;
-    private string Vendor { get; set; }
-    private bool IsApproved { get; set; } = false;
-    private string status;
-    private bool IsDraft { get; set; } = false;
-    private bool IsSaving { get; set; } = false;
-    private List<PR_Items> Items = new List<PR_Items>();
-
-    List<int> IsDelete = new List<int>();
-
-
     public string createPurchase()
     {
-
         try
         {
-            if (!string.IsNullOrEmpty(Vendor))
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                var CountPR = select.PurhcaseRequest(PurchaseRequisitionNumber);
-                if (CountPR.Count == 0)
+                string validate = ValidatePR();
+                if (validate != null)
                 {
-                    PurchaseRequisitionNumber = "PR";
+                    return validate;
+                }
+                int CountPR = db.QueryFirstOrDefault<int>("select count(1) from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+                if (CountPR == 0)
+                {
+                    purchase.PRNumber = "PR";
                     var CountNo = "";
                     int data = select.CountPRnumber();
                     if (data != 0)
@@ -211,33 +273,53 @@
                         if (itNum == 1)
                         {
                             CountNo += "00" + itr;
-                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                            purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
                         }
                         else if (itNum == 2)
                         {
                             CountNo += "0" + itr;
-                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + CountNo;
+                            purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
                         }
                         else
                         {
-                            PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + itr;
+                            purchase.PRNumber = purchase.PRNumber + "-" + itr;
                         }
-
                     }
                     else
                     {
-                        PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + "001";
+                        purchase.PRNumber = purchase.PRNumber + "-" + "001";
                     }
                 }
-                if (IsDraft)
+
+                StringBuilder titleBuilder = new StringBuilder("Purhcase Request for ");
+
+                foreach (var data in Items)
+                {
+                    titleBuilder.Append(data.Item);
+                    titleBuilder.Append(", ");
+                }
+
+                if (Items.Count > 0)
+                {
+                    titleBuilder.Length -= 2;
+                    titleBuilder.Append("...");
+                }
+
+                purchase.PRname = titleBuilder.ToString();
+                header = titleBuilder.ToString();
+
+                if (status == "Save")
                 {
                     purchase.Status = "Draft";
                 }
-               else if (IsApproved)
+
+                else if (status == "Submit")
                 {
-                    purchase.Status = "Approved";
+                    purchase.Status = "Submitted";
                 }
+
                 crud.CRD(purchase, "CreatePurchaseRequest");
+
                 foreach (var PR in Items)
                 {
                     foreach (int del in IsDelete)
@@ -247,69 +329,80 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PR.PRNumber = PurchaseRequisitionNumber;
-                    // if (IsDraft)
-                    // {
-                    //     PR.Status = "Draft";
-                    // }
-                    // if (IsApproved)
-                    // {
-                    //     PR.Status = "Approved";
-                    // }
+                    PR.PRNumber = purchase.PRNumber;
                     DisplayPR = false;
-                    
-
+                    crud.CRD(PR, "PurhcaseRequestItems");
+                    NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PRNumber}", forceLoad: true);
                 }
+
                 foreach (var del in IsDelete)
                 {
-                    pritem.PRNumber = PurchaseRequisitionNumber;
                     pritem.RowID = del;
-                    pritem.RequiredBy = DateTime.Now;
+                    pritem.RequiredBy = DateTime.Now.Date;
                     crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
                 }
+
+                ToggleApproval();
+
                 if (IsDraft)
                 {
                     return "Purchase Request Saved Successfully";
                 }
+
                 else if (IsApproved)
                 {
                     return "Purchase Request Submitted Successfully";
                 }
+
                 else
                 {
-                    return null; 
+                    IsDraft = false;
+                    return "Error in saving request";
                 }
             }
-            else
-            {
-                IsDraft = false;
-                return "Error in saving request";
-            }
         }
-
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-
-            return ex.ToString();
+            return ex.Message;
         }
     }
-    public void Shownotification()
+
+    public string ValidatePR()
+    {
+        if (purchase.DocumentDate == null)
+        { return "Please Enter Document Date"; }
+        else if (Items.Count > 0)
+        {
+            foreach (var PR in Items)
+            {
+                if (string.IsNullOrWhiteSpace(PR.Item))
+                { return "Please Enter Item on No:" + PR.RowID + ""; }
+                else if (string.IsNullOrWhiteSpace(PR.UOM))
+                { return "Please Enter UOM on No:" + PR.RowID + ""; }
+                else if (PR.Quantity == 0)
+                { return "Please Enter Quantity on No:" + PR.RowID + ""; }
+                else if (PR.RequiredBy == null)
+                { return "Please Enter Required By date on No:" + PR.RowID + ""; }
+            }
+            return null;
+        }
+        else
+        { return null; }
+    }
+
+    public void SavePR()
     {
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Success);
         }
         else
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add(notification, Severity.Error);
         }
-      
-
     }
 
     private string GetSubmitButtonText()
@@ -333,18 +426,16 @@
 
     private void ToggleApproval()
     {
-            if (IsDraft)
-            {
-                IsDraft = false;
-                IsApproved = true;
-                IsSaving = false;
-            Shownotification();
-            }
-            else if (!IsSaving)
-            {
-                IsDraft = true;
-            Shownotification();
-            }
+        if (IsDraft)
+        {
+            IsDraft = false;
+            IsApproved = true;
+            IsSaving = false;
+        }
+        else if (!IsSaving)
+        {
+            IsDraft = true;
+        }
     }
 
     private void Save()
@@ -365,7 +456,6 @@
 
     private void DeleteRow(int index)
     {
-
         for (int i = Items.Count - 1; i >= 0; i--)
         {
             if (Items[i].Selected)
@@ -385,5 +475,147 @@
             GetSubmitButtonText();
             StateHasChanged();
         }
+    }
+
+    // public void ToggleDropdown()
+    // {
+    //     if (IsApproved)
+    //     {
+    //         IsDropdownOpen = false;
+    //         return;
+    //     }
+
+    //     IsDropdownOpen = !IsDropdownOpen;
+
+    //     if (!IsDropdownOpen)
+    //     {
+    //         if (!Options.Contains(SelectedOption))
+    //         {
+    //             SelectedOption = "";
+    //         }
+    //     }
+
+    //     if (IsDropdownOpen)
+    //     {
+    //         FilteredOptions = Options;
+    //     }
+    // }
+
+    // private void CloseDropdown(KeyboardEventArgs e)
+    // {
+    //     if (e.Key == "Escape")
+    //     {
+    //         IsDropdownOpen = false;
+    //     }
+    // }
+
+    // private void SelectOption(string option)
+    // {
+    //     if (SelectedOption != null)
+    //     {
+    //         if (!SelectedOption.Contains(option))
+    //         {
+    //             SelectedOption = option;
+    //         }
+    //     }
+    //     SearchTerm = string.Empty;
+    //     IsDropdownOpen = false;
+    // }
+
+    // private async Task FilterOptions(ChangeEventArgs e)
+    // {
+    //     SearchTerm = e.Value.ToString();
+
+    //     if (!string.IsNullOrWhiteSpace(SearchTerm))
+    //     {
+    //         FilteredOptions = FilterList(Options, SearchTerm);
+    //     }
+    //     else
+    //     {
+    //         FilteredOptions = Options;
+    //     }
+
+    //     await InvokeAsync(StateHasChanged);
+    // }
+
+    private void ToggleDropdown(int rowIndex)
+    {
+        if (IsApproved)
+        {
+            Items[rowIndex].IsDropdownOpen = false;
+            return;
+        }
+
+        if (openDropdownIndex.HasValue && openDropdownIndex != rowIndex)
+        {
+            Items[openDropdownIndex.Value].IsDropdownOpen = false;
+        }
+
+        Items[rowIndex].IsDropdownOpen = !Items[rowIndex].IsDropdownOpen;
+
+        if (Items[rowIndex].IsDropdownOpen)
+        {
+            Items[rowIndex].FilteredOptions = Options;
+            openDropdownIndex = rowIndex;
+        }
+        else
+        {
+            openDropdownIndex = null;
+        }
+    }
+
+    private void CloseDropdown(KeyboardEventArgs e, int rowIndex)
+    {
+        if (e.Key == "Escape")
+        {
+            Items[rowIndex].IsDropdownOpen = false;
+        }
+    }
+
+    private void SelectOption(string option, int rowIndex)
+    {
+        // Prevent selection of values not present in the dropdown
+        if (Items[rowIndex].FilteredOptions.Contains(option))
+        {
+            Items[rowIndex].Item = option;
+            Items[rowIndex].IsDropdownOpen = false;
+        }
+    }
+
+    private async Task FilterOptions(ChangeEventArgs e, int rowIndex)
+    {
+        var searchTerm = e.Value.ToString();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            Items[rowIndex].FilteredOptions = FilterList(Options, searchTerm);
+
+            // Clear the input field if the entered value is not in the dropdown options
+            if (!Items[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
+            {
+                Items[rowIndex].Item = "";
+            }
+        }
+        else
+        {
+            Items[rowIndex].FilteredOptions = Options;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private List<string> FilterList(List<string> items, string searchTerm)
+    {
+        List<string> filteredItems = new List<string>();
+
+        foreach (string item in items)
+        {
+            if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            {
+                filteredItems.Add(item);
+            }
+        }
+
+        return filteredItems;
     }
 }

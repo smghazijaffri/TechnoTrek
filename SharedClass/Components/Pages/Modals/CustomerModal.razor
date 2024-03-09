@@ -8,7 +8,7 @@
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-sm p-4 border-0">
-        <div class="modal-content bg-white shadow-lg border-0" style="border-radius: 30px;">
+        <div class="modal-content bg-white shadow-lg border-0" style="border-radius: 20px;">
             <div class="modal-header heading">
                 <h2 class="modal-title">Customer Details</h2>
                 <button type="button" class="btn-close" @onclick="CloseInputModal" aria-label="Close" style="font-size: 15px"></button>
@@ -18,7 +18,7 @@
                 <EditForm Model="@model" OnValidSubmit="SaveChanges">
                     <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
                         <div class="modal-dialog modal-sm p-4">
-                            <div class="modal-content" style="border-radius: 30px;">
+                            <div class="modal-content" style="border-radius: 20px;">
                                 <div class="modal-header heading">
                                     <h2 class="modal-title">Customer Details</h2>
                                     <button type="button" class="btn-close" @onclick="CloseInputModal" aria-label="Close" style="font-size: 15px"></button>
@@ -83,7 +83,6 @@
         {
             SaveChanges();
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Saved", Severity.Success);
         }
     }
@@ -93,6 +92,7 @@
 
     [Parameter]
     public EventCallback<bool> IsVisibleChanged { get; set; }
+
     private void CloseInputModal()
     {
         IsVisible = false;

@@ -51,7 +51,6 @@ h1:focus {
     border-color: #929292;
 }
 
-
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;
@@ -91,6 +90,10 @@ h1:focus {
     }
 }
 
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24
+}
+
 .the-blur {
     position: fixed;
     top: 0;
@@ -111,7 +114,6 @@ h1:focus {
     backdrop-filter: blur(8px);
 }
 
-
 #spinner {
     opacity: 0;
     visibility: hidden;
@@ -124,7 +126,6 @@ h1:focus {
         visibility: visible;
         opacity: 1;
     }
-
 
 .login-popup {
     position: fixed;
@@ -144,14 +145,6 @@ h1:focus {
         margin-bottom: 10px;
         position: center
     }
-
-/*.login-card {
-    background-color: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(15px);
-    padding: 20px;
-    border-radius: 10px;
-}*/
-
 
 .container {
     width: 100%;
@@ -259,7 +252,7 @@ h1:focus {
 
 .card .container {
     background: #F0EEF8;
-    border-radius: 30px;
+    border-radius: 20px;
     height: 140px;
     display: flex;
     align-items: center;
@@ -274,7 +267,7 @@ h1:focus {
     /*padding: 75px;
     margin-top: -40px;
     margin-bottom: -40px;*/
-    border-radius: 30px;
+    border-radius: 20px;
     transition: 0.4s ease;
     cursor: pointer;
 }
@@ -316,7 +309,6 @@ h1:focus {
     width: 160px;
 }
 
-
 /*MAUI Best Practice*/
 *:not(input) {
     user-select: none;
@@ -334,4 +326,8 @@ h1:focus {
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
     }
+}
+
+.size {
+    width: calc(100% - 100px);
 }

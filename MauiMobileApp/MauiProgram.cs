@@ -31,6 +31,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<CRUD>();
             builder.Services.AddScoped<PurchaseOrders>();
+            builder.Services.AddScoped<PurchaseOrderItems>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PR_Items>();
             builder.Services.AddScoped<BaseRecord>();
@@ -39,7 +40,7 @@ namespace MauiMobileApp
             builder.Services.AddMudServices();
             builder.Services.AddMudServices(config =>
             {
-                config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;
 
                 config.SnackbarConfiguration.PreventDuplicates = false;
                 config.SnackbarConfiguration.NewestOnTop = false;
@@ -50,7 +51,8 @@ namespace MauiMobileApp
                 config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
             });
             builder.Services.AddBlazoredSessionStorage();
-            builder.Services.AddBlazoredSessionStorage(config => {
+            builder.Services.AddBlazoredSessionStorage(config =>
+            {
                 config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
                 config.JsonSerializerOptions.IgnoreNullValues = true;
                 config.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
@@ -58,8 +60,9 @@ namespace MauiMobileApp
                 config.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 config.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
                 config.JsonSerializerOptions.WriteIndented = false;
-                }
+            }
             );
+
             builder.Services.AddBlazoredLocalStorage();   // local storage
             builder.Services.AddBlazoredLocalStorage(config =>
                 config.JsonSerializerOptions.WriteIndented = true);  // local storage

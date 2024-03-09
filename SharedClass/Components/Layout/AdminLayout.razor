@@ -5,7 +5,7 @@
 @inject Login login;
 @inject ISnackbar Snackbar;
 @inject NavigationManager navigationManager;
-@inject ISessionStorageService sessionStorage;
+@inject ILocalStorageService localStorage;
 @inherits LayoutComponentBase;
 
 <head>
@@ -16,47 +16,47 @@
     <div style="display:flex;">
         <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
             <MudIconButton Icon="@(open ? Icons.Material.Outlined.Close : Icons.Material.Outlined.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+            <MudImage Src="_content/SharedClass/Images/techlogo.png"Style="width: 200px" />
         </MudAppBar>
         <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
             <MudNavMenu Class="mb-5">
-                <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">
+                <MudNavLink Match="NavLinkMatch.All" Href="/dashboard" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.SpaceDashboard"
                                Style="background-color:transparent;"
                                Color="Color.Info">Dashboard</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/buying">
+                <MudNavLink Match="NavLinkMatch.All" Href="/buying" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.ShoppingBag"
                                Style="background-color:transparent;"
                                Color="Color.Warning">Buying</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/selling">
+                <MudNavLink Match="NavLinkMatch.All" Href="/selling" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.Sell"
                                Style="background-color:transparent;"
                                Color="Color.Warning">Selling</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/inventory">
+                <MudNavLink Match="NavLinkMatch.All" Href="/inventory" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.Inventory2"
                                Style="background-color:transparent;"
                                Color="Color.Warning">Inventory</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/returns">
+                <MudNavLink Match="NavLinkMatch.All" Href="/returns" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.KeyboardReturn"
                                Style="background-color:transparent;"
                                Color="Color.Error">Returns</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/pos">
+                <MudNavLink Match="NavLinkMatch.All" Href="/pos" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.Store"
                                Style="background-color:transparent;"
                                Color="Color.Success">Point of Sale</MudButton>
                 </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/signup">
+                <MudNavLink Match="NavLinkMatch.All" Href="/signup" >
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.VerifiedUser"
                                Style="background-color:transparent;"
@@ -96,14 +96,14 @@
     {
         open = !open;
     }
+
     private async void Logout()
     {
-        await sessionStorage.SetItemAsync("Authorized", false);
-        string User = await sessionStorage.GetItemAsync<string>("Username");
+        await localStorage.SetItemAsync("Authorized", false);
+        string User = await localStorage.GetItemAsync<string>("Username");
         await JSRuntime.InvokeAsync<string>("ExpireCookie");
         login.LogOut(User);
         Snackbar.Clear();
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Logged Out", Severity.Error);
         navigationManager.NavigateTo("/");
     }

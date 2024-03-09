@@ -39,14 +39,14 @@
             <PagerContent>
                 <MudTablePager />
             </PagerContent>
-    </MudTable>
+        </MudTable>
 
     <div class="d-flex flex-wrap mt-4">
         <MudSpacer />
         <div style="min-width:200px;">
             <MudText Inline="true" Class="align-self-center">Selected: @selectedItem1?.PRname</MudText>
+            </div>
         </div>
-    </div>
 }
 
 @code {
@@ -67,7 +67,6 @@
             isLoading = false;
             NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Not Authorized", Severity.Error);
         }
         base.OnInitialized();
@@ -92,10 +91,9 @@
     {
         _selectedItemText = $"{args.Item.PRNumber} ({args.Item.PRNumber})";
         purchaserequisition.PRNumber = args.Item.PRNumber;
-        // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         // Snackbar.Add(PurchaseRequisition.PRNumber.ToString(), Severity.Error);
         // Snackbar.Add(args.Item.PRNumber.ToString(), Severity.Error);
-        NavigationManager.NavigateTo("/PurchaseRequisitionrequisition/create");
+        NavigationManager.NavigateTo($"/PurchaseRequisition/{purchaserequisition.PRNumber}");
 
     }
 
@@ -121,8 +119,7 @@
             return true;
         }
 
-      
-        string reqDateString = element.DocumentDate.ToString("dd/MM/yyyy");
+        string reqDateString = element.DocumentDate.Value.ToString("dd/MM/yyyy");
 
         if (IsDate(reqDateString) && $"{reqDateString}".Contains(searchString))
         {

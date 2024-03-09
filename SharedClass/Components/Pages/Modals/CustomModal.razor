@@ -7,7 +7,7 @@
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
-        <div class="modal-content" style="border-radius:30px;">
+        <div class="modal-content" style="border-radius:20px;">
             <div class="modal-header">
                 <h2 class="modal-title heading">@ComponentName  </h2>
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
@@ -99,7 +99,6 @@
         CloseQuickView();
         await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
         Snackbar.Clear();
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
         Snackbar.Add("Cancelled", Severity.Error);
     }
 }

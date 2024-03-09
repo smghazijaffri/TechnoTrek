@@ -1,26 +1,24 @@
 ﻿@page "/adminlogin"
-@using Microsoft.AspNetCore.Components.Forms
 @using SharedClass.Components
 @using SharedClass.Components.Data
-@inject ISnackbar Snackbar;
-@inject NavigationManager NavigationManager;
-@inject ExampleJsInterop Example;
+@using Microsoft.AspNetCore.Components.Forms
 @inject Login login;
-@inject ISessionStorageService sessionStorage
+@inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject ExampleJsInterop Example;
+@inject NavigationManager NavigationManager;
+@inject ILocalStorageService localStorage;
 
-<div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:30px;max-inline-size: fit-content;">
+<div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:20px;max-inline-size: fit-content;">
     <div class="modal-header text-center" style="align-self: center;">
         <h5 class="modal-title heading text-center">Login</h5>
     </div>
     <div class="modal-body p-1 m-auto">
         <EditForm Model="@login">
             <div class="mb-3">
-                @* <label for="usernameInput" class="form-label text-black">Username</label> *@
                 <InputText id="usernameInput" placeholder="Username" class="form-control" @bind-Value="Username" />
             </div>
             <div class="mb-3">
-                @* <label for="passwordInput" class="form-label text-black">Password</label> *@
                 <InputText id="passwordInput" placeholder="Password" type="password" class="form-control" @bind-Value="Password" />
             </div>
             <button type="submit" class="btn btnpc btn-primary m-1" @onclick="Pagelogin">Login</button>
@@ -45,18 +43,16 @@
         IsLoginSuccessful = await login.Access(Username, Password, JSRuntime);
         if (IsLoginSuccessful)
         {
-            await sessionStorage.SetItemAsync("Authorized", true);
-            await sessionStorage.SetItemAsync("Username", Username);
+            await localStorage.SetItemAsync("Authorized", true);
+            await localStorage.SetItemAsync("Username", Username);
             await JSRuntime.InvokeAsync<string>("CreateCookie");
             NavigationManager.NavigateTo("/dashboard");
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Welcome " + Username, Severity.Success);
         }
         else
         {
             Snackbar.Clear();
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomEnd;
             Snackbar.Add("Invalid Credentials", Severity.Error);
         }
     }
