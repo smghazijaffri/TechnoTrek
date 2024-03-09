@@ -22,6 +22,8 @@ namespace SharedClass.Components.Model
         public int Quantity { get; set; }
         public bool Selected { get; set; }
         public string PRNumber { get; set; }
+        public bool IsDropdownOpen { get; set; }
         public DateTime? RequiredBy { get; set; }
+        public List<string> FilteredOptions { get; set; }
     }
 }

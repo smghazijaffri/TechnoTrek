@@ -5,7 +5,6 @@
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
 @using Microsoft.Data.SqlClient
-@using Blazored.SessionStorage
 @using System.Globalization
 @using System.Reflection
 @using System.Text
@@ -19,8 +18,8 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseRequisition purchase;
+@inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
-@inject ISessionStorageService sessionStorage;
 
 @if (isLoading)
 {
@@ -93,6 +92,7 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
@@ -102,7 +102,42 @@
                                 </div>
                             </td>
                             @* <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td> *@
-                            <td> <Select2 IsApproved="@IsApproved" Items="@item.Item"/> </td>
+                            @* <td> <Select2 IsApproved="@IsApproved" Items="@item.Item"/> </td> *@
+                            @* <td>
+                    <div class="dropdown" id="dropdown" @onkeydown="CloseDropdown">
+                    <input type="text" id="Item" readonly="@IsApproved" @onclick="ToggleDropdown" @bind="item.Item" placeholder="Select an Item"
+                    class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="FilterOptions" />
+                    <ul class="dropdown-menu w-100" id="ul" style="display: @(IsDropdownOpen ? "block" : "none");" aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                    @if (FilteredOptions != null)
+                    {
+                    @foreach (var option in FilteredOptions)
+                    {
+                    <li><a class="dropdown-item" bind="@SelectedOption" @onclick="(() => SelectOption(option))">@option</a></li>
+                    <hr class="m-1 border-primary" />
+                    }
+                    }
+                    <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+                    </ul>
+                    </div>
+                    </td> *@
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => ToggleDropdown(rowIndex)" @bind="item.Item"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(item.IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                                        @if (item.FilteredOptions != null)
+                                        {
+                                            @foreach (var option in item.FilteredOptions)
+                                            {
+                                                <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
+                                                <hr class="m-1 border-primary" />
+                                            }
+                                        }
+                                        <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+                                    </ul>
+                                </div>
+                            </td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -133,20 +168,24 @@
     List<int> IsDelete = new List<int>();
     [Parameter]
     public string? PRNumber { get; set; }
+    private int? openDropdownIndex = null; //Select2
     public bool isAuthorized { get; set; }
+    public bool IsDropdownOpen { get; set; } //Select2
+    private string? SearchTerm { get; set; } //Select2
+    private string SelectedOption { get; set; } //Select2
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
     private bool IsApproved { get; set; } = false;
     private bool IsRejected { get; set; } = false;
     private bool IsSubmitted { get; set; } = false;
     private string header = "Create Purchase Request";
+    private List<string> FilteredOptions { get; set; } //Select2
     private List<PR_Items> Items = new List<PR_Items>();
-    // public string PurchaseRequisitionNumber { get; set; }
-    // private DateTime DocumentDate { get; set; } = DateTime.Now;
+    private List<string> Options { get; set; } = new List<string>(); //Select2
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -175,6 +214,20 @@
                 }
                 else
                 {
+                    db.Close();
+                    db.Open();
+                    using (SqlCommand command = new SqlCommand("SELECT model FROM motherboards", db))
+                    {
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string value = reader.GetString(0);
+                                Options.Add(value);
+                            }
+                        }
+                    }
+                    db.Close();
                     AddRow();
                 }
             }
@@ -280,7 +333,6 @@
 
                 foreach (var del in IsDelete)
                 {
-                    // pritem.PRNumber = PurchaseRequisitionNumber;
                     pritem.RowID = del;
                     pritem.RequiredBy = DateTime.Now.Date;
                     crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
@@ -419,5 +471,147 @@
             GetSubmitButtonText();
             StateHasChanged();
         }
+    }
+
+    // public void ToggleDropdown()
+    // {
+    //     if (IsApproved)
+    //     {
+    //         IsDropdownOpen = false;
+    //         return;
+    //     }
+
+    //     IsDropdownOpen = !IsDropdownOpen;
+
+    //     if (!IsDropdownOpen)
+    //     {
+    //         if (!Options.Contains(SelectedOption))
+    //         {
+    //             SelectedOption = "";
+    //         }
+    //     }
+
+    //     if (IsDropdownOpen)
+    //     {
+    //         FilteredOptions = Options;
+    //     }
+    // }
+
+    // private void CloseDropdown(KeyboardEventArgs e)
+    // {
+    //     if (e.Key == "Escape")
+    //     {
+    //         IsDropdownOpen = false;
+    //     }
+    // }
+
+    // private void SelectOption(string option)
+    // {
+    //     if (SelectedOption != null)
+    //     {
+    //         if (!SelectedOption.Contains(option))
+    //         {
+    //             SelectedOption = option;
+    //         }
+    //     }
+    //     SearchTerm = string.Empty;
+    //     IsDropdownOpen = false;
+    // }
+
+    // private async Task FilterOptions(ChangeEventArgs e)
+    // {
+    //     SearchTerm = e.Value.ToString();
+
+    //     if (!string.IsNullOrWhiteSpace(SearchTerm))
+    //     {
+    //         FilteredOptions = FilterList(Options, SearchTerm);
+    //     }
+    //     else
+    //     {
+    //         FilteredOptions = Options;
+    //     }
+
+    //     await InvokeAsync(StateHasChanged);
+    // }
+
+    private void ToggleDropdown(int rowIndex)
+    {
+        if (IsApproved)
+        {
+            Items[rowIndex].IsDropdownOpen = false;
+            return;
+        }
+
+        if (openDropdownIndex.HasValue && openDropdownIndex != rowIndex)
+        {
+            Items[openDropdownIndex.Value].IsDropdownOpen = false;
+        }
+
+        Items[rowIndex].IsDropdownOpen = !Items[rowIndex].IsDropdownOpen;
+
+        if (Items[rowIndex].IsDropdownOpen)
+        {
+            Items[rowIndex].FilteredOptions = Options;
+            openDropdownIndex = rowIndex;
+        }
+        else
+        {
+            openDropdownIndex = null;
+        }
+    }
+
+    private void CloseDropdown(KeyboardEventArgs e, int rowIndex)
+    {
+        if (e.Key == "Escape")
+        {
+            Items[rowIndex].IsDropdownOpen = false;
+        }
+    }
+
+    private void SelectOption(string option, int rowIndex)
+    {
+        // Prevent selection of values not present in the dropdown
+        if (Items[rowIndex].FilteredOptions.Contains(option))
+        {
+            Items[rowIndex].Item = option;
+            Items[rowIndex].IsDropdownOpen = false;
+        }
+    }
+
+    private async Task FilterOptions(ChangeEventArgs e, int rowIndex)
+    {
+        var searchTerm = e.Value.ToString();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            Items[rowIndex].FilteredOptions = FilterList(Options, searchTerm);
+
+            // Clear the input field if the entered value is not in the dropdown options
+            if (!Items[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
+            {
+                Items[rowIndex].Item = "";
+            }
+        }
+        else
+        {
+            Items[rowIndex].FilteredOptions = Options;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private List<string> FilterList(List<string> items, string searchTerm)
+    {
+        List<string> filteredItems = new List<string>();
+
+        foreach (string item in items)
+        {
+            if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            {
+                filteredItems.Add(item);
+            }
+        }
+
+        return filteredItems;
     }
 }

@@ -5,7 +5,6 @@
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
 @using Microsoft.Data.SqlClient
-@using Blazored.SessionStorage
 @using System.Globalization
 @using System.Reflection
 @using System.Text
@@ -19,8 +18,8 @@
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
 @inject PurchaseOrderItems POItem;
+@inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
-@inject ISessionStorageService sessionStorage;
 
 @if (isLoading)
 {
@@ -66,15 +65,116 @@
             </div>
         </form>
     </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Vendor Address</label>
+                <input type="text" class="form-control" @bind="purchase.VendorAddress" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Company Shipping Address</label>
+                <input type="text" class="form-control" @bind="purchase.CompanyShippingAddress" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor Contact</label>
+                <input type="text" class="form-control" @bind="purchase.VendorContact" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Company Billing Address</label>
+                <input type="text" class="form-control" @bind="purchase.CompanyBillingAddress" readonly>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <table class="table size table-hover">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            UOM
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                        <th class="col col-auto" style="width: 150px;">
+                            Required By
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        item.RowID = index + 1;
+                        POItem.Amount = (item.Rate * item.Quantity);
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
+                                </div>
+                            </td>
+                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
+                            <td>
+                                <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
+                                <datalist id="uomOptions">
+                                    <option value="Piece"></option>
+                                    <option value="Each"></option>
+                                    <option value="Box"></option>
+                                </datalist>
+                            </td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly="@IsApproved" /></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="POItem.Amount" readonly="@IsApproved" /></td>
+                            <td>
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" class="form-control" @bind="purchase.TotalQuantity" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" class="form-control" @bind="purchase.TotalPrice" readonly="@IsApproved">
+            </div>
+        </form>
+    </div>
 }
 
 @code {
-    [Parameter]
-    public string? PONumber { get; set; }
-
     private string? status;
     bool isLoading = false;
     private bool DisplayPO = true;
+    [Parameter]
+    public string? PONumber { get; set; }
     List<int> IsDelete = new List<int>();
     public bool isAuthorized { get; set; }
     private bool IsDraft { get; set; } = false;
@@ -87,12 +187,23 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await sessionStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
             isLoading = true;
-            purchase.DocumentDate = DateTime.Now;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                purchase.DocumentDate = DateTime.Now;
+                if (PONumber != null)
+                {
+
+                }
+                else
+                {
+                    AddRow();
+                }
+            }
             StateHasChanged();
         }
         else
@@ -119,33 +230,33 @@
                 // int CountPO = db.QueryFirstOrDefault<int>("select count(1) from PurchaseOrder where PONumber = @POnumber", new { PONumber = purchase.PONumber });
                 // if (CountPO == 0)
                 // {
-                    purchase.PONumber = "PO-001";
-                    // var CountNo = "";
-                    // int data = select.CountPOnumber();
-                    // if (data != 0)
-                    // {
-                    //     data += 1;
-                    //     var itr = data.ToString();
-                    //     var itNum = itr.Length;
-                    //     if (itNum == 1)
-                    //     {
-                    //         CountNo += "00" + itr;
-                    //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
-                    //     }
-                    //     else if (itNum == 2)
-                    //     {
-                    //         CountNo += "0" + itr;
-                    //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
-                    //     }
-                    //     else
-                    //     {
-                    //         purchase.PONumber = purchase.PONumber + "-" + itr;
-                    //     }
-                    // }
-                    // else
-                    // {
-                    //     purchase.PONumber = purchase.PONumber + "-" + "001";
-                    // }
+                purchase.PONumber = "PO-001";
+                // var CountNo = "";
+                // int data = select.CountPOnumber();
+                // if (data != 0)
+                // {
+                //     data += 1;
+                //     var itr = data.ToString();
+                //     var itNum = itr.Length;
+                //     if (itNum == 1)
+                //     {
+                //         CountNo += "00" + itr;
+                //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
+                //     }
+                //     else if (itNum == 2)
+                //     {
+                //         CountNo += "0" + itr;
+                //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
+                //     }
+                //     else
+                //     {
+                //         purchase.PONumber = purchase.PONumber + "-" + itr;
+                //     }
+                // }
+                // else
+                // {
+                //     purchase.PONumber = purchase.PONumber + "-" + "001";
+                // }
                 // }
 
                 StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
@@ -196,7 +307,7 @@
                 {
                     // pritem.PRNumber = PurchaseRequisitionNumber;
                     POItem.RowID = del;
-                    POItem.RequiredBy = DateOnly.Parse((DateTime.Today).ToString());
+                    POItem.RequiredBy = DateTime.Now;
                     // crud.CRD(purchase, "CreatePurchaseOrder", System.Data.CommandType.StoredProcedure, true);
                 }
 
@@ -237,13 +348,13 @@
         {
             foreach (var PO in Items)
             {
-                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please Enter Item on No. { PO.RowID}";
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please Enter Item on No. {PO.RowID}";
 
-                else if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on No. { PO.RowID}";
+                else if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on No. {PO.RowID}";
 
-                else if (PO.Quantity == 0) return $"Please Enter Quantity on No. { PO.RowID}";
+                else if (PO.Quantity == 0) return $"Please Enter Quantity on No. {PO.RowID}";
 
-                else if (PO.RequiredBy == null) return $"Please Enter Required By date on Row No. { PO.RowID}"; 
+                else if (PO.RequiredBy == null) return $"Please Enter Required By date on Row No. {PO.RowID}";
             }
             return null;
         }
@@ -315,7 +426,7 @@
     {
         Items.Add(new PurchaseOrderItems
             {
-                RequiredBy = DateOnly.Parse((DateTime.Today).ToString()),
+                RequiredBy = DateTime.Now,
                 Quantity = 1
             });
     }
