@@ -1,19 +1,49 @@
-﻿@page "/purchaseorder"
+﻿@using static MudBlazor.CategoryTypes
 @using SharedClass.Components.Layout
-@using System.Globalization
+@using SharedClass.Components.Model
 @using SharedClass.Components.Data
+@using System.Globalization
 @using System.Net.Http.Json
-@using static MudBlazor.CategoryTypes
-@inject Select select;
-@inject IJSRuntime JSRuntime;
-@inject ISnackbar Snackbar;
-@inject NavigationManager NavigationManager;
-@inject ILocalStorageService localStorage;
+@page "/purchaseorder"
+
 @layout AdminLayout;
+@inject Select select;
+@inject ISnackbar Snackbar;
+@inject PurchaseOrders purchaseorder;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
 
 @if (isLoading)
 {
-    
+    <MudTable @ref="_table" T="PurchaseOrders" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true"
+              OnRowClick="@OnRowClick" Filter="new Func<PurchaseOrders,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Order Number</MudTh>
+            <MudTh>Title</MudTh>
+            <MudTh>Vendor</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Grand Total</MudTh>
+            <MudTh>Creation Date</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Requisition Number">@context.PONumber</MudTd>
+            <MudTd DataLabel="Title">@context.POName</MudTd>
+            <MudTd DataLabel="Status">@context.Vendor</MudTd>
+            <MudTd DataLabel="Document Date">@context.Status</MudTd>
+            <MudTd DataLabel="Creation Date">@context.TotalPrice</MudTd>
+            <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+        </PagerContent>
+    </MudTable>
 }
 
 @code {
@@ -38,5 +68,36 @@
         }
         base.OnInitialized();
     }
-        //authorization
+    //authorization
+
+    private string searchString1 = "";
+    private bool _selectOnRowClick = false;
+    private MudTable<PurchaseOrders> _table;
+    private string _selectedItemText = "No row clicked";
+    private IEnumerable<PurchaseOrders> Elements = new List<PurchaseOrders>();
+    private HashSet<PurchaseOrders> selectedItems = new HashSet<PurchaseOrders>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await select.GetPODataAsync();
+    }
+
+    void OnRowClick(TableRowClickEventArgs<PurchaseOrders> args)
+    {
+        purchaseorder.PONumber = args.Item.PONumber;
+        NavigationManager.NavigateTo($"/PurchaseOrders/{purchaseorder.PONumber}");
+    }
+
+    private bool FilterFunc1(PurchaseOrders element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(PurchaseOrders element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.POName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Vendor.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.PONumber} {element.TotalPrice} {element.CreationDate}".Contains(searchString)) return true;
+
+        return false;
+    }
 }

@@ -86,6 +86,13 @@ namespace SharedClass.Components.Data
             return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest");
         }
 
+        public async Task<IEnumerable<PurchaseOrders>> GetPODataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<PurchaseOrders>("SELECT * FROM PurchaseOrder");
+        }
+
         public List<PurchaseRequisition> PurhcaseRequest(string PRNumber)
         {
             con.Close(); con.Open();
