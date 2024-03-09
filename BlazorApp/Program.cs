@@ -23,6 +23,7 @@ builder.Services.AddScoped<Update>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PR_Items>();
 builder.Services.AddScoped<PurchaseOrders>();
+builder.Services.AddScoped<PurchaseOrderItems>();
 builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<ExampleJsInterop>();

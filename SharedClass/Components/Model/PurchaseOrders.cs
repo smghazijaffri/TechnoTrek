@@ -14,7 +14,7 @@ namespace SharedClass.Components.Model
         public int TotalPrice { get; set; }
         public string PONumber { get; set; }
         public int TotalQuantity { get; set; }
-        public int VendorContact { get; set; }
+        public string VendorContact { get; set; }
         public DateTime DocumentDate { get; set; }
         public string VendorAddress { get; set; }
         public string CompanyBillingAddress { get; set; }
@@ -31,7 +31,7 @@ namespace SharedClass.Components.Model
         public int Quantity { get; set; }
         public bool Selected { get; set; }
         public string PONumber { get; set; }
-        public DateOnly RequiredBy { get; set; }
-        public DateOnly ExpectedDeliveryDate { get; set; }
+        public DateTime RequiredBy { get; set; }
+        public DateTime ExpectedDeliveryDate { get; set; }
     }
 }
