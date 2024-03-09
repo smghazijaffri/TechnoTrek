@@ -570,7 +570,6 @@
 
     private void SelectOption(string option, int rowIndex)
     {
-        // Prevent selection of values not present in the dropdown
         if (Items[rowIndex].FilteredOptions.Contains(option))
         {
             Items[rowIndex].Item = option;
