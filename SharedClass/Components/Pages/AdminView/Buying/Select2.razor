@@ -13,20 +13,6 @@
     </ul>
 </div>
 
-@* <script defer>
-    function closeFunc(e) {
-        let x = document.getElementById('dropdown')
-        let y = document.getElementById('ul')
-        if (!x.contains(e.target)) {
-            y.style.display = 'none'
-        }
-        else {
-            y.style.display = 'block'
-        }
-    }
-    document.addEventListener('click', closeFunc)
-</script> *@
-
 @code {
     [Parameter]
     public bool IsApproved { get; set; }

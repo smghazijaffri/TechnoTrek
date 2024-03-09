@@ -19,14 +19,15 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="d-flex justify-content-end">
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 5px;" Size="Size.Large">Create</MudButton>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               Href="/purchaserequisition/new-purchase-request" Size="Size.Large">Create</MudButton>
                 </div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-12">
-                <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true"
+                <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
                           OnRowClick="@OnRowClick" Filter="new Func<PurchaseRequisition,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                     <ToolBarContent>

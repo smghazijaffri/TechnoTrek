@@ -23,6 +23,5 @@ namespace SharedClass.Components.Model
         public bool Selected { get; set; }
         public string PRNumber { get; set; }
         public DateTime? RequiredBy { get; set; }
-
     }
 }
