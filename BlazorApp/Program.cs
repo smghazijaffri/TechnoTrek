@@ -27,6 +27,8 @@ builder.Services.AddScoped<PurchaseOrderItems>();
 builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<ExampleJsInterop>();
+builder.Services.AddScoped<DropDown>();
+builder.Services.AddScoped<BindDropdown>();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddMudServices();
 builder.Services.AddMudServices(config =>

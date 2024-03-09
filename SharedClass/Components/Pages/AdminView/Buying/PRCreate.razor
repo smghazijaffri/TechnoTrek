@@ -17,6 +17,7 @@
 @inject PR_Items pritem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject DropDown dropdown;
 @inject PurchaseRequisition purchase;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -58,10 +59,6 @@
                 <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly>
-            </div>
-            <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
                 <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
@@ -96,6 +93,7 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
+                        dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null });
                         var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
@@ -125,14 +123,15 @@
                     </div>
                     </td> *@
                             <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => ToggleDropdown(rowIndex)" @bind="item.Item"
+                                <div class="dropdown" id="dropdown" @onkeydown="e => dropdown.CloseDropdown(e, rowIndex)">
+
+                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => dropdown.ToggleDropdown(rowIndex)" @bind="item.Item"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(item.IsDropdownOpen ? "block" : "none");"
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(dropdown.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
-                                        @if (item.FilteredOptions != null)
+                                        @if (dropdown.ListItems[rowIndex].FilteredOptions != null)
                                         {
-                                            @foreach (var option in item.FilteredOptions)
+                                            @foreach (var option in dropdown.ListItems[rowIndex].FilteredOptions)
                                             {
                                                 <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
                                                 <hr class="m-1 border-primary" />
@@ -185,7 +184,7 @@
     private string header = "Create Purchase Request";
     private List<string> FilteredOptions { get; set; } //Select2
     private List<PR_Items> Items = new List<PR_Items>();
-    private List<string> Options { get; set; } = new List<string>(); //Select2
+
 
     protected override async void OnInitialized()
     {
@@ -218,22 +217,12 @@
                 }
                 else
                 {
-                    db.Close();
-                    db.Open();
-                    using (SqlCommand command = new SqlCommand("SELECT model FROM motherboards", db))
-                    {
-                        using (SqlDataReader reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                string value = reader.GetString(0);
-                                Options.Add(value);
-                            }
-                        }
-                    }
-                    db.Close();
                     AddRow();
                 }
+
+                dropdown.Options = db.Query<string>("select model from motherboards").ToList();
+                
+
             }
             StateHasChanged();
         }
@@ -260,6 +249,7 @@
                     return validate;
                 }
                 int CountPR = db.QueryFirstOrDefault<int>("select count(1) from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+
                 if (CountPR == 0)
                 {
                     purchase.PRNumber = "PR";
@@ -332,21 +322,25 @@
                     PR.PRNumber = purchase.PRNumber;
                     DisplayPR = false;
                     crud.CRD(PR, "PurhcaseRequestItems");
-                    NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PRNumber}", forceLoad: true);
+
                 }
 
                 foreach (var del in IsDelete)
                 {
                     pritem.RowID = del;
                     pritem.RequiredBy = DateTime.Now.Date;
-                    crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
+                    crud.CRD(pritem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
                 }
 
                 ToggleApproval();
-
+                if (PRNumber == null)
+                {
+                    NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PRNumber}", forceLoad: true);
+                }
                 if (IsDraft)
                 {
-                    return "Purchase Request Saved Successfully";
+                    
+                    return "Resquest Saved Successfully";
                 }
 
                 else if (IsApproved)
@@ -359,6 +353,7 @@
                     IsDraft = false;
                     return "Error in saving request";
                 }
+
             }
         }
         catch (Exception ex)
@@ -383,9 +378,13 @@
                 { return "Please Enter Quantity on No:" + PR.RowID + ""; }
                 else if (PR.RequiredBy == null)
                 { return "Please Enter Required By date on No:" + PR.RowID + ""; }
+                else if (!dropdown.Options.Contains(PR.Item))
+                { return "Item on No: " + PR.RowID + " does not exists"; }
+
             }
             return null;
         }
+
         else
         { return null; }
     }
@@ -462,6 +461,7 @@
             {
                 IsDelete.Add(Items[i].RowID);
                 Items.RemoveAt(i);
+                dropdown.ListItems.RemoveAt(i);
             }
         }
     }
@@ -476,145 +476,24 @@
             StateHasChanged();
         }
     }
-
-    // public void ToggleDropdown()
-    // {
-    //     if (IsApproved)
-    //     {
-    //         IsDropdownOpen = false;
-    //         return;
-    //     }
-
-    //     IsDropdownOpen = !IsDropdownOpen;
-
-    //     if (!IsDropdownOpen)
-    //     {
-    //         if (!Options.Contains(SelectedOption))
-    //         {
-    //             SelectedOption = "";
-    //         }
-    //     }
-
-    //     if (IsDropdownOpen)
-    //     {
-    //         FilteredOptions = Options;
-    //     }
-    // }
-
-    // private void CloseDropdown(KeyboardEventArgs e)
-    // {
-    //     if (e.Key == "Escape")
-    //     {
-    //         IsDropdownOpen = false;
-    //     }
-    // }
-
-    // private void SelectOption(string option)
-    // {
-    //     if (SelectedOption != null)
-    //     {
-    //         if (!SelectedOption.Contains(option))
-    //         {
-    //             SelectedOption = option;
-    //         }
-    //     }
-    //     SearchTerm = string.Empty;
-    //     IsDropdownOpen = false;
-    // }
-
-    // private async Task FilterOptions(ChangeEventArgs e)
-    // {
-    //     SearchTerm = e.Value.ToString();
-
-    //     if (!string.IsNullOrWhiteSpace(SearchTerm))
-    //     {
-    //         FilteredOptions = FilterList(Options, SearchTerm);
-    //     }
-    //     else
-    //     {
-    //         FilteredOptions = Options;
-    //     }
-
-    //     await InvokeAsync(StateHasChanged);
-    // }
-
-    private void ToggleDropdown(int rowIndex)
+    public async Task FilterOptions(ChangeEventArgs e, int rowIndex)
     {
-        if (IsApproved)
+        bool result = dropdown.FilterOptions(e, rowIndex);
+        if (result == true)
         {
-            Items[rowIndex].IsDropdownOpen = false;
-            return;
-        }
-
-        if (openDropdownIndex.HasValue && openDropdownIndex != rowIndex)
-        {
-            Items[openDropdownIndex.Value].IsDropdownOpen = false;
-        }
-
-        Items[rowIndex].IsDropdownOpen = !Items[rowIndex].IsDropdownOpen;
-
-        if (Items[rowIndex].IsDropdownOpen)
-        {
-            Items[rowIndex].FilteredOptions = Options;
-            openDropdownIndex = rowIndex;
-        }
-        else
-        {
-            openDropdownIndex = null;
-        }
-    }
-
-    private void CloseDropdown(KeyboardEventArgs e, int rowIndex)
-    {
-        if (e.Key == "Escape")
-        {
-            Items[rowIndex].IsDropdownOpen = false;
-        }
-    }
-
-    private void SelectOption(string option, int rowIndex)
-    {
-        if (Items[rowIndex].FilteredOptions.Contains(option))
-        {
-            Items[rowIndex].Item = option;
-            Items[rowIndex].IsDropdownOpen = false;
-        }
-    }
-
-    private async Task FilterOptions(ChangeEventArgs e, int rowIndex)
-    {
-        var searchTerm = e.Value.ToString();
-
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            Items[rowIndex].FilteredOptions = FilterList(Options, searchTerm);
-
-            // Clear the input field if the entered value is not in the dropdown options
-            if (!Items[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
+            if (!dropdown.ListItems[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
             {
                 Items[rowIndex].Item = "";
             }
         }
-        else
-        {
-            Items[rowIndex].FilteredOptions = Options;
-        }
-
         await InvokeAsync(StateHasChanged);
     }
-
-    private List<string> FilterList(List<string> items, string searchTerm)
+    private void SelectOption(string option, int rowIndex)
     {
-        List<string> filteredItems = new List<string>();
-
-        foreach (string item in items)
+        bool result = dropdown.SelectOption(option, rowIndex);
+        if (result == false)
         {
-            if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-            {
-                filteredItems.Add(item);
-            }
+            Items[rowIndex].Item = option;
         }
-
-        return filteredItems;
     }
 }
