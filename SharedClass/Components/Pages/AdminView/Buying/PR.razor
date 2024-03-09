@@ -1,52 +1,61 @@
-@page "/PurchaseRequisitionrequisition"
-@using Blazored.SessionStorage
-@using SharedClass.Components.Layout
-@using System.Globalization
-@using SharedClass.Components.Data
-@using SharedClass.Components.Model
-@using System.Net.Http.Json
 @using static MudBlazor.CategoryTypes
-@inject Select select;
-@inject IJSRuntime JSRuntime;
-@inject ISnackbar Snackbar;
-@inject NavigationManager NavigationManager;
-@inject ILocalStorageService localStorage;
-@inject PurchaseRequisition purchaserequisition
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@page "/purchaserequisition"
+@using System.Globalization
+@using System.Net.Http.Json
+
 @layout AdminLayout;
+@inject Select select;
+@inject ISnackbar Snackbar;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+@inject PurchaseRequisition purchaserequisition
 
 @if (isLoading)
 {
-    <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" Filter="new Func<PurchaseRequisition, bool>(FilterFunc1)" MultiSelection="true"
-              @bind-SelectedItem="selectedItem1" @bind-SelectedItems="selectedItems" Hover="true" OnRowClick="@OnRowClick"
-              @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="1" Style="border-radius:10px">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Purchase Requisition</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh>PR Number</MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Document Date</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="PR Number">@context.PRNumber</MudTd>
-                <MudTd DataLabel="Name">@context.PRname</MudTd>
-                <MudTd DataLabel="Status">@context.Status</MudTd>
-                <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager />
-            </PagerContent>
-        </MudTable>
-
-    <div class="d-flex flex-wrap mt-4">
-        <MudSpacer />
-        <div style="min-width:200px;">
-            <MudText Inline="true" Class="align-self-center">Selected: @selectedItem1?.PRname</MudText>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 5px;" Size="Size.Large">Create</MudButton>
+                </div>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true"
+                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseRequisition,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+
+                    <HeaderContent>
+                        <MudTh>Requisition Number</MudTh>
+                        <MudTh>Title</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Document Date</MudTh>
+                        <MudTh>Creation Date</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Requisition Number">@context.PRNumber</MudTd>
+                        <MudTd DataLabel="Title">@context.PRname</MudTd>
+                        <MudTd DataLabel="Status">@context.Status</MudTd>
+                        <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                        <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                </MudTable>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -73,14 +82,12 @@
     }
     //authorization
 
-    private bool hover = true;
-    private string searchString1;
-    private HashSet<PurchaseRequisition> selectedItems = new HashSet<PurchaseRequisition>();
-    private bool _selectOnRowClick = true;
+    private string searchString1 = "";
+    private bool _selectOnRowClick = false;
     private MudTable<PurchaseRequisition> _table;
-    private PurchaseRequisition selectedItem1 = null;
-    private IEnumerable<PurchaseRequisition> Elements = new List<PurchaseRequisition>();
     private string _selectedItemText = "No row clicked";
+    private IEnumerable<PurchaseRequisition> Elements = new List<PurchaseRequisition>();
+    private HashSet<PurchaseRequisition> selectedItems = new HashSet<PurchaseRequisition>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,53 +96,19 @@
 
     void OnRowClick(TableRowClickEventArgs<PurchaseRequisition> args)
     {
-        _selectedItemText = $"{args.Item.PRNumber} ({args.Item.PRNumber})";
         purchaserequisition.PRNumber = args.Item.PRNumber;
-        // Snackbar.Add(PurchaseRequisition.PRNumber.ToString(), Severity.Error);
-        // Snackbar.Add(args.Item.PRNumber.ToString(), Severity.Error);
         NavigationManager.NavigateTo($"/PurchaseRequisition/{purchaserequisition.PRNumber}");
-
     }
 
     private bool FilterFunc1(PurchaseRequisition element) => FilterFunc(element, searchString1);
 
     private bool FilterFunc(PurchaseRequisition element, string searchString)
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-        {
-            return true;
-        }
-
-        if ($"{element.PRNumber} {element.PRname} {element.DocumentDate}".Contains(searchString, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        string prNumberString = element.PRNumber.ToString();
-        string quantityString = element.PRname.ToString();
-
-        if (IsNumeric(prNumberString) && IsNumeric(quantityString) && $"{prNumberString} {quantityString}".ToString().Contains(searchString))
-        {
-            return true;
-        }
-
-        string reqDateString = element.DocumentDate.Value.ToString("dd/MM/yyyy");
-
-        if (IsDate(reqDateString) && $"{reqDateString}".Contains(searchString))
-        {
-            return true;
-        }
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.PRname.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.PRNumber} {element.DocumentDate} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
-    }
-
-    private bool IsNumeric(string value)
-    {
-        return double.TryParse(value, out _);
-    }
-
-    private bool IsDate(string value)
-    {
-        return DateTime.TryParse(value, out _);
     }
 }
