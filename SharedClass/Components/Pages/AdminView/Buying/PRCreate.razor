@@ -15,7 +15,8 @@
     @inject NavigationManager NavigationManager;
     @inject ISessionStorageService sessionStorage;
     @inject CRUD crud;
-    @inject Purchase purchase;
+    @inject PurchaseRequisition purchase;
+    @inject PR_Items pritem;
     @inject Connection con;
     @layout AdminLayout;
 
@@ -58,8 +59,12 @@
                 <input type="text" class="form-control" @bind="PurchaseRequisitionNumber"  readonly>
             </div>
             <div class="col-md-6">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" @bind="PurchaseRequisitionNumber" readonly>
+            </div>
+            <div class="col-md-6">
                 <label class="form-label">Creation Date</label>
-                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" @bind="CreationDate" class="form-control" readonly>
+                <input type="date" @bind="DocumentDate" class="form-control">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -143,18 +148,17 @@
 
             isLoading = true;
 
-            Items = select.PurhcaseRequest(purchase.PRNumber);
-            if (Items.Count > 0)
-            {
-                PurchaseRequisitionNumber = Items[0].PRNumber;
-                Vendor = Items[0].Vendor;
-                CreationDate = Items[0].CreationDate;
-                if (Items[0].Status == "Approved")
-                {
-                    IsApproved = true;
-                    DisplayPR = false;
-                }
-            }
+            // Items = select.PurhcaseRequest(purchase.PRNumber);
+            // if (Items.Count > 0)
+            // {
+            //     PurchaseRequisitionNumber = Items[0].PRNumber;
+            //     DocumentDate = Items[0].CreationDate;
+            //     if (purchase.Status == "Approved")
+            //     {
+            //         IsApproved = true;
+            //         DisplayPR = false;
+            //     }
+            // }
             // else
             // {
             //     PurchaseRequisitionNumber = 1;
@@ -175,13 +179,13 @@
 
     private bool DisplayPR = true;
     private string PurchaseRequisitionNumber { get; set; }
-    private DateTime CreationDate { get; set; } = DateTime.Now;
+    private DateTime DocumentDate { get; set; } = DateTime.Now;
     private string Vendor { get; set; }
     private bool IsApproved { get; set; } = false;
     private string status;
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
-    private List<Purchase> Items = new List<Purchase>();
+    private List<PR_Items> Items = new List<PR_Items>();
 
     List<int> IsDelete = new List<int>();
 
@@ -225,6 +229,15 @@
                         PurchaseRequisitionNumber = PurchaseRequisitionNumber + "-" + "001";
                     }
                 }
+                if (IsDraft)
+                {
+                    purchase.Status = "Draft";
+                }
+               else if (IsApproved)
+                {
+                    purchase.Status = "Approved";
+                }
+                crud.CRD(purchase, "CreatePurchaseRequest");
                 foreach (var PR in Items)
                 {
                     foreach (int del in IsDelete)
@@ -235,24 +248,23 @@
                         }
                     }
                     PR.PRNumber = PurchaseRequisitionNumber;
-                    PR.Vendor = Vendor;
-                    if (IsDraft)
-                    {
-                        PR.Status = "Draft";
-                    }
-                    if (IsApproved)
-                    {
-                        PR.Status = "Approved";
-                    }
+                    // if (IsDraft)
+                    // {
+                    //     PR.Status = "Draft";
+                    // }
+                    // if (IsApproved)
+                    // {
+                    //     PR.Status = "Approved";
+                    // }
                     DisplayPR = false;
-                    crud.CRD(PR, "CreatePurchaseRequest");
+                    
 
                 }
                 foreach (var del in IsDelete)
                 {
-                    purchase.PRNumber = PurchaseRequisitionNumber;
-                    purchase.RowID = del;
-                    purchase.RequiredBy = DateTime.Now;
+                    pritem.PRNumber = PurchaseRequisitionNumber;
+                    pritem.RowID = del;
+                    pritem.RequiredBy = DateTime.Now;
                     crud.CRD(purchase, "CreatePurchaseRequest", System.Data.CommandType.StoredProcedure, true);
                 }
                 if (IsDraft)
@@ -344,7 +356,7 @@
 
     private void AddRow()
     {
-        Items.Add(new Purchase
+        Items.Add(new PR_Items
             {
                 RequiredBy = DateTime.Now,
                 Quantity = 1

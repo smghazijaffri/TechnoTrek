@@ -69,16 +69,16 @@ namespace SharedClass.Components.Data
             string query = "SELECT * FROM coolers";
             return await con.QueryAsync<Cooler>(query);
         }
-        public async Task<IEnumerable<Purchase>> GetPR1DataAsync()
+        public async Task<IEnumerable<PurchaseRequisition>> GetPR1DataAsync()
         {
             con.Close();
             con.Open();
-            return await con.QueryAsync<Purchase>("SELECT * FROM PurchaseRequest");
+            return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest");
         }
-        public  List<Purchase>  PurhcaseRequest(string PRNumber)
+        public  List<PurchaseRequisition>  PurhcaseRequest(string PRNumber)
         { 
             con.Close(); con.Open();
-            return con.Query<Purchase>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = PRNumber }).ToList();
+            return con.Query<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = PRNumber }).ToList();
 
         }
         public int CountPRnumber()
