@@ -170,8 +170,6 @@
     List<int> IsDelete = new List<int>();
     [Parameter]
     public string? PRNumber { get; set; }
-    public List<string> ItemName = new List<string>();
-    private int? openDropdownIndex = null; //Select2
     public bool isAuthorized { get; set; }
     private List<string> UOMList { get; set; }
     private bool IsDraft { get; set; } = false;
@@ -180,6 +178,7 @@
     private bool IsRejected { get; set; } = false;
     private bool IsSubmitted { get; set; } = false;
     private string header = "Create Purchase Request";
+    public List<string> ItemName = new List<string>();
     private List<PR_Items> Items = new List<PR_Items>();
 
     protected override async void OnInitialized()
@@ -194,6 +193,7 @@
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
+                    singledropdown.IsDropdownOpen = false;
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
@@ -216,10 +216,8 @@
                 {
                     AddRow();
                 }
-
+                singledropdown.Options = db.Query<string>("select Unit from UOM").ToList();
                 dropdown.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-               
-
             }
             StateHasChanged();
         }

@@ -102,4 +102,68 @@ namespace SharedClass.Components.Data
         public string Value { get; set; }
         public string Text { get; set; }
     }
+    public class SingleDropDown
+    {
+        public List<string> Options { get; set; }
+        public bool IsDropdownOpen { get; set; }
+        public List<string> FilteredOptions { get; set; }
+
+        public void CloseDropdown(KeyboardEventArgs e)
+        {
+            if (e.Key == "Escape")
+            {
+                IsDropdownOpen = false;
+            }
+        }
+
+        public void ToggleDropdown()
+        {
+            IsDropdownOpen = !IsDropdownOpen;
+
+            if (IsDropdownOpen)
+            {
+                FilteredOptions = Options;
+            }
+        }
+
+        public bool FilterOptions(ChangeEventArgs e)
+        {
+            var searchTerm = e.Value.ToString();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                FilteredOptions = FilterList(Options, searchTerm);
+                return true;
+            }
+            else
+            {
+                FilteredOptions = Options;
+                return false;
+            }
+        }
+
+        private List<string> FilterList(List<string> Options, string searchTerm)
+        {
+            List<string> filteredItems = new List<string>();
+
+            foreach (string item in Options)
+            {
+                if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                {
+                    filteredItems.Add(item);
+                }
+            }
+
+            return filteredItems;
+        }
+
+        public bool SelectOption(string option)
+        {
+            if (FilteredOptions.Contains(option))
+            {
+                IsDropdownOpen = false;
+            }
+            return IsDropdownOpen;
+        }
+    }
 }
