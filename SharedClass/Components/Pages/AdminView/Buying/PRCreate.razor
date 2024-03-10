@@ -15,10 +15,11 @@
 @inject Select select;
 @inject Connection con;
 @inject PR_Items pritem;
+@inject DropDown dropdown;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject DropDown dropdown;
 @inject PurchaseRequisition purchase;
+@inject SingleDropDown singledropdown;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
@@ -38,7 +39,7 @@
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
                 }
             </h3>
         </div>
@@ -47,6 +48,20 @@
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
                     @GetSubmitButtonText()
+                </button>
+            }
+            @if (IsApproved)
+            {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
+                    <ul class="dropdown-menu w-100 list-group" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
+                        <hr class="m-1 border-primary" />
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple">
+                    Cancel
                 </button>
             }
         </div>
@@ -93,39 +108,20 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
-                        dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null });
+                        dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false});
+                        ItemName.Add("");
                         var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
                                     <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
-                                    @(index + 1)
+                                    <b>@(index + 1)</b>
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            @* <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td> *@
-                            @* <td> <Select2 IsApproved="@IsApproved" Items="@item.Item"/> </td> *@
-                            @* <td>
-                    <div class="dropdown" id="dropdown" @onkeydown="CloseDropdown">
-                    <input type="text" id="Item" readonly="@IsApproved" @onclick="ToggleDropdown" @bind="item.Item" placeholder="Select an Item"
-                    class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="FilterOptions" />
-                    <ul class="dropdown-menu w-100" id="ul" style="display: @(IsDropdownOpen ? "block" : "none");" aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
-                    @if (FilteredOptions != null)
-                    {
-                    @foreach (var option in FilteredOptions)
-                    {
-                    <li><a class="dropdown-item" bind="@SelectedOption" @onclick="(() => SelectOption(option))">@option</a></li>
-                    <hr class="m-1 border-primary" />
-                    }
-                    }
-                    <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
-                    </ul>
-                    </div>
-                    </td> *@
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => dropdown.CloseDropdown(e, rowIndex)">
-
-                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => dropdown.ToggleDropdown(rowIndex)" @bind="item.Item"
+                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => dropdown.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(dropdown.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
@@ -133,11 +129,14 @@
                                         {
                                             @foreach (var option in dropdown.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
+                                                <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option.Text</a></li>
+                                                <li hidden><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option.Value</a></li>
+
                                                 <hr class="m-1 border-primary" />
                                             }
                                         }
                                         <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+
                                     </ul>
                                 </div>
                             </td>
@@ -171,20 +170,17 @@
     List<int> IsDelete = new List<int>();
     [Parameter]
     public string? PRNumber { get; set; }
+    public List<string> ItemName = new List<string>();
     private int? openDropdownIndex = null; //Select2
     public bool isAuthorized { get; set; }
-    public bool IsDropdownOpen { get; set; } //Select2
-    private string? SearchTerm { get; set; } //Select2
-    private string SelectedOption { get; set; } //Select2
+    private List<string> UOMList { get; set; }
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
     private bool IsApproved { get; set; } = false;
     private bool IsRejected { get; set; } = false;
     private bool IsSubmitted { get; set; } = false;
     private string header = "Create Purchase Request";
-    private List<string> FilteredOptions { get; set; } //Select2
     private List<PR_Items> Items = new List<PR_Items>();
-
 
     protected override async void OnInitialized()
     {
@@ -200,12 +196,13 @@
                 {
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     if (purchase == null || Items.Count == 0)
                         NavigationManager.NavigateTo("/purchaserequisition/");
 
                     DisplayPR = false;
                     header = purchase.PRname;
-                    if (purchase.Status == "Approved")
+                    if (purchase.Status == "Pending")
                     {
                         IsApproved = true;
                     }
@@ -220,8 +217,8 @@
                     AddRow();
                 }
 
-                dropdown.Options = db.Query<string>("select model from motherboards").ToList();
-                
+                dropdown.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+               
 
             }
             StateHasChanged();
@@ -305,7 +302,7 @@
 
                 else if (status == "Submit")
                 {
-                    purchase.Status = "Submitted";
+                    purchase.Status = "Pending";
                 }
 
                 crud.CRD(purchase, "CreatePurchaseRequest");
@@ -339,7 +336,6 @@
                 }
                 if (IsDraft)
                 {
-                    
                     return "Resquest Saved Successfully";
                 }
 
@@ -353,7 +349,6 @@
                     IsDraft = false;
                     return "Error in saving request";
                 }
-
             }
         }
         catch (Exception ex)
@@ -364,8 +359,7 @@
 
     public string ValidatePR()
     {
-        if (purchase.DocumentDate == null)
-        { return "Please Enter Document Date"; }
+        if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
         else if (Items.Count > 0)
         {
             foreach (var PR in Items)
@@ -378,15 +372,13 @@
                 { return "Please Enter Quantity on No:" + PR.RowID + ""; }
                 else if (PR.RequiredBy == null)
                 { return "Please Enter Required By date on No:" + PR.RowID + ""; }
-                else if (!dropdown.Options.Contains(PR.Item))
+                if (!dropdown.Options.Any(option => option.Value == PR.Item))
                 { return "Item on No: " + PR.RowID + " does not exists"; }
 
             }
             return null;
         }
-
-        else
-        { return null; }
+        else { return null; }
     }
 
     public void SavePR()
@@ -408,8 +400,8 @@
     {
         if (IsApproved)
         {
-            status = "Submitted";
-            return "Submitted";
+            status = "Pending";
+            return "Cancel";
         }
         else if (IsDraft)
         {
@@ -476,24 +468,26 @@
             StateHasChanged();
         }
     }
+
     public async Task FilterOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = dropdown.FilterOptions(e, rowIndex);
         if (result == true)
         {
-            if (!dropdown.ListItems[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
+            if (!dropdown.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
             {
                 Items[rowIndex].Item = "";
             }
         }
         await InvokeAsync(StateHasChanged);
     }
-    private void SelectOption(string option, int rowIndex)
+    private void SelectOption(option options, int rowIndex)
     {
-        bool result = dropdown.SelectOption(option, rowIndex);
+        bool result = dropdown.SelectOption(options, rowIndex);
         if (result == false)
         {
-            Items[rowIndex].Item = option;
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].Item = options.Value;
         }
     }
 }

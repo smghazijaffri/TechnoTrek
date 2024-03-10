@@ -15,35 +15,50 @@
 
 @if (isLoading)
 {
-    <MudTable @ref="_table" T="PurchaseOrders" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true"
-              OnRowClick="@OnRowClick" Filter="new Func<PurchaseOrders,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               Href="/purchaseorder/new-purchase-order" Size="Size.Large">Create</MudButton>
+                </div>
+            </div>
+        </div>
 
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </ToolBarContent>
+        <div class="row">
+            <div class="col-md-12">
+                <MudTable @ref="_table" T="PurchaseOrders" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseOrders,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
-        <HeaderContent>
-            <MudTh>Order Number</MudTh>
-            <MudTh>Title</MudTh>
-            <MudTh>Vendor</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Grand Total</MudTh>
-            <MudTh>Creation Date</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Requisition Number">@context.PONumber</MudTd>
-            <MudTd DataLabel="Title">@context.POName</MudTd>
-            <MudTd DataLabel="Status">@context.Vendor</MudTd>
-            <MudTd DataLabel="Document Date">@context.Status</MudTd>
-            <MudTd DataLabel="Creation Date">@context.TotalPrice</MudTd>
-            <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-        </PagerContent>
-    </MudTable>
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+
+                    <HeaderContent>
+                        <MudTh>Order Number</MudTh>
+                        <MudTh>Title</MudTh>
+                        <MudTh>Vendor</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Grand Total</MudTh>
+                        <MudTh>Creation Date</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Requisition Number">@context.PONumber</MudTd>
+                        <MudTd DataLabel="Title">@context.POName</MudTd>
+                        <MudTd DataLabel="Status">@context.Vendor</MudTd>
+                        <MudTd DataLabel="Document Date">@context.Status</MudTd>
+                        <MudTd DataLabel="Creation Date">@context.TotalPrice</MudTd>
+                        <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                </MudTable>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -85,7 +100,7 @@
     void OnRowClick(TableRowClickEventArgs<PurchaseOrders> args)
     {
         purchaseorder.PONumber = args.Item.PONumber;
-        NavigationManager.NavigateTo($"/PurchaseOrders/{purchaseorder.PONumber}");
+        NavigationManager.NavigateTo($"/purchaseorder/{purchaseorder.PONumber}");
     }
 
     private bool FilterFunc1(PurchaseOrders element) => FilterFunc(element, searchString1);

@@ -39,6 +39,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddScoped<DropDown>();
             builder.Services.AddScoped<BindDropdown>();
+            builder.Services.AddScoped<SingleDropDown>();
             builder.Services.AddMudServices();
             builder.Services.AddMudServices(config =>
             {

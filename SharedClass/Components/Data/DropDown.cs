@@ -14,7 +14,7 @@ namespace SharedClass.Components.Data
     {
         public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>();
         private int? openDropdownIndex = null;
-        public List<string> Options { get; set; }
+        public List<option> Options { get; set; }
 
 
         public void CloseDropdown(KeyboardEventArgs e, int rowIndex)
@@ -26,7 +26,7 @@ namespace SharedClass.Components.Data
         }
         public void ToggleDropdown(int rowIndex)
         {
-            
+
             if (openDropdownIndex.HasValue && openDropdownIndex != rowIndex)
             {
                 ListItems[openDropdownIndex.Value].IsDropdownOpen = false;
@@ -52,7 +52,7 @@ namespace SharedClass.Components.Data
             {
                 ListItems[rowIndex].FilteredOptions = FilterList(Options, searchTerm);
                 return true;
-               
+
             }
             else
             {
@@ -62,13 +62,14 @@ namespace SharedClass.Components.Data
 
 
         }
-        private List<string> FilterList(List<string> Options, string searchTerm)
+        private List<option> FilterList(List<option> Options, string searchTerm)
         {
-            List<string> filteredItems = new List<string>();
+            List<option> filteredItems = new List<option>();
 
-            foreach (string item in Options)
+            foreach (var item in Options)
             {
-                if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+
+                if (item.Text.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                 {
                     filteredItems.Add(item);
                 }
@@ -77,23 +78,28 @@ namespace SharedClass.Components.Data
             return filteredItems;
         }
 
-        public bool SelectOption(string option, int rowIndex)
+        public bool SelectOption(option option, int rowIndex)
         {
             if (ListItems[rowIndex].FilteredOptions.Contains(option))
             {
                 //ListItems[rowIndex].Item = option;
                 ListItems[rowIndex].IsDropdownOpen = false;
-                
+
             }
             return ListItems[rowIndex].IsDropdownOpen;
         }
 
     }
     public class BindDropdown
-    { 
+    {
         public int RowIndex { get; set; }
         public bool IsDropdownOpen { get; set; }
-        public List<string> FilteredOptions { get; set; }
+        public List<option> FilteredOptions { get; set; } = new List<option>();
 
+    }
+    public class option
+    {
+        public string Value { get; set; }
+        public string Text { get; set; }
     }
 }

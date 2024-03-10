@@ -14,6 +14,7 @@
 @layout AdminLayout;
 @inject Select select;
 @inject Connection con;
+@inject DropDown dropdown;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
@@ -121,6 +122,8 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
+                        dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null });
                         POItem.Amount = (item.Rate * item.Quantity);
                         <tr>
                             <td>
@@ -130,7 +133,25 @@
                                     <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" id="Item" @bind="item.Item" readonly="@IsApproved" /></td>
+                            <td>
+                                @* <div class="dropdown" id="dropdown" @onkeydown="e => dropdown.CloseDropdown(e, rowIndex)">
+
+                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => dropdown.ToggleDropdown(rowIndex)" @bind="item.Item"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(dropdown.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                                        @if (dropdown.ListItems[rowIndex].FilteredOptions != null)
+                                        {
+                                            @foreach (var option in dropdown.ListItems[rowIndex].FilteredOptions)
+                                            {
+                                                <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
+                                                <hr class="m-1 border-primary" />
+                                            }
+                                        }
+                                        <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+                                    </ul>
+                                </div>
+ *@                            </td>
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
@@ -140,8 +161,8 @@
                                     <option value="Box"></option>
                                 </datalist>
                             </td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly="@IsApproved" /></td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="POItem.Amount" readonly="@IsApproved" /></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly/></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="POItem.Amount" readonly/></td>
                             <td>
                                 <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
                             </td>
@@ -453,4 +474,24 @@
             StateHasChanged();
         }
     }
+    // public async Task FilterOptions(ChangeEventArgs e, int rowIndex)
+    // {
+    //     bool result = dropdown.FilterOptions(e, rowIndex);
+    //     if (result == true)
+    //     {
+    //         if (!dropdown.ListItems[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
+    //         {
+    //             Items[rowIndex].Item = "";
+    //         }
+    //     }
+    //     await InvokeAsync(StateHasChanged);
+    // }
+    // private void SelectOption(string option, int rowIndex)
+    // {
+    //     bool result = dropdown.SelectOption(option, rowIndex);
+    //     if (result == false)
+    //     {
+    //         Items[rowIndex].Item = option;
+    //     }
+    // }
 }
