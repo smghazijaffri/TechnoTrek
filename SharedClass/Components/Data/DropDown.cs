@@ -13,8 +13,9 @@ namespace SharedClass.Components.Data
     public class DropDown
     {
         public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>();
+        public List<option> Options { get; set; } = new List<option>();
         private int? openDropdownIndex = null;
-        public List<option> Options { get; set; }
+       
 
 
         public void CloseDropdown(KeyboardEventArgs e, int rowIndex)
@@ -61,6 +62,11 @@ namespace SharedClass.Components.Data
             }
 
 
+        }
+        public void HandleDropdownFocusOut(int rowIndex)
+        {
+            // Set IsDropdownOpen to false when the dropdown loses focus
+            ListItems[rowIndex].IsDropdownOpen = false;
         }
         private List<option> FilterList(List<option> Options, string searchTerm)
         {

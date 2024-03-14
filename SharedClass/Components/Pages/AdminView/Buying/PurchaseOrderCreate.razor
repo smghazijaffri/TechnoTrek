@@ -14,7 +14,7 @@
 @layout AdminLayout;
 @inject Select select;
 @inject Connection con;
-@inject DropDown dropdown;
+@* @inject DropDown dropdown; *@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
@@ -123,7 +123,7 @@
                         var item = Items[index];
                         item.RowID = index + 1;
                         var rowIndex = item.RowID - 1;
-                        dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null });
+                        @* dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null }); *@
                         POItem.Amount = (item.Rate * item.Quantity);
                         <tr>
                             <td>
