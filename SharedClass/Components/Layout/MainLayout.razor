@@ -9,7 +9,13 @@
 
 <main class="p-1">
     <MudThemeProvider />
-    <MudDialogProvider />
+    <MudDialogProvider FullWidth="true"
+                       MaxWidth="MaxWidth.ExtraSmall"
+                       CloseButton="true"
+                       DisableBackdropClick="false"
+                       NoHeader="false"
+                       Position="DialogPosition.Center"
+                       CloseOnEscapeKey="true" />
     <MudSnackbarProvider />
     @Body
 </main>

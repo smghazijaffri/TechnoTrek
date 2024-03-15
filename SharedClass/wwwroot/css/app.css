@@ -331,3 +331,7 @@ h1:focus {
 .size {
     width: calc(100% - 100px);
 }
+
+.dialog {
+    backdrop-filter: blur(10px);
+}

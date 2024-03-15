@@ -1,6 +1,7 @@
 ﻿@page "/purchaserequisition/new-purchase-request"
 @page "/purchaserequisition/{PRNumber?}"
 
+@using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
@@ -18,6 +19,7 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseRequisition purchase;
+@inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -53,14 +55,14 @@
             @if (IsApproved)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple mt-1" @onclick="singledropdown.ToggleDropdown">Create</button>
-                    <ul class="dropdown-menu w-100 list-group" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
                         <li><button href="#" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
                         <hr class="m-1 border-primary" />
                         <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
                     </ul>
                 </div>
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple">
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel
                 </button>
             }
@@ -110,7 +112,7 @@
                         item.RowID = index + 1;
                         DropDownItem.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false });
                         DropDownUOM.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false });
-                        
+
                         var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
@@ -124,21 +126,19 @@
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@IsApproved" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-
                                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
                                         <li>
-                                                @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                    @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
-                                                    {
-                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
-                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)" hidden>@option.Value</a>
-                                                        <hr class="m-1 border-primary" />
-                                                    }
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)" hidden>@option.Value</a>
+                                                    <hr class="m-1 border-primary" />
                                                 }
-                                                <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                           
+                                            }
+                                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -147,7 +147,7 @@
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@IsApproved" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
                                         style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
@@ -181,30 +181,31 @@
             <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
         </div>
     </div>
-
-
 }
 
 @code {
     private string? status;
-    bool isLoading = false;
-    private bool DisplayPR = true;
-    List<int> IsDelete = new List<int>();
     [Parameter]
     public string? PRNumber { get; set; }
+    private string header = "Create Purchase Request";
+
+    bool isLoading = false;
+    private bool DisplayPR = true;
     public bool isAuthorized { get; set; }
-    private List<string> UOMList { get; set; }
     private bool IsDraft { get; set; } = false;
     private bool IsSaving { get; set; } = false;
     private bool IsApproved { get; set; } = false;
     private bool IsRejected { get; set; } = false;
     private bool IsSubmitted { get; set; } = false;
-    private string header = "Create Purchase Request";
+
+    public DropDown DropDownUOM = new DropDown();
+    public DropDown DropDownItem = new DropDown();
+
+    List<int> IsDelete = new List<int>();
+    private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
     private List<PR_Items> Items = new List<PR_Items>();
 
-    public DropDown DropDownItem = new DropDown();
-    public DropDown DropDownUOM = new DropDown();
     protected override async void OnInitialized()
     {
         var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
@@ -383,25 +384,23 @@
     public string ValidatePR()
     {
         if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
-        else if (Items.Count > 0)
+        if (Items.Count > 0)
         {
             foreach (var PR in Items)
             {
-                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID-1]))
-                { return "Please Enter Item on No:" + PR.RowID + ""; }
+                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1]))
+                { return "Please Enter Item on Row: " + PR.RowID + ""; }
                 else if (string.IsNullOrWhiteSpace(PR.UOM))
-                { return "Please Enter UOM on No:" + PR.RowID + ""; }
+                { return "Please Enter UOM on Row: " + PR.RowID + ""; }
                 else if (PR.Quantity == 0)
-                { return "Please Enter Quantity on No:" + PR.RowID + ""; }
+                { return "Please Enter Quantity on Row: " + PR.RowID + ""; }
                 else if (PR.RequiredBy == null)
-                { return "Please Enter Required By date on No:" + PR.RowID + ""; }
-                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID-1]))
-                { return "Item on No: " + PR.RowID + " does not exists"; }
-
+                { return "Please Enter Required By date on Row: " + PR.RowID + ""; }
+                else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1]))
+                { return "Item on Row: " + PR.RowID + " does not exists"; }
             }
-            return null;
         }
-        else { return null; }
+        return null;
     }
 
     public void SavePR()
@@ -461,6 +460,7 @@
 
     private void AddRow()
     {
+        HandleFormInput();
         Items.Add(new PR_Items
             {
                 RequiredBy = DateTime.Now,
@@ -477,8 +477,8 @@
             {
                 IsDelete.Add(Items[i].RowID);
                 Items.RemoveAt(i);
-                DropDownItem.ListItems.RemoveAt(i);
                 ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
             }
         }
     }
@@ -506,6 +506,7 @@
         }
         await InvokeAsync(StateHasChanged);
     }
+
     public async Task FilterItemOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownItem.FilterOptions(e, rowIndex);
@@ -518,16 +519,18 @@
         }
         await InvokeAsync(StateHasChanged);
     }
+
     private void SelectItemOption(option options, int rowIndex)
     {
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
-            
+
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].Item = options.Value;
         }
     }
+
     public void SelectUOMOption(option options, int rowIndex)
     {
         bool result = DropDownUOM.SelectOption(options, rowIndex);
@@ -538,4 +541,9 @@
         }
     }
 
+    private void OpenDialog()
+    {
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        DialogService.Show<Dialog>("Cancel Purchase Request", options);
+    }
 }

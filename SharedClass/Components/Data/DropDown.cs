@@ -12,11 +12,9 @@ namespace SharedClass.Components.Data
 {
     public class DropDown
     {
-        public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>();
-        public List<option> Options { get; set; } = new List<option>();
         private int? openDropdownIndex = null;
-       
-
+        public List<option> Options { get; set; } = new List<option>();
+        public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>();
 
         public void CloseDropdown(KeyboardEventArgs e, int rowIndex)
         {
@@ -25,9 +23,9 @@ namespace SharedClass.Components.Data
                 ListItems[rowIndex].IsDropdownOpen = false;
             }
         }
+
         public void ToggleDropdown(int rowIndex)
         {
-
             if (openDropdownIndex.HasValue && openDropdownIndex != rowIndex)
             {
                 ListItems[openDropdownIndex.Value].IsDropdownOpen = false;
@@ -45,6 +43,7 @@ namespace SharedClass.Components.Data
                 openDropdownIndex = null;
             }
         }
+
         public bool FilterOptions(ChangeEventArgs e, int rowIndex)
         {
             var searchTerm = e.Value.ToString();
@@ -53,28 +52,26 @@ namespace SharedClass.Components.Data
             {
                 ListItems[rowIndex].FilteredOptions = FilterList(Options, searchTerm);
                 return true;
-
             }
             else
             {
                 ListItems[rowIndex].FilteredOptions = Options;
                 return false;
             }
-
-
         }
+
         public void HandleDropdownFocusOut(int rowIndex)
         {
             // Set IsDropdownOpen to false when the dropdown loses focus
             ListItems[rowIndex].IsDropdownOpen = false;
         }
+
         private List<option> FilterList(List<option> Options, string searchTerm)
         {
             List<option> filteredItems = new List<option>();
 
             foreach (var item in Options)
             {
-
                 if (item.Text.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                 {
                     filteredItems.Add(item);
@@ -90,24 +87,24 @@ namespace SharedClass.Components.Data
             {
                 //ListItems[rowIndex].Item = option;
                 ListItems[rowIndex].IsDropdownOpen = false;
-
             }
             return ListItems[rowIndex].IsDropdownOpen;
         }
-
     }
+
     public class BindDropdown
     {
         public int RowIndex { get; set; }
         public bool IsDropdownOpen { get; set; }
         public List<option> FilteredOptions { get; set; } = new List<option>();
-
     }
+
     public class option
     {
         public string Value { get; set; }
         public string Text { get; set; }
     }
+
     public class SingleDropDown
     {
         public List<string> Options { get; set; }
