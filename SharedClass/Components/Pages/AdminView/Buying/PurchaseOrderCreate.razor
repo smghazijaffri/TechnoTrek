@@ -1,6 +1,7 @@
 ﻿@page "/purchaseorder/new-purchase-order"
 @page "/purchaseorder/{PONumber?}"
 
+@using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
@@ -19,6 +20,8 @@
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
 @inject PurchaseOrderItems POItem;
+@inject IDialogService DialogService;
+@inject SingleDropDown singledropdown;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
@@ -47,6 +50,22 @@
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">@GetSubmitButtonText()</button>
             }
+            @if (IsApproved)
+            {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Goods Receipt</button></li>
+                        <hr class="m-1 border-primary" />
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Purchase Invoice</button></li>
+                        <hr class="m-1 border-primary" />
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Payment</button></li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
         </div>
     </div>
 
@@ -63,6 +82,25 @@
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
                 <input type="text" @bind="purchase.Vendor" class="form-control" readonly="@IsApproved">
+
+                <div class="dropdown" id="dropdown" @onkeydown="e => singledropdown.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => singledropdown.ToggleDropdown()" @bind="purchase.Vendor"
+                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(singledropdown.IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                        <li>
+                            @if (singledropdown.FilteredOptions != null)
+                            {
+                                @foreach (var option in singledropdown.FilteredOptions)
+                                {
+                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option)">@option.Text</a>
+                                    <hr class="m-1 border-primary" />
+                                }
+                            }
+                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </form>
     </div>
@@ -123,7 +161,7 @@
                         var item = Items[index];
                         item.RowID = index + 1;
                         var rowIndex = item.RowID - 1;
-                        @* dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null }); *@
+                        @* dropdown.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false, FilteredOptions = null });
                         POItem.Amount = (item.Rate * item.Quantity);
                         <tr>
                             <td>
@@ -136,23 +174,24 @@
                             <td>
                                 @* <div class="dropdown" id="dropdown" @onkeydown="e => dropdown.CloseDropdown(e, rowIndex)">
 
-                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => dropdown.ToggleDropdown(rowIndex)" @bind="item.Item"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(dropdown.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
-                                        @if (dropdown.ListItems[rowIndex].FilteredOptions != null)
-                                        {
-                                            @foreach (var option in dropdown.ListItems[rowIndex].FilteredOptions)
-                                            {
-                                                <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
-                                                <hr class="m-1 border-primary" />
-                                            }
-                                        }
-                                        <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
-                                    </ul>
-                                </div>
- *@                            </td>
-                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
+                        <input type="text" id="Item" readonly="@IsApproved" @onclick="() => dropdown.ToggleDropdown(rowIndex)" @bind="item.Item"
+                        placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterOptions(e, rowIndex)" />
+                        <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(dropdown.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                        @if (dropdown.ListItems[rowIndex].FilteredOptions != null)
+                        {
+                        @foreach (var option in dropdown.ListItems[rowIndex].FilteredOptions)
+                        {
+                        <li><a class="dropdown-item" bind="@item.Item" @onclick="() => SelectOption(option, rowIndex)">@option</a></li>
+                        <hr class="m-1 border-primary" />
+                        }
+                        }
+                        <li hidden="@IsApproved"><button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button></li>
+                        </ul>
+                        </div>
+                        </td>
+                        *@
+                           @*  <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <input type="text" list="uomOptions" class="form-control" @bind="item.UOM" readonly="@IsApproved" />
                                 <datalist id="uomOptions">
@@ -161,12 +200,12 @@
                                     <option value="Box"></option>
                                 </datalist>
                             </td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly/></td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="POItem.Amount" readonly/></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly /></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="POItem.Amount" readonly /></td>
                             <td>
                                 <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
                             </td>
-                        </tr>
+                        </tr> *@
                     }
                 </tbody>
             </table>
@@ -304,7 +343,7 @@
 
                 else if (status == "Submit")
                 {
-                    purchase.Status = "Submitted";
+                    purchase.Status = "To Recieve and Bill";
                 }
 
                 // crud.CRD(purchase, "CreatePurchaseRequest");
@@ -404,8 +443,8 @@
     {
         if (IsApproved)
         {
-            status = "Submitted";
-            return "Submitted";
+            status = "To Recieve and Bill";
+            return "Cancel";
         }
 
         else if (IsDraft)
@@ -450,6 +489,7 @@
                 RequiredBy = DateTime.Now,
                 Quantity = 1
             });
+        HandleFormInput();
     }
 
     private void DeleteRow(int index)
@@ -494,4 +534,10 @@
     //         Items[rowIndex].Item = option;
     //     }
     // }
+
+    private void OpenDialog()
+    {
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        DialogService.Show<Dialog>("Cancel Purchase Order", options);
+    }
 }
