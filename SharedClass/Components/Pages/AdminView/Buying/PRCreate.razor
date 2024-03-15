@@ -110,7 +110,7 @@
                         item.RowID = index + 1;
                         DropDownItem.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false });
                         DropDownUOM.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false });
-                        ItemName.Add("");
+                        
                         var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
@@ -348,10 +348,10 @@
                 foreach (var del in IsDelete)
                 {
                     pritem.RowID = del;
-                    pritem.RequiredBy = DateTime.Now.Date;
+                    pritem.PRNumber = purchase.PRNumber;
                     crud.CRD(pritem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
                 }
-
+                IsDelete.Clear();
                 ToggleApproval();
                 if (PRNumber == null)
                 {
@@ -387,7 +387,7 @@
         {
             foreach (var PR in Items)
             {
-                if (string.IsNullOrWhiteSpace(PR.Item))
+                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID-1]))
                 { return "Please Enter Item on No:" + PR.RowID + ""; }
                 else if (string.IsNullOrWhiteSpace(PR.UOM))
                 { return "Please Enter UOM on No:" + PR.RowID + ""; }
@@ -395,7 +395,7 @@
                 { return "Please Enter Quantity on No:" + PR.RowID + ""; }
                 else if (PR.RequiredBy == null)
                 { return "Please Enter Required By date on No:" + PR.RowID + ""; }
-                if (DropDownItem.Options.Any(option => option.Value == PR.Item))
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID-1]))
                 { return "Item on No: " + PR.RowID + " does not exists"; }
 
             }
@@ -466,6 +466,7 @@
                 RequiredBy = DateTime.Now,
                 Quantity = 1
             });
+        ItemName.Add("");
     }
 
     private void DeleteRow(int index)
@@ -477,6 +478,7 @@
                 IsDelete.Add(Items[i].RowID);
                 Items.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
+                ItemName.RemoveAt(i);
             }
         }
     }
@@ -521,6 +523,7 @@
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
+            
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].Item = options.Value;
         }
