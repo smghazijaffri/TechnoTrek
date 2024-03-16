@@ -30,8 +30,8 @@
     <div class="row p-3 align-items-center">
         <div class="col-6">
             <h3>
-                @Header
-                @if (status == "Save" && !IsDraft)
+                @header
+                @if (IsSaving)
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
@@ -41,25 +41,29 @@
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                }
+                @if (IsCancelled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!IsApproved)
+            @if (!IsApproved && !IsCancelled)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">@GetSubmitButtonText()</button>
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">
+                    @GetSubmitButtonText()
+                </button>
             }
-            @if (IsApproved)
+            @if (IsApproved && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Goods Receipt</button></li>
+                        <li><button href="/purchaseorder/new-purchase-order" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
                         <hr class="m-1 border-primary" />
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Purchase Invoice</button></li>
-                        <hr class="m-1 border-primary" />
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Payment</button></li>
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -73,7 +77,7 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPO">
                 <label class="form-label">PurchaseORequisition Number</label>
-                <input type="text" class="form-control" @bind="purchase.PONumber" readonly>
+                <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
@@ -231,18 +235,26 @@
 
 @code {
     private string? status;
-    bool isLoading = false;
-    private bool DisplayPO = true;
     [Parameter]
     public string? PONumber { get; set; }
-    List<int> IsDelete = new List<int>();
+    private string header = "New Purchase Order";
+
+    bool isLoading = false;
+    private bool IsDraft = false;
+    private bool IsSaving = true;
+    private bool DisplayPO = true;
+    private bool IsApproved = false;
+    private bool IsRejected = false;
+    private bool IsSubmitted = false;
+    private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
-    private bool IsDraft { get; set; } = false;
-    private bool IsSaving { get; set; } = false;
-    private string Header = "New Purchase Order";
-    private bool IsApproved { get; set; } = false;
-    private bool IsRejected { get; set; } = false;
-    private bool IsSubmitted { get; set; } = false;
+
+    public DropDown DropDownUOM = new DropDown();
+    public DropDown DropDownItem = new DropDown();
+
+    List<int> IsDelete = new List<int>();
+    private List<string> UOMList { get; set; }
+    public List<string> ItemName = new List<string>();
     private List<PurchaseOrderItems> Items = new List<PurchaseOrderItems>();
 
     protected override async void OnInitialized()
@@ -257,12 +269,38 @@
                 purchase.DocumentDate = DateTime.Now;
                 if (PONumber != null)
                 {
+                    // singledropdown.IsDropdownOpen = false;
+                    // purchase = db.QueryFirstOrDefault<PurchaseOrders>("select * from PurchaseOrder where POnumber = @POnumber", new { PONumber = PONumber });
+                    // Items = db.Query<PurchaseOrderItems>("Select * from PR_Items where PRNumber = @PRNumber", new { PONumber = PONumber }).ToList();
+                    // ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PONumber }).ToList();
+                    // if (purchase == null || Items.Count == 0)
+                    // { NavigationManager.NavigateTo("/purchaserequisition/"); }
 
+                    // DisplayPO = false;
+                    // header = purchase.PurchaseOrderName;
+                    // if (purchase.Status == PurhcaseStatuses.Pending)
+                    // {
+                    //     IsApproved = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (purchase.Status == PurhcaseStatuses.Draft)
+                    // {
+                    //     IsDraft = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (purchase.Status == PurhcaseStatuses.Cancelled)
+                    // {
+                    //     IsCancelled = true;
+                    //     IsSaving = false;
+                    // }
                 }
                 else
                 {
                     AddRow();
                 }
+                singledropdown.Options = db.Query<string>("select Unit from UOM").ToList();
+                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
             }
             StateHasChanged();
         }
@@ -273,6 +311,7 @@
             Snackbar.Clear();
             Snackbar.Add("Not Authorized", Severity.Error);
         }
+
         base.OnInitialized();
     }
 
@@ -282,48 +321,49 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string validate = ValidatePO();
+                string validate = ValidatePR();
                 if (validate != null)
                 {
                     return validate;
                 }
-                // int CountPO = db.QueryFirstOrDefault<int>("select count(1) from PurchaseOrder where PONumber = @POnumber", new { PONumber = purchase.PONumber });
-                // if (CountPO == 0)
-                // {
-                purchase.PONumber = "PO-001";
-                // var CountNo = "";
-                // int data = select.CountPOnumber();
-                // if (data != 0)
-                // {
-                //     data += 1;
-                //     var itr = data.ToString();
-                //     var itNum = itr.Length;
-                //     if (itNum == 1)
-                //     {
-                //         CountNo += "00" + itr;
-                //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
-                //     }
-                //     else if (itNum == 2)
-                //     {
-                //         CountNo += "0" + itr;
-                //         purchase.PONumber = purchase.PONumber + "-" + CountNo;
-                //     }
-                //     else
-                //     {
-                //         purchase.PONumber = purchase.PONumber + "-" + itr;
-                //     }
-                // }
-                // else
-                // {
-                //     purchase.PONumber = purchase.PONumber + "-" + "001";
-                // }
-                // }
+                int CountPR = db.QueryFirstOrDefault<int>("select count(1) from PurchaseRequest where PurchaseOrderID = @PRnumber", new { PRnumber = purchase.PurchaseOrderID });
+
+                if (CountPR == 0)
+                {
+                    purchase.PurchaseOrderID = "PO";
+                    var CountNo = "";
+                    int data = select.CountPRnumber();
+                    if (data != 0)
+                    {
+                        data += 1;
+                        var itr = data.ToString();
+                        var itNum = itr.Length;
+                        if (itNum == 1)
+                        {
+                            CountNo += "00" + itr;
+                            purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + CountNo;
+                        }
+                        else if (itNum == 2)
+                        {
+                            CountNo += "0" + itr;
+                            purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + CountNo;
+                        }
+                        else
+                        {
+                            purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + itr;
+                        }
+                    }
+                    else
+                    {
+                        purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + "001";
+                    }
+                }
 
                 StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
 
-                foreach (var data in Items)
+                foreach (string data in ItemName)
                 {
-                    titleBuilder.Append(data.Item);
+                    titleBuilder.Append(data);
                     titleBuilder.Append(", ");
                 }
 
@@ -333,20 +373,23 @@
                     titleBuilder.Append("...");
                 }
 
-                purchase.POName = titleBuilder.ToString();
-                Header = titleBuilder.ToString();
+                purchase.PurchaseOrderName = titleBuilder.ToString();
+                header = titleBuilder.ToString();
 
-                if (status == "Save")
+                if (IsSaving)
                 {
-                    purchase.Status = "Draft";
+                    purchase.Status = PurhcaseStatuses.Draft;
+                }
+                else if (IsDraft)
+                {
+                    purchase.Status = PurhcaseStatuses.Pending;
+                }
+                else if (IsApproved)
+                {
+                    purchase.Status = PurhcaseStatuses.Cancelled;
                 }
 
-                else if (status == "Submit")
-                {
-                    purchase.Status = "To Recieve and Bill";
-                }
-
-                // crud.CRD(purchase, "CreatePurchaseRequest");
+                crud.CRD(purchase, "CreatePurchaseRequest");
 
                 foreach (var PO in Items)
                 {
@@ -357,30 +400,31 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PO.PONumber = purchase.PONumber;
+                    PO.PurchaseOrderID = purchase.PurchaseOrderID;
                     DisplayPO = false;
-                    // crud.CRD(PO, "PurhcaseRequestItems");
-                    // NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PONumber}", forceLoad: true);
+                    crud.CRD(PO, "PurhcaseOrderItems");
                 }
 
                 foreach (var del in IsDelete)
                 {
-                    // pritem.PRNumber = PurchaseRequisitionNumber;
                     POItem.RowID = del;
-                    POItem.RequiredBy = DateTime.Now;
-                    // crud.CRD(purchase, "CreatePurchaseOrder", System.Data.CommandType.StoredProcedure, true);
+                    POItem.PurchaseOrderID = purchase.PurchaseOrderID;
+                    crud.CRD(POItem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
                 }
-
+                IsDelete.Clear();
                 ToggleApproval();
-
+                if (PONumber == null)
+                {
+                    NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PurchaseOrderID}", forceLoad: true);
+                }
                 if (IsDraft)
                 {
-                    return "Purchase Request Saved Successfully";
+                    return "Order Saved Successfully";
                 }
 
                 else if (IsApproved)
                 {
-                    return "Purchase Request Submitted Successfully";
+                    return "Purchase Order Submitted Successfully";
                 }
 
                 else
@@ -388,8 +432,6 @@
                     IsDraft = false;
                     return "Error in saving request";
                 }
-
-                return null;
             }
         }
         catch (Exception ex)
@@ -398,40 +440,37 @@
         }
     }
 
-    public string ValidatePO()
+    public string ValidatePR()
     {
-        if (purchase.DocumentDate == null) return $"Please Enter Document Date";
-
-        else if (purchase.Vendor == null) return $"Please Select a Vendor";
-
-        else if (Items.Count > 0)
+        if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
+        if (Items.Count > 0)
         {
             foreach (var PO in Items)
             {
-                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please Enter Item on No. {PO.RowID}";
-
-                else if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on No. {PO.RowID}";
-
-                else if (PO.Quantity == 0) return $"Please Enter Quantity on No. {PO.RowID}";
-
-                else if (PO.RequiredBy == null) return $"Please Enter Required By date on Row No. {PO.RowID}";
+                if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
+                { return "Please Enter Item on Row: " + PO.RowID + ""; }
+                else if (string.IsNullOrWhiteSpace(PO.UOM))
+                { return "Please Enter UOM on Row: " + PO.RowID + ""; }
+                else if (PO.Quantity == 0)
+                { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
+                else if (PO.RequiredBy == null)
+                { return "Please Enter Required By date on Row: " + PO.RowID + ""; }
+                else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
+                { return "Item on Row: " + PO.RowID + " does not exists"; }
             }
-            return null;
         }
-
-        else return null;
+        return null;
     }
 
     public void SavePO()
     {
-        string notification = createPurchase();
 
+        string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Success);
         }
-
         else
         {
             Snackbar.Clear();
@@ -443,19 +482,14 @@
     {
         if (IsApproved)
         {
-            status = "To Recieve and Bill";
             return "Cancel";
         }
-
         else if (IsDraft)
         {
-            status = "Submit";
             return "Submit";
         }
-
         else
         {
-            status = "Save";
             return "Save";
         }
     }
@@ -468,28 +502,28 @@
             IsApproved = true;
             IsSaving = false;
         }
-
-        else if (!IsSaving)
+        else if (IsSaving)
         {
             IsDraft = true;
+            IsSaving = false;
         }
-    }
-
-    private void Save()
-    {
-        IsDraft = true;
-        IsSaving = true;
-        IsSaving = false;
+        else if (IsApproved)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            IsApproved = false;
+        }
     }
 
     private void AddRow()
     {
+        HandleFormInput();
         Items.Add(new PurchaseOrderItems
             {
                 RequiredBy = DateTime.Now,
                 Quantity = 1
             });
-        HandleFormInput();
+        ItemName.Add("");
     }
 
     private void DeleteRow(int index)
@@ -500,6 +534,8 @@
             {
                 IsDelete.Add(Items[i].RowID);
                 Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
             }
         }
     }
@@ -508,36 +544,69 @@
     {
         if (IsDraft)
         {
-            status = "Not Saved";
+            IsSaving = true;
             IsDraft = false;
             GetSubmitButtonText();
             StateHasChanged();
         }
     }
-    // public async Task FilterOptions(ChangeEventArgs e, int rowIndex)
-    // {
-    //     bool result = dropdown.FilterOptions(e, rowIndex);
-    //     if (result == true)
-    //     {
-    //         if (!dropdown.ListItems[rowIndex].FilteredOptions.Contains(Items[rowIndex].Item))
-    //         {
-    //             Items[rowIndex].Item = "";
-    //         }
-    //     }
-    //     await InvokeAsync(StateHasChanged);
-    // }
-    // private void SelectOption(string option, int rowIndex)
-    // {
-    //     bool result = dropdown.SelectOption(option, rowIndex);
-    //     if (result == false)
-    //     {
-    //         Items[rowIndex].Item = option;
-    //     }
-    // }
 
-    private void OpenDialog()
+    public async Task FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task FilterItemOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownItem.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].Item = "";
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SelectItemOption(option options, int rowIndex)
+    {
+        bool result = DropDownItem.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].Item = options.Value;
+        }
+    }
+
+    public void SelectUOMOption(option options, int rowIndex)
+    {
+        bool result = DropDownUOM.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+
+            Items[rowIndex].UOM = options.Value;
+        }
+    }
+
+    private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        DialogService.Show<Dialog>("Cancel Purchase Order", options);
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            createPurchase();
+            ToggleApproval();
+        }
     }
 }

@@ -45,8 +45,8 @@
                         <MudTh>Creation Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Requisition Number">@context.PONumber</MudTd>
-                        <MudTd DataLabel="Title">@context.POName</MudTd>
+                        <MudTd DataLabel="Requisition Number">@context.PurchaseOrderID</MudTd>
+                        <MudTd DataLabel="Title">@context.PurchaseOrderName</MudTd>
                         <MudTd DataLabel="Status">@context.Vendor</MudTd>
                         <MudTd DataLabel="Document Date">@context.Status</MudTd>
                         <MudTd DataLabel="Creation Date">@context.TotalPrice</MudTd>
@@ -99,8 +99,8 @@
 
     void OnRowClick(TableRowClickEventArgs<PurchaseOrders> args)
     {
-        purchaseorder.PONumber = args.Item.PONumber;
-        NavigationManager.NavigateTo($"/purchaseorder/{purchaseorder.PONumber}");
+        purchaseorder.PurchaseOrderID = args.Item.PurchaseOrderID;
+        NavigationManager.NavigateTo($"/purchaseorder/{purchaseorder.PurchaseOrderID}");
     }
 
     private bool FilterFunc1(PurchaseOrders element) => FilterFunc(element, searchString1);
@@ -108,10 +108,10 @@
     private bool FilterFunc(PurchaseOrders element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.POName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.PurchaseOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Vendor.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.PONumber} {element.TotalPrice} {element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.PurchaseOrderID} {element.TotalPrice} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
     }
