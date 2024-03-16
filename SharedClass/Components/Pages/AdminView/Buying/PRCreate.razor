@@ -31,7 +31,7 @@
         <div class="col-6">
             <h3>
                 @header
-                @if (status == "Save" && !IsDraft)
+                @if (IsSaving)
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
@@ -43,16 +43,20 @@
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
                 }
+                @if (IsCancelled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!IsApproved)
+            @if (!IsApproved && !IsCancelled)
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
                     @GetSubmitButtonText()
                 </button>
             }
-            @if (IsApproved)
+            @if (IsApproved && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
@@ -117,17 +121,17 @@
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved || @IsCancelled" />
                                     <b>@(index + 1)</b>
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved || @IsCancelled">Delete</button>
                                 </div>
                             </td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                    <input type="text" id="Item" readonly="@IsApproved || @IsCancelled" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved || @IsCancelled">
                                         <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
                                             {
@@ -137,7 +141,7 @@
                                                     <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                            <button href="#" class="text-info" hidden="@IsApproved || @IsCancelled"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -145,11 +149,11 @@
                             <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                    <input type="text" id="Item" readonly="@IsApproved || @IsCancelled" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
                                            placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
                                         style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved || @IsCancelled">
                                         <li>
                                             <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
                                                 @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
@@ -160,14 +164,14 @@
                                                         <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                                <button href="#" class="text-info" ><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
                                             </div>
                                         </li>
                                     </ul>
                                 </div>
                             </td>
                             <td>
-                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved  || @IsCancelled" />
                             </td>
                         </tr>
                     }
@@ -176,7 +180,7 @@
 
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved  || @IsCancelled">Add Row</button>
         </div>
     </div>
 }
@@ -190,11 +194,12 @@
     bool isLoading = false;
     private bool DisplayPR = true;
     public bool isAuthorized { get; set; }
-    private bool IsDraft { get; set; } = false;
-    private bool IsSaving { get; set; } = false;
-    private bool IsApproved { get; set; } = false;
-    private bool IsRejected { get; set; } = false;
-    private bool IsSubmitted { get; set; } = false;
+    private bool IsDraft  = false;
+    private bool IsSaving  = true;
+    private bool IsApproved  = false;
+    private bool IsRejected  = false;
+    private bool IsSubmitted = false;
+    private bool IsCancelled = false;
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
@@ -225,15 +230,21 @@
 
                     DisplayPR = false;
                     header = purchase.PRname;
-                    if (purchase.Status == "Pending")
+                    if (purchase.Status == PurhcaseStatuses.Pending)
                     {
                         IsApproved = true;
+                        IsSaving = false;
                     }
-                    else if (purchase.Status == "Draft")
+                    else if (purchase.Status == PurhcaseStatuses.Draft)
                     {
                         IsDraft = true;
+                        IsSaving = false;
                     }
-                    await JSRuntime.InvokeVoidAsync("console.log", Items);
+                    else if (purchase.Status == PurhcaseStatuses.Cancelled)
+                    {
+                        IsCancelled = true;
+                        IsSaving = false;
+                    }
                 }
                 else
                 {
@@ -317,14 +328,17 @@
                 purchase.PRname = titleBuilder.ToString();
                 header = titleBuilder.ToString();
 
-                if (status == "Save")
+                if (IsSaving)
                 {
-                    purchase.Status = "Draft";
+                    purchase.Status = PurhcaseStatuses.Draft;
                 }
-
-                else if (status == "Submit")
+                else if (IsDraft)
                 {
-                    purchase.Status = "Pending";
+                    purchase.Status = PurhcaseStatuses.Pending;
+                }
+                else if (IsApproved)
+                {
+                    purchase.Status = PurhcaseStatuses.Cancelled;
                 }
 
                 crud.CRD(purchase, "CreatePurchaseRequest");
@@ -341,7 +355,6 @@
                     PR.PRNumber = purchase.PRNumber;
                     DisplayPR = false;
                     crud.CRD(PR, "PurhcaseRequestItems");
-
                 }
 
                 foreach (var del in IsDelete)
@@ -403,6 +416,7 @@
 
     public void SavePR()
     {
+
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
@@ -443,17 +457,17 @@
             IsApproved = true;
             IsSaving = false;
         }
-        else if (!IsSaving)
+        else if (IsSaving)
         {
             IsDraft = true;
+            IsSaving = false;
         }
-    }
-
-    private void Save()
-    {
-        IsDraft = true;
-        IsSaving = true;
-        IsSaving = false;
+        else if (IsApproved)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            IsApproved = false;
+        }
     }
 
     private void AddRow()
@@ -546,7 +560,8 @@
 
         if (result.Data is bool && (bool)result.Data)
         {
-            //returns true
+            createPurchase();
+            ToggleApproval();
         }
     }
 }
