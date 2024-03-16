@@ -1,4 +1,7 @@
 ﻿<MudDialog>
+    <DialogContent>
+        Are you sure?
+    </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Color="Color.Primary" OnClick="Submit">Confirm</MudButton>
@@ -11,4 +14,3 @@
     void Submit() => MudDialog.Close(DialogResult.Ok(true));
     void Cancel() => MudDialog.Cancel();
 }
-

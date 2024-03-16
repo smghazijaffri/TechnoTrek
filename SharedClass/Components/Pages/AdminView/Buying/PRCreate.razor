@@ -57,7 +57,7 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
+                        <li><button href="/purchaseorder/new-purchase-order" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
                         <hr class="m-1 border-primary" />
                         <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
                     </ul>
@@ -539,9 +539,14 @@
         }
     }
 
-    private void OpenDialog()
+    private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        DialogService.Show<Dialog>("Cancel Purchase Request", options);
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            //returns true
+        }
     }
 }
