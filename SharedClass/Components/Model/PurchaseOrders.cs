@@ -9,10 +9,10 @@ namespace SharedClass.Components.Model
     public class PurchaseOrders : BaseRecord
     {
         public string Status { get; set; }
-        public string POName { get; set; }
+        public string PurchaseOrderName { get; set; }
         public string Vendor { get; set; }
         public int TotalPrice { get; set; }
-        public string PONumber { get; set; }
+        public string PurchaseOrderID { get; set; }
         public int TotalQuantity { get; set; }
         public string VendorContact { get; set; }
         public DateTime DocumentDate { get; set; }
@@ -30,7 +30,7 @@ namespace SharedClass.Components.Model
         public string Item { get; set; }
         public int Quantity { get; set; }
         public bool Selected { get; set; }
-        public string PONumber { get; set; }
+        public string PurchaseOrderID { get; set; }
         public DateTime RequiredBy { get; set; }
         public DateTime ExpectedDeliveryDate { get; set; }
     }
