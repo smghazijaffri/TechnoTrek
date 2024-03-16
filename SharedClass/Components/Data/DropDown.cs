@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Options;
 using MudBlazor;
 using System;
@@ -94,7 +95,6 @@ namespace SharedClass.Components.Data
 
     public class BindDropdown
     {
-        public int RowIndex { get; set; }
         public bool IsDropdownOpen { get; set; }
         public List<option> FilteredOptions { get; set; } = new List<option>();
     }
@@ -107,25 +107,26 @@ namespace SharedClass.Components.Data
 
     public class SingleDropDown
     {
-        public List<string> Options { get; set; }
-        public bool IsDropdownOpen { get; set; }
-        public List<string> FilteredOptions { get; set; }
+        public List<option> Options { get; set; } = new List<option>();
+        public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>{ new BindDropdown { IsDropdownOpen = false }};
+
+
 
         public void CloseDropdown(KeyboardEventArgs e)
         {
             if (e.Key == "Escape")
             {
-                IsDropdownOpen = false;
+                ListItems[0].IsDropdownOpen = false;
             }
         }
 
         public void ToggleDropdown()
         {
-            IsDropdownOpen = !IsDropdownOpen;
+            ListItems[0].IsDropdownOpen = !ListItems[0].IsDropdownOpen;
 
-            if (IsDropdownOpen)
+            if (ListItems[0].IsDropdownOpen)
             {
-                FilteredOptions = Options;
+                ListItems[0].FilteredOptions = Options;
             }
         }
 
@@ -135,23 +136,23 @@ namespace SharedClass.Components.Data
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                FilteredOptions = FilterList(Options, searchTerm);
+                ListItems[0].FilteredOptions = FilterList(Options, searchTerm);
                 return true;
             }
             else
             {
-                FilteredOptions = Options;
+                ListItems[0].FilteredOptions = Options;
                 return false;
             }
         }
 
-        private List<string> FilterList(List<string> Options, string searchTerm)
+        private List<option> FilterList(List<option> Options, string searchTerm)
         {
-            List<string> filteredItems = new List<string>();
+            List<option> filteredItems = new List<option>();
 
-            foreach (string item in Options)
+            foreach (var item in Options)
             {
-                if (item.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                if (item.Text.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                 {
                     filteredItems.Add(item);
                 }
@@ -160,13 +161,13 @@ namespace SharedClass.Components.Data
             return filteredItems;
         }
 
-        public bool SelectOption(string option)
+        public bool SelectOption(option option)
         {
-            if (FilteredOptions.Contains(option))
+            if (ListItems[0].FilteredOptions.Contains(option))
             {
-                IsDropdownOpen = false;
+                ListItems[0].IsDropdownOpen = false;
             }
-            return IsDropdownOpen;
+            return ListItems[0].IsDropdownOpen;
         }
     }
 }

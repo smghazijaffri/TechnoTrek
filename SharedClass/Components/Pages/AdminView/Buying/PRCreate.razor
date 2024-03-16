@@ -59,8 +59,8 @@
             @if (IsApproved && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="singledropdown.ToggleDropdown">Create</button>
-                    <ul class="dropdown-menu w-100 list-group mt-1" style="display: @(singledropdown.IsDropdownOpen ? "block" : "none");">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li><button href="/purchaseorder/new-purchase-order" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
                         <hr class="m-1 border-primary" />
                         <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
@@ -114,8 +114,8 @@
                     {
                         var item = Items[index];
                         item.RowID = index + 1;
-                        DropDownItem.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false });
-                        DropDownUOM.ListItems.Add(new BindDropdown { RowIndex = index + 1, IsDropdownOpen = false });
+                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
 
                         var rowIndex = item.RowID - 1;
                         <tr>
@@ -183,10 +183,15 @@
             <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved  || @IsCancelled">Add Row</button>
         </div>
     </div>
+    <script>
+        function toggleDropdown() {
+            var dropdownMenu = document.getElementById("dropdownMenu");
+            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+        }
+    </script>
 }
 
 @code {
-    private string? status;
     [Parameter]
     public string? PRNumber { get; set; }
     private string header = "Create Purchase Request";
@@ -203,6 +208,7 @@
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
+
 
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
@@ -221,7 +227,7 @@
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
-                    singledropdown.IsDropdownOpen = false;
+
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
@@ -250,7 +256,7 @@
                 {
                     AddRow();
                 }
-                singledropdown.Options = db.Query<string>("select Unit from UOM").ToList();
+
                 DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
                 DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
             }
@@ -432,19 +438,12 @@
 
     private string GetSubmitButtonText()
     {
-        if (IsApproved)
-        {
-            status = "Pending";
-            return "Cancel";
-        }
-        else if (IsDraft)
-        {
-            status = "Submit";
+        if (IsDraft)
+        {  
             return "Submit";
         }
         else
         {
-            status = "Save";
             return "Save";
         }
     }
@@ -499,7 +498,7 @@
     {
         if (IsDraft)
         {
-            status = "Not Saved";
+            IsSaving = true;
             IsDraft = false;
             GetSubmitButtonText();
             StateHasChanged();
