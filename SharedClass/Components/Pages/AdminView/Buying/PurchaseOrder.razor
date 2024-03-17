@@ -39,18 +39,16 @@
                     <HeaderContent>
                         <MudTh>Order Number</MudTh>
                         <MudTh>Title</MudTh>
-                        <MudTh>Vendor</MudTh>
                         <MudTh>Status</MudTh>
                         <MudTh>Grand Total</MudTh>
-                        <MudTh>Creation Date</MudTh>
+                        <MudTh>Document Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Requisition Number">@context.PurchaseOrderID</MudTd>
-                        <MudTd DataLabel="Title">@context.PurchaseOrderName</MudTd>
-                        <MudTd DataLabel="Status">@context.Vendor</MudTd>
+                        <MudTd DataLabel="Purchase Order Number">@context.PurchaseOrderID</MudTd>
+                            <MudTd DataLabel="Title">@context.PurchaseOrderName</MudTd>
                         <MudTd DataLabel="Document Date">@context.Status</MudTd>
-                        <MudTd DataLabel="Creation Date">@context.TotalPrice</MudTd>
-                        <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
+                            <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
+                            <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
                     </RowTemplate>
                     <PagerContent>
                         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -110,8 +108,7 @@
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.PurchaseOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.Vendor.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.PurchaseOrderID} {element.TotalPrice} {element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.PurchaseOrderID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
     }
