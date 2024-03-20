@@ -10,5 +10,6 @@ namespace SharedClass.Components.Model
     {
         public int ForInsert { get; set; }
         public DateTime CreationDate { get; set; }
+        public string Output { get; set; }
     }
 }

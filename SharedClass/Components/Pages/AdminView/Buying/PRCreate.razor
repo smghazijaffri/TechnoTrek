@@ -22,8 +22,9 @@
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
 @inject ILocalStorageService localStorage;
+@inject Blazored.SessionStorage.ISessionStorageService session;
+@inject ISessionStorageService sessionStorage
 @inject NavigationManager NavigationManager;
-
 
 @if (isLoading)
 {
@@ -146,7 +147,7 @@
                                     </ul>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@IsApproved" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
@@ -225,9 +226,11 @@
             isLoading = true;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
+                string user = (await session.GetItemAsync<string>("Username"));
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
+
 
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
@@ -237,17 +240,17 @@
 
                     DisplayPR = false;
                     header = purchase.PRname;
-                    if (purchase.Status == PurhcaseStatuses.Pending)
+                    if (purchase.Status == PurchaseStatuses.Pending)
                     {
                         IsApproved = true;
                         IsSaving = false;
                     }
-                    else if (purchase.Status == PurhcaseStatuses.Draft)
+                    else if (purchase.Status == PurchaseStatuses.Draft)
                     {
                         IsDraft = true;
                         IsSaving = false;
                     }
-                    else if (purchase.Status == PurhcaseStatuses.Cancelled)
+                    else if (purchase.Status == PurchaseStatuses.Cancelled)
                     {
                         IsCancelled = true;
                         IsSaving = false;
@@ -285,38 +288,41 @@
                 {
                     return validate;
                 }
-                int CountPR = db.QueryFirstOrDefault<int>("select count(1) from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
 
-                if (CountPR == 0)
-                {
-                    purchase.PRNumber = "PR";
-                    var CountNo = "";
-                    int data = db.QueryFirstOrDefault<int>("Select COUNT(1) from PurchaseRequest");
-                    if (data != 0)
-                    {
-                        data += 1;
-                        var itr = data.ToString();
-                        var itNum = itr.Length;
-                        if (itNum == 1)
-                        {
-                            CountNo += "00" + itr;
-                            purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
-                        }
-                        else if (itNum == 2)
-                        {
-                            CountNo += "0" + itr;
-                            purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
-                        }
-                        else
-                        {
-                            purchase.PRNumber = purchase.PRNumber + "-" + itr;
-                        }
-                    }
-                    else
-                    {
-                        purchase.PRNumber = purchase.PRNumber + "-" + "001";
-                    }
-                }
+
+                // if (CountPR == 0)
+                // {
+                //     purchase.PRNumber = "PR";
+                //     var CountNo = "";
+                //     int data = db.QueryFirstOrDefault<int>("Select COUNT(1) from PurchaseRequest");
+                //     if (data != 0)
+                //     {
+                //         data += 1;
+                //         var itr = data.ToString();
+                //         var itNum = itr.Length;
+                //         if (itNum == 1)
+                //         {
+                //             CountNo += "00" + itr;
+                //             purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
+                //         }
+                //         else if (itNum == 2)
+                //         {
+                //             CountNo += "0" + itr;
+                //             purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
+                //         }
+                //         else
+                //         {
+                //             purchase.PRNumber = purchase.PRNumber + "-" + itr;
+                //         }
+                //     }
+                //     else
+                //     {
+                //         purchase.PRNumber = purchase.PRNumber + "-" + "001";
+                //     }
+                // }
+                // purchase.PRNumber = db.QueryFirstOrDefault<string>("SELECT dbo.CreatePRnumber()");
+                // purchase.PRNumber = db.QueryFirstOrDefault<string>("SELECT dbo.CreatePRnumber()",purchase);
+
 
                 StringBuilder titleBuilder = new StringBuilder("Purhcase Request for ");
 
@@ -337,27 +343,31 @@
 
                 if (IsSaving)
                 {
-                    purchase.Status = PurhcaseStatuses.Draft;
+                    purchase.Status = PurchaseStatuses.Draft;
                 }
                 else if (IsDraft)
                 {
-                    purchase.Status = PurhcaseStatuses.Pending;
+                    purchase.Status = PurchaseStatuses.Pending;
                 }
                 else if (IsApproved)
                 {
-                    purchase.Status = PurhcaseStatuses.Cancelled;
+                    purchase.Status = PurchaseStatuses.Cancelled;
                 }
-
-                crud.CRD(purchase, "CreatePurchaseRequest");
+                //string pr = db.QueryFirstOrDefault<string>("SELECT dbo.CreatePRnumber()", purchase);
+                purchase.PRNumber = crud.CRD(purchase, "CreatePurchaseRequest");
 
                 foreach (var PR in Items)
                 {
-                    foreach (int del in IsDelete)
+                    // foreach (int del in IsDelete)
+                    // {
+                    //     if (PR.RowID == del)
+                    //     {
+                    //         IsDelete.Remove(del);
+                    //     }
+                    // }
+                    if (IsDelete.Any(Del => Del == PR.RowID))
                     {
-                        if (PR.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
+                        IsDelete.Remove(PR.RowID);
                     }
                     PR.PRNumber = purchase.PRNumber;
                     DisplayPR = false;
@@ -401,24 +411,33 @@
 
     public string ValidatePR()
     {
-        if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
-        if (Items.Count > 0)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            foreach (var PR in Items)
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+            if (GetStatus != null)
             {
-                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1]))
-                { return "Please Enter Item on Row: " + PR.RowID + ""; }
-                else if (string.IsNullOrWhiteSpace(PR.UOM))
-                { return "Please Enter UOM on Row: " + PR.RowID + ""; }
-                else if (PR.Quantity == 0)
-                { return "Please Enter Quantity on Row: " + PR.RowID + ""; }
-                else if (PR.RequiredBy == null)
-                { return "Please Enter Required By date on Row: " + PR.RowID + ""; }
-                else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1]))
-                { return "Item on Row: " + PR.RowID + " does not exists"; }
+                if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PR has already been submitted changes cannot be done"; }
+                if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PR has already been Cancelled"; }
             }
+            if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
+            if (Items.Count > 0)
+            {
+                foreach (var PR in Items)
+                {
+                    if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1]))
+                    { return "Please Enter Item on Row: " + PR.RowID + ""; }
+                    else if (string.IsNullOrWhiteSpace(PR.UOM))
+                    { return "Please Enter UOM on Row: " + PR.RowID + ""; }
+                    else if (PR.Quantity == 0)
+                    { return "Please Enter Quantity on Row: " + PR.RowID + ""; }
+                    else if (PR.RequiredBy == null)
+                    { return "Please Enter Required By date on Row: " + PR.RowID + ""; }
+                    else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1]))
+                    { return "Item on Row: " + PR.RowID + " does not exists"; }
+                }
+            }
+            return null;
         }
-        return null;
     }
 
     public void SavePR()
@@ -558,8 +577,7 @@
 
         if (result.Data is bool && (bool)result.Data)
         {
-            createPurchase();
-            ToggleApproval();
+            SavePR();
         }
     }
 }

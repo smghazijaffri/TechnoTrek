@@ -47,6 +47,8 @@ builder.Services.AddMudServices(config =>
 });
 
 builder.Services.AddBlazoredSessionStorage();
+
+
 builder.Services.AddBlazoredSessionStorage(config =>
 {
     config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;

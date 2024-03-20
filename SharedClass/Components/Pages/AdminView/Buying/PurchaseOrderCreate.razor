@@ -14,13 +14,12 @@
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
-@inject Connection con;
 @inject Vendor vendor;
+@inject Connection con;
+@inject PO_Items POItem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
-@inject PO_Items POItem;
-@inject NavigationManager NavigationManager;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -86,10 +85,10 @@
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
-                    <input type="text" id="Item" readonly="@IsApproved" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
-                        aria-labelledby="dropdownMenuButton" hidden="@IsApproved">
+                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
                             @if (DropDownVendor.ListItems[0].FilteredOptions != null)
                             {
@@ -110,7 +109,7 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
-                <label class="form-label">vendor address</label>
+                <label class="form-label">Vendor Address</label>
                 <input type="text" class="form-control" @bind="vendor.Address" readonly>
             </div> 
             @* <div class="col-md-6">
@@ -118,7 +117,7 @@
                 <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
             </div> *@
             <div class="col-md-6">
-                <label class="form-label">vendor contact</label>
+                <label class="form-label">Vendor Contact</label>
                 <input type="text" class="form-control" @bind="vendor.Contact" readonly>
             </div>
            @*  <div class="col-md-6">
@@ -255,7 +254,6 @@
 }
 
 @code {
-    private string? status;
     [Parameter]
     public string? PONumber { get; set; }
     private string header = "New Purchase Order";
@@ -269,27 +267,33 @@
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
+
     public bool ReadonlyHidden
     {
         get { return IsCancelled || IsApproved; }
     }
+
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
+
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
     private List<PO_Items> Items = new List<PO_Items>();
+
     public int SumAmounts
     {
         // Using LINQ to sum the Amount property of each PO_Items object in the list
         get { return Items.Sum(item => item.Amount); }
     }
+
     public int SumQuantity
     {
         // Using LINQ to sum the Amount property of each PO_Items object in the list
         get { return Items.Sum(item => item.Quantity); }
     }
+
     protected override async void OnInitialized()
     {
         var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
@@ -314,17 +318,17 @@
 
                         DisplayPO = false;
                         header = purchase.PurchaseOrderName;
-                        if (purchase.Status == PurhcaseStatuses.Pending)
+                        if (purchase.Status == PurchaseStatuses.Pending)
                         {
                             IsApproved = true;
                             IsSaving = false;
                         }
-                        else if (purchase.Status == PurhcaseStatuses.Draft)
+                        else if (purchase.Status == PurchaseStatuses.Draft)
                         {
                             IsDraft = true;
                             IsSaving = false;
                         }
-                        else if (purchase.Status == PurhcaseStatuses.Cancelled)
+                        else if (purchase.Status == PurchaseStatuses.Cancelled)
                         {
                             IsCancelled = true;
                             IsSaving = false;
@@ -369,39 +373,6 @@
                 {
                     return validate;
                 }
-                int CountP0 = db.QueryFirstOrDefault<int>("select count(1) from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
-
-                if (CountP0 == 0)
-                {
-                    purchase.PurchaseOrderID = "PO";
-                    var CountNo = "";
-                    int data = db.QueryFirstOrDefault<int>("Select COUNT(1) from PurchaseOrder");
-                    if (data != 0)
-                    {
-                        data += 1;
-                        var itr = data.ToString();
-                        var itNum = itr.Length;
-                        if (itNum == 1)
-                        {
-                            CountNo += "00" + itr;
-                            purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + CountNo;
-                        }
-                        else if (itNum == 2)
-                        {
-                            CountNo += "0" + itr;
-                            purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + CountNo;
-                        }
-                        else
-                        {
-                            purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + itr;
-                        }
-                    }
-                    else
-                    {
-                        purchase.PurchaseOrderID = purchase.PurchaseOrderID + "-" + "001";
-                    }
-                }
-
                 StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
 
                 foreach (string data in ItemName)
@@ -422,18 +393,18 @@
                 purchase.TotalQuantity = SumQuantity;
                 if (IsSaving)
                 {
-                    purchase.Status = PurhcaseStatuses.Draft;
+                    purchase.Status = PurchaseStatuses.Draft;
                 }
                 else if (IsDraft)
                 {
-                    purchase.Status = PurhcaseStatuses.Pending;
+                    purchase.Status = PurchaseStatuses.Pending;
                 }
                 else if (IsApproved)
                 {
-                    purchase.Status = PurhcaseStatuses.Cancelled;
+                    purchase.Status = PurchaseStatuses.Cancelled;
                 }
 
-                crud.CRD(purchase, "CreatePurchaseOrder");
+                purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
 
                 foreach (var PO in Items)
                 {
@@ -486,28 +457,37 @@
 
     public string ValidatePO()
     {
-        if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
-        if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please Enter Vendor"; }
-        if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
-        if (Items.Count > 0)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            foreach (var PO in Items)
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+            if (GetStatus != null)
             {
-                if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
-                { return "Please Enter Item on Row: " + PO.RowID + ""; }
-                else if (string.IsNullOrWhiteSpace(PO.UOM))
-                { return "Please Enter UOM on Row: " + PO.RowID + ""; }
-                else if (PO.Quantity == 0)
-                { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
-                else if (PO.Rate == 0)
-                { return "Please Enter Rate on Row: " + PO.RowID + ""; }
-                else if (PO.RequiredBy == null)
-                { return "Please Enter Required By date on Row: " + PO.RowID + ""; }
-                else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
-                { return "Item on Row: " + PO.RowID + " does not exists"; }
+                if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
+                if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PO has already been Cancelled"; }
             }
+            if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
+            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please Enter Vendor"; }
+            if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
+            if (Items.Count > 0)
+            {
+                foreach (var PO in Items)
+                {
+                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
+                    { return "Please Enter Item on Row: " + PO.RowID + ""; }
+                    else if (string.IsNullOrWhiteSpace(PO.UOM))
+                    { return "Please Enter UOM on Row: " + PO.RowID + ""; }
+                    else if (PO.Quantity == 0)
+                    { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
+                    else if (PO.Rate == 0)
+                    { return "Please Enter Rate on Row: " + PO.RowID + ""; }
+                    else if (PO.RequiredBy == null)
+                    { return "Please Enter Required By date on Row: " + PO.RowID + ""; }
+                    else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
+                    { return "Item on Row: " + PO.RowID + " does not exists"; }
+                }
+            }
+            return null;
         }
-        return null;
     }
 
     public void SavePO()
@@ -599,8 +579,6 @@
         }
     }
 
-    
-
     public void FilterVendorOptions(ChangeEventArgs e)
     {
         bool result = DropDownVendor.FilterOptions(e);
@@ -627,6 +605,7 @@
             }
         }
     }
+
     public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownItem.FilterOptions(e, rowIndex);
@@ -650,6 +629,7 @@
             Items[rowIndex].Item = options.Value;
         }
     }
+
     public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownUOM.FilterOptions(e, rowIndex);
@@ -679,8 +659,8 @@
 
         if (result.Data is bool && (bool)result.Data)
         {
-            createPurchase();
-            ToggleApproval();
+            SavePO();
+
         }
     }
 }

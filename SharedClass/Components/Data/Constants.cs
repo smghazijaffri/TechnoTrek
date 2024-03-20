@@ -9,7 +9,7 @@ namespace SharedClass.Components.Data
     internal class Constants
     {
     }
-    public class PurhcaseStatuses 
+    public class PurchaseStatuses 
     {
         public const string Pending = "Pending";
         public const string Draft = "Draft";

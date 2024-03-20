@@ -59,4 +59,27 @@ namespace SharedClass.Components.Model
         public string Contact { get; set; }
         public string Email { get; set; }
     }
+    public class RequestForQuotation : BaseRecord
+    {
+        public string RFQNumber { get; set; }
+        public string RFQName { get; set; }
+        public string Status { get; set; }
+        public DateTime? DocumentDate { get; set; }
+    }
+    public class RFQVendor : BaseRecord
+    {
+        public string RFQNumber { get; set; }
+        public string VendorID { get; set; }
+        public int RowID { get; set; }
+        public bool SendEmail { get; set; }
+    }
+    public class RFQ_Items : BaseRecord
+    {
+        public string RFQNumber { get; set; }
+        public string Item { get; set; }
+        public int RowID { get; set; }
+        public int Quantity { get; set; }
+        public string UOM { get; set; }
+        public DateTime? RequiredBy { get; set; }
+    }
 }

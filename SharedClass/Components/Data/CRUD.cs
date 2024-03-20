@@ -6,8 +6,29 @@ namespace SharedClass.Components.Data
 {
     public class CRUD : Connection
     {
-        public void CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
+        //public void CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
+        //{
+        //    using (SqlConnection db = new SqlConnection(connectionString))
+        //    {
+        //        if (IsDelete)
+        //        {
+        //            Model.ForInsert = 0;
+        //        }
+        //        else
+        //        {
+        //            Model.ForInsert = 1;
+        //        }
+        //        Model.CreationDate = DateTime.Now;
+        //        db.ExecuteScalar(SP, (object)Model, commandType: commandType);
+
+        //        // Convert the result to string
+
+        //    }
+        //}
+        public string CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
         {
+            string outputValue = string.Empty;
+
             using (SqlConnection db = new SqlConnection(connectionString))
             {
                 if (IsDelete)
@@ -18,9 +39,21 @@ namespace SharedClass.Components.Data
                 {
                     Model.ForInsert = 1;
                 }
+
                 Model.CreationDate = DateTime.Now;
-                db.Execute(SP, (object)Model, commandType: commandType);
+
+                var parameters = new DynamicParameters(Model);
+                parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50); // Assuming output parameter size is 50
+
+                db.Execute(SP, parameters, commandType: commandType);
+
+                // Retrieve the output parameter value
+                outputValue = parameters.Get<string>("@Output");
             }
+
+            return outputValue;
         }
+
+
     }
 }
