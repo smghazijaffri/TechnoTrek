@@ -23,22 +23,29 @@ namespace MauiMobileApp
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddScoped<CRUD>();
             builder.Services.AddScoped<Login>();
-            builder.Services.AddScoped<Connection>();
             builder.Services.AddScoped<Insert>();
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
-            builder.Services.AddScoped<CRUD>();
-            builder.Services.AddScoped<PurchaseOrders>();
-            builder.Services.AddScoped<PurchaseRequisition>();
+            builder.Services.AddScoped<Vendor>();
             builder.Services.AddScoped<PR_Items>();
-            builder.Services.AddScoped<BaseRecord>();
-            builder.Services.AddScoped<PurchaseRequisition>();
-            builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddScoped<PO_Items>();
             builder.Services.AddScoped<DropDown>();
+            builder.Services.AddScoped<RFQVendor>();
+            builder.Services.AddScoped<RFQ_Items>();
+            builder.Services.AddScoped<Connection>();
+            builder.Services.AddScoped<BaseRecord>();
             builder.Services.AddScoped<BindDropdown>();
+            builder.Services.AddScoped<Reciept_Items>();
+            builder.Services.AddScoped<PurchaseOrders>();
             builder.Services.AddScoped<SingleDropDown>();
+            builder.Services.AddScoped<PurchaseReceipt>();
+            builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddScoped<RequestForQuotation>();
+            builder.Services.AddScoped<PurchaseRequisition>();
+            builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddMudServices();
             builder.Services.AddMudServices(config =>
             {
