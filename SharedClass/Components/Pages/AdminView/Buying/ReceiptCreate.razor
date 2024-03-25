@@ -1,5 +1,5 @@
-﻿@page "/purchaseorder/new-purchase-order"
-@page "/purchaseorder/{PONumber?}"
+@page "/goodsreceipt/new-goods-receipt"
+@page "/goodsreceipt/{ReceiptNumber?}"
 
 @using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
@@ -16,10 +16,10 @@
 @inject Select select;
 @inject Vendor vendor;
 @inject Connection con;
-@inject PO_Items POItem;
 @inject ISnackbar Snackbar;
+@inject Reciept_Items ReItem;
 @inject IJSRuntime JSRuntime;
-@inject PurchaseOrders purchase;
+@inject PurchaseReceipt purchase;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -75,8 +75,8 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPO">
-                <label class="form-label">PurchaseORequisition Number</label>
-                <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
+                <label class="form-label">Purchase Receipt Number</label>
+                <input type="text" class="form-control" @bind="purchase.ReceiptNumber" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
@@ -139,20 +139,14 @@
                         <th class="col col-auto">
                             Item
                         </th>
-                        <th class="col col-auto" style="width: 70px;">
-                            Quantity
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            UOM
+                        <th class="col col-auto" style="width: 160px;">
+                            Accepted Quantity
                         </th>
                         <th class="col col-auto text-center" style="width: 150px;">
                             Rate
                         </th>
                         <th class="col col-auto text-center" style="width: 150px;">
                             Amount
-                        </th>
-                        <th class="col col-auto" style="width: 150px;">
-                            Required By
                         </th>
                     </tr>
                 </thead>
@@ -164,7 +158,7 @@
                         var rowIndex = item.RowID - 1;
                         DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                         DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        item.Amount = (item.Rate * item.Quantity);
+                        item.Amount = (item.Rate * item.AcceptedQuantity);
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
@@ -194,35 +188,9 @@
                                 </div>
                             </td>
 
-                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
-                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                        <li>
-                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
-                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
-                                                {
-                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
-                                                    {
-                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                        <hr class="m-1 border-primary" />
-                                                    }
-                                                }
-                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
+                            <td><input type="text" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly ="@ReadonlyHidden" /></td>
                             <td><input type="text" list="uomOptions" class="form-control" @bind="item.Amount" readonly/></td>
-                            <td>
-                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
-                            </td>
                         </tr> 
                     }
                 </tbody>
@@ -255,8 +223,8 @@
 
 @code {
     [Parameter]
-    public string? PONumber { get; set; }
-    private string header = "New Purchase Order";
+    public string? ReceiptNumber { get; set; }
+    private string header = "New Goods Receipt";
 
     bool isLoading = false;
     private bool IsDraft = false;
@@ -280,7 +248,7 @@
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
-    private List<PO_Items> Items = new List<PO_Items>();
+    private List<Reciept_Items> Items = new List<Reciept_Items>();
 
     public int SumAmounts
     {
@@ -291,7 +259,7 @@
     public int SumQuantity
     {
         // Using LINQ to sum the Amount property of each PO_Items object in the list
-        get { return Items.Sum(item => item.Quantity); }
+        get { return Items.Sum(item => item.AcceptedQuantity); }
     }
 
     protected override async void OnInitialized()
@@ -306,32 +274,32 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
-                    if (PONumber != null)
+                    if (ReceiptNumber != null)
                     {
-                        purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        if (purchase == null || Items.Count == 0)
-                            NavigationManager.NavigateTo("/purchaserequisition/");
+                        // purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                        // Items = db.Query<Reciept_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                        // ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                        // vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                        // if (purchase == null || Items.Count == 0)
+                        //     NavigationManager.NavigateTo("/purchaserequisition/");
 
-                        DisplayPO = false;
-                        header = purchase.PurchaseOrderName;
-                        if (purchase.Status == PurchaseStatuses.Pending)
-                        {
-                            IsApproved = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Draft)
-                        {
-                            IsDraft = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Cancelled)
-                        {
-                            IsCancelled = true;
-                            IsSaving = false;
-                        }
+                        // DisplayPO = false;
+                        // header = purchase.ReceiptName;
+                        // if (purchase.Status == PurchaseStatuses.Pending)
+                        // {
+                        //     IsApproved = true;
+                        //     IsSaving = false;
+                        // }
+                        // else if (purchase.Status == PurchaseStatuses.Draft)
+                        // {
+                        //     IsDraft = true;
+                        //     IsSaving = false;
+                        // }
+                        // else if (purchase.Status == PurchaseStatuses.Cancelled)
+                        // {
+                        //     IsCancelled = true;
+                        //     IsSaving = false;
+                        // }
                     }
                     else
                     {
@@ -345,10 +313,8 @@
             }
             catch (Exception)
             {
-
                 throw;
             }
-
         }
         else
         {
@@ -372,7 +338,7 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
+                StringBuilder titleBuilder = new StringBuilder("Goods Receipt Order for ");
 
                 foreach (string data in ItemName)
                 {
@@ -386,7 +352,7 @@
                     titleBuilder.Append("...");
                 }
 
-                purchase.PurchaseOrderName = titleBuilder.ToString();
+                purchase.ReceiptName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
                 purchase.TotalAmount = SumAmounts;
                 purchase.TotalQuantity = SumQuantity;
@@ -403,7 +369,7 @@
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
 
-                purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
+                purchase.ReceiptNumber = crud.CRD(purchase, "CreatePurchaseOrder");
 
                 foreach (var PO in Items)
                 {
@@ -414,37 +380,37 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PO.PurchaseOrderID = purchase.PurchaseOrderID;
+                    PO.ReceiptNumber = purchase.ReceiptNumber;
                     DisplayPO = false;
                     crud.CRD(PO, "PurchaseOrderItem");
                 }
 
                 foreach (var del in IsDelete)
                 {
-                    POItem.RowID = del;
-                    POItem.PurchaseOrderID = purchase.PurchaseOrderID;
-                    crud.CRD(POItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
+                    ReItem.RowID = del;
+                    ReItem.ReceiptNumber = purchase.ReceiptNumber;
+                    crud.CRD(ReItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();
-                if (PONumber == null)
+                if (ReceiptNumber == null)
                 {
-                    NavigationManager.NavigateTo($"/purchaseorder/{purchase.PurchaseOrderID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/goodsreceipt/{purchase.ReceiptNumber}", forceLoad: true);
                 }
                 if (IsDraft)
                 {
-                    return "Order Saved Successfully";
+                    return "Receipt Saved Successfully";
                 }
 
                 else if (IsApproved)
                 {
-                    return "Purchase Order Submitted Successfully";
+                    return "Goods Receipt Submitted Successfully";
                 }
 
                 else
                 {
                     IsDraft = false;
-                    return "Error in saving request";
+                    return "Error in saving Receipt";
                 }
             }
         }
@@ -458,7 +424,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { ReceiptNumber = purchase.ReceiptNumber });
             if (GetStatus != null)
             {
                 if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
@@ -473,14 +439,10 @@
                 {
                     if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
                     { return "Please Enter Item on Row: " + PO.RowID + ""; }
-                    else if (string.IsNullOrWhiteSpace(PO.UOM))
-                    { return "Please Enter UOM on Row: " + PO.RowID + ""; }
-                    else if (PO.Quantity == 0)
+                    else if (PO.AcceptedQuantity == 0)
                     { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
                     else if (PO.Rate == 0)
                     { return "Please Enter Rate on Row: " + PO.RowID + ""; }
-                    else if (PO.RequiredBy == null)
-                    { return "Please Enter Required By date on Row: " + PO.RowID + ""; }
                     else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
                     { return "Item on Row: " + PO.RowID + " does not exists"; }
                 }
@@ -491,7 +453,6 @@
 
     public void SavePO()
     {
-
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
@@ -545,10 +506,11 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new PO_Items
+        Items.Add(new Reciept_Items
             {
-                RequiredBy = DateTime.Now,
-                Quantity = 1
+                AcceptedQuantity = 0,
+                Rate = 0,
+                Amount = 0
             });
         ItemName.Add("");
     }
@@ -623,31 +585,8 @@
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].Item = options.Value;
-        }
-    }
-
-    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
-    {
-        bool result = DropDownUOM.FilterOptions(e, rowIndex);
-        if (result == true)
-        {
-            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
-            {
-                Items[rowIndex].UOM = "";
-            }
-        }
-        StateHasChanged();
-    }
-    public void SelectUOMOption(option options, int rowIndex)
-    {
-        bool result = DropDownUOM.SelectOption(options, rowIndex);
-        if (result == false)
-        {
-
-            Items[rowIndex].UOM = options.Value;
         }
     }
 
@@ -659,7 +598,6 @@
         if (result.Data is bool && (bool)result.Data)
         {
             SavePO();
-
         }
     }
 }

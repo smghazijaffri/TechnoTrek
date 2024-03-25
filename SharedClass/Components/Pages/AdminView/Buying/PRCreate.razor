@@ -22,8 +22,6 @@
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
 @inject ILocalStorageService localStorage;
-@inject Blazored.SessionStorage.ISessionStorageService session;
-@inject ISessionStorageService sessionStorage
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -226,7 +224,6 @@
             isLoading = true;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string user = (await session.GetItemAsync<string>("Username"));
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
