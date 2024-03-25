@@ -230,8 +230,6 @@
                 purchase.DocumentDate = DateTime.Now;
                 if (PRNumber != null)
                 {
-
-
                     purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                     Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
