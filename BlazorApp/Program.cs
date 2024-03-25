@@ -23,8 +23,6 @@ builder.Services.AddScoped<Update>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PR_Items>();
 builder.Services.AddScoped<PurchaseOrders>();
-builder.Services.AddScoped<Vendor>();
-builder.Services.AddScoped<PO_Items>();
 builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<ExampleJsInterop>();
@@ -47,7 +45,6 @@ builder.Services.AddMudServices(config =>
 });
 
 builder.Services.AddBlazoredSessionStorage();
-
 
 builder.Services.AddBlazoredSessionStorage(config =>
 {
