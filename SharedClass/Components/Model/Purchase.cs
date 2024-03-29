@@ -83,21 +83,22 @@ namespace SharedClass.Components.Model
         public DateTime? RequiredBy { get; set; }
     }
 
-    public class PurchaseReceipt : BaseRecord
+    public class GoodReceipt : BaseRecord
     {
-        public string ReceiptNumber { get; set; }
-        public string ReceiptName { get; set; }
+        public string GoodReceiptID { get; set; }
+        public string GoodReceiptName { get; set; }
         public string Status { get; set; }
         public string VendorID { get; set; }
+        public string RefrenceDocument { get; set; }
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
         public DateTime? DocumentDate { get; set; }
     }
 
-    public class Reciept_Items : BaseRecord
+    public class GR_Items : BaseRecord
     {
         public bool Selected { get; set; }
-        public string ReceiptNumber { get; set; }
+        public string GoodReceiptID { get; set; }
         public string Item { get; set; }
         public int RowID { get; set; }
         public int AcceptedQuantity { get; set; }

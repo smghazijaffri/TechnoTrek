@@ -1,1 +1,419 @@
-﻿
+﻿@page "/requestforquotation/new-request-quotation"
+@page "/requestforquotation/{RFQNumber?}"
+
+@using SharedClass.Components.Pages.Modals
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Select select;
+@inject Vendor vendor;
+@inject Connection con;
+@inject PO_Items POItem;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject PurchaseOrders purchase;
+@inject IDialogService DialogService;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                @header
+                @if (IsSaving)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsDraft)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+                }
+                @if (IsApproved)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                }
+                @if (IsCancelled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!IsApproved && !IsCancelled)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" id="save">
+                    @GetSubmitButtonText()
+                </button>
+            }
+            @if (IsApproved && !IsCancelled)
+            {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <hr class="m-1 border-primary" />
+                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6" hidden="@DisplayPO">
+                <label class="form-label">PurchaseORequisition Number</label>
+                <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor</label>
+                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                        <li>
+                            @if (DropDownVendor.ListItems[0].FilteredOptions != null)
+                            {
+                                @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
+                                {
+                                    <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                    <hr class="m-1 border-primary" />
+                                }
+                            }
+                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Vendor Address</label>
+                <input type="text" class="form-control" @bind="vendor.Address" readonly>
+            </div>
+            @* <div class="col-md-6">
+        <label class="form-label">company shipping address</label>
+        <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
+        </div> *@
+            <div class="col-md-6">
+                <label class="form-label">Vendor Contact</label>
+                <input type="text" class="form-control" @bind="vendor.Contact" readonly>
+            </div>
+            @*  <div class="col-md-6">
+        <label class="form-label">company billing address</label>
+        <input type="text" class="form-control" @bind="purchase.companybillingaddress" readonly>
+        </div>  *@
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <table class="table size table-hover">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            UOM
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                        <th class="col col-auto" style="width: 150px;">
+                            Required By
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
+                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        item.Amount = (item.Rate * item.Quantity);
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                                {
+                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                    {
+                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                        <hr class="m-1 border-primary" />
+                                                    }
+                                                }
+                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Amount" readonly /></td>
+                            <td>
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" class="form-control" value="@SumQuantity" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" class="form-control" value="@SumAmounts" readonly="@IsApproved">
+            </div>
+        </form>
+    </div>
+    <script>
+        function toggleDropdown() {
+            var dropdownMenu = document.getElementById("dropdownMenu");
+            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+        }
+    </script>
+}
+@code
+{
+    [Parameter]
+    public string? RFQNumber { get; set; }
+    private string header = "New Purchase Order";
+    bool isLoading = false;
+    private bool IsDraft = false;
+    private bool IsSaving = true;
+    private bool DisplayPO = true;
+    private bool IsApproved = false;
+    private bool IsRejected = false;
+    private bool IsSubmitted = false;
+    private bool IsCancelled = false;
+    public bool isAuthorized { get; set; }
+    List<int> IsDelete = new List<int>();
+    public bool ReadonlyHidden
+    {
+        get { return IsCancelled || IsApproved; }
+    }
+
+    public int SumAmounts
+    {
+        // Using LINQ to sum the Amount property of each PO_Items object in the list
+        get { return Items.Sum(item => item.Amount); }
+    }
+    public int SumQuantity
+    {
+        // Using LINQ to sum the Amount property of each PO_Items object in the list
+        get { return Items.Sum(item => item.Quantity); }
+    }
+    public DropDown DropDownUOM = new DropDown();
+    public DropDown DropDownItem = new DropDown();
+    public SingleDropDown DropDownVendor = new SingleDropDown();
+    private List<PO_Items> Items = new List<PO_Items>();
+    public List<string> ItemName = new List<string>();
+    private string GetSubmitButtonText()
+    {
+        if (IsApproved)
+        {
+            return "Cancel";
+        }
+        else if (IsDraft)
+        {
+            return "Submit";
+        }
+        else
+        {
+            return "Save";
+        }
+    }
+    private void HandleFormInput()
+    {
+        if (IsDraft)
+        {
+            IsSaving = true;
+            IsDraft = false;
+            GetSubmitButtonText();
+            StateHasChanged();
+        }
+    }
+    private void AddRow()
+    {
+        HandleFormInput();
+        Items.Add(new PO_Items
+            {
+                RequiredBy = DateTime.Now,
+                Quantity = 1
+            });
+        ItemName.Add("");
+    }
+    private void DeleteRow(int index)
+    {
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                IsDelete.Add(Items[i].RowID);
+                Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
+            }
+        }
+    }
+    private async Task OpenDialog()
+    {
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            // SavePO();
+
+        }
+    }
+    public void FilterVendorOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownVendor.FilterOptions(e);
+        if (result == true)
+        {
+            if (!DropDownVendor.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
+            {
+                purchase.VendorID = "";
+            }
+        }
+        StateHasChanged();
+    }
+    private void SelectVendorOption(option options)
+    {
+        bool result = DropDownVendor.SelectOption(options);
+        if (result == false)
+        {
+            vendor.VendorName = options.Text;
+            purchase.VendorID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+            }
+        }
+    }
+    public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownItem.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].Item = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void SelectItemOption(option options, int rowIndex)
+    {
+        bool result = DropDownItem.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].Item = options.Value;
+        }
+    }
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+    public void SelectUOMOption(option options, int rowIndex)
+    {
+        bool result = DropDownUOM.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+
+            Items[rowIndex].UOM = options.Value;
+        }
+    }
+
+}
