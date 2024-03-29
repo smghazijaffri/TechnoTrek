@@ -26,6 +26,14 @@
 
 @if (isLoading)
 {
+    @* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/buying">Buying</a></li>
+            <li class="breadcrumb-item"><a href="/purchaserequisition">Purchase Requisition</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@header</li>
+        </ol>
+    </nav> *@
+
     <div class="row p-3 align-items-center">
         <div class="col-6">
             <h3>
@@ -145,7 +153,7 @@
                                     </ul>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
@@ -163,7 +171,7 @@
                                                         <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
                                             </div>
                                         </li>
                                     </ul>
@@ -284,41 +292,6 @@
                     return validate;
                 }
 
-
-                // if (CountPR == 0)
-                // {
-                //     purchase.PRNumber = "PR";
-                //     var CountNo = "";
-                //     int data = db.QueryFirstOrDefault<int>("Select COUNT(1) from PurchaseRequest");
-                //     if (data != 0)
-                //     {
-                //         data += 1;
-                //         var itr = data.ToString();
-                //         var itNum = itr.Length;
-                //         if (itNum == 1)
-                //         {
-                //             CountNo += "00" + itr;
-                //             purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
-                //         }
-                //         else if (itNum == 2)
-                //         {
-                //             CountNo += "0" + itr;
-                //             purchase.PRNumber = purchase.PRNumber + "-" + CountNo;
-                //         }
-                //         else
-                //         {
-                //             purchase.PRNumber = purchase.PRNumber + "-" + itr;
-                //         }
-                //     }
-                //     else
-                //     {
-                //         purchase.PRNumber = purchase.PRNumber + "-" + "001";
-                //     }
-                // }
-                // purchase.PRNumber = db.QueryFirstOrDefault<string>("SELECT dbo.CreatePRnumber()");
-                // purchase.PRNumber = db.QueryFirstOrDefault<string>("SELECT dbo.CreatePRnumber()",purchase);
-
-
                 StringBuilder titleBuilder = new StringBuilder("Purhcase Request for ");
 
                 foreach (string data in ItemName)
@@ -348,18 +321,11 @@
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
-                //string pr = db.QueryFirstOrDefault<string>("SELECT dbo.CreatePRnumber()", purchase);
+
                 purchase.PRNumber = crud.CRD(purchase, "CreatePurchaseRequest");
 
                 foreach (var PR in Items)
                 {
-                    // foreach (int del in IsDelete)
-                    // {
-                    //     if (PR.RowID == del)
-                    //     {
-                    //         IsDelete.Remove(del);
-                    //     }
-                    // }
                     if (IsDelete.Any(Del => Del == PR.RowID))
                     {
                         IsDelete.Remove(PR.RowID);
@@ -409,35 +375,32 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
-            if (GetStatus != null)
+
+            if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "PR has already been submitted changes cannot be done";
+
+            if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This PR has already been Cancelled";
+
+            if (purchase.DocumentDate == null) return "Please Enter Document Date";
+
+            foreach (var PR in Items)
             {
-                if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PR has already been submitted changes cannot be done"; }
-                if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PR has already been Cancelled"; }
+                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1])) return $"Please Enter Item on Row: {PR.RowID}";
+
+                if (string.IsNullOrWhiteSpace(PR.UOM)) return $"Please Enter UOM on Row: {PR.RowID}";
+
+                if (PR.Quantity <= 0) return $"Row {PR.RowID}: Quantity cannot be less than or equal to 0";
+
+                if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {PR.RowID}";
+
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1])) return $"Item on Row: {PR.RowID} does not exist";
             }
-            if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
-            if (Items.Count > 0)
-            {
-                foreach (var PR in Items)
-                {
-                    if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1]))
-                    { return "Please Enter Item on Row: " + PR.RowID + ""; }
-                    else if (string.IsNullOrWhiteSpace(PR.UOM))
-                    { return "Please Enter UOM on Row: " + PR.RowID + ""; }
-                    else if (PR.Quantity == 0)
-                    { return "Please Enter Quantity on Row: " + PR.RowID + ""; }
-                    else if (PR.RequiredBy == null)
-                    { return "Please Enter Required By date on Row: " + PR.RowID + ""; }
-                    else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1]))
-                    { return "Item on Row: " + PR.RowID + " does not exists"; }
-                }
-            }
+
             return null;
         }
     }
 
     public void SavePR()
     {
-
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
@@ -560,7 +523,6 @@
         bool result = DropDownUOM.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             Items[rowIndex].UOM = options.Value;
         }
     }

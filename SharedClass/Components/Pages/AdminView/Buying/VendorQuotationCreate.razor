@@ -1,5 +1,5 @@
-@page "/goodsreceipt/new-goods-receipt"
-@page "/goodsreceipt/{ReceiptNumber?}"
+﻿@page "/vendorquotation/new-vendor-quotation"
+@page "/vendorquotation/{VQNumber?}"
 
 @using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
@@ -16,27 +16,14 @@
 @inject Select select;
 @inject Vendor vendor;
 @inject Connection con;
+@inject PO_Items POItem;
 @inject ISnackbar Snackbar;
-@inject GR_Items ReItem;
 @inject IJSRuntime JSRuntime;
-@inject GoodReceipt purchase;
+@inject PurchaseOrders purchase;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
-<style>
-    /* Chrome, Safari, Edge, Opera */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* Firefox */
-    input[type=number] {
-        -moz-appearance: textfield;
-    }
-</style>
 @if (isLoading)
 {
     <div class="row p-3 align-items-center">
@@ -53,11 +40,15 @@
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
                 }
                 @if (IsCancelled)
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                }
+                @if (IsExpired)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Expired</MudChip>
                 }
             </h3>
         </div>
@@ -88,12 +79,8 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPO">
-                <label class="form-label">Purchase Receipt Number</label>
-                <input type="text" class="form-control" @bind="purchase.GoodReceiptID" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
+                <label class="form-label">Vendor Quotation Number</label>
+                <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -114,7 +101,15 @@
                             <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
-                </div> 
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Valid Till</label>
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
         </form>
     </div>
@@ -125,19 +120,19 @@
             <div class="col-md-6">
                 <label class="form-label">Vendor Address</label>
                 <input type="text" class="form-control" @bind="vendor.Address" readonly>
-            </div> 
+            </div>
             @* <div class="col-md-6">
-                <label class="form-label">company shipping address</label>
-                <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
-            </div> *@
+        <label class="form-label">company shipping address</label>
+        <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
+        </div> *@
             <div class="col-md-6">
                 <label class="form-label">Vendor Contact</label>
                 <input type="text" class="form-control" @bind="vendor.Contact" readonly>
             </div>
-           @*  <div class="col-md-6">
-                <label class="form-label">company billing address</label>
-                <input type="text" class="form-control" @bind="purchase.companybillingaddress" readonly>
-            </div>  *@
+            @*  <div class="col-md-6">
+        <label class="form-label">company billing address</label>
+        <input type="text" class="form-control" @bind="purchase.companybillingaddress" readonly>
+        </div>  *@
         </form>
     </div>
 
@@ -153,8 +148,11 @@
                         <th class="col col-auto">
                             Item
                         </th>
-                        <th class="col col-auto" style="width: 160px;">
-                            Accepted Quantity
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            UOM
                         </th>
                         <th class="col col-auto text-center" style="width: 150px;">
                             Rate
@@ -171,7 +169,8 @@
                         item.RowID = index + 1;
                         var rowIndex = item.RowID - 1;
                         DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        item.Amount = (item.Rate * item.AcceptedQuantity);
+                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        item.Amount = (item.Rate * item.Quantity);
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
@@ -201,10 +200,33 @@
                                 </div>
                             </td>
 
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                                {
+                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                    {
+                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                        <hr class="m-1 border-primary" />
+                                                    }
+                                                }
+                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
                             <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
-                        </tr> 
+                            <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -218,11 +240,11 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@IsApproved">
+                <input type="text" class="form-control" value="@SumQuantity" readonly="@IsApproved">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Total Amount</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@IsApproved">
+                <input type="text" class="form-control" value="@SumAmounts" readonly="@IsApproved">
             </div>
         </form>
     </div>
@@ -236,8 +258,8 @@
 
 @code {
     [Parameter]
-    public string? ReceiptNumber { get; set; }
-    private string header = "New Goods Receipt";
+    public string? VQNumber { get; set; }
+    private string header = "New Vendor Quotation";
 
     bool isLoading = false;
     private bool IsDraft = false;
@@ -247,6 +269,7 @@
     private bool IsRejected = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
+    private bool IsExpired = false;
     public bool isAuthorized { get; set; }
 
     public bool ReadonlyHidden
@@ -254,14 +277,14 @@
         get { return IsCancelled || IsApproved; }
     }
 
-   
+    public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
 
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
-    private List<GR_Items> Items = new List<GR_Items>();
+    private List<PO_Items> Items = new List<PO_Items>();
 
     public int SumAmounts
     {
@@ -272,7 +295,7 @@
     public int SumQuantity
     {
         // Using LINQ to sum the Amount property of each PO_Items object in the list
-        get { return Items.Sum(item => item.AcceptedQuantity); }
+        get { return Items.Sum(item => item.Quantity); }
     }
 
     protected override async void OnInitialized()
@@ -287,32 +310,32 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
-                    if (ReceiptNumber != null)
+                    if (VQNumber != null)
                     {
-                        purchase = db.QueryFirstOrDefault<GoodReceipt>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
-                        Items = db.Query<GR_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
-                        ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
-                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
-                        if (purchase == null || Items.Count == 0)
-                            NavigationManager.NavigateTo("/purchaserequisition/");
+                        // purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                        // Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                        // ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                        // vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                        // if (purchase == null || Items.Count == 0)
+                        //     NavigationManager.NavigateTo("/purchaserequisition/");
 
-                        DisplayPO = false;
-                        header = purchase.GoodReceiptName;
-                        if (purchase.Status == PurchaseStatuses.Pending)
-                        {
-                            IsApproved = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Draft)
-                        {
-                            IsDraft = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Cancelled)
-                        {
-                            IsCancelled = true;
-                            IsSaving = false;
-                        }
+                        // DisplayPO = false;
+                        // header = purchase.PurchaseOrderName;
+                        // if (purchase.Status == PurchaseStatuses.Pending)
+                        // {
+                        //     IsApproved = true;
+                        //     IsSaving = false;
+                        // }
+                        // else if (purchase.Status == PurchaseStatuses.Draft)
+                        // {
+                        //     IsDraft = true;
+                        //     IsSaving = false;
+                        // }
+                        // else if (purchase.Status == PurchaseStatuses.Cancelled)
+                        // {
+                        //     IsCancelled = true;
+                        //     IsSaving = false;
+                        // }
                     }
                     else
                     {
@@ -320,7 +343,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    
+                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
                 }
                 StateHasChanged();
             }
@@ -351,7 +374,7 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("Goods Receipt Order for ");
+                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
 
                 foreach (string data in ItemName)
                 {
@@ -362,10 +385,10 @@
                 if (Items.Count > 0)
                 {
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
+                    titleBuilder.Append("...");
                 }
 
-                purchase.GoodReceiptName = titleBuilder.ToString();
+                purchase.PurchaseOrderName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
                 purchase.TotalAmount = SumAmounts;
                 purchase.TotalQuantity = SumQuantity;
@@ -375,14 +398,18 @@
                 }
                 else if (IsDraft)
                 {
-                    purchase.Status = PurchaseStatuses.Pending;
+                    purchase.Status = PurchaseStatuses.Submitted;
                 }
                 else if (IsApproved)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
+                else if (IsExpired)
+                {
+                    purchase.Status = PurchaseStatuses.Expired;
+                }
 
-                purchase.GoodReceiptID = crud.CRD(purchase, "CreateGoodReceipt");
+                purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
 
                 foreach (var PO in Items)
                 {
@@ -393,40 +420,37 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PO.GoodReceiptID = purchase.GoodReceiptID;
+                    PO.PurchaseOrderID = purchase.PurchaseOrderID;
                     DisplayPO = false;
-                    crud.CRD(PO, "GoodReceiptItems");
+                    crud.CRD(PO, "PurchaseOrderItem");
                 }
 
                 foreach (var del in IsDelete)
                 {
-                    ReItem.RowID = del;
-                    ReItem.GoodReceiptID = purchase.GoodReceiptID;
-                    crud.CRD(ReItem, "GoodReceiptItems", IsDelete: true);
+                    POItem.RowID = del;
+                    POItem.PurchaseOrderID = purchase.PurchaseOrderID;
+                    crud.CRD(POItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
                 }
-
                 IsDelete.Clear();
                 ToggleApproval();
-
-                if (ReceiptNumber == null)
+                if (VQNumber == null)
                 {
-                    NavigationManager.NavigateTo($"/goodsreceipt/{purchase.GoodReceiptID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/purchaseorder/{purchase.PurchaseOrderID}", forceLoad: true);
                 }
-
                 if (IsDraft)
                 {
-                    return "Receipt Saved Successfully";
+                    return "Order Saved Successfully";
                 }
 
                 else if (IsApproved)
                 {
-                    return "Goods Receipt Submitted Successfully";
+                    return "Purchase Order Submitted Successfully";
                 }
 
                 else
                 {
                     IsDraft = false;
-                    return "Error in saving Receipt";
+                    return "Error in saving request";
                 }
             }
         }
@@ -440,43 +464,40 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (purchase.GoodReceiptID != null)
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+
+            if (GetStatus == PurchaseStatuses.Submitted && !IsApproved) return "PO has already been submitted changes cannot be done";
+
+            if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This PO has already been Cancelled";
+
+            if (purchase.DocumentDate == null) return "Please Enter Document Date";
+
+            if (string.IsNullOrWhiteSpace(vendor.VendorName)) return "Please Enter Vendor";
+
+            if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) return "Please Enter Valid Vendor";
+
+            foreach (var PO in Items)
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
-                if (GetStatus != null)
-                {
-                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
-                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PO has already been Cancelled"; }
-                }
-                else
-                {
-                    return "Good Receipt ID does not exist";
-                }
+                if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+
+                if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
+
+                if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+
+                if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+
+                if (PO.RequiredBy == null) return $"Please Enter Required By date on Row: {PO.RowID}";
+
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
             }
-           
-            if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
-            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please Enter Vendor"; }
-            if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
-            if (Items.Count > 0)
-            {
-                foreach (var PO in Items)
-                {
-                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
-                    { return "Please Enter Item on Row: " + PO.RowID + ""; }
-                    else if (PO.AcceptedQuantity == 0)
-                    { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
-                    else if (PO.Rate == 0)
-                    { return "Please Enter Rate on Row: " + PO.RowID + ""; }
-                    else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
-                    { return "Item on Row: " + PO.RowID + " does not exists"; }
-                }
-            }
+
             return null;
         }
     }
 
     public void SavePO()
     {
+
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
@@ -530,11 +551,10 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new GR_Items
+        Items.Add(new PO_Items
             {
-                AcceptedQuantity = 0,
-                Rate = 0,
-                Amount = 0
+                RequiredBy = DateTime.Now,
+                Quantity = 1
             });
         ItemName.Add("");
     }
@@ -586,7 +606,7 @@
             purchase.VendorID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new {VendorID = options.Value});
+                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
             }
         }
     }
@@ -609,8 +629,31 @@
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
+
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].Item = options.Value;
+        }
+    }
+
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+    public void SelectUOMOption(option options, int rowIndex)
+    {
+        bool result = DropDownUOM.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+
+            Items[rowIndex].UOM = options.Value;
         }
     }
 

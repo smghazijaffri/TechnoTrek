@@ -1,11 +1,4 @@
-﻿using SharedClass.Components.Pages.AdminView.Buying;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SharedClass.Components.Model
+﻿namespace SharedClass.Components.Model
 {
     public class PurchaseRequisition : BaseRecord
     {
@@ -68,6 +61,7 @@ namespace SharedClass.Components.Model
     }
     public class RFQVendor : BaseRecord
     {
+        public bool Selected { get; set; }
         public string RFQNumber { get; set; }
         public string VendorID { get; set; }
         public int RowID { get; set; }
@@ -75,6 +69,7 @@ namespace SharedClass.Components.Model
     }
     public class RFQ_Items : BaseRecord
     {
+        public bool Selected { get; set; }
         public string RFQNumber { get; set; }
         public string Item { get; set; }
         public int RowID { get; set; }
