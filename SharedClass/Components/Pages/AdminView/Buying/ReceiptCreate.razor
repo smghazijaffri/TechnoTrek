@@ -17,13 +17,26 @@
 @inject Vendor vendor;
 @inject Connection con;
 @inject ISnackbar Snackbar;
-@inject Reciept_Items ReItem;
+@inject GR_Items ReItem;
 @inject IJSRuntime JSRuntime;
-@inject PurchaseReceipt purchase;
+@inject GoodReceipt purchase;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
+<style>
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
 @if (isLoading)
 {
     <div class="row p-3 align-items-center">
@@ -76,7 +89,7 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPO">
                 <label class="form-label">Purchase Receipt Number</label>
-                <input type="text" class="form-control" @bind="purchase.ReceiptNumber" readonly>
+                <input type="text" class="form-control" @bind="purchase.GoodReceiptID" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
@@ -158,7 +171,6 @@
                         item.RowID = index + 1;
                         var rowIndex = item.RowID - 1;
                         DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                         item.Amount = (item.Rate * item.AcceptedQuantity);
                         <tr>
                             <td>
@@ -242,14 +254,14 @@
         get { return IsCancelled || IsApproved; }
     }
 
-    public DropDown DropDownUOM = new DropDown();
+   
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
 
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
-    private List<Reciept_Items> Items = new List<Reciept_Items>();
+    private List<GR_Items> Items = new List<GR_Items>();
 
     public int SumAmounts
     {
@@ -277,30 +289,30 @@
                     purchase.DocumentDate = DateTime.Now;
                     if (ReceiptNumber != null)
                     {
-                        // purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        // Items = db.Query<Reciept_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        // ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        // vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        // if (purchase == null || Items.Count == 0)
-                        //     NavigationManager.NavigateTo("/purchaserequisition/");
+                        purchase = db.QueryFirstOrDefault<GoodReceipt>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
+                        Items = db.Query<GR_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
+                        if (purchase == null || Items.Count == 0)
+                            NavigationManager.NavigateTo("/purchaserequisition/");
 
-                        // DisplayPO = false;
-                        // header = purchase.ReceiptName;
-                        // if (purchase.Status == PurchaseStatuses.Pending)
-                        // {
-                        //     IsApproved = true;
-                        //     IsSaving = false;
-                        // }
-                        // else if (purchase.Status == PurchaseStatuses.Draft)
-                        // {
-                        //     IsDraft = true;
-                        //     IsSaving = false;
-                        // }
-                        // else if (purchase.Status == PurchaseStatuses.Cancelled)
-                        // {
-                        //     IsCancelled = true;
-                        //     IsSaving = false;
-                        // }
+                        DisplayPO = false;
+                        header = purchase.GoodReceiptName;
+                        if (purchase.Status == PurchaseStatuses.Pending)
+                        {
+                            IsApproved = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.Draft)
+                        {
+                            IsDraft = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.Cancelled)
+                        {
+                            IsCancelled = true;
+                            IsSaving = false;
+                        }
                     }
                     else
                     {
@@ -308,7 +320,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                    
                 }
                 StateHasChanged();
             }
@@ -350,10 +362,10 @@
                 if (Items.Count > 0)
                 {
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append("...");
+                    titleBuilder.Append(".");
                 }
 
-                purchase.ReceiptName = titleBuilder.ToString();
+                purchase.GoodReceiptName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
                 purchase.TotalAmount = SumAmounts;
                 purchase.TotalQuantity = SumQuantity;
@@ -370,7 +382,7 @@
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
 
-                purchase.ReceiptNumber = crud.CRD(purchase, "CreatePurchaseOrder");
+                purchase.GoodReceiptID = crud.CRD(purchase, "CreateGoodReceipt");
 
                 foreach (var PO in Items)
                 {
@@ -381,16 +393,16 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PO.ReceiptNumber = purchase.ReceiptNumber;
+                    PO.GoodReceiptID = purchase.GoodReceiptID;
                     DisplayPO = false;
-                    crud.CRD(PO, "PurchaseOrderItem");
+                    crud.CRD(PO, "GoodReceiptItems");
                 }
 
                 foreach (var del in IsDelete)
                 {
                     ReItem.RowID = del;
-                    ReItem.ReceiptNumber = purchase.ReceiptNumber;
-                    crud.CRD(ReItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
+                    ReItem.GoodReceiptID = purchase.GoodReceiptID;
+                    crud.CRD(ReItem, "GoodReceiptItems", IsDelete: true);
                 }
 
                 IsDelete.Clear();
@@ -398,7 +410,7 @@
 
                 if (ReceiptNumber == null)
                 {
-                    NavigationManager.NavigateTo($"/goodsreceipt/{purchase.ReceiptNumber}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/goodsreceipt/{purchase.GoodReceiptID}", forceLoad: true);
                 }
 
                 if (IsDraft)
@@ -428,12 +440,20 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { ReceiptNumber = purchase.ReceiptNumber });
-            if (GetStatus != null)
+            if (purchase.GoodReceiptID != null)
             {
-                if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
-                if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PO has already been Cancelled"; }
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PO has already been Cancelled"; }
+                }
+                else
+                {
+                    return "Good Receipt ID does not exist";
+                }
             }
+           
             if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please Enter Vendor"; }
             if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
@@ -510,7 +530,7 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new Reciept_Items
+        Items.Add(new GR_Items
             {
                 AcceptedQuantity = 0,
                 Rate = 0,
