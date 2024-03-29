@@ -107,6 +107,7 @@
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Address and Contact</h5>
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Vendor Address</label>
@@ -188,9 +189,9 @@
                                 </div>
                             </td>
 
-                            <td><input type="text" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Rate" readonly ="@ReadonlyHidden" /></td>
-                            <td><input type="text" list="uomOptions" class="form-control" @bind="item.Amount" readonly/></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
                         </tr> 
                     }
                 </tbody>
@@ -205,11 +206,11 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
-                <input type="text" class="form-control" value="@SumQuantity" readonly="@IsApproved">
+                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@IsApproved">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Total Amount</label>
-                <input type="text" class="form-control" value="@SumAmounts" readonly="@IsApproved">
+                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@IsApproved">
             </div>
         </form>
     </div>
@@ -391,12 +392,15 @@
                     ReItem.ReceiptNumber = purchase.ReceiptNumber;
                     crud.CRD(ReItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
                 }
+
                 IsDelete.Clear();
                 ToggleApproval();
+
                 if (ReceiptNumber == null)
                 {
                     NavigationManager.NavigateTo($"/goodsreceipt/{purchase.ReceiptNumber}", forceLoad: true);
                 }
+
                 if (IsDraft)
                 {
                     return "Receipt Saved Successfully";
