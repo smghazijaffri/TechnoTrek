@@ -1,4 +1,4 @@
-﻿@page "/purchaseorder"
+﻿@page "/requestforquotation"
 
 @using static MudBlazor.CategoryTypes
 @using SharedClass.Components.Layout
@@ -10,7 +10,7 @@
 @layout AdminLayout;
 @inject Select select;
 @inject ISnackbar Snackbar;
-@inject PurchaseOrders purchaseorder;
+@inject RequestForQuotation rfq;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
@@ -21,35 +21,33 @@
             <div class="col-md-12">
                 <div class="d-flex justify-content-end">
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                               Href="/purchaseorder/new-purchase-order" Size="Size.Large">Create</MudButton>
+                               Href="/requestforquotation/new-request-for-quotation" Size="Size.Large">Create</MudButton>
                 </div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-12">
-                <MudTable @ref="_table" T="PurchaseOrders" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseOrders,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                <MudTable @ref="_table" T="RequestForQuotation" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<RequestForQuotation,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                     <ToolBarContent>
-                        <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
+                        <MudText Typo="Typo.h6">Requests for Quotation</MudText>
                         <MudSpacer />
                         <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     </ToolBarContent>
 
                     <HeaderContent>
-                        <MudTh>Order Number</MudTh>
+                        <MudTh>Quotation Number</MudTh>
                         <MudTh>Title</MudTh>
                         <MudTh>Status</MudTh>
-                        <MudTh>Grand Total</MudTh>
                         <MudTh>Document Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Purchase Order Number">@context.PurchaseOrderID</MudTd>
-                            <MudTd DataLabel="Title">@context.PurchaseOrderName</MudTd>
+                        <MudTd DataLabel="Quotation Number">@context.RFQNumber</MudTd>
+                        <MudTd DataLabel="Title">@context.RFQName</MudTd>
                         <MudTd DataLabel="Document Date">@context.Status</MudTd>
-                            <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                            <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                        <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
                     </RowTemplate>
                     <PagerContent>
                         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -86,30 +84,30 @@
 
     private string searchString1 = "";
     private bool _selectOnRowClick = false;
-    private MudTable<PurchaseOrders> _table;
+    private MudTable<RequestForQuotation> _table;
     private string _selectedItemText = "No row clicked";
-    private IEnumerable<PurchaseOrders> Elements = new List<PurchaseOrders>();
-    private HashSet<PurchaseOrders> selectedItems = new HashSet<PurchaseOrders>();
+    private IEnumerable<RequestForQuotation> Elements = new List<RequestForQuotation>();
+    private HashSet<RequestForQuotation> selectedItems = new HashSet<RequestForQuotation>();
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetPODataAsync();
+        Elements = await select.GetRFQDataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<PurchaseOrders> args)
+    void OnRowClick(TableRowClickEventArgs<RequestForQuotation> args)
     {
-        purchaseorder.PurchaseOrderID = args.Item.PurchaseOrderID;
-        NavigationManager.NavigateTo($"/purchaseorder/{purchaseorder.PurchaseOrderID}");
+        rfq.RFQNumber = args.Item.RFQNumber;
+        NavigationManager.NavigateTo($"/requestforquotation/{rfq.RFQNumber}");
     }
 
-    private bool FilterFunc1(PurchaseOrders element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(RequestForQuotation element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(PurchaseOrders element, string searchString)
+    private bool FilterFunc(RequestForQuotation element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.PurchaseOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.RFQName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.PurchaseOrderID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.RFQNumber} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
     }
