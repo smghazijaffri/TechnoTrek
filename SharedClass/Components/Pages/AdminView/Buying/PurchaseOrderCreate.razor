@@ -313,7 +313,7 @@
                         ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
                         if (purchase == null || Items.Count == 0)
-                            NavigationManager.NavigateTo("/purchaserequisition/");
+                            NavigationManager.NavigateTo("/purchaseorder/");
 
                         DisplayPO = false;
                         header = purchase.PurchaseOrderName;
@@ -336,6 +336,7 @@
                     else
                     {
                         AddRow();
+
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
@@ -456,11 +457,19 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
-
-            if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "PO has already been submitted changes cannot be done";
-
-            if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This PO has already been Cancelled";
+            if (purchase.PurchaseOrderID != null)
+            {
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Purchase Order has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Purchase Order has already been Cancelled"; }
+                }
+                else
+                {
+                    return "Purchase Order ID does not exist";
+                }
+            }
 
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
 
@@ -470,6 +479,8 @@
 
             foreach (var PO in Items)
             {
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
+
                 if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
 
                 if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
@@ -579,13 +590,13 @@
     public void FilterVendorOptions(ChangeEventArgs e)
     {
         bool result = DropDownVendor.FilterOptions(e);
-        if (result == true)
-        {
-            if (!DropDownVendor.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
-            {
-                purchase.VendorID = "";
-            }
-        }
+        // if (result == true)
+        // {
+        //     if (!DropDownVendor.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
+        //     {
+        //         purchase.VendorID = "";
+        //     }
+        // }
         StateHasChanged();
     }
 
@@ -606,13 +617,13 @@
     public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownItem.FilterOptions(e, rowIndex);
-        if (result == true)
-        {
-            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
-            {
-                Items[rowIndex].Item = "";
-            }
-        }
+        // if (result == true)
+        // {
+        //     if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+        //     {
+        //         Items[rowIndex].Item = "";
+        //     }
+        // }
         StateHasChanged();
     }
 

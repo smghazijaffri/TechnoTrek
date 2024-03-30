@@ -374,11 +374,20 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+            if (purchase.PRNumber != null)
+            {
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "Purchase Request has already been submitted changes cannot be done";
 
-            if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "PR has already been submitted changes cannot be done";
-
-            if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This PR has already been Cancelled";
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Purchase Request has already been Cancelled";
+                }
+                else
+                {
+                    return "Purchase Request ID does not exist";
+                }
+            }
 
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
 

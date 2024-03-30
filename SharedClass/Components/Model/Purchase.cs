@@ -58,6 +58,9 @@
         public string RFQName { get; set; }
         public string Status { get; set; }
         public DateTime? DocumentDate { get; set; }
+        public string RefrenceDocument { get; set; }
+
+
     }
     public class RFQVendor : BaseRecord
     {

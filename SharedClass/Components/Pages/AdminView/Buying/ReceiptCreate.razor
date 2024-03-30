@@ -294,7 +294,7 @@
                         ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
                         if (purchase == null || Items.Count == 0)
-                            NavigationManager.NavigateTo("/purchaserequisition/");
+                            NavigationManager.NavigateTo("/goodsreceipt/");
 
                         DisplayPO = false;
                         header = purchase.GoodReceiptName;
@@ -346,7 +346,7 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string validate = ValidatePO();
+                string validate = ValidateGR();
                 if (validate != null)
                 {
                     return validate;
@@ -436,7 +436,7 @@
         }
     }
 
-    public string ValidatePO()
+    public string ValidateGR()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
@@ -445,8 +445,8 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
-                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PO has already been Cancelled"; }
+                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Good Receipt has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Good Receipt has already been Cancelled"; }
                 }
                 else
                 {
@@ -461,6 +461,7 @@
             {
                 foreach (var PO in Items)
                 {
+                    if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
                     if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
                     { return "Please Enter Item on Row: " + PO.RowID + ""; }
                     else if (PO.AcceptedQuantity == 0)
