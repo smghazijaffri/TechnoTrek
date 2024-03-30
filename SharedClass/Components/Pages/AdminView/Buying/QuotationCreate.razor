@@ -60,9 +60,7 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
-                        <hr class="m-1 border-primary" />
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <li><a href="/vendorquotation/new-vendor-quotation" class="btn ms-2 m-1 text-sm-start">Vendor Quotation</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -262,7 +260,7 @@
 @code {
     [Parameter]
     public string? RFQNumber { get; set; }
-    private string header = "New Purchase Order";
+    private string header = "New Request for Quotation";
 
     bool isLoading = false;
     private bool IsDraft = false;
@@ -273,11 +271,7 @@
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
-
-    public bool ReadonlyHidden
-    {
-        get { return IsCancelled || IsApproved; }
-    }
+    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();

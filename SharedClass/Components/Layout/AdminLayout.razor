@@ -1,11 +1,13 @@
 ﻿@using SharedClass.Components.Pages.AdminView
 @using SharedClass.Components.Data
-@inject Connection conn;
-@inject IJSRuntime JSRuntime;
+
 @inject Login login;
+@inject Connection conn;
 @inject ISnackbar Snackbar;
-@inject NavigationManager navigationManager;
+@inject IJSRuntime JSRuntime;
 @inject ILocalStorageService localStorage;
+@inject NavigationManager navigationManager;
+
 @inherits LayoutComponentBase;
 
 <head>
@@ -16,7 +18,7 @@
     <div style="display:flex;">
         <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
             <MudIconButton Icon="@(open ? Icons.Material.Outlined.Close : Icons.Material.Outlined.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px"/>
         </MudAppBar>
         <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
             <MudNavMenu Class="mb-5">
@@ -28,21 +30,15 @@
                 </MudNavLink>
                 <MudNavLink Match="NavLinkMatch.All" Href="/buying">
                     <MudButton Variant="Variant.Text"
-                               StartIcon="@Icons.Material.Outlined.ShoppingBag"
+                               StartIcon="@Icons.Material.Outlined.Inventory2"
                                Style="background-color:transparent;"
-                               Color="Color.Warning">Buying</MudButton>
+                               Color="Color.Warning">Inventory</MudButton>
                 </MudNavLink>
                 <MudNavLink Match="NavLinkMatch.All" Href="/selling">
                     <MudButton Variant="Variant.Text"
                                StartIcon="@Icons.Material.Outlined.Sell"
                                Style="background-color:transparent;"
                                Color="Color.Warning">Selling</MudButton>
-                </MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All" Href="/inventory">
-                    <MudButton Variant="Variant.Text"
-                               StartIcon="@Icons.Material.Outlined.Inventory2"
-                               Style="background-color:transparent;"
-                               Color="Color.Warning">Inventory</MudButton>
                 </MudNavLink>
                 <MudNavLink Match="NavLinkMatch.All" Href="/returns">
                     <MudButton Variant="Variant.Text"

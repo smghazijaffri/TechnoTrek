@@ -8,7 +8,6 @@ namespace SharedClass.Components.Data
         private SqlCommand? cmd;
         private SqlDataReader? dr;
         protected bool Authorized { get; set; }
-
         public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime)
         {
             try

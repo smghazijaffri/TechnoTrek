@@ -24,19 +24,6 @@
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
-<style>
-    /* Chrome, Safari, Edge, Opera */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* Firefox */
-    input[type=number] {
-        -moz-appearance: textfield;
-    }
-</style>
 @if (isLoading)
 {
     <div class="row p-3 align-items-center">
@@ -73,9 +60,9 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Return</a></li>
                         <hr class="m-1 border-primary" />
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -114,7 +101,7 @@
                             <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
-                </div> 
+                </div>
             </div>
         </form>
     </div>
@@ -125,19 +112,19 @@
             <div class="col-md-6">
                 <label class="form-label">Vendor Address</label>
                 <input type="text" class="form-control" @bind="vendor.Address" readonly>
-            </div> 
+            </div>
             @* <div class="col-md-6">
-                <label class="form-label">company shipping address</label>
-                <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
-            </div> *@
+        <label class="form-label">company shipping address</label>
+        <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
+        </div> *@
             <div class="col-md-6">
                 <label class="form-label">Vendor Contact</label>
                 <input type="text" class="form-control" @bind="vendor.Contact" readonly>
             </div>
-           @*  <div class="col-md-6">
-                <label class="form-label">company billing address</label>
-                <input type="text" class="form-control" @bind="purchase.companybillingaddress" readonly>
-            </div>  *@
+            @*  <div class="col-md-6">
+        <label class="form-label">company billing address</label>
+        <input type="text" class="form-control" @bind="purchase.companybillingaddress" readonly>
+        </div>  *@
         </form>
     </div>
 
@@ -204,7 +191,7 @@
                             <td><input type="text" inputmode="numeric" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
-                        </tr> 
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -248,13 +235,8 @@
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
+    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
 
-    public bool ReadonlyHidden
-    {
-        get { return IsCancelled || IsApproved; }
-    }
-
-   
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
 
@@ -320,7 +302,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    
+
                 }
                 StateHasChanged();
             }
@@ -453,7 +435,7 @@
                     return "Good Receipt ID does not exist";
                 }
             }
-           
+
             if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please Enter Vendor"; }
             if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
@@ -586,7 +568,7 @@
             purchase.VendorID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new {VendorID = options.Value});
+                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
             }
         }
     }

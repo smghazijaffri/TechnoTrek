@@ -54,10 +54,18 @@
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
+                @if (IsOrdered)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
+                }
+                @if (IsReceived)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
+                }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!IsApproved && !IsCancelled)
+            @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
                     @GetSubmitButtonText()
@@ -68,11 +76,17 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><button href="/purchaseorder/new-purchase-order" class="ms-2 m-1 text-sm-start">Create Purchase Order</button></li>
+                        <li><a href="/purchaseorder/new-purchase-order" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
                         <hr class="m-1 border-primary" />
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <li><a href="/requestforquotation/new-request-for-quotation" class="btn ms-2 m-1 text-sm-start">Request For Quotation</a></li>
                     </ul>
                 </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+            @if (IsReceived || IsOrdered && !IsCancelled)
+            {
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel
                 </button>
@@ -204,20 +218,21 @@
     private string header = "Create Purchase Request";
 
     bool isLoading = false;
-    private bool DisplayPR = true;
-    public bool isAuthorized { get; set; }
     private bool IsDraft = false;
     private bool IsSaving = true;
+    private bool DisplayPR = true;
+    private bool IsOrdered = false;
     private bool IsApproved = false;
     private bool IsRejected = false;
+    private bool IsReceived = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
-    public bool ReadonlyHidden
-    {
-        get { return IsCancelled || IsApproved; }
-    }
+    public bool isAuthorized { get; set; }
+    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
+
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
+
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
@@ -256,6 +271,16 @@
                     else if (purchase.Status == PurchaseStatuses.Cancelled)
                     {
                         IsCancelled = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Ordered)
+                    {
+                        IsOrdered = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Received)
+                    {
+                        IsReceived = true;
                         IsSaving = false;
                     }
                 }
@@ -317,9 +342,17 @@
                 {
                     purchase.Status = PurchaseStatuses.Pending;
                 }
-                else if (IsApproved)
+                else if (IsApproved || IsOrdered || IsReceived)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
+                }
+                else if (IsOrdered)
+                {
+                    purchase.Status = PurchaseStatuses.Ordered;
+                }
+                else if (IsReceived)
+                {
+                    purchase.Status = PurchaseStatuses.Received;
                 }
 
                 purchase.PRNumber = crud.CRD(purchase, "CreatePurchaseRequest");
@@ -355,6 +388,11 @@
                 else if (IsApproved)
                 {
                     return "Purchase Request Submitted Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Purchase Request Cancelled Successfully";
                 }
 
                 else
@@ -439,11 +477,13 @@
             IsDraft = true;
             IsSaving = false;
         }
-        else if (IsApproved)
+        else if (IsApproved || IsOrdered || IsReceived)
         {
             IsCancelled = true;
             IsSaving = false;
             IsApproved = false;
+            IsOrdered = false;
+            IsReceived = false;
         }
     }
 

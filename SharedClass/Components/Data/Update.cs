@@ -17,6 +17,7 @@ namespace SharedClass.Components.Data
         {
             Iid = id;
         }
+
         public async Task UpdateCustomBuilt(string comp, IJSRuntime JSRuntime)
         {
             try
