@@ -46,7 +46,9 @@ namespace MauiMobileApp
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseRequisition>();
-            builder.Services.AddMudServices();
+            builder.Services.AddScoped<GoodReceipt>();
+            builder.Services.AddScoped<Quotation>();
+            builder.Services.AddScoped<QU_Items>();
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;

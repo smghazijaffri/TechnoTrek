@@ -16,10 +16,10 @@
 @inject Select select;
 @inject Vendor vendor;
 @inject Connection con;
-@inject PO_Items POItem;
+@inject QU_Items QUItem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject PurchaseOrders purchase;
+@inject Quotation purchase;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -80,7 +80,7 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6" hidden="@DisplayPO">
                 <label class="form-label">Vendor Quotation Number</label>
-                <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
+                <input type="text" class="form-control" @bind="purchase.QuotationID" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -284,7 +284,7 @@
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
-    private List<PO_Items> Items = new List<PO_Items>();
+    private List<QU_Items> Items = new List<QU_Items>();
 
     public int SumAmounts
     {
@@ -312,30 +312,31 @@
                     purchase.DocumentDate = DateTime.Now;
                     if (VQNumber != null)
                     {
-                        // purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        // Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        // ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        // vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        // if (purchase == null || Items.Count == 0)
-                        //     NavigationManager.NavigateTo("/purchaserequisition/");
+                        purchase = db.QueryFirstOrDefault<Quotation>("Select * from Quotation where QuotationID = @QuotationID", new { QuotationID = VQNumber });
+                        if (purchase == null || Items.Count == 0)
+                            NavigationManager.NavigateTo("/vendorquotation/");
+                        Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = VQNumber });
+                       
 
-                        // DisplayPO = false;
-                        // header = purchase.PurchaseOrderName;
-                        // if (purchase.Status == PurchaseStatuses.Pending)
-                        // {
-                        //     IsApproved = true;
-                        //     IsSaving = false;
-                        // }
-                        // else if (purchase.Status == PurchaseStatuses.Draft)
-                        // {
-                        //     IsDraft = true;
-                        //     IsSaving = false;
-                        // }
-                        // else if (purchase.Status == PurchaseStatuses.Cancelled)
-                        // {
-                        //     IsCancelled = true;
-                        //     IsSaving = false;
-                        // }
+                        DisplayPO = false;
+                        header = purchase.QuotationName;
+                        if (purchase.Status == PurchaseStatuses.Pending)
+                        {
+                            IsApproved = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.Draft)
+                        {
+                            IsDraft = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.Cancelled)
+                        {
+                            IsCancelled = true;
+                            IsSaving = false;
+                        }
                     }
                     else
                     {
@@ -374,7 +375,7 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
+                StringBuilder titleBuilder = new StringBuilder("Quotation for ");
 
                 foreach (string data in ItemName)
                 {
@@ -385,10 +386,10 @@
                 if (Items.Count > 0)
                 {
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append("...");
+                    titleBuilder.Append(".");
                 }
 
-                purchase.PurchaseOrderName = titleBuilder.ToString();
+                purchase.QuotationName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
                 purchase.TotalAmount = SumAmounts;
                 purchase.TotalQuantity = SumQuantity;
@@ -409,7 +410,7 @@
                     purchase.Status = PurchaseStatuses.Expired;
                 }
 
-                purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
+                purchase.QuotationID = crud.CRD(purchase, "CreateQuotation");
 
                 foreach (var PO in Items)
                 {
@@ -420,22 +421,22 @@
                             IsDelete.Remove(del);
                         }
                     }
-                    PO.PurchaseOrderID = purchase.PurchaseOrderID;
+                    PO.QuotationID = purchase.QuotationID;
                     DisplayPO = false;
-                    crud.CRD(PO, "PurchaseOrderItem");
+                    crud.CRD(PO, "QUItems");
                 }
 
                 foreach (var del in IsDelete)
                 {
-                    POItem.RowID = del;
-                    POItem.PurchaseOrderID = purchase.PurchaseOrderID;
-                    crud.CRD(POItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
+                    QUItem.RowID = del;
+                    QUItem.QuotationID = purchase.QuotationID;
+                    crud.CRD(QUItem, "QUItems", IsDelete: true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (VQNumber == null)
                 {
-                    NavigationManager.NavigateTo($"/purchaseorder/{purchase.PurchaseOrderID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/vendorquotation/{purchase.QuotationID}", forceLoad: true);
                 }
                 if (IsDraft)
                 {
@@ -464,12 +465,19 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
-
-            if (GetStatus == PurchaseStatuses.Submitted && !IsApproved) return "PO has already been submitted changes cannot be done";
-
-            if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This PO has already been Cancelled";
-
+            if (purchase.QuotationID != null)
+            {
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Quotation where QuotationID = @QuotationID", new { QuotationID = purchase.QuotationID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Quotation has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Quotation has already been Cancelled"; }
+                }
+                else
+                {
+                    return "Quotation ID does not exist";
+                }
+            }
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
 
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) return "Please Enter Vendor";
@@ -478,6 +486,8 @@
 
             foreach (var PO in Items)
             {
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
+
                 if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
 
                 if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
@@ -485,8 +495,6 @@
                 if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
 
                 if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
-
-                if (PO.RequiredBy == null) return $"Please Enter Required By date on Row: {PO.RowID}";
 
                 if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
             }
@@ -551,9 +559,8 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new PO_Items
+        Items.Add(new QU_Items
             {
-                RequiredBy = DateTime.Now,
                 Quantity = 1
             });
         ItemName.Add("");

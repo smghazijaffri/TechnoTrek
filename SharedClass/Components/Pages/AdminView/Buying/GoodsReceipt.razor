@@ -1,0 +1,115 @@
+@using static MudBlazor.CategoryTypes
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using System.Globalization
+@using System.Net.Http.Json
+@page "/goodsreceipt"
+
+@layout AdminLayout;
+@inject Select select;
+@inject ISnackbar Snackbar;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+@inject GoodReceipt goodsreceipt;
+
+@if (isLoading)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               Href="/goodsreceipt/new-goods-receipt" Size="Size.Large">Create</MudButton>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <MudTable @ref="_table" T="GoodReceipt" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<GoodReceipt,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Good Receipts</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+
+                    <HeaderContent>
+                        <MudTh>Goods Receipt Number</MudTh>
+                        <MudTh>Title</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Grand Total</MudTh>
+                        <MudTh>Document Date</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Goods Receipt Number">@context.GoodReceiptID</MudTd>
+                            <MudTd DataLabel="Title">@context.GoodReceiptName</MudTd>
+                            <MudTd DataLabel="Status">@context.Status</MudTd>
+                            <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
+                            <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                        </PagerContent>
+                    </MudTable>
+                </div>
+            </div>
+        </div>
+}
+
+@code {
+    //authorization
+    bool isLoading = false;
+    public bool isAuthorized { get; set; }
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            StateHasChanged();
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+        base.OnInitialized();
+    }
+    //authorization
+
+    private string searchString1 = "";
+    private bool _selectOnRowClick = false;
+    private MudTable<GoodReceipt> _table;
+    private string _selectedItemText = "No row clicked";
+    private IEnumerable<GoodReceipt> Elements = new List<GoodReceipt>();
+    private HashSet<GoodReceipt> selectedItems = new HashSet<GoodReceipt>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await select.GetGRDataAsync();
+    }
+
+    void OnRowClick(TableRowClickEventArgs<GoodReceipt> args)
+    {
+        goodsreceipt.GoodReceiptID = args.Item.GoodReceiptID;
+        NavigationManager.NavigateTo($"/goodsreceipt/{goodsreceipt.GoodReceiptID}");
+    }
+
+    private bool FilterFunc1(GoodReceipt element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(GoodReceipt element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.GoodReceiptName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.GoodReceiptID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
+
+        return false;
+    }
+}

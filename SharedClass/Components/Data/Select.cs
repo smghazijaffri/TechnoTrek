@@ -117,5 +117,12 @@ namespace SharedClass.Components.Data
             con.Close(); con.Open();
             return con.QueryFirstOrDefault<int>("Select COUNT(1)POnumber from PurchaseOrder");
         }
+
+        public async Task<IEnumerable<GoodReceipt>> GetGRDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<GoodReceipt>("SELECT * FROM GoodReceipt");
+        }
     }
 }
