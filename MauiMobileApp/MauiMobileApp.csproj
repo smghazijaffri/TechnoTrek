@@ -69,6 +69,10 @@
   <ItemGroup>
     <!-- App Icon -->
     <MauiIcon Include="Resources\AppIcon\techlogo.png" BackgroundColor="#ffffff" Color="#ffffff" />
+    <MauiSplashScreen Include="Resources\Images\splash.svg">
+      <Color>#ffffff</Color>
+      <BaseSize>128,128</BaseSize>
+    </MauiSplashScreen>
 
     <!-- Splash Screen -->
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#ffffff" BaseSize="128,128" />
@@ -76,6 +80,7 @@
     <!-- Images -->
     <MauiImage Include="Resources\Images\*" />
     <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
+    <MauiImage Update="Resources\Images\splash.svg" BaseSize="208,208" />
 
     <!-- Custom Fonts -->
     <MauiFont Include="Resources\Fonts\*" />
@@ -220,14 +225,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Resources\AppIcon\techlogo.ico" />
+    <MauiImage Remove="Resources\Images\splash.svg" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Resources\AppIcon\techlogo.ico">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
+    <None Remove="Resources\AppIcon\techlogo.png" />
+    <None Remove="Resources\Images\splash.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Resources\AppIcon\techlogo.png">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

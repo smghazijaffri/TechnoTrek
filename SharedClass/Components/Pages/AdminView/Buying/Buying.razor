@@ -1,11 +1,14 @@
 ﻿@page "/buying";
+
 @using SharedClass.Components.Layout
-@using System.Globalization
 @using SharedClass.Components.Data
-@inject IJSRuntime JSRuntime;
+@using System.Globalization
+
 @inject ISnackbar Snackbar;
-@inject NavigationManager NavigationManager;
+@inject IJSRuntime JSRuntime;
 @inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
 @layout AdminLayout;
 
 @if (isLoading)
@@ -21,7 +24,7 @@
 
         <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
             <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/requestforquotation/new-request-for-quotation" Style="border-radius:10px">
+                <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/requestforquotation" Style="border-radius:10px">
                     Request for Quotation
                 </MudListItem>
             </MudList>
@@ -35,13 +38,13 @@
             </MudList>
         </MudPaper>
 
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        @* <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
             <MudList Clickable="true">
                 <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="#" Style="border-radius:10px">
                     Purchase Invoice
                 </MudListItem>
             </MudList>
-        </MudPaper>
+        </MudPaper> *@
 
         <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
             <MudList Clickable="true">

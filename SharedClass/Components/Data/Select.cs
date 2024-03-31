@@ -1,8 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using SharedClass.Components.Pages.CustomPC;
 using SharedClass.Components.Model;
-using static MudBlazor.CategoryTypes;
+using SharedClass.Components.Pages.CustomPC;
 
 namespace SharedClass.Components.Data
 {
@@ -112,10 +111,11 @@ namespace SharedClass.Components.Data
             return con.Query<PurchaseOrders>("select * from PurchaseOrder where POnumber = @POnumber", new { POnumber = PONumber }).ToList();
         }
 
-        public int CountPOnumber()
+        public async Task<IEnumerable<RequestForQuotation>> GetRFQDataAsync()
         {
-            con.Close(); con.Open();
-            return con.QueryFirstOrDefault<int>("Select COUNT(1)POnumber from PurchaseOrder");
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<RequestForQuotation>("SELECT * FROM RequestForQuotation");
         }
 
         public async Task<IEnumerable<GoodReceipt>> GetGRDataAsync()

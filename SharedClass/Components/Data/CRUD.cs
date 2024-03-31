@@ -6,25 +6,6 @@ namespace SharedClass.Components.Data
 {
     public class CRUD : Connection
     {
-        //public void CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
-        //{
-        //    using (SqlConnection db = new SqlConnection(connectionString))
-        //    {
-        //        if (IsDelete)
-        //        {
-        //            Model.ForInsert = 0;
-        //        }
-        //        else
-        //        {
-        //            Model.ForInsert = 1;
-        //        }
-        //        Model.CreationDate = DateTime.Now;
-        //        db.ExecuteScalar(SP, (object)Model, commandType: commandType);
-
-        //        // Convert the result to string
-
-        //    }
-        //}
         public string CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
         {
             string outputValue = string.Empty;
@@ -53,7 +34,5 @@ namespace SharedClass.Components.Data
 
             return outputValue;
         }
-
-
     }
 }

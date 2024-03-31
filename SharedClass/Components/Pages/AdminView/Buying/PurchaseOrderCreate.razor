@@ -60,9 +60,9 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Goods Receipt</a></li>
                         <hr class="m-1 border-primary" />
-                        <li><button href="#" class="ms-2 m-1 text-sm-start">Create Request For Quotation</button></li>
+                        <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -86,7 +86,7 @@
                 <label class="form-label">Vendor</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                           placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
@@ -267,11 +267,7 @@
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
-
-    public bool ReadonlyHidden
-    {
-        get { return IsCancelled || IsApproved; }
-    }
+    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();

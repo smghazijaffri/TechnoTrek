@@ -16,7 +16,6 @@ namespace SharedClass.Components.Data
         private int? openDropdownIndex = null;
         public List<option> Options { get; set; } = new List<option>();
         public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>();
-
         public void CloseDropdown(KeyboardEventArgs e, int rowIndex)
         {
             if (e.Key == "Escape")
@@ -109,9 +108,6 @@ namespace SharedClass.Components.Data
     {
         public List<option> Options { get; set; } = new List<option>();
         public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>{ new BindDropdown { IsDropdownOpen = false }};
-
-
-
         public void CloseDropdown(KeyboardEventArgs e)
         {
             if (e.Key == "Escape")
