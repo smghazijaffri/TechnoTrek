@@ -405,6 +405,11 @@
                     return "Goods Receipt Submitted Successfully";
                 }
 
+                else if (IsCancelled)
+                {
+                    return "Goods Receipt Cancelled Successfully";
+                }
+
                 else
                 {
                     IsDraft = false;
@@ -444,14 +449,17 @@
                 foreach (var PO in Items)
                 {
                     if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
-                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
-                    { return "Please Enter Item on Row: " + PO.RowID + ""; }
-                    else if (PO.AcceptedQuantity == 0)
-                    { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
-                    else if (PO.Rate == 0)
-                    { return "Please Enter Rate on Row: " + PO.RowID + ""; }
-                    else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
-                    { return "Item on Row: " + PO.RowID + " does not exists"; }
+
+                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+
+                    if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+
+                    if (PO.AcceptedQuantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+
+                    if (PO.Amount <= 0) return $"Row {PO.RowID}: Amount cannot be less than or equal to 0";
+
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
+
                 }
             }
             return null;
@@ -600,7 +608,7 @@
     private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Goods Receipt", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {

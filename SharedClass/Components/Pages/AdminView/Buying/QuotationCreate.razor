@@ -444,12 +444,17 @@
                 }
                 if (IsDraft)
                 {
-                    return "Order Saved Successfully";
+                    return "RFQ Saved Successfully";
                 }
 
                 else if (IsApproved)
                 {
-                    return "Purchase Order Submitted Successfully";
+                    return "Request for Quotation Submitted Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Request for Quotation Cancelled Successfully";
                 }
 
                 else
@@ -696,7 +701,7 @@
     private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Request for Quotation", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {

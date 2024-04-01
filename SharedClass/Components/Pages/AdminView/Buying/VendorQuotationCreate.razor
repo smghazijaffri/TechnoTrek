@@ -84,7 +84,7 @@
                 <label class="form-label">Vendor</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                           placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
@@ -105,10 +105,10 @@
                 <label class="form-label">Date</label>
                 <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
-            <div class="col-md-6">
+            @* <div class="col-md-6">
                 <label class="form-label">Valid Till</label>
                 <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
-            </div>
+            </div> *@
         </form>
     </div>
 
@@ -307,16 +307,17 @@
                     if (VQNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<Quotation>("Select * from Quotation where QuotationID = @QuotationID", new { QuotationID = VQNumber });
+                        
+                        Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
                         if (purchase == null || Items.Count == 0)
                             NavigationManager.NavigateTo("/vendorquotation/");
-                        Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
                         ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = VQNumber });
                        
 
                         DisplayPO = false;
                         header = purchase.QuotationName;
-                        if (purchase.Status == PurchaseStatuses.Pending)
+                        if (purchase.Status == PurchaseStatuses.Submitted)
                         {
                             IsApproved = true;
                             IsSaving = false;
@@ -434,12 +435,17 @@
                 }
                 if (IsDraft)
                 {
-                    return "Order Saved Successfully";
+                    return "Quotation Saved Successfully";
                 }
 
                 else if (IsApproved)
                 {
-                    return "Purchase Order Submitted Successfully";
+                    return "Vendor Quotation Submitted Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Vendor Quotation Cancelled Successfully";
                 }
 
                 else
@@ -661,7 +667,7 @@
     private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Vendor Quotation", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {

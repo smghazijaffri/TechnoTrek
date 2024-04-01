@@ -436,6 +436,11 @@
                     return "Purchase Order Submitted Successfully";
                 }
 
+                else if (IsCancelled)
+                {
+                    return "Purchase Order Cancelled Successfully";
+                }
+
                 else
                 {
                     IsDraft = false;
@@ -659,7 +664,7 @@
     private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
