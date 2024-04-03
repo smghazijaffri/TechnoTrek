@@ -117,5 +117,19 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<RequestForQuotation>("SELECT * FROM RequestForQuotation");
         }
+
+        public async Task<IEnumerable<GoodReceipt>> GetGRDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<GoodReceipt>("SELECT * FROM GoodReceipt");
+        }
+
+        public async Task<IEnumerable<Quotation>> GetVQDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<Quotation>("SELECT * FROM Quotation");
+        }
     }
 }

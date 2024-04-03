@@ -36,6 +36,8 @@ builder.Services.AddScoped<ExampleJsInterop>();
 builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
+builder.Services.AddScoped<Quotation>();
+builder.Services.AddScoped<QU_Items>();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddMudServices();
 builder.Services.AddMudServices(config =>

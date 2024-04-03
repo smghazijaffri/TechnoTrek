@@ -38,9 +38,9 @@
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
-                @if (IsApproved)
+                @if (ToBill)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">To Bill</MudChip>
                 }
                 @if (IsCancelled)
                 {
@@ -49,13 +49,13 @@
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!IsApproved && !IsCancelled)
+            @if (!ToBill && !IsCancelled)
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">
                     @GetSubmitButtonText()
                 </button>
             }
-            @if (IsApproved && !IsCancelled)
+            @if (ToBill && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
@@ -80,7 +80,7 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ToBill">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -98,7 +98,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button href="#" class="text-info" hidden="@ToBill"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -162,9 +162,9 @@
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ToBill" />
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToBill">Delete</button>
                                 </div>
                             </td>
                             <td>
@@ -197,7 +197,7 @@
             </table>
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ToBill">Add Row</button>
         </div>
     </div>
 
@@ -205,11 +205,11 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@IsApproved">
+                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ToBill">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Total Amount</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@IsApproved">
+                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ToBill">
             </div>
         </form>
     </div>
@@ -227,15 +227,15 @@
     private string header = "New Goods Receipt";
 
     bool isLoading = false;
+    private bool ToBill = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool DisplayPO = true;
-    private bool IsApproved = false;
     private bool IsRejected = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
-    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
+    public bool ReadonlyHidden { get { return IsCancelled || ToBill; } }
 
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
@@ -280,9 +280,9 @@
 
                         DisplayPO = false;
                         header = purchase.GoodReceiptName;
-                        if (purchase.Status == PurchaseStatuses.Pending)
+                        if (purchase.Status == PurchaseStatuses.ToBill)
                         {
-                            IsApproved = true;
+                            ToBill = true;
                             IsSaving = false;
                         }
                         else if (purchase.Status == PurchaseStatuses.Draft)
@@ -357,9 +357,9 @@
                 }
                 else if (IsDraft)
                 {
-                    purchase.Status = PurchaseStatuses.Pending;
+                    purchase.Status = PurchaseStatuses.ToBill;
                 }
-                else if (IsApproved)
+                else if (ToBill)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
@@ -400,9 +400,14 @@
                     return "Receipt Saved Successfully";
                 }
 
-                else if (IsApproved)
+                else if (ToBill)
                 {
                     return "Goods Receipt Submitted Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Goods Receipt Cancelled Successfully";
                 }
 
                 else
@@ -427,7 +432,7 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Good Receipt has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.ToBill && !ToBill) { return "Good Receipt has already been submitted changes cannot be done"; }
                     if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Good Receipt has already been Cancelled"; }
                 }
                 else
@@ -444,14 +449,17 @@
                 foreach (var PO in Items)
                 {
                     if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
-                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1]))
-                    { return "Please Enter Item on Row: " + PO.RowID + ""; }
-                    else if (PO.AcceptedQuantity == 0)
-                    { return "Please Enter Quantity on Row: " + PO.RowID + ""; }
-                    else if (PO.Rate == 0)
-                    { return "Please Enter Rate on Row: " + PO.RowID + ""; }
-                    else if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1]))
-                    { return "Item on Row: " + PO.RowID + " does not exists"; }
+
+                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+
+                    if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+
+                    if (PO.AcceptedQuantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+
+                    if (PO.Amount <= 0) return $"Row {PO.RowID}: Amount cannot be less than or equal to 0";
+
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
+
                 }
             }
             return null;
@@ -475,7 +483,7 @@
 
     private string GetSubmitButtonText()
     {
-        if (IsApproved)
+        if (ToBill)
         {
             return "Cancel";
         }
@@ -494,7 +502,7 @@
         if (IsDraft)
         {
             IsDraft = false;
-            IsApproved = true;
+            ToBill = true;
             IsSaving = false;
         }
         else if (IsSaving)
@@ -502,11 +510,11 @@
             IsDraft = true;
             IsSaving = false;
         }
-        else if (IsApproved)
+        else if (ToBill)
         {
             IsCancelled = true;
             IsSaving = false;
-            IsApproved = false;
+            ToBill = false;
         }
     }
 
@@ -600,7 +608,7 @@
     private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Goods Receipt", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
