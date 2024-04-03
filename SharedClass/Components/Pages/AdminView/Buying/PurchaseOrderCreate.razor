@@ -38,9 +38,21 @@
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
-                @if (IsApproved)
+                @if (ToReceiveBill)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">To Receive and Bill</MudChip>
+                }
+                @if (ToReceive)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">To Receive</MudChip>
+                }
+                @if (ToBill)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">To Bill</MudChip>
+                }
+                @if (IsCompleted)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Completed</MudChip>
                 }
                 @if (IsCancelled)
                 {
@@ -49,13 +61,13 @@
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!IsApproved && !IsCancelled)
+            @if (!ReadonlyHidden)
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">
                     @GetSubmitButtonText()
                 </button>
             }
-            @if (IsApproved && !IsCancelled)
+            @if (ToReceiveBill && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
@@ -65,6 +77,26 @@
                         <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+            @if (ToReceive || ToBill && !IsCancelled)
+            {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                        <li hidden="@ToBill"><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Goods Receipt</a></li>
+                        <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
+                        <li hidden="@ToReceive"><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+            @if (IsCompleted && !IsCancelled)
+            {
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel
                 </button>
@@ -80,7 +112,7 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
@@ -98,7 +130,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -168,9 +200,9 @@
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@IsApproved">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToReceiveBill">Delete</button>
                                 </div>
                             </td>
                             <td>
@@ -221,7 +253,7 @@
                             <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
                             <td>
-                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@IsApproved" />
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
                             </td>
                         </tr>
                     }
@@ -229,7 +261,7 @@
             </table>
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@IsApproved">Add Row</button>
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
         </div>
     </div>
 
@@ -237,11 +269,11 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
-                <input type="text" class="form-control" value="@SumQuantity" readonly="@IsApproved">
+                <input type="text" class="form-control" value="@SumQuantity" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Total Amount</label>
-                <input type="text" class="form-control" value="@SumAmounts" readonly="@IsApproved">
+                <input type="text" class="form-control" value="@SumAmounts" readonly>
             </div>
         </form>
     </div>
@@ -259,15 +291,18 @@
     private string header = "New Purchase Order";
 
     bool isLoading = false;
+    private bool ToBill = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool DisplayPO = true;
-    private bool IsApproved = false;
+    private bool ToReceive = false;
     private bool IsRejected = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
+    private bool IsCompleted = false;
+    private bool ToReceiveBill = false;
     public bool isAuthorized { get; set; }
-    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
+    public bool ReadonlyHidden { get { return IsCancelled || ToReceiveBill || ToReceive || ToBill || IsCompleted; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
@@ -313,14 +348,29 @@
 
                         DisplayPO = false;
                         header = purchase.PurchaseOrderName;
-                        if (purchase.Status == PurchaseStatuses.Pending)
+                        if (purchase.Status == PurchaseStatuses.ToReceiveBill)
                         {
-                            IsApproved = true;
+                            ToReceiveBill = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.ToReceive)
+                        {
+                            ToReceive = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.ToBill)
+                        {
+                            ToBill = true;
                             IsSaving = false;
                         }
                         else if (purchase.Status == PurchaseStatuses.Draft)
                         {
                             IsDraft = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.Completed)
+                        {
+                            IsCompleted = true;
                             IsSaving = false;
                         }
                         else if (purchase.Status == PurchaseStatuses.Cancelled)
@@ -332,7 +382,6 @@
                     else
                     {
                         AddRow();
-
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
@@ -391,9 +440,9 @@
                 }
                 else if (IsDraft)
                 {
-                    purchase.Status = PurchaseStatuses.Pending;
+                    purchase.Status = PurchaseStatuses.ToReceiveBill;
                 }
-                else if (IsApproved)
+                else if (ToReceiveBill || ToReceive || ToBill || IsCompleted)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
@@ -431,7 +480,7 @@
                     return "Order Saved Successfully";
                 }
 
-                else if (IsApproved)
+                else if (ToReceiveBill)
                 {
                     return "Purchase Order Submitted Successfully";
                 }
@@ -463,7 +512,8 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Purchase Order has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.ToReceiveBill && !ToReceiveBill) { return "Purchase Order has already been submitted changes cannot be done"; }
+
                     if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Purchase Order has already been Cancelled"; }
                 }
                 else
@@ -501,7 +551,6 @@
 
     public void SavePO()
     {
-
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
@@ -517,7 +566,7 @@
 
     private string GetSubmitButtonText()
     {
-        if (IsApproved)
+        if (ToReceiveBill)
         {
             return "Cancel";
         }
@@ -536,7 +585,7 @@
         if (IsDraft)
         {
             IsDraft = false;
-            IsApproved = true;
+            ToReceiveBill = true;
             IsSaving = false;
         }
         else if (IsSaving)
@@ -544,11 +593,29 @@
             IsDraft = true;
             IsSaving = false;
         }
-        else if (IsApproved)
+        else if (ToReceiveBill)
         {
             IsCancelled = true;
             IsSaving = false;
-            IsApproved = false;
+            ToReceiveBill = false;
+        }
+        else if (ToReceive)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            ToReceive = false;
+        }
+        else if (ToBill)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            ToBill = false;
+        }
+        else if(IsCompleted)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            IsCompleted = false;
         }
     }
 
@@ -633,7 +700,6 @@
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].Item = options.Value;
         }
@@ -656,7 +722,6 @@
         bool result = DropDownUOM.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             Items[rowIndex].UOM = options.Value;
         }
     }

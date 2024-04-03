@@ -346,14 +346,6 @@
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
-                else if (IsOrdered)
-                {
-                    purchase.Status = PurchaseStatuses.Ordered;
-                }
-                else if (IsReceived)
-                {
-                    purchase.Status = PurchaseStatuses.Received;
-                }
 
                 purchase.PRNumber = crud.CRD(purchase, "CreatePurchaseRequest");
 
@@ -420,6 +412,7 @@
                     if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "Purchase Request has already been submitted changes cannot be done";
 
                     if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Purchase Request has already been Cancelled";
+
                 }
                 else
                 {
