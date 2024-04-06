@@ -391,6 +391,7 @@
                     }
                     else if (!string.IsNullOrWhiteSpace(QuotationID))
                     {
+                        purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
                         Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                         ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
@@ -445,7 +446,7 @@
                 if (Items.Count > 0)
                 {
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append("...");
+                    titleBuilder.Append(".");
                 }
 
                 purchase.PurchaseOrderName = titleBuilder.ToString();
@@ -460,11 +461,6 @@
                 {
                     purchase.Status = PurchaseStatuses.ToReceiveBill;
                 }
-                else if (ToReceiveBill || ToReceive || ToBill || IsCompleted)
-                {
-                    purchase.Status = PurchaseStatuses.Cancelled;
-                }
-
                 purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
 
                 foreach (var PO in Items)
@@ -542,7 +538,8 @@
 
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
 
-            if (string.IsNullOrWhiteSpace(vendor.VendorName)) return "Please Enter Vendor";
+            if (string.IsNullOrWhiteSpace(purchase.VendorID)) return $"Please select Vendor";
+            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please select Vendor"; }
 
             if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) return "Please Enter Valid Vendor";
 
@@ -629,7 +626,7 @@
             IsSaving = false;
             ToBill = false;
         }
-        else if(IsCompleted)
+        else if (IsCompleted)
         {
             IsCancelled = true;
             IsSaving = false;
@@ -746,12 +743,40 @@
 
     private async Task OpenDialog()
     {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+
+            if (GetStatus == PurchaseStatuses.Cancelled)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Purchase Order has already been Cancelled", Severity.Error);
+                return;
+            }
+
+        }
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
-        
+
         if (result.Data is bool && (bool)result.Data)
         {
-            SavePO();
+            Cancel();
+        }
+    }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = purchase.PurchaseOrderID;
+            cancelall.type = "Purchase Order";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+
         }
     }
     public void CreateGR()

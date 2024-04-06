@@ -106,9 +106,9 @@
                 <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
             </div>
             @* <div class="col-md-6">
-                <label class="form-label">Valid Till</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
-            </div> *@
+        <label class="form-label">Valid Till</label>
+        <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@IsApproved">
+        </div> *@
         </form>
     </div>
 
@@ -302,15 +302,18 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
+                    var RFQNumber = await localStorage.GetItemAsync<string>("RFQNumber");
+                    var VendorID = await localStorage.GetItemAsync<string>("VendorID");
+
                     if (VQNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<Quotation>("Select * from Quotation where QuotationID = @QuotationID", new { QuotationID = VQNumber });
                         if (purchase == null)
                             NavigationManager.NavigateTo("/vendorquotation/");
                         Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
-                         ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = VQNumber });
-                       
+
 
                         DisplayPO = false;
                         header = purchase.QuotationName;
@@ -329,6 +332,17 @@
                             IsCancelled = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(RFQNumber))
+                    {
+
+                        purchase.VendorID = VendorID;
+                        Items = db.Query<QU_Items>("select * from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from RFQ_Items inner join Items on Item = ItemCode  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select * from Vendor where VendorID  = @VendorID", new { VendorID = VendorID });
+                        purchase.RefrenceDocument = RFQNumber;
+                        await localStorage.SetItemAsync("RFQNumber", "");
+                        await localStorage.SetItemAsync("VendorID", "");
                     }
                     else
                     {
@@ -393,10 +407,10 @@
                 {
                     purchase.Status = PurchaseStatuses.Submitted;
                 }
-                else if (IsApproved)
-                {
-                    purchase.Status = PurchaseStatuses.Cancelled;
-                }
+                // else if (IsApproved)
+                // {
+                //     purchase.Status = PurchaseStatuses.Cancelled;
+                // }
                 else if (IsExpired)
                 {
                     purchase.Status = PurchaseStatuses.Expired;
@@ -477,7 +491,8 @@
             }
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
 
-            if (string.IsNullOrWhiteSpace(vendor.VendorName)) return "Please Enter Vendor";
+            if (string.IsNullOrWhiteSpace(purchase.VendorID)) return $"Please select Vendor";
+            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please select Vendor"; }
 
             if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) return "Please Enter Valid Vendor";
 
@@ -663,12 +678,38 @@
 
     private async Task OpenDialog()
     {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Quotation where QuotationID = @QuotationID", new { QuotationID = purchase.QuotationID });
+            if (GetStatus == PurchaseStatuses.Cancelled) 
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Quotation has already been Cancelled", Severity.Error);
+                return;
+            }
+
+        }
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Vendor Quotation", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
-            SavePO();
+            Cancel();
+        }
+    }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = purchase.QuotationID;
+            cancelall.type = "Quotation";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+
         }
     }
     public void CreatePO()
