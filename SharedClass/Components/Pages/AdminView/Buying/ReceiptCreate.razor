@@ -269,6 +269,7 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
+                    var PurchaseOrderID = await localStorage.GetItemAsync<string>("PurchaseOrderID");
                     if (ReceiptNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<GoodReceipt>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
@@ -295,6 +296,14 @@
                             IsCancelled = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(PurchaseOrderID))
+                    {
+                        Items = db.Query<GR_Items>("select Quantity as AcceptedQuantity ,* from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                        purchase.RefrenceDocument = PurchaseOrderID;
+                        await localStorage.SetItemAsync("PurchaseOrderID", "");
                     }
                     else
                     {
@@ -615,4 +624,5 @@
             SavePO();
         }
     }
+  
 }

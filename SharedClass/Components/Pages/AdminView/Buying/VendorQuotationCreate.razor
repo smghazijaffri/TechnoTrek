@@ -64,7 +64,7 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><a href="/purchaseorder/new-purchase-order" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
+                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Purchase Order</li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -307,11 +307,10 @@
                     if (VQNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<Quotation>("Select * from Quotation where QuotationID = @QuotationID", new { QuotationID = VQNumber });
-                        
-                        Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
-                        if (purchase == null || Items.Count == 0)
+                        if (purchase == null)
                             NavigationManager.NavigateTo("/vendorquotation/");
-                        ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
+                        Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
+                         ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = VQNumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = VQNumber });
                        
 
@@ -673,5 +672,28 @@
         {
             SavePO();
         }
+    }
+    public void CreatePO()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Quotation where QuotationID = @QuotationID", new { QuotationID = purchase.QuotationID });
+
+            if (GetStatus != PurchaseStatuses.Submitted)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Order Quotation has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Quotation ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("QuotationID", purchase.QuotationID);
+            NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
+        }
+
     }
 }

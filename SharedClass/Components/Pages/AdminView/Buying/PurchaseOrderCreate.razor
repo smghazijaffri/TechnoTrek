@@ -20,6 +20,7 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
+@inject PurchaseRequisition PR;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -72,7 +73,7 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Goods Receipt</a></li>
+                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
                         <hr class="m-1 border-primary" />
                         <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
@@ -336,16 +337,18 @@
             {
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
+
+                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
+                    var QuotationID = await localStorage.GetItemAsync<string>("QuotationID");
                     purchase.DocumentDate = DateTime.Now;
                     if (PONumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                        if (purchase == null)
+                            NavigationManager.NavigateTo("/purchaseorder/");
                         Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
                         ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        if (purchase == null || Items.Count == 0)
-                            NavigationManager.NavigateTo("/purchaseorder/");
-
                         DisplayPO = false;
                         header = purchase.PurchaseOrderName;
                         if (purchase.Status == PurchaseStatuses.ToReceiveBill)
@@ -378,6 +381,21 @@
                             IsCancelled = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(PRNumber))
+                    {
+                        Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                        purchase.RefrenceDocument = PRNumber;
+                        await localStorage.SetItemAsync("PRNumber", "");
+                    }
+                    else if (!string.IsNullOrWhiteSpace(QuotationID))
+                    {
+                        Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                        purchase.RefrenceDocument = QuotationID;
+                        await localStorage.SetItemAsync("QuotationID", "");
                     }
                     else
                     {
@@ -730,10 +748,33 @@
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
-
+        
         if (result.Data is bool && (bool)result.Data)
         {
             SavePO();
         }
+    }
+    public void CreateGR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+
+            if (GetStatus != PurchaseStatuses.ToReceiveBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Good Receipt Purchase Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Purchase Order ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("PurchaseOrderID", purchase.PurchaseOrderID);
+            NavigationManager.NavigateTo("/goodsreceipt/new-goods-receipt");
+        }
+
     }
 }

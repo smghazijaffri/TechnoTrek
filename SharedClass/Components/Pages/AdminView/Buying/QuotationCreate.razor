@@ -301,6 +301,7 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     rfq.DocumentDate = DateTime.Now;
+                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
                     if (RFQNumber != null)
                     {
                         rfq = db.QueryFirstOrDefault<RequestForQuotation>("Select * from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber });
@@ -328,6 +329,13 @@
                             IsCancelled = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(PRNumber))
+                    {
+                        Items = db.Query<RFQ_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                        rfq.RefrenceDocument = PRNumber;
+                        await localStorage.SetItemAsync("PRNumber", "");
                     }
                     else
                     {
