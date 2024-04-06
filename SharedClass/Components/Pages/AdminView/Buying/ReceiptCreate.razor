@@ -80,13 +80,13 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ToBill">
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Vendor</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                           placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
@@ -98,7 +98,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info" hidden="@ToBill"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -162,9 +162,9 @@
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ToBill" />
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToBill">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
                                 </div>
                             </td>
                             <td>
@@ -197,7 +197,7 @@
             </table>
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ToBill">Add Row</button>
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
         </div>
     </div>
 
@@ -205,14 +205,15 @@
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ToBill">
+                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Total Amount</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ToBill">
+                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
             </div>
         </form>
     </div>
+
     <script>
         function toggleDropdown() {
             var dropdownMenu = document.getElementById("dropdownMenu");
@@ -231,8 +232,6 @@
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool DisplayPO = true;
-    private bool IsRejected = false;
-    private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
     public bool ReadonlyHidden { get { return IsCancelled || ToBill; } }

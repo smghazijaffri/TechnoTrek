@@ -1,1 +1,712 @@
-﻿
+﻿@page "/purchaseinvoice/new-purchase-invoice"
+@page "/purchaseinvoice/{PurchaseInvoiceID?}"
+
+@using SharedClass.Components.Pages.Modals
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Select select;
+@inject Vendor vendor;
+@inject Connection con;
+@inject PI_Items invoiceitem;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject PurchaseInvoice purchase;
+@inject IDialogService DialogService;
+@inject SingleDropDown DropDownVendor;
+@inject SingleDropDown singledropdown;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    @* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/buying">Buying</a></li>
+            <li class="breadcrumb-item"><a href="/PurchaseInvoice">Purchase Requisition</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@header</li>
+        </ol>
+    </nav> *@
+
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                @header
+                @if (IsSaving)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsDraft)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+                }
+                @if (Unpaid)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Unpaid</MudChip>
+                }
+                @if (IsCancelled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                }
+                @if (Paid)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Paid</MudChip>
+                }
+                @if (Overdue)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!Unpaid && !IsCancelled && !Paid && !Overdue)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
+                    @GetSubmitButtonText()
+                </button>
+            }
+            @* @if (Unpaid && !IsCancelled)
+        {
+        <div class="dropdown m-1" id="dropdown">
+        <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+        <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+        <li><a href="/purchaseorder/new-purchase-order" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
+        <hr class="m-1 border-primary" />
+        <li><a href="/purchaseinvoice/new-purchase-invoice-quotation" class="btn ms-2 m-1 text-sm-start">Request For Quotation</a></li>
+        </ul>
+        </div>
+        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+        Cancel
+        </button>
+        } *@
+            @if (Unpaid || Paid || Overdue && !IsCancelled)
+            {
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6" hidden="@DisplayPR">
+                <label class="form-label">Purchase Invoice Number</label>
+                <input type="text" class="form-control" @bind="purchase.PurchaseInvoiceID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor</label>
+                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                        <li>
+                            @if (DropDownVendor.ListItems[0].FilteredOptions != null)
+                            {
+                                @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
+                                {
+                                    <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                    <hr class="m-1 border-primary" />
+                                }
+                            }
+                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Creation Date</label>
+                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Due Date</label>
+                <input type="date" @bind="purchase.DueDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label"></label>
+                <MudCheckBox @bind-Value="@IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
+                <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Vendor Invoice Details</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Vendor Invoice No</label>
+                <input type="text" class="form-control" @bind="vendor.Address" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor Invoice Date</label>
+                <input type="date" @bind="purchase.VendorInvoiceDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Address and Contact</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Vendor Address</label>
+                <input type="text" class="form-control" @bind="vendor.Address" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor Contact</label>
+                <input type="text" class="form-control" @bind="vendor.Contact" readonly>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Currency and Price List</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Currency</label>
+                <input type="text" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Price List</label>
+                <div class="dropdown" id="dropdown" @onkeydown="e => singledropdown.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => singledropdown.ToggleDropdown()"
+                           class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterPriceOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(singledropdown.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                        <li>
+                            @if (singledropdown.ListItems[0].FilteredOptions != null)
+                            {
+                                @foreach (var option in singledropdown.ListItems[0].FilteredOptions)
+                                {
+                                    <a class="dropdown-item" @onclick="() => SelectPriceOption(option)">@option.Text</a>
+                                    <hr class="m-1 border-primary" />
+                                }
+                            }
+                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <table class="table size table-hover">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 160px;">
+                            Accepted Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
+                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        item.Amount = (item.Rate * item.AcceptedQuantity);
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Grand Total</label>
+                <input type="text" inputmode="numeric" class="form-control" value="@SumTotal" readonly="@ReadonlyHidden">
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? PurchaseInvoiceID { get; set; }
+    private string header = "Create Purchase Invoice";
+
+    bool isLoading = false;
+    private bool Unpaid = false;
+    private bool IsDraft = false;
+    private bool IsSaving = true;
+    private bool Overdue = false;
+    private bool DisplayPR = true;
+    private bool IsCancelled = false;
+    public bool isAuthorized { get; set; }
+    private bool Paid { get; set; } = false;
+    private bool IsPaid { get; set; } = false;
+    private bool IsReturn { get; set; } = false;
+    public bool ReadonlyHidden { get { return IsCancelled || Unpaid; } }
+
+    public DropDown DropDownUOM = new DropDown();
+    public DropDown DropDownItem = new DropDown();
+
+    List<int> IsDelete = new List<int>();
+    private List<string> UOMList { get; set; }
+    public List<string> ItemName = new List<string>();
+    private List<PI_Items> Items = new List<PI_Items>();
+
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                purchase.DocumentDate = DateTime.Now;
+                if (PurchaseInvoiceID != null)
+                {
+                    // purchase = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseRequest where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
+                    // Items = db.Query<PI_Items>("Select * from PI_Items where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
+                    // ItemName = db.Query<string>("select ItemName from PI_Items inner join Items on Item = ItemCode  where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
+                    // if (purchase == null || Items.Count == 0)
+                    //     NavigationManager.NavigateTo("/PurchaseInvoice/");
+
+                    // DisplayPR = false;
+                    // header = purchase.PRname;
+                    // if (purchase.Status == PurchaseStatuses.Pending)
+                    // {
+                    //     Unpaid = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (purchase.Status == PurchaseStatuses.Draft)
+                    // {
+                    //     IsDraft = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (purchase.Status == PurchaseStatuses.Cancelled)
+                    // {
+                    //     IsCancelled = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (purchase.Status == PurchaseStatuses.Ordered)
+                    // {
+                    //     IsOrdered = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (purchase.Status == PurchaseStatuses.Received)
+                    // {
+                    //     IsReceived = true;
+                    //     IsSaving = false;
+                    // }
+                }
+                else
+                {
+                    AddRow();
+                }
+
+                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+            }
+            StateHasChanged();
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+
+        base.OnInitialized();
+    }
+
+    public int SumAmounts
+    {
+        get { return Items.Sum(item => item.Amount); }
+    }
+
+    public int SumQuantity
+    {
+        get { return Items.Sum(item => item.AcceptedQuantity); }
+    }
+
+    public int SumTotal
+    {
+        get { return Items.Sum(item => item.Amount); }
+    }
+
+    public string createPurchase()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidatePR();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                StringBuilder titleBuilder = new StringBuilder("Purhcase Invoice for ");
+
+                foreach (string data in ItemName)
+                {
+                    titleBuilder.Append(data);
+                    titleBuilder.Append(", ");
+                }
+
+                if (Items.Count > 0)
+                {
+                    titleBuilder.Length -= 2;
+                    titleBuilder.Append("...");
+                }
+
+                purchase.PIName = titleBuilder.ToString();
+                header = titleBuilder.ToString();
+
+                if (IsSaving)
+                {
+                    purchase.Status = PurchaseStatuses.Draft;
+                }
+                else if (IsDraft)
+                {
+                    purchase.Status = PurchaseStatuses.Pending;
+                }
+                else if (Unpaid || Paid || Overdue)
+                {
+                    purchase.Status = PurchaseStatuses.Cancelled;
+                }
+
+                purchase.PurchaseInvoiceID = crud.CRD(purchase, "CreatePurchaseInvoice");
+
+                foreach (var PR in Items)
+                {
+                    if (IsDelete.Any(Del => Del == PR.RowID))
+                    {
+                        IsDelete.Remove(PR.RowID);
+                    }
+                    PR.PurchaseInvoiceID = purchase.PurchaseInvoiceID;
+                    DisplayPR = false;
+                    crud.CRD(PR, "PurhcaseInvoiceItems");
+                }
+
+                foreach (var del in IsDelete)
+                {
+                    invoiceitem.RowID = del;
+                    invoiceitem.PurchaseInvoiceID = purchase.PurchaseInvoiceID;
+                    crud.CRD(invoiceitem, "PurhcaseInvoiceItems", System.Data.CommandType.StoredProcedure, true);
+                }
+                IsDelete.Clear();
+                ToggleApproval();
+                if (PurchaseInvoiceID == null)
+                {
+                    NavigationManager.NavigateTo($"/purchaseinvoice/{purchase.PurchaseInvoiceID}", forceLoad: true);
+                }
+                if (IsDraft)
+                {
+                    return "Invoice Saved Successfully";
+                }
+
+                else if (Unpaid || Paid)
+                {
+                    return "Purchase Invoice Submitted Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Purchase Invoice Cancelled Successfully";
+                }
+
+                else
+                {
+                    IsDraft = false;
+                    return "Error in saving Invoice";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public string ValidatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (purchase.PurchaseInvoiceID != null)
+            {
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = purchase.PurchaseInvoiceID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == PurchaseStatuses.Pending && !Unpaid) return "Purchase Invoice has already been submitted changes cannot be done";
+
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Purchase Invoice has already been Cancelled";
+
+                }
+                else
+                {
+                    return "Purchase Invoice ID does not exist";
+                }
+            }
+
+            if (purchase.DocumentDate == null) return "Please Enter Document Date";
+
+            foreach (var PI in Items)
+            {
+                if (string.IsNullOrWhiteSpace(ItemName[PI.RowID - 1])) return $"Please Enter Item on Row: {PI.RowID}";
+
+                if (PI.Rate <= 0) return $"Row {PI.RowID}: Rate cannot be less than or equal to 0";
+
+                if (PI.AcceptedQuantity <= 0) return $"Row {PI.RowID}: Quantity cannot be less than or equal to 0";
+
+                if (PI.Amount <= 0) return $"Row {PI.RowID}: Amount cannot be less than or equal to 0";
+
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PI.RowID - 1])) return $"Item on Row: {PI.RowID} does not exist";
+            }
+
+            return null;
+        }
+    }
+
+    public void SavePR()
+    {
+        string notification = createPurchase();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    private string GetSubmitButtonText()
+    {
+        if (IsDraft)
+        {
+            return "Submit";
+        }
+        else
+        {
+            return "Save";
+        }
+    }
+
+    private void ToggleApproval()
+    {
+        if (IsDraft)
+        {
+            IsDraft = false;
+            Unpaid = true;
+            IsSaving = false;
+        }
+        else if (IsSaving)
+        {
+            IsDraft = true;
+            IsSaving = false;
+        }
+        else if (Unpaid || Paid || Overdue)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            Unpaid = false;
+            Paid = false;
+            Overdue = false;
+        }
+    }
+
+    private void AddRow()
+    {
+        HandleFormInput();
+        Items.Add(new PI_Items
+            {
+                AcceptedQuantity = 0
+            });
+        ItemName.Add("");
+    }
+
+    private void DeleteRow(int index)
+    {
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                IsDelete.Add(Items[i].RowID);
+                Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
+            }
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (IsDraft)
+        {
+            IsSaving = true;
+            IsDraft = false;
+            GetSubmitButtonText();
+            StateHasChanged();
+        }
+    }
+
+    public void FilterVendorOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownVendor.FilterOptions(e);
+        if (result == true)
+        {
+            if (!DropDownVendor.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
+            {
+                purchase.VendorID = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void SelectVendorOption(option options)
+    {
+        bool result = DropDownVendor.SelectOption(options);
+        if (result == false)
+        {
+            vendor.VendorName = options.Text;
+            purchase.VendorID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+            }
+        }
+    }
+
+    public void FilterPriceOptions(ChangeEventArgs e)
+    {
+        bool result = singledropdown.FilterOptions(e);
+        if (result == true)
+        {
+            if (!singledropdown.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
+            {
+                purchase.VendorID = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void SelectPriceOption(option options)
+    {
+        bool result = singledropdown.SelectOption(options);
+        if (result == false)
+        {
+            vendor.VendorName = options.Text;
+            purchase.VendorID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+            }
+        }
+    }
+
+    public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownItem.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].Item = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void SelectItemOption(option options, int rowIndex)
+    {
+        bool result = DropDownItem.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].Item = options.Value;
+        }
+    }
+
+    private async Task OpenDialog()
+    {
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Invoice", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            SavePR();
+        }
+    }
+}
