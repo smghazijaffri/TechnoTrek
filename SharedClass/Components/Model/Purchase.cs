@@ -18,6 +18,7 @@
         public string PRNumber { get; set; }
         public DateTime? RequiredBy { get; set; }
     }
+
     public class PurchaseOrders : BaseRecord
     {
         public string PurchaseOrderID { get; set; }
@@ -42,6 +43,7 @@
         public int Amount { get; set; }
         public DateTime? RequiredBy { get; set; }
     }
+
     public class Vendor : BaseRecord
     {
         public string VendorID { get; set; }
@@ -52,6 +54,7 @@
         public string Contact { get; set; }
         public string Email { get; set; }
     }
+
     public class RequestForQuotation : BaseRecord
     {
         public string RFQNumber { get; set; }
@@ -60,6 +63,7 @@
         public DateTime? DocumentDate { get; set; }
         public string RefrenceDocument { get; set; }
     }
+
     public class RFQVendor : BaseRecord
     {
         public bool Selected { get; set; }
@@ -68,6 +72,7 @@
         public int RowID { get; set; }
         public bool SendEmail { get; set; }
     }
+
     public class RFQ_Items : BaseRecord
     {
         public bool Selected { get; set; }
@@ -102,7 +107,7 @@
         public int Amount { get; set; }
     }
 
-    public class Quotation : BaseRecord 
+    public class Quotation : BaseRecord
     {
         public string QuotationID { get; set; }
         public string QuotationName { get; set; }
@@ -128,6 +133,30 @@
 
     public class PurchaseInvoice : BaseRecord
     {
+        public string PurchaseInvoiceID { get; set; }
+        public string PIName { get; set; }
+        public string Status { get; set; }
+        public string VendorID { get; set; }
+        public string VendorInvoiceNo { get; set; }
+        public string RefrenceDocument { get; set; }
+        public int TotalAmount { get; set; }
+        public int GrandTotal { get; set; }
+        public int TotalQuantity { get; set; }
+        public DateTime? DocumentDate { get; set; }
+        public DateTime? DueDate { get; set; } = DateTime.Today;
+        public DateTime? VendorInvoiceDate { get; set; } = DateTime.Today;
+        public bool IsPaid { get; set; }
+        public bool IsReturn { get; set; }
+    }
 
+    public class PI_Items : BaseRecord
+    {
+        public bool Selected { get; set; }
+        public string PurchaseInvoiceID { get; set; }
+        public string Item { get; set; }
+        public int RowID { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
     }
 }

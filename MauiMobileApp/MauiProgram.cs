@@ -30,25 +30,28 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<Vendor>();
+            builder.Services.AddScoped<GR_Items>();
+            builder.Services.AddScoped<PI_Items>();
             builder.Services.AddScoped<PR_Items>();
             builder.Services.AddScoped<PO_Items>();
             builder.Services.AddScoped<DropDown>();
+            builder.Services.AddScoped<QU_Items>();
             builder.Services.AddScoped<RFQVendor>();
             builder.Services.AddScoped<RFQ_Items>();
+            builder.Services.AddScoped<Quotation>();
             builder.Services.AddScoped<Connection>();
             builder.Services.AddScoped<BaseRecord>();
+            builder.Services.AddScoped<GoodReceipt>();
+            builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddScoped<BindDropdown>();
-            builder.Services.AddScoped<GR_Items>();
             builder.Services.AddScoped<PurchaseOrders>();
             builder.Services.AddScoped<SingleDropDown>();
-            builder.Services.AddScoped<GoodReceipt>();
+            builder.Services.AddScoped<PurchaseInvoice>();
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseRequisition>();
-            builder.Services.AddScoped<GoodReceipt>();
-            builder.Services.AddScoped<Quotation>();
-            builder.Services.AddScoped<QU_Items>();
+
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;
