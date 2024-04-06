@@ -59,8 +59,6 @@
         public string Status { get; set; }
         public DateTime? DocumentDate { get; set; }
         public string RefrenceDocument { get; set; }
-
-
     }
     public class RFQVendor : BaseRecord
     {
@@ -103,6 +101,7 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
+
     public class Quotation : BaseRecord 
     {
         public string QuotationID { get; set; }
@@ -114,6 +113,7 @@
         public int TotalQuantity { get; set; }
         public DateTime? DocumentDate { get; set; }
     }
+
     public class QU_Items : BaseRecord
     {
         public bool Selected { get; set; }
@@ -124,5 +124,10 @@
         public string UOM { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
+    }
+
+    public class PurchaseInvoice : BaseRecord
+    {
+
     }
 }
