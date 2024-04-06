@@ -282,13 +282,11 @@
 
     public int SumAmounts
     {
-        // Using LINQ to sum the Amount property of each PO_Items object in the list
         get { return Items.Sum(item => item.Amount); }
     }
 
     public int SumQuantity
     {
-        // Using LINQ to sum the Amount property of each PO_Items object in the list
         get { return Items.Sum(item => item.Quantity); }
     }
 

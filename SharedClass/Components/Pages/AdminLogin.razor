@@ -6,10 +6,8 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject ExampleJsInterop Example;
-@inject NavigationManager NavigationManager;
-@inject ISessionStorageService sessionStorage
-@inject Blazored.SessionStorage.ISessionStorageService session
 @inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
 
 <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:20px;max-inline-size: fit-content;">
     <div class="modal-header text-center" style="align-self: center;">
@@ -45,10 +43,8 @@
         IsLoginSuccessful = await login.Access(Username, Password, JSRuntime);
         if (IsLoginSuccessful)
         {
-            
             await localStorage.SetItemAsync("Authorized", true);
             await localStorage.SetItemAsync("Username", Username);
-            await session.SetItemAsync("Username", Username);
             
             await JSRuntime.InvokeAsync<string>("CreateCookie");
             NavigationManager.NavigateTo("/dashboard");

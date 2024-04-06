@@ -60,7 +60,7 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><a href="/vendorquotation/new-vendor-quotation" class="btn ms-2 m-1 text-sm-start">Vendor Quotation</a></li>
+                        <li @onclick="CreateQuotation"><a class="btn ms-2 m-1 text-sm-start">Vendor Quotation</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -252,6 +252,8 @@
         </div>
     </div>
 
+    <VendorSelection @bind-IsVisible="IsVisible" />
+
     <script>
         function toggleDropdown() {
             var dropdownMenu = document.getElementById("dropdownMenu");
@@ -273,6 +275,7 @@
     private bool IsRejected = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
+    private bool IsVisible = false;
     public bool isAuthorized { get; set; }
     public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
 
@@ -715,5 +718,10 @@
         {
             SavePO();
         }
+    }
+
+    private void CreateQuotation()
+    {
+        IsVisible = true;
     }
 }
