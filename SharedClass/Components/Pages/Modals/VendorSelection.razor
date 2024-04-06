@@ -1,0 +1,85 @@
+﻿@using SharedClass.Components.Model
+@using Microsoft.Data.SqlClient
+@using Dapper
+
+@inject Vendor vendor;
+@inject Connection con;
+@inject NavigationManager navigationManager;
+
+<div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); margin-top:60px;">
+    <div class="modal-dialog border-0">
+        <div class="modal-content bg-white shadow-lg border-0" style="border-radius: 10px;">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5">Create Vendor Quotation</h2>
+                <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close" style="font-size: 15px"></button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
+                        <input type="text" id="Item" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                               placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                        <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                            aria-labelledby="dropdownMenuButton">
+                            <li>
+                                @if (DropDownVendor.ListItems[0].FilteredOptions != null)
+                                {
+                                    @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
+                                    {
+                                        <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                        <hr class="m-1 border-primary" />
+                                    }
+                                }
+                                <button class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" @onclick="Create" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    private void CloseModal()
+    {
+        IsVisible = false;
+        IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    public SingleDropDown DropDownVendor = new SingleDropDown();
+
+    public void FilterVendorOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownVendor.FilterOptions(e);
+        StateHasChanged();
+    }
+
+    private void SelectVendorOption(option options)
+    {
+        bool result = DropDownVendor.SelectOption(options);
+        if (result == false)
+        {
+            vendor.VendorName = options.Text;
+            // purchase.VendorID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+            }
+        }
+    }
+
+    private void Create()
+    {
+        IsVisible = false;
+        navigationManager.NavigateTo("/vendorquotation/new-vendor-quotation");
+    }
+}
