@@ -124,7 +124,7 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Creation Date</label>
+                <label class="form-label">Date</label>
                 <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
             </div>
             <div class="col-md-6">
@@ -168,39 +168,9 @@
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Currency and Price List</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
-                <label class="form-label">Currency</label>
-                <input type="text" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Price List</label>
-                <div class="dropdown" id="dropdown" @onkeydown="e => singledropdown.CloseDropdown(e)">
-                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => singledropdown.ToggleDropdown()"
-                           class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterPriceOptions(e)" />
-                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(singledropdown.ListItems[0].IsDropdownOpen ? "block" : "none");"
-                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                        <li>
-                            @if (singledropdown.ListItems[0].FilteredOptions != null)
-                            {
-                                @foreach (var option in singledropdown.ListItems[0].FilteredOptions)
-                                {
-                                    <a class="dropdown-item" @onclick="() => SelectPriceOption(option)">@option.Text</a>
-                                    <hr class="m-1 border-primary" />
-                                }
-                            }
-                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Items</h5>
         <form class="row g-3" @oninput="HandleFormInput">
+            <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox>
             <table class="table size table-hover">
                 <thead>
                     <tr>
@@ -283,15 +253,6 @@
             </div>
         </form>
     </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
-                <label class="form-label">Grand Total</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumTotal" readonly="@ReadonlyHidden">
-            </div>
-        </form>
-    </div>
 }
 
 @code {
@@ -305,6 +266,7 @@
     private bool IsSaving = true;
     private bool Overdue = false;
     private bool DisplayPR = true;
+    private bool UpdateStock = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
     private bool Paid { get; set; } = false;
@@ -330,6 +292,8 @@
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 purchase.DocumentDate = DateTime.Now;
+                purchase.DueDate = DateTime.Today;
+                purchase.VendorInvoiceDate = DateTime.Now;
                 if (PurchaseInvoiceID != null)
                 {
                     // purchase = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseRequest where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
@@ -518,6 +482,12 @@
             }
 
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
+
+            if (purchase.VendorID == null) return "Please Select a Vendor";
+
+            if (purchase.VendorInvoiceNo == null) return "Please Enter Vendor Invoice No.";
+
+            if (purchase.DueDate < purchase.DocumentDate) return "DueDate cannot be before DocumentDate";
 
             foreach (var PI in Items)
             {
