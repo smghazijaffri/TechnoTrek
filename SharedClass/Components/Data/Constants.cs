@@ -19,6 +19,7 @@
         public const string ToReceive = "To Receive";
         public const string Debit = "Debit Note Issued";
         public const string Transferred = "Transferred";
+        public const string PartiallyPaid = "Partially Paid";
         public const string ToReceiveBill = "To Receive and Bill";
     }
 }
