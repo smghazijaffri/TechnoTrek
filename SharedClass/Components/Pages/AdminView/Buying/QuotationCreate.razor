@@ -252,7 +252,7 @@
         </div>
     </div>
 
-    <VendorSelection @bind-IsVisible="IsVisible" />
+    <VendorSelection @bind-IsVisible="IsVisible" RFQNumber = "@rfq.RFQNumber" />
 
     <script>
         function toggleDropdown() {
@@ -304,6 +304,7 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     rfq.DocumentDate = DateTime.Now;
+                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
                     if (RFQNumber != null)
                     {
                         rfq = db.QueryFirstOrDefault<RequestForQuotation>("Select * from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber });
@@ -331,6 +332,14 @@
                             IsCancelled = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(PRNumber))
+                    {
+                        Items = db.Query<RFQ_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                        rfq.RefrenceDocument = PRNumber;
+                        AddRowVendor();
+                        await localStorage.SetItemAsync("PRNumber", "");
                     }
                     else
                     {
@@ -396,11 +405,6 @@
                 {
                     rfq.Status = PurchaseStatuses.Submitted;
                 }
-                else if (IsApproved)
-                {
-                    rfq.Status = PurchaseStatuses.Cancelled;
-                }
-
                 rfq.RFQNumber = crud.CRD(rfq, "CreateRFQ");
 
                 foreach (var RF in Items)
@@ -482,8 +486,8 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = rfq.RFQNumber});
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "PO has already been submitted changes cannot be done"; }
-                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This PO has already been Cancelled"; }
+                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Request For Quotation has already been submitted changes cannot be done"; }
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Request For Quotation has already been Cancelled"; }
                 }
                 else
                 {
@@ -703,15 +707,41 @@
 
     private async Task OpenDialog()
     {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = rfq.RFQNumber });
+
+            if (GetStatus == PurchaseStatuses.Cancelled)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Request For Quotation has already been Cancelled", Severity.Error);
+                return;
+            }
+            
+        }
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Request for Quotation", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
-            SavePO();
+            Cancel();
         }
     }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = rfq.RFQNumber;
+            cancelall.type = "Request For Quotation";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
 
+        }
+    }
     private void CreateQuotation()
     {
         IsVisible = true;

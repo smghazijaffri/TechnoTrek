@@ -268,6 +268,7 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
+                    var PurchaseOrderID = await localStorage.GetItemAsync<string>("PurchaseOrderID");
                     if (ReceiptNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<GoodReceipt>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
@@ -294,6 +295,15 @@
                             IsCancelled = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(PurchaseOrderID))
+                    {
+                        purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                        Items = db.Query<GR_Items>("select Quantity as AcceptedQuantity ,* from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                        purchase.RefrenceDocument = PurchaseOrderID;
+                        await localStorage.SetItemAsync("PurchaseOrderID", "");
                     }
                     else
                     {
@@ -357,10 +367,6 @@
                 else if (IsDraft)
                 {
                     purchase.Status = PurchaseStatuses.ToBill;
-                }
-                else if (ToBill)
-                {
-                    purchase.Status = PurchaseStatuses.Cancelled;
                 }
 
                 purchase.GoodReceiptID = crud.CRD(purchase, "CreateGoodReceipt");
@@ -441,7 +447,8 @@
             }
 
             if (purchase.DocumentDate == null) { return "Please Enter Document Date"; }
-            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please Enter Vendor"; }
+            if (string.IsNullOrWhiteSpace(purchase.VendorID)) return $"Please select Vendor";
+            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please select Vendor"; }
             if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
             if (Items.Count > 0)
             {
@@ -606,12 +613,38 @@
 
     private async Task OpenDialog()
     {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
+            if (GetStatus == PurchaseStatuses.Cancelled) 
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Good Receipt has already been Cancelled", Severity.Error);
+                return;
+            }
+        }
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Goods Receipt", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
-            SavePO();
+            Cancel();
         }
     }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = purchase.GoodReceiptID;
+            cancelall.type = "Good Receipt";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
 }

@@ -76,9 +76,9 @@
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><a href="/purchaseorder/new-purchase-order" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
+                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO"> Purchase Order</li>
                         <hr class="m-1 border-primary" />
-                        <li><a href="/requestforquotation/new-request-for-quotation" class="btn ms-2 m-1 text-sm-start">Request For Quotation</a></li>
+                        <li @onclick="CreateRFQ" class="btn ms-2 m-1 text-sm-start">Request For Quotation</li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -297,9 +297,10 @@
         else
         {
             isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
             Snackbar.Clear();
             Snackbar.Add("Not Authorized", Severity.Error);
+            NavigationManager.NavigateTo("/adminlogin");
+
         }
 
         base.OnInitialized();
@@ -406,7 +407,7 @@
         {
             if (purchase.PRNumber != null)
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
                 if (GetStatus != null)
                 {
                     if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "Purchase Request has already been submitted changes cannot be done";
@@ -571,12 +572,89 @@
 
     private async Task OpenDialog()
     {
-        var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
-
-        if (result.Data is bool && (bool)result.Data)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            SavePR();
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+            if (GetStatus != null)
+            {
+                if (GetStatus == PurchaseStatuses.Cancelled)
+                {
+                    Snackbar.Clear();
+                    Snackbar.Add("This Purchase Request has already been Cancelled", Severity.Error);
+                    return;
+                }
+            }
+            var options = new DialogOptions { ClassBackground = "dialog" };
+            var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+
+            if (result.Data is bool && (bool)result.Data)
+            {
+                Cancel();
+            }
         }
     }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = purchase.PRNumber;
+            cancelall.type = "Purhcase Request";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+
+        }
+
+
+    }
+    public void CreatePO()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+
+            if (GetStatus != PurchaseStatuses.Pending)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Order Purchase request has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Purchase Request ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("PRNumber", purchase.PRNumber);
+            NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
+        }
+
+    }
+    public void CreateRFQ()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+
+            if (GetStatus != PurchaseStatuses.Pending)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Order Purchase request has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Purchase Request ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("PRNumber", purchase.PRNumber);
+            NavigationManager.NavigateTo("/requestforquotation/new-request-for-quotation");
+        }
+
+    }
+
 }

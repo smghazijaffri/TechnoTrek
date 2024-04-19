@@ -130,7 +130,11 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
-
+    public class CancelAll:BaseRecord
+    { 
+        public string ID { get; set; }
+        public string type { get; set; }
+    }
     public class PurchaseInvoice : BaseRecord
     {
         public string PurchaseInvoiceID { get; set; }

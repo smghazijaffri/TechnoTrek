@@ -1,10 +1,11 @@
 ﻿@using SharedClass.Components.Model
 @using Microsoft.Data.SqlClient
 @using Dapper
-
+@inject RequestForQuotation rfq;
 @inject Vendor vendor;
 @inject Connection con;
 @inject NavigationManager navigationManager;
+@inject ILocalStorageService localStorage;
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); margin-top:60px;">
     <div class="modal-dialog border-0">
@@ -16,7 +17,7 @@
             <div class="modal-body">
                 <div>
                     <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
-                        <input type="text" id="Item" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                        <input type="text" id="Item" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="VendorName"
                                placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
                         <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
                             aria-labelledby="dropdownMenuButton">
@@ -47,7 +48,18 @@
     public bool IsVisible { get; set; }
 
     [Parameter]
+    public string? RFQNumber{ get; set; }
+
+    [Parameter]
     public EventCallback<bool> IsVisibleChanged { get; set; }
+  
+    public string VendorName = "";
+    protected override void OnInitialized()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+            DropDownVendor.Options = db.Query<option>("	Select v.VendorID as Value, VendorName as Text from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+
+    }
 
     private void CloseModal()
     {
@@ -68,18 +80,16 @@
         bool result = DropDownVendor.SelectOption(options);
         if (result == false)
         {
-            vendor.VendorName = options.Text;
-            // purchase.VendorID = options.Value;
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
-            }
+            VendorName = options.Text;
+            localStorage.SetItemAsync("VendorID", options.Value);
+
         }
     }
 
     private void Create()
     {
         IsVisible = false;
+        localStorage.SetItemAsync("RFQNumber", rfq.RFQNumber);
         navigationManager.NavigateTo("/vendorquotation/new-vendor-quotation");
     }
 }
