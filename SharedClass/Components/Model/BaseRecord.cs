@@ -9,7 +9,7 @@ namespace SharedClass.Components.Model
     public class BaseRecord
     {
         public int ForInsert { get; set; }
-        public DateTime CreationDate { get; set; }
+        public DateTime CreationDate { get; set; } = DateTime.Now;
         public string Output { get; set; }
     }
 }

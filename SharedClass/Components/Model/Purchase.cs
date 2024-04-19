@@ -130,11 +130,13 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
-    public class CancelAll:BaseRecord
-    { 
+
+    public class CancelAll : BaseRecord
+    {
         public string ID { get; set; }
         public string type { get; set; }
     }
+    
     public class PurchaseInvoice : BaseRecord
     {
         public string PurchaseInvoiceID { get; set; }
@@ -147,14 +149,15 @@
         public int GrandTotal { get; set; }
         public int TotalQuantity { get; set; }
         public DateTime? DocumentDate { get; set; }
-        public DateTime? DueDate { get; set; } = DateTime.Today;
-        public DateTime? VendorInvoiceDate { get; set; } = DateTime.Today;
+        public DateTime? DueDate { get; set; }
+        public DateTime? VendorInvoiceDate { get; set; }
         public bool IsPaid { get; set; }
         public bool IsReturn { get; set; }
     }
 
     public class PI_Items : BaseRecord
     {
+        public bool UpdateStock { get; set; } 
         public bool Selected { get; set; }
         public string PurchaseInvoiceID { get; set; }
         public string Item { get; set; }
