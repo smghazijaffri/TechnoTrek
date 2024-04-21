@@ -80,12 +80,12 @@
         } *@
             @if (Unpaid || Paid || Overdue && !IsCancelled)
             {
-                <div class="dropdown m-1" id="dropdown">
+                @* <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
                     </ul>
-                </div>
+                </div> *@
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel
                 </button>
@@ -130,8 +130,9 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label"></label>
-                <MudCheckBox @bind-Value="@IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
-                <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
+                <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
+                <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
+
             </div>
         </form>
     </div>
@@ -335,6 +336,8 @@
                     purchase.DocumentDate = DateTime.Now;
                     purchase.DueDate = DateTime.Now;
                     purchase.VendorInvoiceDate = DateTime.Now;
+                    var PurchaseOrderID = await localStorage.GetItemAsync<string>("PurchaseOrderID");
+                    var GoodReceiptID = await localStorage.GetItemAsync<string>("GoodReceiptID");
                     if (PurchaseInvoiceID != null)
                     {
                         purchase = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
@@ -372,6 +375,28 @@
                             Overdue = true;
                             IsSaving = false;
                         }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(PurchaseOrderID))
+                    {
+                        purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                        Items = db.Query<PI_Items>("select Quantity as AcceptedQuantity ,* from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                        purchase.RefrenceDocument = PurchaseOrderID;
+                        purchase.DueDate = DateTime.Now;
+                        purchase.VendorInvoiceDate = DateTime.Now;
+                        await localStorage.SetItemAsync("PurchaseOrderID", "");
+                    }
+                    else if (!string.IsNullOrWhiteSpace(GoodReceiptID))
+                    {
+                        purchase = db.QueryFirstOrDefault<PurchaseInvoice>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID });
+                        Items = db.Query<PI_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
+                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID });
+                        purchase.RefrenceDocument = GoodReceiptID;
+                        purchase.DueDate = DateTime.Now;
+                        purchase.VendorInvoiceDate = DateTime.Now;
+                        await localStorage.SetItemAsync("GoodReceiptID", "");
                     }
                     else
                     {
@@ -456,7 +481,7 @@
                     }
                     else
                     {
-                        if (purchase.DueDate > DateTime.Now)
+                        if (purchase.DueDate < DateTime.Today)
                         {
                             purchase.Status = PurchaseStatuses.Overdue;
                         }
@@ -504,7 +529,7 @@
                     return "Invoice Saved Successfully";
                 }
 
-                else if (Unpaid || Paid)
+                else if (Unpaid || Paid || Overdue)
                 {
                     return "Purchase Invoice Submitted Successfully";
                 }
@@ -601,14 +626,31 @@
         if (IsDraft)
         {
             IsDraft = false;
-            Unpaid = true;
             IsSaving = false;
+            if (purchase.Status == PurchaseStatuses.Paid)
+            {
+                IsPaid = true;
+                Paid = true;
+            }
+            else
+            {
+                if (purchase.DueDate < DateTime.Today)
+                {
+                    Overdue = true;
+                }
+                else
+                {
+                    Unpaid = true;
+                }
+            }
+
         }
         else if (IsSaving)
         {
             IsDraft = true;
             IsSaving = false;
         }
+
         else if (Unpaid || Paid || Overdue)
         {
             IsCancelled = true;
@@ -739,7 +781,11 @@
 
         if (result.Data is bool && (bool)result.Data)
         {
-            SavePR();
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = purchase.PurchaseInvoiceID;
+            cancelall.type = "Purchase Invoice";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
         }
     }
 }
