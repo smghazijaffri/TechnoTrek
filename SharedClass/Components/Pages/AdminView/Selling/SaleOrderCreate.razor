@@ -1,0 +1,684 @@
+﻿@page "/salesorder/new-sales-order"
+@page "/salesorder/{SaleOrderID?}"
+
+@using SharedClass.Components.Pages.Modals
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject Customers customer;
+@inject SaleOrder saleorder;
+@inject IJSRuntime JSRuntime;
+@inject SaleOrderItems SOItem;
+@inject IDialogService DialogService;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                @header
+                @if (IsSaving)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsDraft)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+                }
+                @if (ToBill)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">To Bill</MudChip>
+                }
+                @if (PartiallyPaid)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Partially Paid</MudChip>
+                }
+                @if (IsCompleted)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Completed</MudChip>
+                }
+                @if (IsCancelled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!ReadonlyHidden)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">
+                    @GetSubmitButtonText()
+                </button>
+            }
+            @if (ToBill || PartiallyPaid && !IsCancelled) 
+            {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                        <li hidden="@ToBill"><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Sales Invoice</a></li>
+                        <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
+                        <li hidden="@ReadonlyHidden"><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Request</a></li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+            @if (IsCompleted && !IsCancelled)
+            {
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6" hidden="@DisplaySO">
+                <label class="form-label">Sales Order Number</label>
+                <input type="text" class="form-control" @bind="saleorder.SaleOrderID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" @bind="saleorder.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Customer</label>
+                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.CustomerName"
+                           placeholder="Select a Customer" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                        <li>
+                            @if (DropDownCustomer.ListItems[0].FilteredOptions != null)
+                            {
+                                @foreach (var option in DropDownCustomer.ListItems[0].FilteredOptions)
+                                {
+                                    <a class="dropdown-item" @onclick="() => SelectCustomerOption(option)">@option.Text</a>
+                                    <hr class="m-1 border-primary" />
+                                }
+                            }
+                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Address and Contact</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Customer Address</label>
+                <input type="text" class="form-control" @bind="customer.CustomerAddress" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Customer Contact</label>
+                <input type="text" class="form-control" @bind="customer.CustomerContact" readonly>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3" @oninput="HandleFormInput">
+            <table class="table size table-hover">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
+                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        item.Amount = (item.Rate * item.Quantity);
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToBill">Delete</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" class="form-control" value="@SumQuantity" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" class="form-control" value="@SumAmounts" readonly>
+            </div>
+        </form>
+    </div>
+    <script>
+        function toggleDropdown() {
+            var dropdownMenu = document.getElementById("dropdownMenu");
+            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+        }
+    </script>
+}
+
+@code {
+    [Parameter]
+    public string? SaleOrderID { get; set; }
+    private string header = "New Sales Order";
+
+    bool isLoading = false;
+    private bool ToBill = false;
+    private bool IsDraft = false;
+    private bool IsSaving = true;
+    private bool DisplaySO = true;
+    private bool IsCancelled = false;
+    private bool IsCompleted = false;
+    private bool PartiallyPaid = false;
+    public bool isAuthorized { get; set; }
+    public bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted || PartiallyPaid; } }
+
+    public DropDown DropDownItem = new DropDown();
+    public SingleDropDown DropDownCustomer = new SingleDropDown();
+
+    List<int> IsDelete = new List<int>();
+    public List<string> ItemName = new List<string>();
+    private List<SaleOrderItems> Items = new List<SaleOrderItems>();
+
+    public int SumAmounts
+    {
+        // Using LINQ to sum the Amount property of each PO_Items object in the list
+        get { return Items.Sum(item => item.Amount); }
+    }
+
+    public int SumQuantity
+    {
+        // Using LINQ to sum the Amount property of each PO_Items object in the list
+        get { return Items.Sum(item => item.Quantity); }
+    }
+
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            try
+            {
+                using (SqlConnection db = new SqlConnection(con.connectionString))
+                {
+                    saleorder.DocumentDate = DateTime.Now;
+                    if (SaleOrderID != null)
+                    {
+                        saleorder = db.QueryFirstOrDefault<SaleOrder>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = SaleOrderID });
+                        if (saleorder == null) { NavigationManager.NavigateTo("/purchaseorder/"); }
+                        Items = db.Query<SaleOrderItems>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                        customer = db.QueryFirstOrDefault<Customers>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = SaleOrderID });
+                        DisplaySO = false;
+                        header = saleorder.SaleOrderName;
+                        if (saleorder.Status == PurchaseStatuses.ToBill)
+                        {
+                            ToBill = true;
+                            IsSaving = false;
+                        }
+                        else if (saleorder.Status == PurchaseStatuses.Draft)
+                        {
+                            IsDraft = true;
+                            IsSaving = false;
+                        }
+                        else if (saleorder.Status == PurchaseStatuses.PartiallyPaid)
+                        {
+                            PartiallyPaid = true;
+                            IsSaving = false;
+                        }
+                        else if (saleorder.Status == PurchaseStatuses.Completed)
+                        {
+                            IsCompleted = true;
+                            IsSaving = false;
+                        }
+                        else if (saleorder.Status == PurchaseStatuses.Cancelled)
+                        {
+                            IsCancelled = true;
+                            IsSaving = false;
+                        }
+                    }
+                    // else if (!string.IsNullOrWhiteSpace(SaleOrderID))
+                    // {
+                    //     Items = db.Query<SaleOrderItems>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    //     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    //     await localStorage.SetItemAsync("PRNumber", "");
+                    // }
+                    // else if (!string.IsNullOrWhiteSpace(QuotationID))
+                    // {
+                    //     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                    //     Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    //     ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    //     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                    //     purchase.RefrenceDocument = QuotationID;
+                    //     await localStorage.SetItemAsync("QuotationID", "");
+                    // }
+                    else
+                    {
+                        AddRow();
+                    }
+                    DropDownCustomer.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
+                    DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                }
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+
+        base.OnInitialized();
+    }
+
+    public string createPurchase()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidatePO();
+                if (validate != null)
+                {
+                    return validate;
+                }
+                StringBuilder titleBuilder = new StringBuilder("Sales Order for ");
+
+                foreach (string data in ItemName)
+                {
+                    titleBuilder.Append(data);
+                    titleBuilder.Append(", ");
+                }
+
+                if (Items.Count > 0)
+                {
+                    titleBuilder.Length -= 2;
+                    titleBuilder.Append(".");
+                }
+
+                saleorder.SaleOrderName = titleBuilder.ToString();
+                header = titleBuilder.ToString();
+                saleorder.TotalAmount = SumAmounts;
+                saleorder.TotalQuantity = SumQuantity;
+                if (IsSaving)
+                {
+                    saleorder.Status = PurchaseStatuses.Draft;
+                }
+                else if (IsDraft)
+                {
+                    saleorder.Status = PurchaseStatuses.ToBill;
+                }
+                saleorder.SaleOrderID = crud.CRD(saleorder, "CreatePurchaseOrder");
+
+                foreach (var PO in Items)
+                {
+                    foreach (int del in IsDelete)
+                    {
+                        if (PO.RowID == del)
+                        {
+                            IsDelete.Remove(del);
+                        }
+                    }
+                    PO.SaleOrderID = saleorder.SaleOrderID;
+                    DisplaySO = false;
+                    crud.CRD(PO, "PurchaseOrderItem");
+                }
+
+                foreach (var del in IsDelete)
+                {
+                    SOItem.RowID = del;
+                    SOItem.SaleOrderID = saleorder.SaleOrderID;
+                    crud.CRD(SOItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
+                }
+                IsDelete.Clear();
+                ToggleApproval();
+                if (SaleOrderID == null)
+                {
+                    NavigationManager.NavigateTo($"/purchaseorder/{saleorder.SaleOrderID}", forceLoad: true);
+                }
+                if (IsDraft)
+                {
+                    return "Order Saved Successfully";
+                }
+
+                else if (ToBill)
+                {
+                    return "Purchase Order Submitted Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Purchase Order Cancelled Successfully";
+                }
+
+                else
+                {
+                    IsDraft = false;
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public string ValidatePO()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (saleorder.SaleOrderID != null)
+            {
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = saleorder.SaleOrderID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == PurchaseStatuses.ToBill && !ToBill) { return "Purchase Order has already been submitted changes cannot be done"; }
+
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) { return "This Purchase Order has already been Cancelled"; }
+                }
+                else
+                {
+                    return "Purchase Order ID does not exist";
+                }
+            }
+
+            if (saleorder.DocumentDate == null) return "Please Enter Document Date";
+
+            if (string.IsNullOrWhiteSpace(saleorder.CustomerID)) return $"Please select Customer";
+            if (string.IsNullOrWhiteSpace(customer.CustomerName)) { return "Please select Customer"; }
+
+            if (!DropDownCustomer.Options.Any(option => option.Text == customer.CustomerName)) return "Please Enter Valid Customer";
+
+            foreach (var PO in Items)
+            {
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
+
+                if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+
+                if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+
+                if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
+            }
+
+            return null;
+        }
+    }
+
+    public void SavePO()
+    {
+        string notification = createPurchase();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    private string GetSubmitButtonText()
+    {
+        if (ToBill)
+        {
+            return "Cancel";
+        }
+        else if (IsDraft)
+        {
+            return "Submit";
+        }
+        else
+        {
+            return "Save";
+        }
+    }
+
+    private void ToggleApproval()
+    {
+        if (IsDraft)
+        {
+            IsDraft = false;
+            ToBill = true;
+            IsSaving = false;
+        }
+        else if (IsSaving)
+        {
+            IsDraft = true;
+            IsSaving = false;
+        }
+        else if (ToBill)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            ToBill = false;
+        }
+        else if (IsCompleted)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            IsCompleted = false;
+        }
+    }
+
+    private void AddRow()
+    {
+        HandleFormInput();
+        Items.Add(new SaleOrderItems
+            {
+                Quantity = 1
+            });
+        ItemName.Add("");
+    }
+
+    private void DeleteRow(int index)
+    {
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                IsDelete.Add(Items[i].RowID);
+                Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
+            }
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (IsDraft)
+        {
+            IsSaving = true;
+            IsDraft = false;
+            GetSubmitButtonText();
+            StateHasChanged();
+        }
+    }
+
+    public void FilterCustomerOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownCustomer.FilterOptions(e);
+        // if (result == true)
+        // {
+        //     if (!DropDownVendor.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
+        //     {
+        //         purchase.VendorID = "";
+        //     }
+        // }
+        StateHasChanged();
+    }
+
+    private void SelectCustomerOption(option options)
+    {
+        bool result = DropDownCustomer.SelectOption(options);
+        if (result == false)
+        {
+            customer.CustomerName = options.Text;
+            customer.CustomerID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                customer = db.QueryFirstOrDefault<Customers>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+            }
+        }
+    }
+
+    public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownItem.FilterOptions(e, rowIndex);
+        StateHasChanged();
+    }
+
+    private void SelectItemOption(option options, int rowIndex)
+    {
+        bool result = DropDownItem.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].Item = options.Value;
+        }
+    }
+
+    private async Task OpenDialog()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = saleorder.SaleOrderID });
+
+            if (GetStatus == PurchaseStatuses.Cancelled)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Purchase Order has already been Cancelled", Severity.Error);
+                return;
+            }
+
+        }
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            Cancel();
+        }
+    }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = saleorder.SaleOrderID;
+            cancelall.type = "Sales Order";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+    public void CreateGR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { SaleOrderID = saleorder.SaleOrderID });
+
+            if (GetStatus != PurchaseStatuses.ToBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Sales Invoice, Sales Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Sales Order ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("SaleOrderID", saleorder.SaleOrderID);
+            NavigationManager.NavigateTo("/salesinvoice/new-sales-invoice");
+        }
+
+    }
+}

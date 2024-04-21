@@ -1,5 +1,5 @@
-﻿@page "/purchaseinvoice/new-purchase-invoice"
-@page "/purchaseinvoice/{PurchaseInvoiceID?}"
+﻿@page "/salesinvoice/new-sales-invoice"
+@page "/salesinvoice/{SalesInvoiceID?}"
 
 @using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
@@ -13,15 +13,15 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
-@inject Vendor vendor;
 @inject Connection con;
-@inject PI_Items invoiceitem;
 @inject ISnackbar Snackbar;
+@inject Customers customer;
 @inject IJSRuntime JSRuntime;
-@inject PurchaseInvoice purchase;
+@inject SalesInvoice salesinvoice;
+@inject SaleInvoiceItems invoiceitem;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
+@inject SingleDropDown DropDownCustomer;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
@@ -49,7 +49,11 @@
                 }
                 @if (Unpaid)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Unpaid</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Unpaid</MudChip>
+                }
+                @if (PartiallyPaid)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Surface">Partially Paid</MudChip>
                 }
                 @if (IsCancelled)
                 {
@@ -74,18 +78,20 @@
             }
             @* @if (Unpaid && !IsCancelled)
         {
+        <div class="dropdown m-1" id="dropdown">
+        <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+        <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+        <li><a href="/purchaseorder/new-salesinvoice-order" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
+        <hr class="m-1 border-primary" />
+        <li><a href="/purchaseinvoice/new-salesinvoice-invoice-quotation" class="btn ms-2 m-1 text-sm-start">Request For Quotation</a></li>
+        </ul>
+        </div>
         <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
         Cancel
         </button>
         } *@
             @if (Unpaid || Paid || Overdue && !IsCancelled)
             {
-                <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
-                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
-                    </ul>
-                </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel
                 </button>
@@ -95,57 +101,45 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6" hidden="@DisplayPR">
-                <label class="form-label">Purchase Invoice Number</label>
-                <input type="text" class="form-control" @bind="purchase.PurchaseInvoiceID" readonly>
+            <div class="col-md-6" hidden="@DisplaySI">
+                <label class="form-label">Sales Invoice Number</label>
+                <input type="text" class="form-control" @bind="salesinvoice.SalesInvoiceID" readonly>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Vendor</label>
-                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
-                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
-                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                <label class="form-label">Customer</label>
+                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.CustomerName"
+                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
-                            @if (DropDownVendor.ListItems[0].FilteredOptions != null)
+                            @if (DropDownCustomer.ListItems[0].FilteredOptions != null)
                             {
-                                @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
+                                @foreach (var option in DropDownCustomer.ListItems[0].FilteredOptions)
                                 {
-                                    <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                    <a class="dropdown-item" @onclick="() => SelectCustomerOption(option)">@option.Text</a>
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+                <input type="date" @bind="salesinvoice.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Due Date</label>
-                <input type="date" @bind="purchase.DueDate" class="form-control" readonly="@ReadonlyHidden">
+                <input type="date" @bind="salesinvoice.DueDate" class="form-control" readonly="@ReadonlyHidden">
             </div>
             <div class="col-md-6">
-                <label class="form-label"></label>
-                <MudCheckBox @bind-Value="@IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
+                <MudRadioGroup T="bool">
+                    <MudRadio @bind-Value="@IsPaid" Color="Color.Success" UnCheckedColor="Color.Default">Is Paid</MudRadio>
+                    <MudRadio @bind-Value="@PartiallyPaid" Color="Color.Success" UnCheckedColor="Color.Default">Is Partially Paid</MudRadio>
+                </MudRadioGroup>
                 <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
-            </div>
-        </form>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Vendor Invoice Details</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
-            <div class="col-md-6">
-                <label class="form-label">Vendor Invoice No</label>
-                <input type="text" class="form-control" @bind="purchase.VendorInvoiceNumber">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor Invoice Date</label>
-                <input type="date" class="form-control" @bind="purchase.VendorInvoiceDate" readonly="@ReadonlyHidden">
             </div>
         </form>
     </div>
@@ -154,12 +148,12 @@
         <h5>Address and Contact</h5>
         <form class="row g-3" @oninput="HandleFormInput">
             <div class="col-md-6">
-                <label class="form-label">Vendor Address</label>
-                <input type="text" class="form-control" @bind="vendor.Address" readonly>
+                <label class="form-label">Customer Address</label>
+                <input type="text" class="form-control" @bind="customer.CustomerAddress" readonly>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Vendor Contact</label>
-                <input type="text" class="form-control" @bind="vendor.Contact" readonly>
+                <label class="form-label">Customer Contact</label>
+                <input type="text" class="form-control" @bind="customer.CustomerContact" readonly>
             </div>
         </form>
     </div>
@@ -167,7 +161,7 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Items</h5>
         <form class="row g-3" @oninput="HandleFormInput">
-            @* <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox> *@
+            <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox>
             <table class="table size table-hover">
                 <thead>
                     <tr>
@@ -178,7 +172,7 @@
                             Item
                         </th>
                         <th class="col col-auto" style="width: 160px;">
-                            Accepted Quantity
+                            Quantity
                         </th>
                         <th class="col col-auto text-center" style="width: 150px;">
                             Rate
@@ -195,7 +189,7 @@
                         item.RowID = index + 1;
                         var rowIndex = item.RowID - 1;
                         DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        item.Amount = (item.Rate * item.AcceptedQuantity);
+                        item.Amount = (item.Rate * item.Quantity);
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
@@ -225,8 +219,8 @@
                                 </div>
                             </td>
 
-                            <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
-                            <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
                         </tr>
                     }
@@ -250,154 +244,99 @@
             </div>
         </form>
     </div>
-    <script>
-        function toggleDropdown() {
-            var dropdownMenu = document.getElementById("dropdownMenu");
-            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
-        }
-        $('#quantity').on('input', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-        $('#quantity').on('paste', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        }); $('#rate').on('input', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-        $('#rate').on('paste', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-    </script>
 }
 
 @code {
     [Parameter]
-    public string? PurchaseInvoiceID { get; set; }
-    private string header = "Create Purchase Invoice";
+    public string? SalesInvoiceID { get; set; }
+    private string header = "Create Sales Invoice";
 
     bool isLoading = false;
     private bool Unpaid = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool Overdue = false;
-    private bool DisplayPR = true;
+    private bool DisplaySI = true;
     private bool UpdateStock = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
     private bool Paid { get; set; } = false;
     private bool IsPaid { get; set; } = false;
     private bool IsReturn { get; set; } = false;
-    public bool ReadonlyHidden { get { return IsCancelled || Unpaid; } }
+    private bool PartiallyPaid { get; set; } = false;
+    public bool ReadonlyHidden { get { return IsCancelled || Unpaid || PartiallyPaid || Paid; } }
 
-    public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
-    public SingleDropDown DropDownVendor = new SingleDropDown();
 
     List<int> IsDelete = new List<int>();
-    private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
-    private List<PI_Items> Items = new List<PI_Items>();
+    private List<SaleInvoiceItems> Items = new List<SaleInvoiceItems>();
 
     protected override async void OnInitialized()
     {
-        try
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
         {
-            var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
-            isAuthorized = cookieContent;
-            if (isAuthorized)
+            isLoading = true;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                isLoading = true;
-                using (SqlConnection db = new SqlConnection(con.connectionString))
+                salesinvoice.DocumentDate = DateTime.Now;
+                salesinvoice.DueDate = DateTime.Today;
+                if (SalesInvoiceID != null)
                 {
-                    purchase.DocumentDate = DateTime.Now;
-                    purchase.DueDate = DateTime.Now;
-                    purchase.VendorInvoiceDate = DateTime.Now;
-                    if (PurchaseInvoiceID != null)
-                    {
-                        purchase = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
-                        Items = db.Query<PI_Items>("Select * from PI_Items where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
-                        ItemName = db.Query<string>("select ItemName from PI_Items inner join Items on Item = ItemCode  where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
-                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseInvoice pi on pi.VendorID = v.VendorID where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
+                    // salesinvoice = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseRequest where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
+                    // Items = db.Query<PI_Items>("Select * from PI_Items where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                    // ItemName = db.Query<string>("select ItemName from PI_Items inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                    // if (salesinvoice == null || Items.Count == 0)
+                    //     NavigationManager.NavigateTo("/PurchaseInvoice/");
 
-                        if (purchase == null || Items.Count == 0)
-                            NavigationManager.NavigateTo("/PurchaseInvoice/");
-
-                        DisplayPR = false;
-                        header = purchase.PurchaseInvoiceName;
-                        if (purchase.Status == PurchaseStatuses.Unpaid)
-                        {
-                            Unpaid = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Draft)
-                        {
-                            IsDraft = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Cancelled)
-                        {
-                            IsCancelled = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Paid)
-                        {
-                            IsPaid = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Overdue)
-                        {
-                            Overdue = true;
-                            IsSaving = false;
-                        }
-                    }
-                    else
-                    {
-                        AddRow();
-                    }
-                    DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
-                    DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                    // DisplaySI = false;
+                    // header = salesinvoice.PRname;
+                    // if (salesinvoice.Status == PurchaseStatuses.Pending)
+                    // {
+                    //     Unpaid = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (salesinvoice.Status == PurchaseStatuses.Draft)
+                    // {
+                    //     IsDraft = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (salesinvoice.Status == PurchaseStatuses.Cancelled)
+                    // {
+                    //     IsCancelled = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (salesinvoice.Status == PurchaseStatuses.Ordered)
+                    // {
+                    //     IsOrdered = true;
+                    //     IsSaving = false;
+                    // }
+                    // else if (salesinvoice.Status == PurchaseStatuses.Received)
+                    // {
+                    //     IsReceived = true;
+                    //     IsSaving = false;
+                    // }
                 }
-                StateHasChanged();
-            }
-            else
-            {
-                isLoading = false;
-                NavigationManager.NavigateTo("/adminlogin");
-                Snackbar.Clear();
-                Snackbar.Add("Not Authorized", Severity.Error);
-            }
+                else
+                {
+                    AddRow();
+                }
 
-            base.OnInitialized();
+                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+            }
+            StateHasChanged();
         }
-        catch (Exception ex)
+        else
         {
-
-            throw;
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
         }
+
+        base.OnInitialized();
     }
 
     public int SumAmounts
@@ -407,7 +346,7 @@
 
     public int SumQuantity
     {
-        get { return Items.Sum(item => item.AcceptedQuantity); }
+        get { return Items.Sum(item => item.Quantity); }
     }
 
     public int SumTotal
@@ -427,7 +366,7 @@
                     return validate;
                 }
 
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Invoice for ");
+                StringBuilder titleBuilder = new StringBuilder("Sales Invoice for ");
 
                 foreach (string data in ItemName)
                 {
@@ -438,43 +377,26 @@
                 if (Items.Count > 0)
                 {
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
+                    titleBuilder.Append("...");
                 }
 
-                purchase.PurchaseInvoiceName = titleBuilder.ToString();
+                salesinvoice.SalesInvoiceName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
 
                 if (IsSaving)
                 {
-                    purchase.Status = PurchaseStatuses.Draft;
+                    salesinvoice.Status = PurchaseStatuses.Draft;
                 }
                 else if (IsDraft)
                 {
-                    if (purchase.IsPaid == true)
-                    {
-                        purchase.Status = PurchaseStatuses.Paid;
-                    }
-                    else
-                    {
-                        if (purchase.DueDate > DateTime.Now)
-                        {
-                            purchase.Status = PurchaseStatuses.Overdue;
-                        }
-                        else
-                        {
-                            purchase.Status = PurchaseStatuses.Unpaid;
-                        }
-                    }
+                    salesinvoice.Status = PurchaseStatuses.Pending;
                 }
                 else if (Unpaid || Paid || Overdue)
                 {
-                    purchase.Status = PurchaseStatuses.Cancelled;
+                    salesinvoice.Status = PurchaseStatuses.Cancelled;
                 }
-                if (string.IsNullOrWhiteSpace(purchase.VendorInvoiceNumber))
-                {
-                    purchase.VendorInvoiceDate = null;
-                }
-                purchase.PurchaseInvoiceID = crud.CRD(purchase, "CreatePurchaseInvoice");
+
+                salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreatePurchaseInvoice");
 
                 foreach (var PR in Items)
                 {
@@ -482,29 +404,29 @@
                     {
                         IsDelete.Remove(PR.RowID);
                     }
-                    PR.PurchaseInvoiceID = purchase.PurchaseInvoiceID;
-                    DisplayPR = false;
-                    crud.CRD(PR, "PIItems");
+                    PR.SalesInvoiceID = salesinvoice.SalesInvoiceID;
+                    DisplaySI = false;
+                    crud.CRD(PR, "PurhcaseInvoiceItems");
                 }
 
                 foreach (var del in IsDelete)
                 {
                     invoiceitem.RowID = del;
-                    invoiceitem.PurchaseInvoiceID = purchase.PurchaseInvoiceID;
-                    crud.CRD(invoiceitem, "PIItems", System.Data.CommandType.StoredProcedure, true);
+                    invoiceitem.SalesInvoiceID = salesinvoice.SalesInvoiceID;
+                    crud.CRD(invoiceitem, "PurhcaseInvoiceItems", System.Data.CommandType.StoredProcedure, true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();
-                if (PurchaseInvoiceID == null)
+                if (SalesInvoiceID == null)
                 {
-                    NavigationManager.NavigateTo($"/purchaseinvoice/{purchase.PurchaseInvoiceID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/purchaseinvoice/{salesinvoice.SalesInvoiceID}", forceLoad: true);
                 }
                 if (IsDraft)
                 {
                     return "Invoice Saved Successfully";
                 }
 
-                else if (Unpaid || Paid)
+                else if (Unpaid || PartiallyPaid || Paid)
                 {
                     return "Purchase Invoice Submitted Successfully";
                 }
@@ -531,9 +453,9 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (purchase.PurchaseInvoiceID != null)
+            if (salesinvoice.SalesInvoiceID != null)
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = purchase.PurchaseInvoiceID });
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
                 if (GetStatus != null)
                 {
                     if (GetStatus == PurchaseStatuses.Pending && !Unpaid) return "Purchase Invoice has already been submitted changes cannot be done";
@@ -547,10 +469,13 @@
                 }
             }
 
-            if (purchase.DocumentDate == null) return "Please Enter Document Date";
+            if (salesinvoice.DocumentDate == null) return "Please Enter Document Date";
 
-            if (purchase.VendorID == null) return "Please Select a Vendor";
-            if (purchase.DueDate < purchase.DocumentDate) return "DueDate cannot be before DocumentDate";
+            if (salesinvoice.CustomerID == null) return "Please Select a Customer";
+
+            // if (salesinvoice.VendorInvoiceNo == null) return "Please Enter Customer Invoice No.";
+
+            if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
 
             foreach (var PI in Items)
             {
@@ -558,7 +483,7 @@
 
                 if (PI.Rate <= 0) return $"Row {PI.RowID}: Rate cannot be less than or equal to 0";
 
-                if (PI.AcceptedQuantity <= 0) return $"Row {PI.RowID}: Quantity cannot be less than or equal to 0";
+                if (PI.Quantity <= 0) return $"Row {PI.RowID}: Quantity cannot be less than or equal to 0";
 
                 if (PI.Amount <= 0) return $"Row {PI.RowID}: Amount cannot be less than or equal to 0";
 
@@ -622,9 +547,9 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new PI_Items
+        Items.Add(new SaleInvoiceItems
             {
-                AcceptedQuantity = 0
+                Quantity = 0
             });
         ItemName.Add("");
     }
@@ -654,56 +579,29 @@
         }
     }
 
-    public void FilterVendorOptions(ChangeEventArgs e)
+    public void FilterCustomerOptions(ChangeEventArgs e)
     {
-        bool result = DropDownVendor.FilterOptions(e);
+        bool result = DropDownCustomer.FilterOptions(e);
         if (result == true)
         {
-            if (!DropDownVendor.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
+            if (!DropDownCustomer.ListItems[0].FilteredOptions.Any(option => option.Text == salesinvoice.SalesInvoiceID))
             {
-                purchase.VendorID = "";
+                salesinvoice.SalesInvoiceID = "";
             }
         }
         StateHasChanged();
     }
 
-    private void SelectVendorOption(option options)
+    private void SelectCustomerOption(option options)
     {
-        bool result = DropDownVendor.SelectOption(options);
+        bool result = DropDownCustomer.SelectOption(options);
         if (result == false)
         {
-            vendor.VendorName = options.Text;
-            purchase.VendorID = options.Value;
+            customer.CustomerName = options.Text;
+            salesinvoice.SalesInvoiceID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
-            }
-        }
-    }
-
-    public void FilterPriceOptions(ChangeEventArgs e)
-    {
-        bool result = singledropdown.FilterOptions(e);
-        if (result == true)
-        {
-            if (!singledropdown.ListItems[0].FilteredOptions.Any(option => option.Text == purchase.VendorID))
-            {
-                purchase.VendorID = "";
-            }
-        }
-        StateHasChanged();
-    }
-
-    private void SelectPriceOption(option options)
-    {
-        bool result = singledropdown.SelectOption(options);
-        if (result == false)
-        {
-            vendor.VendorName = options.Text;
-            purchase.VendorID = options.Value;
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+                customer = db.QueryFirstOrDefault<Customers>("Select * from Customer where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = options.Value });
             }
         }
     }
@@ -735,7 +633,7 @@
     private async Task OpenDialog()
     {
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Invoice", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Sales Invoice", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
