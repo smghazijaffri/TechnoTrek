@@ -131,5 +131,12 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<Quotation>("SELECT * FROM Quotation");
         }
+
+        public async Task<IEnumerable<PurchaseInvoice>> GetPIDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<PurchaseInvoice>("SELECT * FROM PurchaseInvoice");
+        }
     }
 }

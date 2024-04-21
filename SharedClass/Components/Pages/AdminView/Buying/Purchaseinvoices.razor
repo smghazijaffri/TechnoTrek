@@ -9,9 +9,9 @@
 @layout AdminLayout;
 @inject Select select;
 @inject ISnackbar Snackbar;
+@inject PurchaseInvoice invoice;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
-@inject GoodReceipt goodsreceipt;
 
 @if (isLoading)
 {
@@ -20,32 +20,32 @@
             <div class="col-md-12">
                 <div class="d-flex justify-content-end">
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                               Href="/goodsreceipt/new-goods-receipt" Size="Size.Large">Create</MudButton>
+                               Href="/purchaseinvoice/new-purchase-invoice" Size="Size.Large">Create</MudButton>
                 </div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-12">
-                <MudTable @ref="_table" T="GoodReceipt" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                          OnRowClick="@OnRowClick" Filter="new Func<GoodReceipt,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                <MudTable @ref="_table" T="PurchaseInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                     <ToolBarContent>
-                        <MudText Typo="Typo.h6">Good Receipts</MudText>
+                        <MudText Typo="Typo.h6">Purchase Invoices</MudText>
                         <MudSpacer />
                         <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     </ToolBarContent>
 
                     <HeaderContent>
-                        <MudTh>Goods Receipt Number</MudTh>
+                        <MudTh>Purchase Invoice Number</MudTh>
                         <MudTh>Title</MudTh>
                         <MudTh>Status</MudTh>
                         <MudTh>Grand Total</MudTh>
                         <MudTh>Document Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Goods Receipt Number">@context.GoodReceiptID</MudTd>
-                        <MudTd DataLabel="Title">@context.GoodReceiptName</MudTd>
+                        <MudTd DataLabel="Purchase Invoice Number">@context.PurchaseInvoiceID</MudTd>
+                        <MudTd DataLabel="Title">@context.PurchaseInvoiceName</MudTd>
                         <MudTd DataLabel="Status">@context.Status</MudTd>
                         <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
                         <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
@@ -85,30 +85,30 @@
 
     private string searchString1 = "";
     private bool _selectOnRowClick = false;
-    private MudTable<GoodReceipt> _table;
+    private MudTable<PurchaseInvoice> _table;
     private string _selectedItemText = "No row clicked";
-    private IEnumerable<GoodReceipt> Elements = new List<GoodReceipt>();
-    private HashSet<GoodReceipt> selectedItems = new HashSet<GoodReceipt>();
+    private IEnumerable<PurchaseInvoice> Elements = new List<PurchaseInvoice>();
+    private HashSet<PurchaseInvoice> selectedItems = new HashSet<PurchaseInvoice>();
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetGRDataAsync();
+        Elements = await select.GetPIDataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<GoodReceipt> args)
+    void OnRowClick(TableRowClickEventArgs<PurchaseInvoice> args)
     {
-        goodsreceipt.GoodReceiptID = args.Item.GoodReceiptID;
-        NavigationManager.NavigateTo($"/goodsreceipt/{goodsreceipt.GoodReceiptID}");
+        invoice.PurchaseInvoiceID = args.Item.PurchaseInvoiceID;
+        NavigationManager.NavigateTo($"/purchaseinvoice/{invoice.PurchaseInvoiceID}");
     }
 
-    private bool FilterFunc1(GoodReceipt element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(PurchaseInvoice element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(GoodReceipt element, string searchString)
+    private bool FilterFunc(PurchaseInvoice element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.GoodReceiptName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.PurchaseInvoiceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.GoodReceiptID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.PurchaseInvoiceID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
     }
