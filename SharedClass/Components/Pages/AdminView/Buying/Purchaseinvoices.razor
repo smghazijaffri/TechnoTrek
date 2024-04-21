@@ -1,0 +1,115 @@
+﻿@using static MudBlazor.CategoryTypes
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using System.Globalization
+@using System.Net.Http.Json
+@page "/purchaseinvoice"
+
+@layout AdminLayout;
+@inject Select select;
+@inject ISnackbar Snackbar;
+@inject PurchaseInvoice invoice;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               Href="/purchaseinvoice/new-purchase-invoice" Size="Size.Large">Create</MudButton>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <MudTable @ref="_table" T="PurchaseInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Purchase Invoices</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+
+                    <HeaderContent>
+                        <MudTh>Purchase Invoice Number</MudTh>
+                        <MudTh>Title</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Grand Total</MudTh>
+                        <MudTh>Document Date</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Purchase Invoice Number">@context.PurchaseInvoiceID</MudTd>
+                        <MudTd DataLabel="Title">@context.PurchaseInvoiceName</MudTd>
+                        <MudTd DataLabel="Status">@context.Status</MudTd>
+                        <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
+                        <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                </MudTable>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    //authorization
+    bool isLoading = false;
+    public bool isAuthorized { get; set; }
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            StateHasChanged();
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+        base.OnInitialized();
+    }
+    //authorization
+
+    private string searchString1 = "";
+    private bool _selectOnRowClick = false;
+    private MudTable<PurchaseInvoice> _table;
+    private string _selectedItemText = "No row clicked";
+    private IEnumerable<PurchaseInvoice> Elements = new List<PurchaseInvoice>();
+    private HashSet<PurchaseInvoice> selectedItems = new HashSet<PurchaseInvoice>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await select.GetPIDataAsync();
+    }
+
+    void OnRowClick(TableRowClickEventArgs<PurchaseInvoice> args)
+    {
+        invoice.PurchaseInvoiceID = args.Item.PurchaseInvoiceID;
+        NavigationManager.NavigateTo($"/purchaseinvoice/{invoice.PurchaseInvoiceID}");
+    }
+
+    private bool FilterFunc1(PurchaseInvoice element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(PurchaseInvoice element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.PurchaseInvoiceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.PurchaseInvoiceID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
+
+        return false;
+    }
+}
