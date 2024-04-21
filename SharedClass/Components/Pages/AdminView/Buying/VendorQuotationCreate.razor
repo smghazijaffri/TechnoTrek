@@ -198,7 +198,7 @@
                                 </div>
                             </td>
 
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
@@ -222,7 +222,7 @@
                                     </ul>
                                 </div>
                             </td>
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
                         </tr>
                     }
@@ -251,6 +251,41 @@
             var dropdownMenu = document.getElementById("dropdownMenu");
             dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
         }
+        $('#quantity').on('input', function () {
+            debugger;
+            var inputValue = $(this).val();
+            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+            if (nonNumberRegex.test(inputValue)) {
+                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            }
+        });
+        $('#quantity').on('paste', function () {
+            debugger;
+            var inputValue = $(this).val();
+            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+            if (nonNumberRegex.test(inputValue)) {
+                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            }
+        }); $('#rate').on('input', function () {
+            debugger;
+            var inputValue = $(this).val();
+            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+            if (nonNumberRegex.test(inputValue)) {
+                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            }
+        });
+        $('#rate').on('paste', function () {
+            debugger;
+            var inputValue = $(this).val();
+            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+            if (nonNumberRegex.test(inputValue)) {
+                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            }
+        });
     </script>
 }
 

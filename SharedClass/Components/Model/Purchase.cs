@@ -140,24 +140,22 @@
     public class PurchaseInvoice : BaseRecord
     {
         public string PurchaseInvoiceID { get; set; }
-        public string PIName { get; set; }
+        public string PurchaseInvoiceName { get; set; }
         public string Status { get; set; }
         public string VendorID { get; set; }
-        public string VendorInvoiceNo { get; set; }
         public string RefrenceDocument { get; set; }
         public int TotalAmount { get; set; }
-        public int GrandTotal { get; set; }
         public int TotalQuantity { get; set; }
         public DateTime? DocumentDate { get; set; }
         public DateTime? DueDate { get; set; }
-        public DateTime? VendorInvoiceDate { get; set; }
         public bool IsPaid { get; set; }
         public bool IsReturn { get; set; }
+        public string VendorInvoiceNumber { get; set; }
+        public DateTime? VendorInvoiceDate { get; set; }
     }
 
     public class PI_Items : BaseRecord
     {
-        public bool UpdateStock { get; set; } 
         public bool Selected { get; set; }
         public string PurchaseInvoiceID { get; set; }
         public string Item { get; set; }
@@ -166,4 +164,5 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
+    
 }

@@ -378,6 +378,7 @@
                     purchase.DocumentDate = DateTime.Now;
                     if (PONumber != null)
                     {
+
                         purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
                         if (purchase == null)
                             NavigationManager.NavigateTo("/purchaseorder/");
@@ -500,6 +501,7 @@
                 {
                     purchase.Status = PurchaseStatuses.ToReceiveBill;
                 }
+                
                 purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
 
                 foreach (var PO in Items)
