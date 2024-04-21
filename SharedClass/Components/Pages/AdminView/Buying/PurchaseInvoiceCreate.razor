@@ -55,7 +55,7 @@
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
-                @if (Paid)
+                @if (IsPaid)
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Success">Paid</MudChip>
                 }
@@ -66,7 +66,7 @@
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!Unpaid && !IsCancelled && !Paid && !Overdue)
+            @if (!Unpaid && !IsCancelled && !IsPaid && !Overdue)
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
                     @GetSubmitButtonText()
@@ -78,7 +78,7 @@
         Cancel
         </button>
         } *@
-            @if (Unpaid || Paid || Overdue && !IsCancelled)
+            @if (Unpaid || IsPaid || Overdue && !IsCancelled)
             {
                 @* <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
@@ -308,10 +308,9 @@
     private bool UpdateStock = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
-    private bool Paid { get; set; } = false;
     private bool IsPaid { get; set; } = false;
     private bool IsReturn { get; set; } = false;
-    public bool ReadonlyHidden { get { return IsCancelled || Unpaid; } }
+    public bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
@@ -491,7 +490,7 @@
                         }
                     }
                 }
-                else if (Unpaid || Paid || Overdue)
+                else if (Unpaid || IsPaid || Overdue)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
@@ -529,7 +528,7 @@
                     return "Invoice Saved Successfully";
                 }
 
-                else if (Unpaid || Paid || Overdue)
+                else if (Unpaid || IsPaid || Overdue)
                 {
                     return "Purchase Invoice Submitted Successfully";
                 }
@@ -630,7 +629,6 @@
             if (purchase.Status == PurchaseStatuses.Paid)
             {
                 IsPaid = true;
-                Paid = true;
             }
             else
             {
@@ -651,12 +649,12 @@
             IsSaving = false;
         }
 
-        else if (Unpaid || Paid || Overdue)
+        else if (Unpaid || IsPaid || Overdue)
         {
             IsCancelled = true;
             IsSaving = false;
             Unpaid = false;
-            Paid = false;
+            IsPaid = false;
             Overdue = false;
         }
     }
