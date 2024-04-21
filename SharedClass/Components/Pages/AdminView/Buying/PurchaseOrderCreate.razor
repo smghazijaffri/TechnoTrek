@@ -40,19 +40,19 @@
                 }
                 @if (ToReceiveBill)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">To Receive and Bill</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">To Receive and Bill</MudChip>
                 }
                 @if (ToReceive)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">To Receive</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">To Receive</MudChip>
                 }
                 @if (ToBill)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">To Bill</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">To Bill</MudChip>
                 }
                 @if (IsCompleted)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Completed</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Completed</MudChip>
                 }
                 @if (IsCancelled)
                 {
@@ -81,7 +81,7 @@
                     Cancel
                 </button>
             }
-            @if (ToReceive || ToBill && !IsCancelled)
+            @if (ToReceive || ToBill && !IsCancelled && !IsCompleted)
             {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
@@ -95,7 +95,7 @@
                     Cancel
                 </button>
             }
-            @if (IsCompleted && !IsCancelled)
+            @if (!IsCompleted && !IsCancelled)
             {
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel

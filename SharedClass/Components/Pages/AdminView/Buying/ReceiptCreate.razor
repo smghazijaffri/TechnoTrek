@@ -46,16 +46,20 @@
                 {
                     <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
+                @if (IsCompleted)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Completed</MudChip>
+                }
             </h3>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            @if (!ToBill && !IsCancelled)
+            @if (!ToBill && !IsCancelled && !IsCompleted)
             {
                 <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">
                     @GetSubmitButtonText()
                 </button>
             }
-            @if (ToBill && !IsCancelled)
+            @if (ToBill && !IsCancelled && !IsCompleted)
             {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
@@ -269,8 +273,9 @@
     private bool IsSaving = true;
     private bool DisplayPO = true;
     private bool IsCancelled = false;
+    private bool IsCompleted = false;
     public bool isAuthorized { get; set; }
-    public bool ReadonlyHidden { get { return IsCancelled || ToBill; } }
+    public bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted; } }
 
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
@@ -329,6 +334,11 @@
                         else if (purchase.Status == PurchaseStatuses.Cancelled)
                         {
                             IsCancelled = true;
+                            IsSaving = false;
+                        }
+                        else if (purchase.Status == PurchaseStatuses.Completed)
+                        {
+                            IsCompleted = true;
                             IsSaving = false;
                         }
                     }

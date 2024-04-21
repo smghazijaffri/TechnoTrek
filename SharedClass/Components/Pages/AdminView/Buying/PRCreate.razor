@@ -85,7 +85,7 @@
                     Cancel
                 </button>
             }
-            @if (IsReceived || IsOrdered && !IsCancelled)
+            @if (!IsReceived && IsOrdered && !IsCancelled)
             {
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
                     Cancel
@@ -241,12 +241,11 @@
     private bool DisplayPR = true;
     private bool IsOrdered = false;
     private bool IsApproved = false;
-    private bool IsRejected = false;
     private bool IsReceived = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
     public bool isAuthorized { get; set; }
-    public bool ReadonlyHidden { get { return IsCancelled || IsApproved; } }
+    public bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsOrdered || IsReceived; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
