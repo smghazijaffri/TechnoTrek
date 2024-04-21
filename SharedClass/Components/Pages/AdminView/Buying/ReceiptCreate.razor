@@ -62,7 +62,7 @@
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Return</a></li>
                         <hr class="m-1 border-primary" />
-                        <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+                        <li><a  @onclick="CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -680,6 +680,28 @@
         catch (Exception ex)
         {
 
+        }
+    }
+    public void CreatePI()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
+
+            if (GetStatus != PurchaseStatuses.ToBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Invoice, Good Receipt has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Good Receipt ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("GoodReceiptID", purchase.GoodReceiptID);
+            NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }
 

@@ -74,7 +74,7 @@
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
                         <hr class="m-1 border-primary" />
-                        <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+                        <li><a href="#" @onclick = "CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
@@ -500,7 +500,7 @@
                 {
                     purchase.Status = PurchaseStatuses.ToReceiveBill;
                 }
-                
+
                 purchase.PurchaseOrderID = crud.CRD(purchase, "CreatePurchaseOrder");
 
                 foreach (var PO in Items)
@@ -841,5 +841,28 @@
             NavigationManager.NavigateTo("/goodsreceipt/new-goods-receipt");
         }
 
+    }
+    public void CreatePI()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = purchase.PurchaseOrderID });
+
+            if (GetStatus != PurchaseStatuses.ToReceiveBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Good Receipt, Purchase Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Purchase Order ID does not exist", Severity.Error);
+                return;
+            }
+            localStorage.SetItemAsync("PurchaseOrderID", purchase.PurchaseOrderID);
+            NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
+        }
+        
     }
 }
