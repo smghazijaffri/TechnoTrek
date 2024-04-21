@@ -20,7 +20,6 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
-@inject PurchaseRequisition PR;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -829,7 +828,7 @@
             if (GetStatus != PurchaseStatuses.ToReceiveBill)
             {
                 Snackbar.Clear();
-                Snackbar.Add("Cannot create Good Receipt Purchase Order has already been " + GetStatus, Severity.Error);
+                Snackbar.Add("Cannot create Good Receipt, Purchase Order has already been " + GetStatus, Severity.Error);
                 return;
             }
             else if (GetStatus == null)
