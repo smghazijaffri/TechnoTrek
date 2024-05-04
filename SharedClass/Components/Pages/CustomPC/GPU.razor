@@ -11,7 +11,7 @@
                 @foreach (var values in Graphics)
                 {
                     <div class="col mb-4">
-                        <div class="card text-black">
+                        <div class="card text-black" style="border-radius:20px;">
                             <div class="card-body">
                                 <h5 class="card-title">@values.Brand</h5>
                                 <h5 class="card-title">@values.Model</h5>
@@ -30,7 +30,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btnpc btn-primary m-1 rz-ripple" @onclick="() => Select(values)">Select</button>
+                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="() => Select(values)">Select</button>
                                 </div>
                             </div>
                         </div>

@@ -58,27 +58,27 @@
         <div class="col-6 d-flex justify-content-end">
             @if (!ReadonlyHidden)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePO">
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePO">
                     @GetSubmitButtonText()
                 </button>
             }
             @if (ToBill || PartiallyPaid && !IsCancelled) 
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li hidden="@ToBill"><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Sales Invoice</a></li>
                         <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
                         <li hidden="@ReadonlyHidden"><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Request</a></li>
                     </ul>
                 </div>
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
             }
             @if (IsCompleted && !IsCancelled)
             {
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
             }
@@ -86,7 +86,7 @@
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6" hidden="@DisplaySO">
                 <label class="form-label">Sales Order Number</label>
                 <input type="text" class="form-control" @bind="saleorder.SaleOrderID" readonly>
@@ -121,7 +121,7 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Address and Contact</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6">
                 <label class="form-label">Customer Address</label>
                 <input type="text" class="form-control" @bind="customer.CustomerAddress" readonly>
@@ -135,7 +135,7 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <table class="table size table-hover">
                 <thead>
                     <tr>
@@ -169,7 +169,7 @@
                                 <div style="display: flex; align-items: center;">
                                     <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToBill">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToBill">Delete</button>
                                 </div>
                             </td>
                             <td>
@@ -202,12 +202,12 @@
             </table>
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
         </div>
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
                 <input type="text" class="form-control" value="@SumQuantity" readonly>

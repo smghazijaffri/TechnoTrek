@@ -68,25 +68,25 @@
         <div class="col-6 d-flex justify-content-end">
             @if (!Unpaid && !IsCancelled && !IsPaid && !Overdue)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center rz-ripple" @onclick="SavePR">
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePR">
                     @GetSubmitButtonText()
                 </button>
             }
             @* @if (Unpaid && !IsCancelled)
         {
-        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
         Cancel
         </button>
         } *@
             @if (Unpaid || IsPaid || Overdue && !IsCancelled)
             {
                 @* <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center rz-ripple" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
                     </ul>
                 </div> *@
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center rz-ripple" @onclick="OpenDialog">
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
             }
@@ -94,7 +94,7 @@
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6" hidden="@DisplayPR">
                 <label class="form-label">Purchase Invoice Number</label>
                 <input type="text" class="form-control" @bind="purchase.PurchaseInvoiceID" readonly>
@@ -139,7 +139,7 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Vendor Invoice Details</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6">
                 <label class="form-label">Vendor Invoice No</label>
                 <input type="text" class="form-control" @bind="purchase.VendorInvoiceNumber">
@@ -153,7 +153,7 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Address and Contact</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6">
                 <label class="form-label">Vendor Address</label>
                 <input type="text" class="form-control" @bind="vendor.Address" readonly>
@@ -167,7 +167,7 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             @* <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox> *@
             <table class="table size table-hover">
                 <thead>
@@ -202,7 +202,7 @@
                                 <div style="display: flex; align-items: center;">
                                     <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger rz-ripple" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
                                 </div>
                             </td>
                             <td>
@@ -235,12 +235,12 @@
             </table>
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill rz-ripple" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
         </div>
     </div>
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6">
                 <label class="form-label">Total Quantity</label>
                 <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
