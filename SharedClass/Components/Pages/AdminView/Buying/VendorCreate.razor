@@ -1,5 +1,5 @@
-﻿@page "/buying/new-vendor"
-@page "/buying/{VendorID?}"
+﻿@page "/vendors/new-vendor"
+@page "/vendors/{VendorID?}"
 
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
@@ -182,7 +182,7 @@
 
                 if (VendorID == null)
                 {
-                    NavigationManager.NavigateTo($"/buying/{vendor.VendorID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/vendors/{vendor.VendorID}", forceLoad: true);
                 }
                 if (IsSaving)
                 {

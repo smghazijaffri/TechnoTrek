@@ -138,5 +138,11 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<PurchaseInvoice>("SELECT * FROM PurchaseInvoice");
         }
+        public async Task<IEnumerable<Vendor>> GetVendorsDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<Vendor>("SELECT * FROM Vendor");
+        }
     }
 }
