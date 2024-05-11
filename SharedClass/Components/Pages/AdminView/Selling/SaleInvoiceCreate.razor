@@ -15,13 +15,12 @@
 @layout AdminLayout;
 @inject Connection con;
 @inject ISnackbar Snackbar;
-@inject Customers customer;
 @inject IJSRuntime JSRuntime;
 @inject SalesInvoice salesinvoice;
-@inject SaleInvoiceItems invoiceitem;
+@inject Customer customer;
+@inject SI_Item invoiceitem;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
-@inject SingleDropDown DropDownCustomer;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
@@ -108,7 +107,7 @@
             <div class="col-md-6">
                 <label class="form-label">Customer</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
-                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.CustomerName"
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.Name"
                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
@@ -149,11 +148,11 @@
         <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6">
                 <label class="form-label">Customer Address</label>
-                <input type="text" class="form-control" @bind="customer.CustomerAddress" readonly>
+                <input type="text" class="form-control" @bind="customer.Address" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Customer Contact</label>
-                <input type="text" class="form-control" @bind="customer.CustomerContact" readonly>
+                <input type="text" class="form-control" @bind="customer.Contact" readonly>
             </div>
         </form>
     </div>
@@ -270,7 +269,9 @@
 
     List<int> IsDelete = new List<int>();
     public List<string> ItemName = new List<string>();
-    private List<SaleInvoiceItems> Items = new List<SaleInvoiceItems>();
+    private List<SI_Item> Items = new List<SI_Item>();
+    public SingleDropDown DropDownCustomer = new SingleDropDown();
+
 
     protected override async void OnInitialized()
     {
@@ -282,42 +283,43 @@
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 salesinvoice.DocumentDate = DateTime.Now;
-                salesinvoice.DueDate = DateTime.Today;
+                salesinvoice.DueDate = DateTime.Now;
                 if (SalesInvoiceID != null)
                 {
-                    // salesinvoice = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseRequest where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
-                    // Items = db.Query<PI_Items>("Select * from PI_Items where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
-                    // ItemName = db.Query<string>("select ItemName from PI_Items inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
-                    // if (salesinvoice == null || Items.Count == 0)
-                    //     NavigationManager.NavigateTo("/PurchaseInvoice/");
+                    salesinvoice = db.QueryFirstOrDefault<SalesInvoice>("select * from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
+                    Items = db.Query<SI_Item>("Select * from SI_Item where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from SI_Item inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                    customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleInvoice si on si.CustomerID = si.CustomerID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
+                    if (salesinvoice == null || Items.Count == 0)
+                        NavigationManager.NavigateTo("/salesinvoice/");
 
-                    // DisplaySI = false;
-                    // header = salesinvoice.PRname;
-                    // if (salesinvoice.Status == PurchaseStatuses.Pending)
-                    // {
-                    //     Unpaid = true;
-                    //     IsSaving = false;
-                    // }
-                    // else if (salesinvoice.Status == PurchaseStatuses.Draft)
-                    // {
-                    //     IsDraft = true;
-                    //     IsSaving = false;
-                    // }
-                    // else if (salesinvoice.Status == PurchaseStatuses.Cancelled)
-                    // {
-                    //     IsCancelled = true;
-                    //     IsSaving = false;
-                    // }
-                    // else if (salesinvoice.Status == PurchaseStatuses.Ordered)
-                    // {
-                    //     IsOrdered = true;
-                    //     IsSaving = false;
-                    // }
-                    // else if (salesinvoice.Status == PurchaseStatuses.Received)
-                    // {
-                    //     IsReceived = true;
-                    //     IsSaving = false;
-                    // }
+                    DisplaySI = false;
+                    header = salesinvoice.SalesInvoiceName;
+                    if (salesinvoice.Status == SaleStatus.Pending)
+                    {
+                        Unpaid = true;
+                        IsSaving = false;
+                    }
+                    else if (salesinvoice.Status == SaleStatus.Draft)
+                    {
+                        IsDraft = true;
+                        IsSaving = false;
+                    }
+                    else if (salesinvoice.Status == SaleStatus.Cancelled)
+                    {
+                        IsCancelled = true;
+                        IsSaving = false;
+                    }
+                    else if (salesinvoice.Status == SaleStatus.Paid)
+                    {
+                        IsPaid = true;
+                        IsSaving = false;
+                    }
+                    else if (salesinvoice.Status == SaleStatus.Overdue)
+                    {
+                        Overdue = true;
+                        IsSaving = false;
+                    }
                 }
                 else
                 {
@@ -325,6 +327,7 @@
                 }
 
                 DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                DropDownCustomer.Options = db.Query<option>("select CustomerID as Value, Name as Text from Customer").ToList();
             }
             StateHasChanged();
         }
@@ -396,7 +399,7 @@
                     salesinvoice.Status = PurchaseStatuses.Cancelled;
                 }
 
-                salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreatePurchaseInvoice");
+                salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreateSaleInvoice");
 
                 foreach (var PR in Items)
                 {
@@ -406,20 +409,20 @@
                     }
                     PR.SalesInvoiceID = salesinvoice.SalesInvoiceID;
                     DisplaySI = false;
-                    crud.CRD(PR, "PurhcaseInvoiceItems");
+                    crud.CRD(PR, "SIItem");
                 }
 
                 foreach (var del in IsDelete)
                 {
                     invoiceitem.RowID = del;
                     invoiceitem.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                    crud.CRD(invoiceitem, "PurhcaseInvoiceItems", System.Data.CommandType.StoredProcedure, true);
+                    crud.CRD(invoiceitem, "SIItem", System.Data.CommandType.StoredProcedure, true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (SalesInvoiceID == null)
                 {
-                    NavigationManager.NavigateTo($"/purchaseinvoice/{salesinvoice.SalesInvoiceID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/salesinvoice/{salesinvoice.SalesInvoiceID}", forceLoad: true);
                 }
                 if (IsDraft)
                 {
@@ -428,12 +431,12 @@
 
                 else if (Unpaid || PartiallyPaid || Paid)
                 {
-                    return "Purchase Invoice Submitted Successfully";
+                    return "Sale Invoice Submitted Successfully";
                 }
 
                 else if (IsCancelled)
                 {
-                    return "Purchase Invoice Cancelled Successfully";
+                    return "Sale Invoice Cancelled Successfully";
                 }
 
                 else
@@ -455,12 +458,12 @@
         {
             if (salesinvoice.SalesInvoiceID != null)
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Pending && !Unpaid) return "Purchase Invoice has already been submitted changes cannot be done";
+                    if (GetStatus == SaleStatus.Pending && !Unpaid) return "Sale Invoice has already been submitted changes cannot be done";
 
-                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Purchase Invoice has already been Cancelled";
+                    if (GetStatus == SaleStatus.Cancelled && !IsCancelled) return "This Sale Invoice has already been Cancelled";
 
                 }
                 else
@@ -547,7 +550,7 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new SaleInvoiceItems
+        Items.Add(new SI_Item
             {
                 Quantity = 0
             });
@@ -597,11 +600,11 @@
         bool result = DropDownCustomer.SelectOption(options);
         if (result == false)
         {
-            customer.CustomerName = options.Text;
-            salesinvoice.SalesInvoiceID = options.Value;
+            customer.Name = options.Text;
+            salesinvoice.CustomerID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                customer = db.QueryFirstOrDefault<Customers>("Select * from Customer where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = options.Value });
+                customer = db.QueryFirstOrDefault<Customer>("Select * from Customer where CustomerID = @CustomerID", new { CustomerID = options.Value });
             }
         }
     }
@@ -632,12 +635,41 @@
 
     private async Task OpenDialog()
     {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
+
+            if (GetStatus == SaleStatus.Cancelled)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Sale Invoice has already been Cancelled", Severity.Error);
+                return;
+            }
+
+        }
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Sales Invoice", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Sale Invoice", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
-            SavePR();
+            Cancel();
+        }
+    }
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = salesinvoice.SalesInvoiceID;
+            cancelall.type = "Sale Invoice";
+            crud.CRD(cancelall, "CancelAll");
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 }

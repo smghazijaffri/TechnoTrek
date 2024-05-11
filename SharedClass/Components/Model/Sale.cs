@@ -18,7 +18,7 @@ namespace SharedClass.Components.Model
         public DateTime? DeliveryDate { get; set; }
     }
 
-    public class SaleOrderItems : BaseRecord 
+    public class SO_Item : BaseRecord 
     {
         public bool Selected { get; set; }
         public string SaleOrderID { get; set; }
@@ -45,7 +45,7 @@ namespace SharedClass.Components.Model
         public bool IsReturn { get; set; }
     }
 
-    public class SaleInvoiceItems : BaseRecord
+    public class SI_Item : BaseRecord
     {
         public bool Selected { get; set; }
         public string SalesInvoiceID { get; set; }
@@ -54,5 +54,13 @@ namespace SharedClass.Components.Model
         public int Quantity { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
+    }
+    public class Customer: BaseRecord
+    {
+        public string CustomerID { get; set; }
+        public string Name { get; set; }
+        public string Address { get; set; }
+        public string Contact { get; set; }
+
     }
 }

@@ -39,7 +39,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<SaleOrder>();
             builder.Services.AddScoped<RFQVendor>();
             builder.Services.AddScoped<RFQ_Items>();
-            builder.Services.AddScoped<Customers>();
+            builder.Services.AddScoped<Customer>();
             builder.Services.AddScoped<Quotation>();
             builder.Services.AddScoped<Connection>();
             builder.Services.AddScoped<BaseRecord>();
@@ -47,11 +47,11 @@ namespace MauiMobileApp
             builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddScoped<SalesInvoice>();
             builder.Services.AddScoped<BindDropdown>();
-            builder.Services.AddScoped<SaleOrderItems>();
+            builder.Services.AddScoped<SO_Item>();
             builder.Services.AddScoped<PurchaseOrders>();
             builder.Services.AddScoped<SingleDropDown>();
             builder.Services.AddScoped<PurchaseInvoice>();
-            builder.Services.AddScoped<SaleInvoiceItems>();
+            builder.Services.AddScoped<SI_Item>();
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
