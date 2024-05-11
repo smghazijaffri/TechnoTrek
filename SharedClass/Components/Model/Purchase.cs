@@ -53,6 +53,7 @@
         public string Address { get; set; }
         public string Contact { get; set; }
         public string Email { get; set; }
+        public string Status { get; set; }
     }
 
     public class RequestForQuotation : BaseRecord
@@ -164,5 +165,11 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
-    
+
+    public class UnitofMeasure : BaseRecord
+    {
+        public string UOMID { get; set; }
+        public string UOMName { get; set; }
+        public string Status { get; set; }
+    }
 }

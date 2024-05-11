@@ -11,6 +11,8 @@
         public const string Pending = "Pending";
         public const string Expired = "Expired";
         public const string Ordered = "Ordered";
+        public const string Enabled = "Enabled";
+        public const string Disabled = "Disabled";
         public const string Received = "Received";
         public const string Cancelled = "Cancelled";
         public const string Submitted = "Submitted";

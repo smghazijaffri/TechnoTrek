@@ -1,0 +1,269 @@
+﻿@page "/vendors/new-vendor"
+@page "/vendors/{VendorID?}"
+
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Vendor vendor;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                @header
+                @if (IsSaving)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsEnabled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+                }
+                @if (IsDisabled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SaveVendor">
+                Save
+            </button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Name and Type</h5>
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6" hidden>
+                <label class="form-label">Vendor ID</label>
+                <input type="text" class="form-control" @bind="vendor.VendorID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor Name</label>
+                <input type="text" @bind="vendor.VendorName" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vendor Group</label>
+                <input type="text" @bind="vendor.VendorGroup" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <MudSelect T="string" Label="Vendor Type" @bind-Value="vendor.VendorType" AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="@("Company")" />
+                    <MudSelectItem Value="@("Individual")" />
+                </MudSelect>
+            </div>
+            <div class="col-md-6">
+                <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+            </div>
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-control" @bind="vendor.Address">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Contact Number</label>
+                <input type="text" class="form-control" @bind="vendor.Contact">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" @bind="vendor.Email">
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? VendorID { get; set; }
+    private string header = "New Vendor";
+
+    bool isLoading = false;
+    private bool IsSaving = true;
+    private bool Disabled = false;
+    private bool IsEnabled = false;
+    private bool IsDisabled = false;
+    public bool isAuthorized { get; set; }
+    public bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
+
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            try
+            {
+                using (SqlConnection db = new SqlConnection(con.connectionString))
+                {
+                    if (VendorID != null)
+                    {
+                        vendor = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = VendorID });
+                        if (vendor == null)
+                            NavigationManager.NavigateTo("/vendors/");
+                        header = vendor.VendorName;
+                        if (vendor.Status == PurchaseStatuses.Enabled)
+                        {
+                            IsEnabled = true;
+                            IsSaving = false;
+                        }
+                        else if (vendor.Status == PurchaseStatuses.Disabled)
+                        {
+                            Disabled = true;
+                            IsDisabled = true;
+                            IsSaving = false;
+                        }
+                    }
+                }
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+
+        base.OnInitialized();
+    }
+
+    public string createVendor()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidateVendor();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                header = vendor.VendorName;
+
+                if (IsEnabled)
+                {
+                    vendor.Status = PurchaseStatuses.Enabled;
+                    IsSaving = false;
+                }
+                else if (IsDisabled)
+                {
+                    vendor.Status = PurchaseStatuses.Disabled;
+                    IsSaving = false;
+                }
+
+                vendor.VendorID = crud.CRD(vendor, "CreateVendor");
+
+                if (VendorID == null)
+                {
+                    NavigationManager.NavigateTo($"/vendors/{vendor.VendorID}", forceLoad: true);
+                }
+                if (IsSaving)
+                {
+                    return "Vendor Created Successfully";
+                }
+                else if (IsEnabled)
+                {
+                    return "Vendor Enabled Successfully";
+                }
+                else if (IsDisabled)
+                {
+                    return "Vendor Disabled Successfully";
+                }
+                else
+                {
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public void SaveVendor()
+    {
+        string notification = createVendor();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    public string ValidateVendor()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
+            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
+            // if (vendor.VendorID == null)
+            // {
+                // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
+                // if (GetStatus != null)
+                // {
+                //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
+
+                //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
+                // }
+                // else
+                // {
+                // return "Vendor does not exist";
+                // }
+            // }
+
+            if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return $"Please enter Vendor Name"; }
+            if (string.IsNullOrWhiteSpace(vendor.VendorGroup)) { return $"Please enter Vendor Group"; }
+            if (string.IsNullOrWhiteSpace(vendor.VendorType)) { return $"Please enter Vendor Type"; }
+            if (string.IsNullOrWhiteSpace(vendor.Address)) { return $"Please enter Vendor Address"; }
+            if (string.IsNullOrWhiteSpace(vendor.Contact)) { return $"Please enter Vendor Contact"; }
+            if (string.IsNullOrWhiteSpace(vendor.Email)) { return $"Please enter Vendor Email"; }
+
+            return null;
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (IsEnabled || (IsDisabled && Disabled))
+        {
+            IsSaving = true;
+            Disabled = false;
+            IsDisabled = false;
+            IsEnabled = false;
+            StateHasChanged();
+        }
+    }
+}

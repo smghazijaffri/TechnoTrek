@@ -1,0 +1,108 @@
+﻿@using static MudBlazor.CategoryTypes
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using System.Globalization
+@using System.Net.Http.Json
+@page "/uom"
+
+@layout AdminLayout;
+@inject Select select;
+@inject UnitofMeasure uom;
+@inject ISnackbar Snackbar;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               Href="/uom/new-uom" Size="Size.Large">Create</MudButton>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <MudTable @ref="_table" T="UnitofMeasure" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<UnitofMeasure,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Unit of Measures</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+                    </ToolBarContent>
+
+                    <HeaderContent>
+                        <MudTh>UOM Name</MudTh>
+                        <MudTh>Status</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="UOM Name">@context.UOMName</MudTd>
+                        <MudTd DataLabel="Status">@context.Status</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                </MudTable>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    //authorization
+    bool isLoading = false;
+    public bool isAuthorized { get; set; }
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            StateHasChanged();
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+        base.OnInitialized();
+    }
+    //authorization
+
+    private string searchString1 = "";
+    private bool _selectOnRowClick = false;
+    private MudTable<UnitofMeasure> _table;
+    private string _selectedItemText = "No row clicked";
+    private IEnumerable<UnitofMeasure> Elements = new List<UnitofMeasure>();
+    private HashSet<UnitofMeasure> selectedItems = new HashSet<UnitofMeasure>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await select.GetUOMDataAsync();
+    }
+
+    void OnRowClick(TableRowClickEventArgs<UnitofMeasure> args)
+    {
+        uom.UOMID = args.Item.UOMID;
+        NavigationManager.NavigateTo($"/uom/{uom.UOMID}");
+    }
+
+    private bool FilterFunc1(UnitofMeasure element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(UnitofMeasure element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.UOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+
+        return false;
+    }
+}

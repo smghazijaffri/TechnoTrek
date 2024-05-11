@@ -103,7 +103,7 @@
                 <label class="form-label">Vendor</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                           placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
@@ -115,7 +115,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button @onclick="NavigateVendor" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -403,7 +403,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
                 }
                 StateHasChanged();
             }
@@ -641,7 +641,6 @@
                     Unpaid = true;
                 }
             }
-
         }
         else if (IsSaving)
         {
@@ -824,5 +823,10 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    public void NavigateVendor()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
 }

@@ -185,7 +185,7 @@
                                                         <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
                                             </div>
                                         </li>
                                     </ul>
@@ -307,7 +307,7 @@
                 }
 
                 DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
             }
             StateHasChanged();
         }
@@ -566,6 +566,7 @@
             Items[rowIndex].Item = options.Value;
         }
     }
+
     public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownUOM.FilterOptions(e, rowIndex);
@@ -578,6 +579,7 @@
         }
         StateHasChanged();
     }
+
     public void SelectUOMOption(option options, int rowIndex)
     {
         bool result = DropDownUOM.SelectOption(options, rowIndex);
@@ -610,6 +612,7 @@
             }
         }
     }
+
     public void Cancel()
     {
         try
@@ -624,8 +627,6 @@
         {
 
         }
-
-
     }
     public void CreatePO()
     {
@@ -648,7 +649,6 @@
             localStorage.SetItemAsync("PRNumber", purchase.PRNumber);
             NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
         }
-
     }
     public void CreateRFQ()
     {
@@ -671,7 +671,10 @@
             localStorage.SetItemAsync("PRNumber", purchase.PRNumber);
             NavigationManager.NavigateTo("/requestforquotation/new-request-for-quotation");
         }
-
     }
 
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo($"/uom/new-uom", forceLoad: true);
+    }
 }

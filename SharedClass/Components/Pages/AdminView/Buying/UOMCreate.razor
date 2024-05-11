@@ -1,0 +1,236 @@
+﻿@page "/uom/new-uom"
+@page "/uom/{UOMID?}"
+
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject UnitofMeasure uom;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                @header
+                @if (IsSaving)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                }
+                @if (IsEnabled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+                }
+                @if (IsDisabled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SaveVendor">
+                Save
+            </button>
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6" hidden>
+                <label class="form-label">UOM ID</label>
+                <input type="text" class="form-control" @bind="uom.UOMID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">UOM Name</label>
+                <input type="text" @bind="uom.UOMName" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? UOMID { get; set; }
+    private string header = "New UOM";
+
+    bool isLoading = false;
+    private bool IsSaving = true;
+    private bool Disabled = false;
+    private bool IsEnabled = false;
+    private bool IsDisabled = false;
+    public bool isAuthorized { get; set; }
+    public bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
+
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            try
+            {
+                using (SqlConnection db = new SqlConnection(con.connectionString))
+                {
+                    if (UOMID != null)
+                    {
+                        uom = db.QueryFirstOrDefault<UnitofMeasure>("Select * from UOM where UOMID = @UOMID", new { UOMID = UOMID });
+                        if (uom == null)
+                            NavigationManager.NavigateTo("/uom/");
+                        header = uom.UOMName;
+                        if (uom.Status == PurchaseStatuses.Enabled)
+                        {
+                            IsEnabled = true;
+                            IsSaving = false;
+                        }
+                        else if (uom.Status == PurchaseStatuses.Disabled)
+                        {
+                            Disabled = true;
+                            IsDisabled = true;
+                            IsSaving = false;
+                        }
+                    }
+                }
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+
+        base.OnInitialized();
+    }
+
+    public string createVendor()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidateVendor();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                header = uom.UOMName;
+
+                if (IsEnabled)
+                {
+                    uom.Status = PurchaseStatuses.Enabled;
+                    IsSaving = false;
+                }
+                else if (IsDisabled)
+                {
+                    uom.Status = PurchaseStatuses.Disabled;
+                    IsSaving = false;
+                }
+
+                uom.UOMID = crud.CRD(uom, "CreateUOM");
+
+                if (UOMID == null)
+                {
+                    NavigationManager.NavigateTo($"/uom/{uom.UOMID}", forceLoad: true);
+                }
+                if (IsSaving)
+                {
+                    return "UOM Created Successfully";
+                }
+                else if (IsEnabled)
+                {
+                    return "UOM Enabled Successfully";
+                }
+                else if (IsDisabled)
+                {
+                    return "UOM Disabled Successfully";
+                }
+                else
+                {
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public void SaveVendor()
+    {
+        string notification = createVendor();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    public string ValidateVendor()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
+            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
+            // if (vendor.VendorID == null)
+            // {
+            // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
+            // if (GetStatus != null)
+            // {
+            //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
+
+            //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
+            // }
+            // else
+            // {
+            // return "Vendor does not exist";
+            // }
+            // }
+
+            if (string.IsNullOrWhiteSpace(uom.UOMName)) { return $"Please enter UOM Name"; }
+
+            return null;
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (IsEnabled || (IsDisabled && Disabled))
+        {
+            IsSaving = true;
+            Disabled = false;
+            IsDisabled = false;
+            IsEnabled = false;
+            StateHasChanged();
+        }
+    }
+}
