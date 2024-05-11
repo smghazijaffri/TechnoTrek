@@ -124,7 +124,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button @onclick="NavigateVendor" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -238,7 +238,7 @@
                                                         <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
                                             </div>
                                         </li>
                                     </ul>
@@ -433,7 +433,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
                 }
                 StateHasChanged();
             }
@@ -794,6 +794,7 @@
             Cancel();
         }
     }
+
     public void Cancel()
     {
         try
@@ -806,9 +807,11 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Clear();
+            Snackbar.Add(ex.ToString(), Severity.Error);
         }
     }
+
     public void CreateGR()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -832,6 +835,7 @@
         }
 
     }
+
     public void CreatePI()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -853,6 +857,15 @@
             localStorage.SetItemAsync("PurchaseOrderID", purchase.PurchaseOrderID);
             NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
-        
+    }
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
+
+    public void NavigateVendor()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
 }

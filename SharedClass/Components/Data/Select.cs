@@ -144,5 +144,12 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<Vendor>("SELECT * FROM Vendor");
         }
+
+        public async Task<IEnumerable<UnitofMeasure>> GetUOMDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<UnitofMeasure>("SELECT * FROM UOM");
+        }
     }
 }

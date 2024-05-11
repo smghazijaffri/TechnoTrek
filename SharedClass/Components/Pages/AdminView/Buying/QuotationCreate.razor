@@ -121,7 +121,7 @@
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Vendor" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown(rowIndex)" @bind="VendorInfo[rowIndex].VendorName"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e, rowIndex)" />
+                                           placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
@@ -133,7 +133,7 @@
                                                     <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                                            <button @onclick="NavigateVendor" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -233,7 +233,7 @@
                                                         <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
                                             </div>
                                         </li>
                                     </ul>
@@ -366,7 +366,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
 
                 }
                 StateHasChanged();
@@ -541,7 +541,6 @@
                 if (string.IsNullOrWhiteSpace(VendorInfo[VR.RowID - 1].VendorName)) return $"Please Enter Vendor on Row: {VR.RowID}";
 
                 if (!DropDownVendor.Options.Any(option => option.Text == VendorInfo[VR.RowID - 1].VendorName)) return $"Vendor on Row: {VR.RowID} does not exist";
-
             }
 
             return null;
@@ -550,7 +549,6 @@
 
     public void SavePO()
     {
-
         string notification = createPurchase();
         if (notification.Contains("Successfully"))
         {
@@ -611,12 +609,14 @@
             });
         ItemName.Add("");
     }
+
     private void AddRowVendor()
     {
         HandleFormInput();
         RFQVendor.Add(new RFQVendor { });
         VendorInfo.Add(new Vendor { });
     }
+
     private void DeleteRow(int index)
     {
         for (int i = Items.Count - 1; i >= 0; i--)
@@ -630,6 +630,7 @@
             }
         }
     }
+
     private void Deletevendor(int index)
     {
         for (int i = RFQVendor.Count - 1; i >= 0; i--)
@@ -643,6 +644,7 @@
             }
         }
     }
+
     private void HandleFormInput()
     {
         if (IsDraft)
@@ -714,6 +716,7 @@
         }
         StateHasChanged();
     }
+
     public void SelectUOMOption(option options, int rowIndex)
     {
         bool result = DropDownUOM.SelectOption(options, rowIndex);
@@ -745,6 +748,7 @@
             Cancel();
         }
     }
+
     public void Cancel()
     {
         try
@@ -760,8 +764,19 @@
 
         }
     }
+
     private void CreateQuotation()
     {
         IsVisible = true;
+    }
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
+
+    public void NavigateVendor()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
 }
