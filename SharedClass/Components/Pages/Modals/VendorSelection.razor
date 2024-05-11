@@ -1,11 +1,11 @@
 ﻿@using SharedClass.Components.Model
 @using Microsoft.Data.SqlClient
 @using Dapper
-@inject RequestForQuotation rfq;
 @inject Vendor vendor;
 @inject Connection con;
-@inject NavigationManager navigationManager;
+@inject RequestForQuotation rfq;
 @inject ILocalStorageService localStorage;
+@inject NavigationManager navigationManager;
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); margin-top:60px;">
     <div class="modal-dialog border-0">
@@ -30,7 +30,7 @@
                                         <hr class="m-1 border-primary" />
                                     }
                                 }
-                                <button class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                                <button @onclick="NavigateVendor" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                             </li>
                         </ul>
                     </div>
@@ -91,5 +91,10 @@
         IsVisible = false;
         localStorage.SetItemAsync("RFQNumber", RFQNumber);
         navigationManager.NavigateTo("/vendorquotation/new-vendor-quotation");
+    }
+
+    public void NavigateVendor()
+    {
+        navigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
 }

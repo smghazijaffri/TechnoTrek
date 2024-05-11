@@ -165,5 +165,11 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
-    
+
+    public class UnitofMeasure : BaseRecord
+    {
+        public string UOMID { get; set; }
+        public string UOMName { get; set; }
+        public string Status { get; set; }
+    }
 }

@@ -102,7 +102,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button @onclick="NavigateVendor" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -677,6 +677,7 @@
             Cancel();
         }
     }
+
     public void Cancel()
     {
         try
@@ -692,6 +693,7 @@
 
         }
     }
+
     public void CreatePI()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -715,4 +717,8 @@
         }
     }
 
+    public void NavigateVendor()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
+    }
 }

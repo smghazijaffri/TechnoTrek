@@ -96,7 +96,7 @@
                                     <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button href="#" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            <button @onclick="NavigateVendor" class="text-info" hidden="@IsApproved"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
                         </li>
                     </ul>
                 </div>
@@ -216,7 +216,7 @@
                                                         <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
                                             </div>
                                         </li>
                                     </ul>
@@ -385,7 +385,7 @@
                     }
                     DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select unit as Text , unit as Value from UOM").ToList();
+                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
                 }
                 StateHasChanged();
             }
@@ -683,7 +683,6 @@
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].Item = options.Value;
         }
@@ -701,12 +700,12 @@
         }
         StateHasChanged();
     }
+
     public void SelectUOMOption(option options, int rowIndex)
     {
         bool result = DropDownUOM.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             Items[rowIndex].UOM = options.Value;
         }
     }
@@ -722,7 +721,6 @@
                 Snackbar.Add("This Quotation has already been Cancelled", Severity.Error);
                 return;
             }
-
         }
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Vendor Quotation", options).Result;
@@ -732,6 +730,7 @@
             Cancel();
         }
     }
+
     public void Cancel()
     {
         try
@@ -744,9 +743,11 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Clear();
+            Snackbar.Add(ex.ToString(), Severity.Error);
         }
     }
+
     public void CreatePO()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -768,6 +769,15 @@
             localStorage.SetItemAsync("QuotationID", purchase.QuotationID);
             NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
         }
+    }
 
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
+
+    public void NavigateVendor()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
 }

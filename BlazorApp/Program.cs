@@ -36,6 +36,7 @@ builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodReceipt>();
 builder.Services.AddScoped<SalesInvoice>();
 builder.Services.AddScoped<BindDropdown>();
+builder.Services.AddScoped<UnitofMeasure>();
 builder.Services.AddScoped<SingleDropDown>();
 builder.Services.AddScoped<SaleOrderItems>();
 builder.Services.AddScoped<PurchaseOrders>();
