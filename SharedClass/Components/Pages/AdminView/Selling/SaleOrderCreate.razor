@@ -1,5 +1,5 @@
-﻿@page "/salesorder/new-sales-order"
-@page "/salesorder/{SaleOrderID?}"
+﻿@page "/saleorder/new-sales-order"
+@page "/saleorder/{SaleOrderID?}"
 
 @using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
@@ -14,11 +14,11 @@
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Connection con;
-@inject ISnackbar Snackbar;
+@inject SO_Item SOItem;
 @inject Customer customer;
+@inject ISnackbar Snackbar;
 @inject SaleOrder saleorder;
 @inject IJSRuntime JSRuntime;
-@inject SO_Item SOItem;
 @inject IDialogService DialogService;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
@@ -276,7 +276,7 @@
                     if (SaleOrderID != null)
                     {
                         saleorder = db.QueryFirstOrDefault<SaleOrder>("Select * from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
-                        if (saleorder == null) { NavigationManager.NavigateTo("/salesorder/"); }
+                        if (saleorder == null) { NavigationManager.NavigateTo("/saleorder/"); }
                         Items = db.Query<SO_Item>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                         ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                         customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleOrder si on si.CustomerID = si.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
@@ -411,7 +411,7 @@
                 ToggleApproval();
                 if (SaleOrderID == null)
                 {
-                    NavigationManager.NavigateTo($"/salesorder/{saleorder.SaleOrderID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/saleorder/{saleorder.SaleOrderID}", forceLoad: true);
                 }
                 if (IsDraft)
                 {

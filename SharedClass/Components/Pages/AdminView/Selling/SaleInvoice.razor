@@ -1,16 +1,15 @@
-﻿@page "/purchaseorder"
-
-@using static MudBlazor.CategoryTypes
+﻿@using static MudBlazor.CategoryTypes
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
 @using System.Globalization
 @using System.Net.Http.Json
+@page "/saleinvoice"
 
 @layout AdminLayout;
 @inject Select select;
 @inject ISnackbar Snackbar;
-@inject PurchaseOrders purchaseorder;
+@inject SalesInvoice invoice;
 @inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
 
@@ -21,32 +20,32 @@
             <div class="col-md-12">
                 <div class="d-flex justify-content-end">
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                               Href="/purchaseorder/new-purchase-order" Size="Size.Large">Create</MudButton>
+                               Href="/saleinvoice/new-sales-invoice" Size="Size.Large">Create</MudButton>
                 </div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-12">
-                <MudTable @ref="_table" T="PurchaseOrders" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseOrders,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                <MudTable @ref="_table" T="SalesInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                     <ToolBarContent>
-                        <MudText Typo="Typo.h6">Purchase Orders</MudText>
+                        <MudText Typo="Typo.h6">Sales Invoices</MudText>
                         <MudSpacer />
                         <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     </ToolBarContent>
 
                     <HeaderContent>
-                        <MudTh>Order Number</MudTh>
+                        <MudTh>Purchase Invoice ID</MudTh>
                         <MudTh>Title</MudTh>
                         <MudTh>Status</MudTh>
                         <MudTh>Grand Total</MudTh>
                         <MudTh>Document Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Purchase Order Number">@context.PurchaseOrderID</MudTd>
-                        <MudTd DataLabel="Title">@context.PurchaseOrderName</MudTd>
+                        <MudTd DataLabel="Sales Invoice Number">@context.SalesInvoiceID</MudTd>
+                        <MudTd DataLabel="Title">@context.SalesInvoiceName</MudTd>
                         <MudTd DataLabel="Status">@context.Status</MudTd>
                         <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
                         <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
@@ -86,30 +85,30 @@
 
     private string searchString1 = "";
     private bool _selectOnRowClick = false;
-    private MudTable<PurchaseOrders> _table;
+    private MudTable<SalesInvoice> _table;
     private string _selectedItemText = "No row clicked";
-    private IEnumerable<PurchaseOrders> Elements = new List<PurchaseOrders>();
-    private HashSet<PurchaseOrders> selectedItems = new HashSet<PurchaseOrders>();
+    private IEnumerable<SalesInvoice> Elements = new List<SalesInvoice>();
+    private HashSet<SalesInvoice> selectedItems = new HashSet<SalesInvoice>();
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetPODataAsync();
+        Elements = await select.GetSaleInvoiceDataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<PurchaseOrders> args)
+    void OnRowClick(TableRowClickEventArgs<SalesInvoice> args)
     {
-        purchaseorder.PurchaseOrderID = args.Item.PurchaseOrderID;
-        NavigationManager.NavigateTo($"/purchaseorder/{purchaseorder.PurchaseOrderID}");
+        invoice.SalesInvoiceID = args.Item.SalesInvoiceID;
+        NavigationManager.NavigateTo($"/saleinvoice/{invoice.SalesInvoiceID}");
     }
 
-    private bool FilterFunc1(PurchaseOrders element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(SalesInvoice element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(PurchaseOrders element, string searchString)
+    private bool FilterFunc(SalesInvoice element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.PurchaseOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.SalesInvoiceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.PurchaseOrderID} {element.TotalAmount} {element.DocumentDate}".Contains(searchString)) return true;
+        if ($"{element.SalesInvoiceID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
     }

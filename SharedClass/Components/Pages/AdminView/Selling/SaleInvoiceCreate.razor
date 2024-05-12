@@ -1,5 +1,5 @@
-﻿@page "/salesinvoice/new-sales-invoice"
-@page "/salesinvoice/{SalesInvoiceID?}"
+﻿@page "/saleinvoice/new-sales-invoice"
+@page "/saleinvoice/{SalesInvoiceID?}"
 
 @using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
@@ -14,11 +14,11 @@
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Connection con;
+@inject Customer customer;
 @inject ISnackbar Snackbar;
+@inject SI_Item invoiceitem;
 @inject IJSRuntime JSRuntime;
 @inject SalesInvoice salesinvoice;
-@inject Customer customer;
-@inject SI_Item invoiceitem;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
 @inject ILocalStorageService localStorage;
@@ -291,7 +291,7 @@
                     ItemName = db.Query<string>("select ItemName from SI_Item inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                     customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleInvoice si on si.CustomerID = si.CustomerID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
                     if (salesinvoice == null || Items.Count == 0)
-                        NavigationManager.NavigateTo("/salesinvoice/");
+                        NavigationManager.NavigateTo("/saleinvoice/");
 
                     DisplaySI = false;
                     header = salesinvoice.SalesInvoiceName;
@@ -422,7 +422,7 @@
                 ToggleApproval();
                 if (SalesInvoiceID == null)
                 {
-                    NavigationManager.NavigateTo($"/salesinvoice/{salesinvoice.SalesInvoiceID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/saleinvoice/{salesinvoice.SalesInvoiceID}", forceLoad: true);
                 }
                 if (IsDraft)
                 {
