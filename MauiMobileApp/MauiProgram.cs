@@ -7,6 +7,7 @@ using SharedClass;
 using SharedClass.Components.Data;
 using SharedClass.Components.Model;
 using System.Text.Json;
+using static SharedClass.Components.Pages.AdminView.Buying.ItemsCreate;
 
 namespace MauiMobileApp
 {
@@ -30,16 +31,20 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Delete>();
             builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<Vendor>();
+            builder.Services.AddScoped<SO_Item>();
+            builder.Services.AddScoped<ItemUOM>();
+            builder.Services.AddScoped<SI_Item>();
             builder.Services.AddScoped<GR_Items>();
             builder.Services.AddScoped<PI_Items>();
             builder.Services.AddScoped<PR_Items>();
             builder.Services.AddScoped<PO_Items>();
             builder.Services.AddScoped<DropDown>();
             builder.Services.AddScoped<QU_Items>();
+            builder.Services.AddScoped<Customer>();
+            builder.Services.AddScoped<ItemClass>();
             builder.Services.AddScoped<SaleOrder>();
             builder.Services.AddScoped<RFQVendor>();
             builder.Services.AddScoped<RFQ_Items>();
-            builder.Services.AddScoped<Customer>();
             builder.Services.AddScoped<Quotation>();
             builder.Services.AddScoped<Connection>();
             builder.Services.AddScoped<BaseRecord>();
@@ -48,11 +53,11 @@ namespace MauiMobileApp
             builder.Services.AddScoped<SalesInvoice>();
             builder.Services.AddScoped<BindDropdown>();
             builder.Services.AddScoped<UnitofMeasure>();
-            builder.Services.AddScoped<SO_Item>();
+            builder.Services.AddScoped<Compatibility>();
+            builder.Services.AddScoped<AlternateItem>();
             builder.Services.AddScoped<PurchaseOrders>();
             builder.Services.AddScoped<SingleDropDown>();
             builder.Services.AddScoped<PurchaseInvoice>();
-            builder.Services.AddScoped<SI_Item>();
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
