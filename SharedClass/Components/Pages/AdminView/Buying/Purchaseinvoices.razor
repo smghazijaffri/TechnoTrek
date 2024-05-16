@@ -10,7 +10,7 @@
 @inject Select select;
 @inject ISnackbar Snackbar;
 @inject PurchaseInvoice invoice;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -65,7 +65,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {

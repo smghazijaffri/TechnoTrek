@@ -9,54 +9,54 @@
 @layout AdminLayout;
 @inject Select select;
 @inject ISnackbar Snackbar;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 @inject PurchaseRequisition purchaserequisition
 
 @if (isLoading)
 {
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="d-flex justify-content-end">
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                               Href="/purchaserequisition/new-purchase-request" Size="Size.Large">Create</MudButton>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-end">
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                                   Href="/purchaserequisition/new-purchase-request" Size="Size.Large">Create</MudButton>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                              OnRowClick="@OnRowClick" Filter="new Func<PurchaseRequisition,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        </ToolBarContent>
+
+                        <HeaderContent>
+                            <MudTh>Requisition Number</MudTh>
+                            <MudTh>Title</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Document Date</MudTh>
+                            <MudTh>Creation Date</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Requisition Number">@context.PRNumber</MudTd>
+                            <MudTd DataLabel="Title">@context.PRname</MudTd>
+                            <MudTd DataLabel="Status">@context.Status</MudTd>
+                            <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                            <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd> 
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                        </PagerContent>
+                    </MudTable>
                 </div>
             </div>
         </div>
-
-        <div class="row">
-            <div class="col-md-12">
-                <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                          OnRowClick="@OnRowClick" Filter="new Func<PurchaseRequisition,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
-
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
-                        <MudSpacer />
-                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </ToolBarContent>
-
-                    <HeaderContent>
-                        <MudTh>Requisition Number</MudTh>
-                        <MudTh>Title</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh>Document Date</MudTh>
-                        <MudTh>Creation Date</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Requisition Number">@context.PRNumber</MudTd>
-                        <MudTd DataLabel="Title">@context.PRname</MudTd>
-                        <MudTd DataLabel="Status">@context.Status</MudTd>
-                        <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
-                        <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd> 
-                    </RowTemplate>
-                    <PagerContent>
-                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-                    </PagerContent>
-                </MudTable>
-            </div>
-        </div>
-    </div>
 }
 
 @code {
@@ -65,7 +65,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {

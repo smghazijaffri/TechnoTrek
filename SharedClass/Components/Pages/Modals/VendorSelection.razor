@@ -4,7 +4,7 @@
 @inject Vendor vendor;
 @inject Connection con;
 @inject RequestForQuotation rfq;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager navigationManager;
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); margin-top:60px;">
@@ -26,8 +26,8 @@
                                 {
                                     @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
                                     {
-                                        <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
-                                        <hr class="m-1 border-primary" />
+                                                <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                                <hr class="m-1 border-primary" />
                                     }
                                 }
                                 <button @onclick="NavigateVendor" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
@@ -48,11 +48,11 @@
     public bool IsVisible { get; set; }
 
     [Parameter]
-    public string? RFQNumber{ get; set; }
+    public string? RFQNumber { get; set; }
 
     [Parameter]
     public EventCallback<bool> IsVisibleChanged { get; set; }
-  
+
     public string VendorName = "";
     protected override void OnInitialized()
     {
@@ -81,7 +81,7 @@
         if (result == false)
         {
             VendorName = options.Text;
-            localStorage.SetItemAsync("VendorID", options.Value);
+            _protectedLocalStore.SetLocalAsync("VendorID", options.Value);
 
         }
     }
@@ -89,7 +89,7 @@
     private void Create()
     {
         IsVisible = false;
-        localStorage.SetItemAsync("RFQNumber", RFQNumber);
+        _protectedLocalStore.SetLocalAsync("RFQNumber", RFQNumber);
         navigationManager.NavigateTo("/vendorquotation/new-vendor-quotation");
     }
 

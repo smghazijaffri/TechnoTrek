@@ -21,7 +21,7 @@
 @inject IJSRuntime JSRuntime;
 @inject Quotation purchase;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -327,7 +327,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -337,8 +337,8 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
-                    var RFQNumber = await localStorage.GetItemAsync<string>("RFQNumber");
-                    var VendorID = await localStorage.GetItemAsync<string>("VendorID");
+                    var RFQNumber = await _protectedLocalStore.GetLocalAsync<string>("RFQNumber");
+                    var VendorID = await _protectedLocalStore.GetLocalAsync<string>("VendorID");
 
                     if (VQNumber != null)
                     {
@@ -376,8 +376,8 @@
                         ItemName = db.Query<string>("select ItemName from RFQ_Items inner join Items on Item = ItemCode  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select * from Vendor where VendorID  = @VendorID", new { VendorID = VendorID });
                         purchase.RefrenceDocument = RFQNumber;
-                        await localStorage.SetItemAsync("RFQNumber", "");
-                        await localStorage.SetItemAsync("VendorID", "");
+                        await _protectedLocalStore.SetLocalAsync("RFQNumber", "");
+                        await _protectedLocalStore.SetLocalAsync("VendorID", "");
                     }
                     else
                     {
@@ -766,7 +766,7 @@
                 Snackbar.Add("Quotation ID does not exist", Severity.Error);
                 return;
             }
-            localStorage.SetItemAsync("QuotationID", purchase.QuotationID);
+            _protectedLocalStore.SetLocalAsync("QuotationID", purchase.QuotationID);
             NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
         }
     }
