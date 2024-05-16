@@ -21,7 +21,7 @@
 @inject Compatibility compatibility;
 @inject AlternateItem alternateitem;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -233,7 +233,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {

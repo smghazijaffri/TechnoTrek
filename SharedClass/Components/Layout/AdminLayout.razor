@@ -5,7 +5,7 @@
 @inject Connection conn;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager navigationManager;
 
 @inherits LayoutComponentBase;
@@ -101,8 +101,8 @@
 
     private async void Logout()
     {
-        await localStorage.SetItemAsync("Authorized", false);
-        string User = await localStorage.GetItemAsync<string>("Username");
+        await _protectedLocalStore.SetLocalAsync("Authorized", false);
+        string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
         await JSRuntime.InvokeAsync<string>("ExpireCookie");
         login.LogOut(User);
         Snackbar.Clear();

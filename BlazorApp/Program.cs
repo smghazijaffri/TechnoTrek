@@ -2,6 +2,7 @@ using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using MudBlazor;
 using MudBlazor.Services;
+using ProtectedLocalStore;
 using SharedClass;
 using SharedClass.Components;
 using SharedClass.Components.Data;
@@ -66,23 +67,9 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
 });
 
-builder.Services.AddBlazoredSessionStorage();
+builder.Services.AddProtectedLocalStore(new EncryptionService(
+                new KeyInfo("45BLO2yoJkvBwz99kBEMlNkxvL40vUSGaqr/WBu3+Vg=", "Ou3fn+I9SVicGWMLkFEgZQ==")));
 
-builder.Services.AddBlazoredSessionStorage(config =>
-{
-    config.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-    config.JsonSerializerOptions.IgnoreNullValues = true;
-    config.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
-    config.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    config.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    config.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
-    config.JsonSerializerOptions.WriteIndented = false;
-}
-);
-
-builder.Services.AddBlazoredLocalStorage();   // local storage
-builder.Services.AddBlazoredLocalStorage(config =>
-    config.JsonSerializerOptions.WriteIndented = true);  // local storage
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

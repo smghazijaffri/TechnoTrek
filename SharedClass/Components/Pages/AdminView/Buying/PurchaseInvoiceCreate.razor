@@ -22,7 +22,7 @@
 @inject PurchaseInvoice purchase;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -35,42 +35,42 @@
         </ol>
     </nav> *@
 
-    <div class="row p-3 align-items-center">
-        <div class="col-6">
-            <h3>
+        <div class="row p-3 align-items-center">
+            <div class="col-6">
+                <h3>
                 @header
                 @if (IsSaving)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsDraft)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
                 @if (Unpaid)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Unpaid</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Warning">Unpaid</MudChip>
                 }
                 @if (IsCancelled)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
                 @if (IsPaid)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Paid</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Success">Paid</MudChip>
                 }
                 @if (Overdue)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
                 }
-            </h3>
-        </div>
-        <div class="col-6 d-flex justify-content-end">
+                </h3>
+            </div>
+            <div class="col-6 d-flex justify-content-end">
             @if (!Unpaid && !IsCancelled && !IsPaid && !Overdue)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePR">
+                        <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePR">
                     @GetSubmitButtonText()
-                </button>
+                        </button>
             }
             @* @if (Unpaid && !IsCancelled)
         {
@@ -86,110 +86,110 @@
                         <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
                     </ul>
                 </div> *@
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                    Cancel
-                </button>
+                        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                            Cancel
+                        </button>
             }
-        </div>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6" hidden="@DisplayPR">
-                <label class="form-label">Purchase Invoice Number</label>
-                <input type="text" class="form-control" @bind="purchase.PurchaseInvoiceID" readonly>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor</label>
-                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
-                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                           placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
-                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
-                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                        <li>
+        </div>
+
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6" hidden="@DisplayPR">
+                    <label class="form-label">Purchase Invoice Number</label>
+                    <input type="text" class="form-control" @bind="purchase.PurchaseInvoiceID" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Vendor</label>
+                    <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
+                        <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                               placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                        <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                            aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                            <li>
                             @if (DropDownVendor.ListItems[0].FilteredOptions != null)
                             {
                                 @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
                                 {
-                                    <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
-                                    <hr class="m-1 border-primary" />
+                                                <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                                <hr class="m-1 border-primary" />
                                 }
                             }
-                            <button @onclick="NavigateVendor" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
-                        </li>
-                    </ul>
+                                <button @onclick="NavigateVendor" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Due Date</label>
-                <input type="date" @bind="purchase.DueDate" class="form-control" readonly="@ReadonlyHidden">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label"></label>
-                <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
-                <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
+                <div class="col-md-6">
+                    <label class="form-label">Date</label>
+                    <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" @bind="purchase.DueDate" class="form-control" readonly="@ReadonlyHidden">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label"></label>
+                    <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
+                    <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
 
-            </div>
-        </form>
-    </div>
+                </div>
+            </form>
+        </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Vendor Invoice Details</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6">
-                <label class="form-label">Vendor Invoice No</label>
-                <input type="text" class="form-control" @bind="purchase.VendorInvoiceNumber">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor Invoice Date</label>
-                <input type="date" class="form-control" @bind="purchase.VendorInvoiceDate" readonly="@ReadonlyHidden">
-            </div>
-        </form>
-    </div>
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <h5>Vendor Invoice Details</h5>
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6">
+                    <label class="form-label">Vendor Invoice No</label>
+                    <input type="text" class="form-control" @bind="purchase.VendorInvoiceNumber">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Vendor Invoice Date</label>
+                    <input type="date" class="form-control" @bind="purchase.VendorInvoiceDate" readonly="@ReadonlyHidden">
+                </div>
+            </form>
+        </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Address and Contact</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6">
-                <label class="form-label">Vendor Address</label>
-                <input type="text" class="form-control" @bind="vendor.Address" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor Contact</label>
-                <input type="text" class="form-control" @bind="vendor.Contact" readonly>
-            </div>
-        </form>
-    </div>
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <h5>Address and Contact</h5>
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6">
+                    <label class="form-label">Vendor Address</label>
+                    <input type="text" class="form-control" @bind="vendor.Address" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Vendor Contact</label>
+                    <input type="text" class="form-control" @bind="vendor.Contact" readonly>
+                </div>
+            </form>
+        </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <h5>Items</h5>
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             @* <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox> *@
-            <table class="table size table-hover">
-                <thead>
-                    <tr>
-                        <th class="col col-auto" style="width: 50px;">
-                            No.
-                        </th>
-                        <th class="col col-auto">
-                            Item
-                        </th>
-                        <th class="col col-auto" style="width: 160px;">
-                            Accepted Quantity
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            Rate
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            Amount
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
+                <table class="table size table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col col-auto" style="width: 50px;">
+                                No.
+                            </th>
+                            <th class="col col-auto">
+                                Item
+                            </th>
+                            <th class="col col-auto" style="width: 160px;">
+                                Accepted Quantity
+                            </th>
+                            <th class="col col-auto text-center" style="width: 150px;">
+                                Rate
+                            </th>
+                            <th class="col col-auto text-center" style="width: 150px;">
+                                Amount
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
                     @for (int index = 0; index < Items.Count; index++)
                     {
                         var item = Items[index];
@@ -197,101 +197,101 @@
                         var rowIndex = item.RowID - 1;
                         DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                         item.Amount = (item.Rate * item.AcceptedQuantity);
-                        <tr>
-                            <td>
-                                <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center;">
+                                            <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                        <li>
+                                            <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                            <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                                   placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                            <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                                aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                                <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
                                             {
                                                 @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
-                                                    <hr class="m-1 border-primary" />
+                                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                                    <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
+                                                    <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
 
-                            <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
-                            <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
-                        </tr>
+                                    <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
+                                    <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                                    <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
+                                </tr>
                     }
-                </tbody>
-            </table>
-        </form>
-        <div class="col-12">
-            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+                    </tbody>
+                </table>
+            </form>
+            <div class="col-12">
+                <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+            </div>
         </div>
-    </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6">
-                <label class="form-label">Total Quantity</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Total Amount</label>
-                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
-            </div>
-        </form>
-    </div>
-    <script>
-        function toggleDropdown() {
-            var dropdownMenu = document.getElementById("dropdownMenu");
-            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
-        }
-        $('#quantity').on('input', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6">
+                    <label class="form-label">Total Quantity</label>
+                    <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Total Amount</label>
+                    <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
+                </div>
+            </form>
+        </div>
+        <script>
+            function toggleDropdown() {
+                var dropdownMenu = document.getElementById("dropdownMenu");
+                dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
             }
-        });
-        $('#quantity').on('paste', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+            $('#quantity').on('input', function () {
+                debugger;
+                var inputValue = $(this).val();
+                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        }); $('#rate').on('input', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+                if (nonNumberRegex.test(inputValue)) {
+                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                }
+            });
+            $('#quantity').on('paste', function () {
+                debugger;
+                var inputValue = $(this).val();
+                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-        $('#rate').on('paste', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+                if (nonNumberRegex.test(inputValue)) {
+                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                }
+            }); $('#rate').on('input', function () {
+                debugger;
+                var inputValue = $(this).val();
+                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-    </script>
+                if (nonNumberRegex.test(inputValue)) {
+                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                }
+            });
+            $('#rate').on('paste', function () {
+                debugger;
+                var inputValue = $(this).val();
+                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+                if (nonNumberRegex.test(inputValue)) {
+                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                }
+            });
+        </script>
 }
 
 @code {
@@ -325,7 +325,7 @@
     {
         try
         {
-            var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+            var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
             isAuthorized = cookieContent;
             if (isAuthorized)
             {
@@ -335,8 +335,8 @@
                     purchase.DocumentDate = DateTime.Now;
                     purchase.DueDate = DateTime.Now;
                     purchase.VendorInvoiceDate = DateTime.Now;
-                    var PurchaseOrderID = await localStorage.GetItemAsync<string>("PurchaseOrderID");
-                    var GoodReceiptID = await localStorage.GetItemAsync<string>("GoodReceiptID");
+                    var PurchaseOrderID = await _protectedLocalStore.GetLocalAsync<string>("PurchaseOrderID");
+                    var GoodReceiptID = await _protectedLocalStore.GetLocalAsync<string>("GoodReceiptID");
                     if (PurchaseInvoiceID != null)
                     {
                         purchase = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
@@ -384,7 +384,7 @@
                         purchase.RefrenceDocument = PurchaseOrderID;
                         purchase.DueDate = DateTime.Now;
                         purchase.VendorInvoiceDate = DateTime.Now;
-                        await localStorage.SetItemAsync("PurchaseOrderID", "");
+                        await _protectedLocalStore.SetLocalAsync("PurchaseOrderID", "");
                     }
                     else if (!string.IsNullOrWhiteSpace(GoodReceiptID))
                     {
@@ -395,7 +395,7 @@
                         purchase.RefrenceDocument = GoodReceiptID;
                         purchase.DueDate = DateTime.Now;
                         purchase.VendorInvoiceDate = DateTime.Now;
-                        await localStorage.SetItemAsync("GoodReceiptID", "");
+                        await _protectedLocalStore.SetLocalAsync("GoodReceiptID", "");
                     }
                     else
                     {

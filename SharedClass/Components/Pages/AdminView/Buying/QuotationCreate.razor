@@ -21,7 +21,7 @@
 @inject IJSRuntime JSRuntime;
 @inject RequestForQuotation rfq;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -312,7 +312,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -322,7 +322,7 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     rfq.DocumentDate = DateTime.Now;
-                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
+                    var PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
                     if (RFQNumber != null)
                     {
                         rfq = db.QueryFirstOrDefault<RequestForQuotation>("Select * from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber });
@@ -357,7 +357,7 @@
                         ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                         rfq.RefrenceDocument = PRNumber;
                         AddRowVendor();
-                        await localStorage.SetItemAsync("PRNumber", "");
+                        await _protectedLocalStore.SetLocalAsync("PRNumber", "");
                     }
                     else
                     {

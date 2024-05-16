@@ -5,28 +5,28 @@
 @inject IJSRuntime JSRuntime;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @layout AdminLayout;
 
 @if (isLoading)
 {
-    <div class="row">
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleorder" Style="border-radius:10px">
-                    Sales Order
-                </MudListItem>
-            </MudList>
-        </MudPaper>
+        <div class="row">
+            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+                <MudList Clickable="true">
+                    <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleorder" Style="border-radius:10px">
+                        Sales Order
+                    </MudListItem>
+                </MudList>
+            </MudPaper>
 
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleinvoice" Style="border-radius:10px">
-                    Sales Invoice
-                </MudListItem>
-            </MudList>
-        </MudPaper>
-    </div>
+            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+                <MudList Clickable="true">
+                    <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleinvoice" Style="border-radius:10px">
+                        Sales Invoice
+                    </MudListItem>
+                </MudList>
+            </MudPaper>
+        </div>
 }
 
 @code {
@@ -34,7 +34,7 @@
     public bool isAuthorized { get; set; }
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {

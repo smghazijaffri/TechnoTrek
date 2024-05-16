@@ -1,13 +1,15 @@
 ﻿@page "/adminlogin"
-@using SharedClass.Components
-@using SharedClass.Components.Data
+
 @using Microsoft.AspNetCore.Components
+@using SharedClass.Components.Data
+@using SharedClass.Components
+
 @inject Login login;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject ExampleJsInterop Example;
-@inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:20px;max-inline-size: fit-content;">
     <div class="modal-header text-center" style="align-self: center;">
@@ -43,9 +45,11 @@
         IsLoginSuccessful = await login.Access(Username, Password, JSRuntime);
         if (IsLoginSuccessful)
         {
-            await localStorage.SetItemAsync("Authorized", true);
-            await localStorage.SetItemAsync("Username", Username);
-            
+            // await localStorage.SetItemAsync("Authorized", true);
+            await _protectedLocalStore.SetLocalAsync("Authorized", true);
+            // await localStorage.SetItemAsync("Username", Username);
+            await _protectedLocalStore.SetLocalAsync("Username", Username);
+
             await JSRuntime.InvokeAsync<string>("CreateCookie");
             NavigationManager.NavigateTo("/dashboard");
             Snackbar.Clear();
