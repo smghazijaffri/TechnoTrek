@@ -335,3 +335,10 @@ h1:focus {
 .dialog {
     backdrop-filter: blur(10px);
 }
+
+#loader {
+    display: inline-block;
+    width: 55%;
+    margin-left: 8%;
+    margin-top: 5.5%;
+}
