@@ -17,79 +17,79 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
 {
-    <div class="row p-3 align-items-center">
-        <div class="col-6">
-            <h3>
+        <div class="row p-3 align-items-center">
+            <div class="col-6">
+                <h3>
                 @header
                 @if (IsSaving)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsEnabled)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
                 }
                 @if (IsDisabled)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
                 }
-            </h3>
+                </h3>
+            </div>
+            <div class="col-6 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SaveVendor">
+                    Save
+                </button>
+            </div>
         </div>
-        <div class="col-6 d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SaveVendor">
-                Save
-            </button>
+
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <h5>Name and Type</h5>
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6" hidden>
+                    <label class="form-label">Vendor ID</label>
+                    <input type="text" class="form-control" @bind="vendor.VendorID" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Vendor Name</label>
+                    <input type="text" @bind="vendor.VendorName" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Vendor Group</label>
+                    <input type="text" @bind="vendor.VendorGroup" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <MudSelect T="string" Label="Vendor Type" @bind-Value="vendor.VendorType" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@("Company")" />
+                        <MudSelectItem Value="@("Individual")" />
+                    </MudSelect>
+                </div>
+                <div class="col-md-6">
+                    <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+                </div>
+            </form>
         </div>
-    </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Name and Type</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6" hidden>
-                <label class="form-label">Vendor ID</label>
-                <input type="text" class="form-control" @bind="vendor.VendorID" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor Name</label>
-                <input type="text" @bind="vendor.VendorName" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Vendor Group</label>
-                <input type="text" @bind="vendor.VendorGroup" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <MudSelect T="string" Label="Vendor Type" @bind-Value="vendor.VendorType" AnchorOrigin="Origin.BottomCenter">
-                    <MudSelectItem Value="@("Company")" />
-                    <MudSelectItem Value="@("Individual")" />
-                </MudSelect>
-            </div>
-            <div class="col-md-6">
-                <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
-            </div>
-        </form>
-    </div>
-
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6">
-                <label class="form-label">Address</label>
-                <input type="text" class="form-control" @bind="vendor.Address">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Contact Number</label>
-                <input type="text" class="form-control" @bind="vendor.Contact">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" @bind="vendor.Email">
-            </div>
-        </form>
-    </div>
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-control" @bind="vendor.Address">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Contact Number</label>
+                    <input type="text" class="form-control" @bind="vendor.Contact">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" @bind="vendor.Email">
+                </div>
+            </form>
+        </div>
 }
 
 @code {
@@ -107,7 +107,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -231,17 +231,17 @@
             if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
             // if (vendor.VendorID == null)
             // {
-                // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
-                // if (GetStatus != null)
-                // {
-                //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
+            // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
+            // if (GetStatus != null)
+            // {
+            //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
 
-                //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
-                // }
-                // else
-                // {
-                // return "Vendor does not exist";
-                // }
+            //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
+            // }
+            // else
+            // {
+            // return "Vendor does not exist";
+            // }
             // }
 
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return $"Please enter Vendor Name"; }

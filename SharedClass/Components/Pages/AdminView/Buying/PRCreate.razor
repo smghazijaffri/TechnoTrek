@@ -21,8 +21,8 @@
 @inject PurchaseRequisition purchase;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
-@inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -257,7 +257,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -646,7 +646,8 @@
                 Snackbar.Add("Purchase Request ID does not exist", Severity.Error);
                 return;
             }
-            localStorage.SetItemAsync("PRNumber", purchase.PRNumber);
+            _protectedLocalStore.SetLocalAsync("PRNumber", purchase.PRNumber);
+
             NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
         }
     }
@@ -668,7 +669,7 @@
                 Snackbar.Add("Purchase Request ID does not exist", Severity.Error);
                 return;
             }
-            localStorage.SetItemAsync("PRNumber", purchase.PRNumber);
+            _protectedLocalStore.SetLocalAsync("PRNumber", purchase.PRNumber);
             NavigationManager.NavigateTo("/requestforquotation/new-request-for-quotation");
         }
     }

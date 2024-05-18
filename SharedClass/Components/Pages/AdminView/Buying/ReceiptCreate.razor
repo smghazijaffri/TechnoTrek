@@ -21,7 +21,7 @@
 @inject IJSRuntime JSRuntime;
 @inject GoodReceipt purchase;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
+@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
 @if (isLoading)
@@ -299,7 +299,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -309,7 +309,7 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
-                    var PurchaseOrderID = await localStorage.GetItemAsync<string>("PurchaseOrderID");
+                    var PurchaseOrderID = await _protectedLocalStore.GetLocalAsync<string>("PurchaseOrderID");
                     if (ReceiptNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<GoodReceipt>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
@@ -349,7 +349,7 @@
                         ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                         vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
                         purchase.RefrenceDocument = PurchaseOrderID;
-                        await localStorage.SetItemAsync("PurchaseOrderID", "");
+                        await _protectedLocalStore.SetLocalAsync("PurchaseOrderID", "");
                     }
                     else
                     {
@@ -712,7 +712,7 @@
                 Snackbar.Add("Good Receipt ID does not exist", Severity.Error);
                 return;
             }
-            localStorage.SetItemAsync("GoodReceiptID", purchase.GoodReceiptID);
+            _protectedLocalStore.SetLocalAsync("GoodReceiptID", purchase.GoodReceiptID);
             NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }

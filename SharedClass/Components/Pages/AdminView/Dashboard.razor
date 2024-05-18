@@ -1,14 +1,16 @@
 ﻿@page "/dashboard";
+
 @using SharedClass.Components.Layout
-@using System.Globalization
 @using SharedClass.Components.Data
-@inject Login login;
-@inject IJSRuntime JSRuntime;
-@inject ISnackbar Snackbar;
-@inject NavigationManager NavigationManager;
-@inject ILocalStorageService localStorage;
-@inject Select select;
+@using System.Globalization
+
 @layout AdminLayout;
+@inject Login login;
+@inject Select select;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -47,7 +49,8 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        // var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {

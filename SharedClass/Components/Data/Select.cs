@@ -151,5 +151,26 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<UnitofMeasure>("SELECT * FROM UOM");
         }
+
+        public async Task<IEnumerable<SalesInvoice>> GetSaleInvoiceDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice");
+        }
+
+        public async Task<IEnumerable<SaleOrder>> GetSaleOrderDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<SaleOrder>("SELECT * FROM SaleOrder");
+        }
+
+        public async Task<IEnumerable<ItemClass>> GetItemsAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<ItemClass>("SELECT * FROM Items");
+        }
     }
 }

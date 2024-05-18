@@ -4,12 +4,12 @@
 @using SharedClass.Components.Data
 @using System.Globalization
 @using System.Net.Http.Json
-@page "/vendors"
+@page "/saleinvoice"
 
 @layout AdminLayout;
 @inject Select select;
-@inject Vendor vendor;
 @inject ISnackbar Snackbar;
+@inject SalesInvoice invoice;
 @inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
 
@@ -20,33 +20,35 @@
                 <div class="col-md-12">
                     <div class="d-flex justify-content-end">
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                                   Href="/vendors/new-vendor" Size="Size.Large">Create</MudButton>
+                                   Href="/saleinvoice/new-sales-invoice" Size="Size.Large">Create</MudButton>
                     </div>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-12">
-                    <MudTable @ref="_table" T="Vendor" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                              OnRowClick="@OnRowClick" Filter="new Func<Vendor,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                    <MudTable @ref="_table" T="SalesInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                              OnRowClick="@OnRowClick" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                         <ToolBarContent>
-                            <MudText Typo="Typo.h6">Vendors</MudText>
+                            <MudText Typo="Typo.h6">Sales Invoices</MudText>
                             <MudSpacer />
-                            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"/>
+                            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                         </ToolBarContent>
 
                         <HeaderContent>
-                            <MudTh>Supplier Name</MudTh>
+                            <MudTh>Purchase Invoice ID</MudTh>
+                            <MudTh>Title</MudTh>
                             <MudTh>Status</MudTh>
-                            <MudTh>Supplier Group</MudTh>
-                            <MudTh>Supplier Type</MudTh>
+                            <MudTh>Grand Total</MudTh>
+                            <MudTh>Document Date</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Supplier Name">@context.VendorName</MudTd>
+                            <MudTd DataLabel="Sales Invoice Number">@context.SalesInvoiceID</MudTd>
+                            <MudTd DataLabel="Title">@context.SalesInvoiceName</MudTd>
                             <MudTd DataLabel="Status">@context.Status</MudTd>
-                            <MudTd DataLabel="Supplier Group">@context.VendorGroup</MudTd>
-                            <MudTd DataLabel="Supplier Type">@context.VendorType</MudTd>
+                            <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
+                            <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
                         </RowTemplate>
                         <PagerContent>
                             <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -83,31 +85,30 @@
 
     private string searchString1 = "";
     private bool _selectOnRowClick = false;
-    private MudTable<Vendor> _table;
+    private MudTable<SalesInvoice> _table;
     private string _selectedItemText = "No row clicked";
-    private IEnumerable<Vendor> Elements = new List<Vendor>();
-    private HashSet<Vendor> selectedItems = new HashSet<Vendor>();
+    private IEnumerable<SalesInvoice> Elements = new List<SalesInvoice>();
+    private HashSet<SalesInvoice> selectedItems = new HashSet<SalesInvoice>();
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetVendorsDataAsync();
+        Elements = await select.GetSaleInvoiceDataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<Vendor> args)
+    void OnRowClick(TableRowClickEventArgs<SalesInvoice> args)
     {
-        vendor.VendorID = args.Item.VendorID;
-        NavigationManager.NavigateTo($"/vendors/{vendor.VendorID}");
+        invoice.SalesInvoiceID = args.Item.SalesInvoiceID;
+        NavigationManager.NavigateTo($"/saleinvoice/{invoice.SalesInvoiceID}");
     }
 
-    private bool FilterFunc1(Vendor element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(SalesInvoice element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(Vendor element, string searchString)
+    private bool FilterFunc(SalesInvoice element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.VendorName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.SalesInvoiceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.VendorGroup.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.VendorType.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.SalesInvoiceID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
     }
