@@ -23,7 +23,8 @@
         public const string Transferred = "Transferred";
         public const string PartiallyPaid = "Partially Paid";
         public const string ToReceiveBill = "To Receive and Bill";
-    } public class SaleStatus
+    } 
+    public class SaleStatus
     {
         public const string Paid = "Paid";
         public const string Draft = "Draft";
@@ -44,5 +45,14 @@
         public const string Transferred = "Transferred";
         public const string PartiallyPaid = "Partially Paid";
         public const string ToReceiveBill = "To Receive and Bill";
+    }
+    public class ProductionStatus
+    {
+        public const string Active = "Active";
+        public const string ToReceiveBill = "InActive";
+        public const string Saved = "Saved";
+        public const string Cancelled = "Cancelled";
+
+
     }
 }

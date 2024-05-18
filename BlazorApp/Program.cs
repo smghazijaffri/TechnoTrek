@@ -42,6 +42,8 @@ builder.Services.AddScoped<SO_Item>();
 builder.Services.AddScoped<PurchaseOrders>();
 builder.Services.AddScoped<PurchaseInvoice>();
 builder.Services.AddScoped<SI_Item>();
+builder.Services.AddScoped<BOM_Item>();
+builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<ExampleJsInterop>();
 builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();

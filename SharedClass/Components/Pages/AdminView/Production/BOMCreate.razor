@@ -1,0 +1,665 @@
+﻿@page "/billofmaterial/new-bom"
+@page "/billofmaterial/{BOMID?}"
+
+@using SharedClass.Components.Pages.Modals
+@using SharedClass.Components.Layout
+@using SharedClass.Components.Model
+@using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Dapper
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Select select;
+@inject Connection con;
+@inject BOM_Item BOMItem;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject BOM bom;
+@inject IDialogService DialogService;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager NavigationManager;
+
+@if (isLoading)
+{
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
+                @header
+
+                @if (IsCancelled)
+                {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                }
+                else if(bom.BOMID != null)
+                {
+                    if (Active)
+                    {
+                        <MudChip Variant="Variant.Text" Color="Color.Success">Active</MudChip>
+                    }
+                    else if (!Active)
+                    {
+                        <MudChip Variant="Variant.Text" Color="Color.Error">InActive</MudChip>
+                    }
+                }
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!IsCancelled)
+            {
+                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePO">
+                    Save
+                </button>
+            }
+            @if (IsSaving && !IsCancelled)
+            {
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                    Cancel
+                </button>
+            }
+
+            @*   
+                
+            @if (ToReceiveBill && !IsCancelled)
+        {
+        <div class="dropdown m-1" id="dropdown">
+        <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+        <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
+        <hr class="m-1 border-primary" />
+        <li><a href="#" @onclick="CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+        </ul>
+        </div>
+        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+        Cancel
+        </button>
+        } *@
+
+        </div>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3"  autocomplete="off">
+            <div class="col-md-6" hidden=" @DisplayPO">
+                <label class="form-label">Item Name</label>
+                <input type="text" class="form-control" @bind="bom.BOMID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Item Name</label>
+                <input type="text" class="form-control" @bind="bom.ItemName">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" @bind="bom.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Type</label>
+                <input type="text" class="form-control" @bind="bom.Type" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <MudCheckBox @bind-Value="@bom.IsActive" Size="Size.Small" Dense="true" Label="Is Active" readonly="@IsCancelled"></MudCheckBox>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3"  autocomplete="off">
+            <table class="table size table-hover">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 70px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            UOM
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        item.RowID = index + 1;
+                        var rowIndex = item.RowID - 1;
+                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                        item.Amount = (item.Rate * item.Quantity);
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                    @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToReceiveBill">Delete</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
+                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                                {
+                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                    {
+                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                        <hr class="m-1 border-primary" />
+                                                    }
+                                                }
+                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+        </div>
+    </div>
+
+    @*     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" class="form-control" value="@SumQuantity" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" class="form-control" value="@SumAmounts" readonly>
+            </div>
+        </form>
+    </div>
+ *@    <script>
+               function toggleDropdown() {
+                   var dropdownMenu = document.getElementById("dropdownMenu");
+                   dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+               }
+               $('#quantity').on('input', function () {
+                   debugger;
+                   var inputValue = $(this).val();
+                   var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+                   if (nonNumberRegex.test(inputValue)) {
+                       $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                   }
+               });
+               $('#quantity').on('paste', function () {
+                   debugger;
+                   var inputValue = $(this).val();
+                   var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+                   if (nonNumberRegex.test(inputValue)) {
+                       $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                   }
+               }); $('#rate').on('input', function () {
+                   debugger;
+                   var inputValue = $(this).val();
+                   var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+                   if (nonNumberRegex.test(inputValue)) {
+                       $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                   }
+               });
+               $('#rate').on('paste', function () {
+                   debugger;
+                   var inputValue = $(this).val();
+                   var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+                   if (nonNumberRegex.test(inputValue)) {
+                       $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                   }
+               });
+    </script>
+}
+
+@code {
+    [Parameter]
+    public string? BOMID { get; set; }
+    private string header = "New Purchase Order";
+
+    bool isLoading = false;
+    private bool DisplayPO = true;
+    private bool IsActive { get; set; } = false;
+    private bool Active = false;
+    private bool ToReceiveBill = false;
+    public bool isAuthorized { get; set; }
+    private bool IsCancelled = false;
+    private bool IsSaving = false;
+    public bool ReadonlyHidden { get { return IsSaving || IsCancelled; } }
+
+    public DropDown DropDownUOM = new DropDown();
+    public DropDown DropDownItem = new DropDown();
+
+    List<int> IsDelete = new List<int>();
+    private List<string> UOMList { get; set; }
+    public List<string> ItemName = new List<string>();
+    public List<string> UOMName = new List<string>();
+
+    private List<BOM_Item> Items = new List<BOM_Item>();
+
+    public int SumAmounts
+    {
+        get { return Items.Sum(item => item.Amount); }
+    }
+
+    public int SumQuantity
+    {
+        get { return Items.Sum(item => item.Quantity); }
+    }
+
+    protected override async void OnInitialized()
+    {
+        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        isAuthorized = cookieContent;
+        if (isAuthorized)
+        {
+            isLoading = true;
+            try
+            {
+                using (SqlConnection db = new SqlConnection(con.connectionString))
+                {
+                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
+                    var QuotationID = await localStorage.GetItemAsync<string>("QuotationID");
+                    bom.DocumentDate = DateTime.Now;
+                    bom.Type = "Manual";
+                    if (BOMID != null)
+                    {
+                        bom = db.QueryFirstOrDefault<BOM>("Select * from BOM  where BOMID = @BOMID", new { BOMID = BOMID });
+                        if (bom == null)
+                            NavigationManager.NavigateTo("/billofmaterial/");
+                        Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                        ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                        UOMName = db.Query<string>("select UOMName from BOM_Item inner join UOM on UOMID = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                        DisplayPO = false;
+                        header = bom.BOMID;
+                        IsSaving = true;
+                        if (bom.Status == ProductionStatus.Cancelled)
+                        {
+                            IsCancelled = true;
+                        }
+                        else if (bom.IsActive)
+                        {
+                            Active = true;
+                        }
+                    }
+                    // else if (!string.IsNullOrWhiteSpace(PRNumber))
+                    // {
+                    //     Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    //     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    //     purchase.RefrenceDocument = PRNumber;
+                    //     await localStorage.SetItemAsync("PRNumber", "");
+                    // }
+                    // else if (!string.IsNullOrWhiteSpace(QuotationID))
+                    // {
+                    //     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                    //     Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    //     ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    //     foreach (var item in Items)
+                    //     {
+                    //         item.RequiredBy = DateTime.Now;
+                    //     }
+                    //     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                    //     purchase.RefrenceDocument = QuotationID;
+                    //     await localStorage.SetItemAsync("QuotationID", "");
+                    // }
+                    else
+                    {
+                        AddRow();
+                    }
+                    DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
+                }
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        else
+        {
+            isLoading = false;
+            NavigationManager.NavigateTo("/adminlogin");
+            Snackbar.Clear();
+            Snackbar.Add("Not Authorized", Severity.Error);
+        }
+
+        base.OnInitialized();
+    }
+
+    public string createPurchase()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidatePO();
+                if (validate != null)
+                {
+                    return validate;
+                }
+                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
+
+                foreach (string data in ItemName)
+                {
+                    titleBuilder.Append(data);
+                    titleBuilder.Append(", ");
+                }
+
+                if (Items.Count > 0)
+                {
+                    titleBuilder.Length -= 2;
+                    titleBuilder.Append(".");
+                }
+
+                bom.BOMName = titleBuilder.ToString();
+                header = titleBuilder.ToString();
+
+
+                bom.Status = ProductionStatus.Saved;
+
+
+                bom.BOMID = crud.CRD(bom, "CreateBOM");
+
+                foreach (var PO in Items)
+                {
+                    foreach (int del in IsDelete)
+                    {
+                        if (PO.RowID == del)
+                        {
+                            IsDelete.Remove(del);
+                        }
+                    }
+                    PO.BOMID = bom.BOMID;
+                    DisplayPO = false;
+                    crud.CRD(PO, "BOMItem");
+                }
+
+                foreach (var del in IsDelete)
+                {
+                    BOMItem.RowID = del;
+                    BOMItem.BOMID = bom.BOMID;
+                    crud.CRD(BOMItem, "BOMItem", System.Data.CommandType.StoredProcedure, true);
+                }
+                IsDelete.Clear();
+                ToggleApproval();
+                if (BOMID == null)
+                {
+                    NavigationManager.NavigateTo($"/billofmaterial/{bom.BOMID}", forceLoad: true);
+                }
+
+                return "BOM Saved Successfully";
+
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public string ValidatePO()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (bom.BOMID != null)
+            {
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from BOM where BOMID = @BOMID", new { BOMID = bom.BOMID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == ProductionStatus.ToReceiveBill && !ToReceiveBill) { return "Purchase Order has already been submitted changes cannot be done"; }
+
+                    if (GetStatus == ProductionStatus.Cancelled && !IsCancelled) { return "This Purchase Order has already been Cancelled"; }
+                }
+                else
+                {
+                    return "Purchase Order ID does not exist";
+                }
+            }
+
+            if (bom.DocumentDate == null) return "Please Enter Document Date";
+
+
+
+            foreach (var PO in Items)
+            {
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
+
+                if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+
+                if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
+
+                if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+
+                if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
+            }
+
+            return null;
+        }
+    }
+
+    public void SavePO()
+    {
+        string notification = createPurchase();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    // private string GetSubmitButtonText()
+    // {
+    //     if (ToReceiveBill)
+    //     {
+    //         return "Cancel";
+    //     }
+    //     else if (IsDraft)
+    //     {
+    //         return "Submit";
+    //     }
+    //     else
+    //     {
+    //         return "Save";
+    //     }
+    // }
+
+    private void ToggleApproval()
+    {
+        if (bom.IsActive)
+        {
+            Active = true;
+            IsSaving = true;
+        }
+        else if (!bom.IsActive)
+        {
+            Active = false;
+            IsSaving = true;
+        }        
+    }
+
+    private void AddRow()
+    {
+        // HandleFormInput();
+        Items.Add(new BOM_Item
+            {
+                Quantity = 1
+            });
+        ItemName.Add("");
+        UOMName.Add("");
+    }
+
+    private void DeleteRow(int index)
+    {
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                IsDelete.Add(Items[i].RowID);
+                Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
+            }
+        }
+    }
+
+    // private void HandleFormInput()
+    // {
+    //     if (IsDraft)
+    //     {
+    //         IsSaving = true;
+    //         IsDraft = false;
+    //         StateHasChanged();
+    //     }
+    // }
+    public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownItem.FilterOptions(e, rowIndex);
+        // if (result == true)
+        // {
+        //     if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+        //     {
+        //         Items[rowIndex].Item = "";
+        //     }
+        // }
+        StateHasChanged();
+    }
+
+    private void SelectItemOption(option options, int rowIndex)
+    {
+        bool result = DropDownItem.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].Item = options.Value;
+        }
+    }
+
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+    public void SelectUOMOption(option options, int rowIndex)
+    {
+        bool result = DropDownUOM.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+            UOMName[rowIndex] = options.Text;
+            Items[rowIndex].UOM = options.Value;
+        }
+    }
+
+    private async Task OpenDialog()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from BOM where BOMID = @BOMID", new { BOMID = bom.BOMID });
+
+            if (GetStatus == ProductionStatus.Cancelled)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Bill Of Material has already been Cancelled", Severity.Error);
+                return;
+            }
+
+        }
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            Cancel();
+        }
+    }
+
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = bom.BOMID;
+            cancelall.type = "BOM";
+            crud.CRD(cancelall, "CancelAll");
+            IsCancelled = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.ToString(), Severity.Error);
+        }
+    }
+
+
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
+
+}
