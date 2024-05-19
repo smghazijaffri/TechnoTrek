@@ -56,7 +56,7 @@
         <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6" hidden>
                 <label class="form-label">Item ID</label>
-                <input type="text" class="form-control" @bind="items.ItemID" readonly>
+                <input type="text" class="form-control" @bind="items.ItemCode" readonly>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Item Name</label>
@@ -180,7 +180,7 @@
                     @foreach (var item in itemsFromDatabase)
                     {
                         <div>
-                            <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                            <MudCheckBox  @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
                         </div>
                     }
                 </form>
@@ -226,6 +226,7 @@
     public bool isAuthorized { get; set; }
     public bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
 
+    List<string> AlternateID = new List<string>();
     List<int> IsDelete = new List<int>();
     public DropDown DropDownUOM = new DropDown();
     private List<ItemUOM> ItemUOM = new List<ItemUOM>();
@@ -284,7 +285,7 @@
 
         base.OnInitialized();
     }
-
+  
     public string createUOM()
     {
         try
@@ -322,11 +323,11 @@
                 //     }
                 // }
 
-                items.ItemID = crud.CRD(items, "CreateVendor");
+                items.ItemCode = crud.CRD(items, "CreateVendor");
 
                 if (ItemID == null)
                 {
-                    NavigationManager.NavigateTo($"/item/{items.ItemID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/item/{items.ItemCode}", forceLoad: true);
                 }
                 if (IsSaving)
                 {

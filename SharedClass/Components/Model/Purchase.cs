@@ -175,7 +175,7 @@
 
     public class ItemClass: BaseRecord
     {
-        public string ItemID { get; set; }
+        public string ItemCode { get; set; }
         public string ItemName { get; set; }
         public string ItemType { get; set; }
         public int Sellingrate { get; set; }
