@@ -11,6 +11,7 @@
 @using System.Text
 @using Dapper
 
+@inject BOM bom;
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
@@ -18,10 +19,9 @@
 @inject BOM_Item BOMItem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject BOM bom;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -264,7 +264,7 @@
 @code {
     [Parameter]
     public string? BOMID { get; set; }
-    private string header = "New Purchase Order";
+    private string header = "New Bill of Material";
 
     bool isLoading = false;
     private bool DisplayPO = true;
@@ -280,7 +280,6 @@
     public DropDown DropDownItem = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
     public List<string> UOMName = new List<string>();
 
@@ -298,7 +297,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -307,8 +306,8 @@
             {
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
-                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
-                    var QuotationID = await localStorage.GetItemAsync<string>("QuotationID");
+                    // var PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
+                    // var QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
                     bom.DocumentDate = DateTime.Now;
                     bom.Type = "Manual";
                     if (BOMID != null)

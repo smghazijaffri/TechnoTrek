@@ -129,7 +129,7 @@
                                             {
                                                 @foreach (var option in DropDownVendor.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                    <a class="dropdown-item"  @onclick="() => SelectVendorOption(option, rowIndex)">@option.Text</a>
+                                                    <a class="dropdown-item" @onclick="() => SelectVendorOption(option, rowIndex)">@option.Text</a>
                                                     <hr class="m-1 border-primary" />
                                                 }
                                             }
@@ -143,7 +143,7 @@
                             <td>
                                 <div style="display: flex; align-items: center;">
                                     <input type="checkbox" class="me-1" @bind="vendor.SendEmail" readonly="@ReadonlyHidden" />
-                                </div>  
+                                </div>
                             </td>
                         </tr>
                     }
@@ -252,7 +252,7 @@
         </div>
     </div>
 
-    <VendorSelection @bind-IsVisible="IsVisible" RFQNumber = "@rfq.RFQNumber" />
+    <VendorSelection @bind-IsVisible="IsVisible" RFQNumber="@rfq.RFQNumber" />
 
     <script>
         function toggleDropdown() {
@@ -322,7 +322,12 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     rfq.DocumentDate = DateTime.Now;
-                    var PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
+                    var PRNumber = string.Empty;
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PRNumber"))
+                    {
+                        PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
+                    }
+
                     if (RFQNumber != null)
                     {
                         rfq = db.QueryFirstOrDefault<RequestForQuotation>("Select * from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber });
@@ -501,7 +506,7 @@
         {
             if (rfq.RFQNumber != null)
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = rfq.RFQNumber});
+                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = rfq.RFQNumber });
                 if (GetStatus != null)
                 {
                     if (GetStatus == PurchaseStatuses.Pending && !IsApproved) { return "Request For Quotation has already been submitted changes cannot be done"; }
@@ -521,7 +526,7 @@
 
             foreach (var PO in Items)
             {
-                if (string.IsNullOrWhiteSpace(PO.Item))  return $"Please select Item on Row: {PO.RowID}";
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
 
                 if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
 
@@ -738,7 +743,7 @@
                 Snackbar.Add("This Request For Quotation has already been Cancelled", Severity.Error);
                 return;
             }
-            
+
         }
         var options = new DialogOptions { ClassBackground = "dialog" };
         var result = await DialogService.Show<Dialog>("Cancel Request for Quotation", options).Result;

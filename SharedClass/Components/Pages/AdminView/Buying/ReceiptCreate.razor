@@ -66,7 +66,7 @@
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Return</a></li>
                         <hr class="m-1 border-primary" />
-                        <li><a  @onclick="CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+                        <li><a @onclick="CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -309,7 +309,12 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
-                    var PurchaseOrderID = await _protectedLocalStore.GetLocalAsync<string>("PurchaseOrderID");
+                    var PurchaseOrderID = string.Empty;
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PurchaseOrderID"))
+                    {
+                        PurchaseOrderID = await _protectedLocalStore.GetLocalAsync<string>("PurchaseOrderID");
+                    }
+
                     if (ReceiptNumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<GoodReceipt>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
@@ -662,7 +667,7 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = purchase.GoodReceiptID });
-            if (GetStatus == PurchaseStatuses.Cancelled) 
+            if (GetStatus == PurchaseStatuses.Cancelled)
             {
                 Snackbar.Clear();
                 Snackbar.Add("This Good Receipt has already been Cancelled", Severity.Error);
