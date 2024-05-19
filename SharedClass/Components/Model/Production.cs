@@ -9,7 +9,7 @@ namespace SharedClass.Components.Model
     internal class Production
     {
     }
-    public class BOM: BaseRecord
+    public class BOM : BaseRecord
     {
         public string BOMID { get; set; }
         public string BOMName { get; set; }
