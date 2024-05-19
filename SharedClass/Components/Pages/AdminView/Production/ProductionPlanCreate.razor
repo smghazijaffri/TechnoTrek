@@ -21,8 +21,8 @@
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
 @inject IDialogService DialogService;
-@inject ILocalStorageService localStorage;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -308,7 +308,7 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await localStorage.GetItemAsync<bool>("Authorized");
+        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
@@ -317,8 +317,8 @@
             {
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
-                    var PRNumber = await localStorage.GetItemAsync<string>("PRNumber");
-                    var QuotationID = await localStorage.GetItemAsync<string>("QuotationID");
+                    var PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
+                    var QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
                     purchase.DocumentDate = DateTime.Now;
                     // if (PONumber != null)
                     // {
@@ -784,7 +784,7 @@
                 Snackbar.Add("Purchase Order ID does not exist", Severity.Error);
                 return;
             }
-            localStorage.SetItemAsync("PurchaseOrderID", purchase.PurchaseOrderID);
+            _protectedLocalStore.SetLocalAsync("PurchaseOrderID", purchase.PurchaseOrderID);
             NavigationManager.NavigateTo("/goodsreceipt/new-goods-receipt");
         }
 
@@ -808,7 +808,7 @@
                 Snackbar.Add("Purchase Order ID does not exist", Severity.Error);
                 return;
             }
-            localStorage.SetItemAsync("PurchaseOrderID", purchase.PurchaseOrderID);
+            _protectedLocalStore.SetLocalAsync("PurchaseOrderID", purchase.PurchaseOrderID);
             NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }

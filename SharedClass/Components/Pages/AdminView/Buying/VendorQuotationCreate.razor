@@ -337,8 +337,17 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     purchase.DocumentDate = DateTime.Now;
-                    var RFQNumber = await _protectedLocalStore.GetLocalAsync<string>("RFQNumber");
-                    var VendorID = await _protectedLocalStore.GetLocalAsync<string>("VendorID");
+                    var RFQNumber = string.Empty;
+                    var VendorID = string.Empty;
+
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "RFQNumber"))
+                    {
+                        RFQNumber = await _protectedLocalStore.GetLocalAsync<string>("RFQNumber");
+                    }
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "VendorID"))
+                    {
+                        VendorID = await _protectedLocalStore.GetLocalAsync<string>("VendorID");
+                    }
 
                     if (VQNumber != null)
                     {
@@ -715,7 +724,7 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Quotation where QuotationID = @QuotationID", new { QuotationID = purchase.QuotationID });
-            if (GetStatus == PurchaseStatuses.Cancelled) 
+            if (GetStatus == PurchaseStatuses.Cancelled)
             {
                 Snackbar.Clear();
                 Snackbar.Add("This Quotation has already been Cancelled", Severity.Error);

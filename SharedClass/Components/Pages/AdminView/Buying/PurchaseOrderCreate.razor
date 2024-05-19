@@ -21,8 +21,8 @@
 @inject IJSRuntime JSRuntime;
 @inject PurchaseOrders purchase;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -74,7 +74,7 @@
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
                         <hr class="m-1 border-primary" />
-                        <li><a href="#" @onclick = "CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+                        <li><a href="#" @onclick="CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                     </ul>
                 </div>
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -320,6 +320,7 @@
     private string header = "New Purchase Order";
 
     bool isLoading = false;
+    bool IsKeyPresent = false;
     private bool ToBill = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
@@ -361,11 +362,22 @@
             isLoading = true;
             try
             {
+                var PRNumber = string.Empty;
+                var QuotationID = string.Empty;
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
-                    var PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
-                    var QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PRNumber"))
+                    {
+                        PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
+                    }
+
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "QuotationID"))
+                    {
+                        QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
+                    }
+
                     purchase.DocumentDate = DateTime.Now;
+
                     if (PONumber != null)
                     {
                         purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
