@@ -346,18 +346,6 @@
                     IsSaving = false;
                 }
 
-                // foreach (var item in itemsFromDatabase)
-                // {
-                //     if (item.Compatible)
-                //     {
-                //         // Save the compatibility record to the database
-                //     }
-                //     if (item.Alternate)
-                //     {
-                //         // Save the compatibility record to the database
-                //     }
-                // }
-
                 items.ItemCode = crud.CRD(items, "Add_Item");
                 var compatibleItems = itemsFromDatabase.Where(item => item.Compatible).ToList();
                 var AlternateItems = itemsFromDatabase.Where(item => item.Alternate).ToList();
@@ -455,12 +443,12 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            // int countname = 0;
-            // countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName", new { ItemName = items.ItemName });
-            // if (countname > 0)
-            // {
-            //     return $"Item Already Exists";
-            // }
+            int countname = 0;
+            countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName and ItemID != @ItemID", new { ItemName = items.ItemName, ItemID = items.ItemCode });
+            if (countname > 0)
+            {
+                return $"Item Already Exists";
+            }
 
             if (string.IsNullOrWhiteSpace(items.ItemName)) { return $"Please enter Item Name"; }
             if (string.IsNullOrWhiteSpace(items.ItemType)) { return $"Please enter Item Type"; }
@@ -468,6 +456,7 @@
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Description"; }
+
             foreach (var IT in ItemUOM)
             {
                 if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row: {IT.RowID}";
@@ -505,9 +494,10 @@
         {
             if (ItemUOM[i].Selected)
             {
-                IsDelete.Add(ItemUOM[i].RowID);
+
                 ItemUOM.RemoveAt(i);
                 DropDownUOM.ListItems.RemoveAt(i);
+                UOMName.RemoveAt(i);
             }
         }
     }
