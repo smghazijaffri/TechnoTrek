@@ -197,7 +197,6 @@
 
     public class Compatibility : BaseRecord
     {
-        public string Item { get; set; }
         public string ItemID { get; set; }
         public string CompatibilityID { get; set; }
 

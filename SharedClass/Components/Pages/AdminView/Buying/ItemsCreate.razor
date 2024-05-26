@@ -126,7 +126,7 @@
                             </td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOMID"
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
                                            placeholder="Select Unit of Measure" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)"
                                         style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
@@ -180,7 +180,7 @@
                     @foreach (var item in itemsFromDatabase)
                     {
                         <div>
-                            <MudCheckBox  @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                            <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
                         </div>
                     }
                 </form>
@@ -229,6 +229,7 @@
     List<string> AlternateID = new List<string>();
     List<int> IsDelete = new List<int>();
     public DropDown DropDownUOM = new DropDown();
+    public List<string> UOMName = new List<string>();
     private List<ItemUOM> ItemUOM = new List<ItemUOM>();
     private IEnumerable<ItemClass> itemsFromDatabase = new List<ItemClass>();
 
@@ -246,7 +247,10 @@
                 {
                     if (ItemID != null)
                     {
-                        items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemID = @ItemID", new { ItemID = ItemID });
+                        items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
+                        ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                        UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                        itemsFromDatabase = db.Query<ItemClass>("select it.*, case when ic.ItemID = @ItemID then 1 else 0 end as Compatible, case when ia.ItemID = @ItemID then 1 else 0 end as Alternate from Items it left join ItemCompability ic on it.ItemCode = ic.CompatibilityID left join ItemAlternate ia on ItemCode = ia.AlternateID", new { ItemID = ItemID });
                         if (items == null)
                             NavigationManager.NavigateTo("/vendors/");
                         header = items.ItemName;
@@ -266,7 +270,7 @@
                     {
                         AddRow();
                     }
-                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
+                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
                 }
                 await InvokeAsync(StateHasChanged);
             }
@@ -285,7 +289,7 @@
 
         base.OnInitialized();
     }
-  
+
     public string createUOM()
     {
         try
@@ -300,12 +304,12 @@
 
                 header = items.ItemName;
 
-                if (IsEnabled)
+                if (!Disabled)
                 {
                     items.Status = PurchaseStatuses.Enabled;
                     IsSaving = false;
                 }
-                else if (IsDisabled)
+                else if (Disabled)
                 {
                     items.Status = PurchaseStatuses.Disabled;
                     IsSaving = false;
@@ -323,8 +327,56 @@
                 //     }
                 // }
 
-                items.ItemCode = crud.CRD(items, "CreateVendor");
-
+                items.ItemCode = crud.CRD(items, "Add_Item");
+                var compatibleItems = itemsFromDatabase.Where(item => item.Compatible).ToList();
+                var AlternateItems = itemsFromDatabase.Where(item => item.Alternate).ToList();
+                if (ItemUOM.Count == 0)
+                {
+                    itemuom.ItemID = items.ItemCode;
+                    crud.CRD(itemuom, "CreateItemUOM", IsDelete:true);
+                }
+                else
+                {
+                    itemuom.ItemID = items.ItemCode;
+                    crud.CRD(itemuom, "CreateItemUOM", IsDelete: true);
+                    foreach (var item in ItemUOM)
+                    {
+                        item.ItemID = items.ItemCode;
+                        crud.CRD(item, "CreateItemUOM");
+                    }
+                }
+                if (compatibleItems.Count == 0)
+                {
+                    compatibility.ItemID = items.ItemCode;
+                    crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
+                }
+                else
+                {
+                    compatibility.ItemID = items.ItemCode;
+                    crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
+                    foreach (var item in compatibleItems)
+                    {
+                        compatibility.CompatibilityID = item.ItemCode;
+                        crud.CRD(compatibility, "CreateCompabilityItem");
+                    }
+                }
+                if (AlternateItems.Count == 0)
+                {
+                    alternateitem.ItemID = items.ItemCode;
+                    crud.CRD(alternateitem, "CreateAlternateItem",IsDelete:true);
+                }
+                else
+                {
+                    alternateitem.ItemID = items.ItemCode;
+                    crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
+                    foreach (var item in AlternateItems)
+                    {
+                        alternateitem.AlternateID = item.ItemCode;
+                        crud.CRD(alternateitem, "CreateAlternateItem");
+                    }
+                }
+                if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
+                if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
                 if (ItemID == null)
                 {
                     NavigationManager.NavigateTo($"/item/{items.ItemCode}", forceLoad: true);
@@ -372,8 +424,12 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
-            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
+            int countname = 0;
+            countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName", new { ItemName = items.ItemName });
+            if (countname > 0)
+            {
+                return $"Item Already Exists";
+            }
             // if (vendor.VendorID == null)
             // {
             // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
@@ -395,8 +451,13 @@
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Description"; }
-            if (string.IsNullOrWhiteSpace(itemuom.UOMID)) return $"Please Enter UOM on Row: {itemuom.RowID}";
-            if (!items.Compatible) { return $"Please select atleast one Compatible Item"; }
+            foreach (var IT in ItemUOM)
+            {
+                if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row: {IT.RowID}";
+
+            }
+
+            // if (!items.Compatible) { return $"Please select atleast one Compatible Item"; }
 
             return null;
         }
@@ -420,7 +481,9 @@
         ItemUOM.Add(new ItemUOM
             {
                 ItemID = "",
+
             });
+        UOMName.Add("");
     }
 
     private void DeleteRow(int index)
@@ -454,6 +517,7 @@
         bool result = DropDownUOM.SelectOption(options, rowIndex);
         if (result == false)
         {
+            UOMName[rowIndex] = options.Text;
             ItemUOM[rowIndex].UOMID = options.Value;
         }
     }
