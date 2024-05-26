@@ -1,7 +1,9 @@
-﻿@inject SharedClass.Components.Data.Select select;
-@inject SharedClass.Components.Data.Insert insert;
-@inject IJSRuntime JSRuntime;
+﻿@inject Select select;
+@inject Insert insert;
 @inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <section>
     <div class="container py-5">
@@ -14,23 +16,16 @@
                         <div class="card text-black" style="border-radius:20px;">
                             <div class="card-body">
                                 <h5 class="card-title">@values.Brand</h5>
-                                <h5 class="card-title">@values.Model</h5>
+                                <h5 class="card-title">@values.ItemName</h5>
                                 <div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Chip</span><span>@values.Chip</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Memory</span><span>@values.Memory</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Memory Interface</span><span>@values.Memory_Interface</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Tdp</span><span>@values.Tdp</span>
+                                    <div class="d-flex justify-content-center"
+                                        @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
+                                        <h6><span>Show Description</span></h6>
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="() => Select(values)">Select</button>
+                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
+                                        @onclick="() => Select(values)">Select</button>
                                 </div>
                             </div>
                         </div>
@@ -42,26 +37,25 @@
 </section>
 
 @code {
-    public int Id { get; set; }
-    public string Brand { get; set; }
-    public string Model { get; set; }
-    public string Chip { get; set; }
-    public float Memory { get; set; }
-    public string Memory_Interface { get; set; }
-    public int Tdp { get; set; }
-
-    private IEnumerable<GPU> Graphics;
+    private IEnumerable<ItemClass> Graphics;
 
     protected override async Task OnInitializedAsync()
     {
-        Graphics = await select.GetGPUAsync();
+        Graphics = await select.GetItemsAsync("Graphics Card");
     }
-    private async Task Select(GPU selectedGPU)
+
+    private async Task Select(ItemClass selectedGPU)
     {
-        string component = "[Graphics Card]";
-        string combinedValue = $"{selectedGPU.Brand} {selectedGPU.Model}";
-        await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
+        string component = "Graphics Card";
+        await _protectedLocalStore.SetLocalAsync(component, selectedGPU.ItemCode);
         Snackbar.Clear();
         Snackbar.Add("Selection Saved", Severity.Success);
+    }
+
+    private async void OnButtonClicked(string message)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+        "Description", message);
+        StateHasChanged();
     }
 }

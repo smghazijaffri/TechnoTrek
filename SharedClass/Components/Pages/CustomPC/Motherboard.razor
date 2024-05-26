@@ -1,7 +1,9 @@
-﻿@inject SharedClass.Components.Data.Select select;
-@inject SharedClass.Components.Data.Insert insert;
-@inject IJSRuntime JSRuntime;
+﻿@inject Select select;
+@inject Insert insert;
 @inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <section>
     <div class="container py-5">
@@ -14,20 +16,17 @@
                         <div class="card text-black" style="border-radius:20px;">
                             <div class="card-body">
                                 <h5 class="card-title">@values.Brand</h5>
-                                <h5 class="card-title">@values.Model</h5>
+                                <h5 class="card-title">@values.ItemName</h5>
                                 <div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Socket</span><span>@values.Socket</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Chipset</span><span>@values.Chipset</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Form Factor</span><span>@values.Form_Factor</span>
+                                    <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
+                                        <h6><span>Show Description</span></h6>
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="() => Select(values)">Select</button>
+                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
+                                            @onclick="() => Select(values)">
+                                        Select
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -39,26 +38,25 @@
 </section>
 
 @code {
-    public int Id { get; set; }
-    public string Brand { get; set; }
-    public string Model { get; set; }
-    public string Socket { get; set; }
-    public string Chipset { get; set; }
-    public string Form_Factor { get; set; }
-
-    private IEnumerable<Motherboard> Motherboards;
+    private IEnumerable<ItemClass> Motherboards;
 
     protected override async Task OnInitializedAsync()
     {
-        Motherboards = await select.GetMotherboardsAsync();
+        Motherboards = await select.GetItemsAsync("Motherboard");
     }
-    
-    private async Task Select(Motherboard selectedMotherboard)
+
+    private async Task Select(ItemClass selectedMotherboard)
     {
         string component = "Motherboard";
-        string combinedValue = $"{selectedMotherboard.Brand} {selectedMotherboard.Model}";
-        await insert.InsertIntoCustomBuilt(combinedValue, component, JSRuntime);
+        await _protectedLocalStore.SetLocalAsync(component, selectedMotherboard.ItemCode);
         Snackbar.Clear();
         Snackbar.Add("Selection Saved", Severity.Success);
+    }
+
+    private async void OnButtonClicked(string message)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Description", message);
+        StateHasChanged();
     }
 }
