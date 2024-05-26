@@ -170,7 +170,7 @@ namespace SharedClass.Components.Data
         {
             con.Close();
             con.Open();
-            return await con.QueryAsync<ItemClass>("SELECT * FROM Items");
+            return await con.QueryAsync<ItemClass>("SELECT * FROM Items ORDER BY ItemCode");
         }
 
         public async Task<IEnumerable<BOM>> GetBOMAsync()
