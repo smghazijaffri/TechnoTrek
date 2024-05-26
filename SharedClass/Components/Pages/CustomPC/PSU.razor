@@ -18,13 +18,14 @@
                                 <h5 class="card-title">@values.Brand</h5>
                                 <h5 class="card-title">@values.ItemName</h5>
                                 <div>
-                                    <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
+                                    <div class="d-flex justify-content-center"
+                                        @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
                                         <h6><span>Show Description</span></h6>
                                     </div>
                                 </div>
                                 <div>
                                     <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                            @onclick="() => Select(values)">
+                                        @onclick="() => Select(values)">
                                         Select
                                     </button>
                                 </div>
@@ -48,7 +49,7 @@
 
     private async Task Select(ItemClass selectedPSU)
     {
-        string component = "[Power Supply]";
+        string component = "Power Supply";
         await _protectedLocalStore.SetLocalAsync(component, selectedPSU.ItemCode);
         Snackbar.Clear();
         Snackbar.Add("Selection Saved", Severity.Success);
@@ -57,7 +58,7 @@
     private async void OnButtonClicked(string message)
     {
         bool? result = await DialogService.ShowMessageBox(
-            "Description", message);
+        "Description", message);
         StateHasChanged();
     }
 }

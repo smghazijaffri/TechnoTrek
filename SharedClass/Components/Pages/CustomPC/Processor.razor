@@ -43,7 +43,19 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var motherboardItemCode = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
         Processors = await select.GetItemsAsync("Processor");
+
+        // if (!string.IsNullOrEmpty(motherboardItemCode))
+        // {
+        //     var compatibleItemCodes = await select.GetCompatibleItemCodesAsync(motherboardItemCode);
+            // Processors = await select.GetItemsAsync("Processor", compatibleItemCodes.ToList());
+            // if(Processors.Count > 0)
+        // }
+        // else
+        // {
+        //     Processors = await select.GetItemsAsync("Processor");
+        // }
     }
 
     private async Task Select(ItemClass selectedProcessor)

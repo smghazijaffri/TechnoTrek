@@ -95,19 +95,37 @@ namespace SharedClass.Components.Data
             return await con.QueryAsync<ItemClass>("SELECT * FROM Items ORDER BY ItemCode");
         }
 
-        public async Task<IEnumerable<ItemClass>> GetItemsAsync(string ItemType)
-        {
-            con.Close();
-            con.Open();
-            return await con.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType = @ItemType ORDER BY ItemCode", new { ItemType });
-        }
-
-        //public async Task<string> GetItemNameAsync(string ItemCode)
+        //public async Task<IEnumerable<ItemClass>> GetItemsAsync(string ItemType)
         //{
         //    con.Close();
         //    con.Open();
-        //    return await con.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode });
+        //    return await con.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType = @ItemType ORDER BY ItemCode", new { ItemType });
         //}
+
+        public async Task<IEnumerable<ItemClass>> GetItemsAsync(string ItemType, List<string> compatibleItemCodes = null)
+        {
+            con.Close();
+            con.Open();
+
+            var query = "SELECT * FROM Items WHERE ItemType = @ItemType";
+
+            if (compatibleItemCodes != null)
+            {
+                query += " AND ItemCode IN @CompatibleItemCodes";
+            }
+
+            query += " ORDER BY ItemCode";
+
+            return await con.QueryAsync<ItemClass>(query, new { ItemType, CompatibleItemCodes = compatibleItemCodes });
+        }
+
+        public async Task<IEnumerable<string>> GetCompatibleItemCodesAsync(string itemCode)
+        {
+            con.Close();
+            con.Open();
+            var query = "SELECT CompatibilityID FROM ItemCompability WHERE ItemID = @ItemID";
+            return await con.QueryAsync<string>(query, new { ItemID = itemCode });
+        }
 
         public async Task<IEnumerable<BOM>> GetBOMAsync()
         {
