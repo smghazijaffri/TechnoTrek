@@ -335,10 +335,10 @@
 
                     if (GoodsIssueID != null)
                     {
-                        issue = db.QueryFirstOrDefault<GoodsIssue>("Select * from GoodsIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                        issue = db.QueryFirstOrDefault<GoodsIssue>("Select * from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
                         Items = db.Query<GI_Items>("select * from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                         ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
-                        customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join GoodReceipt si on si.CustomerID = si.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                        customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join GoodIssue si on si.CustomerID = si.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
                         if (issue == null || Items.Count == 0)
                             NavigationManager.NavigateTo("/goodsreceipt/");
 

@@ -333,7 +333,7 @@
                 if (ItemUOM.Count == 0)
                 {
                     itemuom.ItemID = items.ItemCode;
-                    crud.CRD(itemuom, "CreateItemUOM", IsDelete:true);
+                    crud.CRD(itemuom, "CreateItemUOM", IsDelete: true);
                 }
                 else
                 {
@@ -363,7 +363,7 @@
                 if (AlternateItems.Count == 0)
                 {
                     alternateitem.ItemID = items.ItemCode;
-                    crud.CRD(alternateitem, "CreateAlternateItem",IsDelete:true);
+                    crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
                 }
                 else
                 {
@@ -454,7 +454,6 @@
             foreach (var IT in ItemUOM)
             {
                 if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row: {IT.RowID}";
-
             }
 
             // if (!items.Compatible) { return $"Please select atleast one Compatible Item"; }
@@ -481,7 +480,6 @@
         ItemUOM.Add(new ItemUOM
             {
                 ItemID = "",
-
             });
         UOMName.Add("");
     }

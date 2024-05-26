@@ -179,5 +179,12 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<BOM>("SELECT * FROM BOM");
         }
+
+        public async Task<IEnumerable<GoodsIssue>> GetGIAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<GoodsIssue>("SELECT * FROM GoodIssue");
+        }
     }
 }
