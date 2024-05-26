@@ -98,7 +98,7 @@
     void OnRowClick(TableRowClickEventArgs<GoodsIssue> args)
     {
         goodsissue.GoodsIssueID = args.Item.GoodsIssueID;
-        NavigationManager.NavigateTo($"/goodsreceipt/{goodsissue.GoodsIssueID}");
+        NavigationManager.NavigateTo($"/goodissue/{goodsissue.GoodsIssueID}");
     }
 
     private bool FilterFunc1(GoodsIssue element) => FilterFunc(element, searchString1);
