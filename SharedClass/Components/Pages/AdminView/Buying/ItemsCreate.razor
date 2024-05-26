@@ -455,9 +455,22 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            // int countname = 0;
-            // countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName", new { ItemName = items.ItemName });
-            // if (countname > 0)
+            int countname = 0;
+            countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName and ItemID != @ItemID", new { ItemName = items.ItemName, ItemID = items.ItemCode });
+            if (countname > 0)
+            {
+                return $"Item Already Exists";
+            }
+            // if (vendor.VendorID == null)
+            // {
+            // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
+            // if (GetStatus != null)
+            // {
+            //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
+
+            //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
+            // }
+            // else
             // {
             //     return $"Item Already Exists";
             // }
@@ -505,9 +518,10 @@
         {
             if (ItemUOM[i].Selected)
             {
-                IsDelete.Add(ItemUOM[i].RowID);
+
                 ItemUOM.RemoveAt(i);
                 DropDownUOM.ListItems.RemoveAt(i);
+                UOMName.RemoveAt(i);
             }
         }
     }
