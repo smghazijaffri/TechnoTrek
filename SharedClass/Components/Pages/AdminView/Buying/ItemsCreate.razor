@@ -21,8 +21,8 @@
 @inject Compatibility compatibility;
 @inject AlternateItem alternateitem;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -165,9 +165,15 @@
                 <form class="" @oninput="HandleFormInput" autocomplete="off">
                     @foreach (var item in itemsFromDatabase)
                     {
-                        <div>
-                            <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
-                        </div>
+                        @if (item.ItemCode != items.ItemCode)
+                        {
+                            @if (item.ItemType != items.ItemType)
+                            {
+                                <div>
+                                    <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                                </div>
+                            }
+                        }
                     }
                 </form>
             </div>
@@ -179,9 +185,15 @@
                 <form class="" @oninput="HandleFormInput" autocomplete="off">
                     @foreach (var item in itemsFromDatabase)
                     {
-                        <div>
-                            <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
-                        </div>
+                        @if (item.ItemCode != items.ItemCode)
+                        {
+                            @if (item.ItemType == items.ItemType)
+                            {
+                                <div>
+                                    <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                                </div>
+                            }
+                        }
                     }
                 </form>
             </div>
@@ -250,7 +262,26 @@
                         items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
                         ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
                         UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
-                        itemsFromDatabase = db.Query<ItemClass>("select it.*, case when ic.ItemID = @ItemID then 1 else 0 end as Compatible, case when ia.ItemID = @ItemID then 1 else 0 end as Alternate from Items it left join ItemCompability ic on it.ItemCode = ic.CompatibilityID left join ItemAlternate ia on ItemCode = ia.AlternateID", new { ItemID = ItemID });
+                        itemsFromDatabase = db.Query<ItemClass>(@"SELECT
+                                                it.*,
+                                                MAX(CASE WHEN ic.ItemID = @ItemID THEN 1 ELSE 0 END) AS Compatible,
+                                                MAX(CASE WHEN ia.ItemID = @ItemID THEN 1 ELSE 0 END) AS Alternate
+                                            FROM
+                                                Items it
+                                            LEFT JOIN
+                                                ItemCompability ic ON it.ItemCode = ic.CompatibilityID
+                                            LEFT JOIN
+                                                ItemAlternate ia ON it.ItemCode = ia.AlternateID
+                                            GROUP BY
+                                            it.ItemCode,
+                                                   it.ItemName,
+                                                   it.ItemType,
+                                                   it.Description,
+                                                   it.LeadTime,
+                                                   it.Status,
+                                                   it.CreationDate,
+                                                   it.Brand,
+                                                   it.Sellingrate", new { ItemID = ItemID });
                         if (items == null)
                             NavigationManager.NavigateTo("/vendors/");
                         header = items.ItemName;
@@ -424,25 +455,11 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            int countname = 0;
-            countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName", new { ItemName = items.ItemName });
-            if (countname > 0)
-            {
-                return $"Item Already Exists";
-            }
-            // if (vendor.VendorID == null)
+            // int countname = 0;
+            // countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName", new { ItemName = items.ItemName });
+            // if (countname > 0)
             // {
-            // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
-            // if (GetStatus != null)
-            // {
-            //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
-
-            //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
-            // }
-            // else
-            // {
-            // return "Vendor does not exist";
-            // }
+            //     return $"Item Already Exists";
             // }
 
             if (string.IsNullOrWhiteSpace(items.ItemName)) { return $"Please enter Item Name"; }
@@ -455,8 +472,6 @@
             {
                 if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row: {IT.RowID}";
             }
-
-            // if (!items.Compatible) { return $"Please select atleast one Compatible Item"; }
 
             return null;
         }

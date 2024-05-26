@@ -137,7 +137,7 @@
         public string ID { get; set; }
         public string type { get; set; }
     }
-    
+
     public class PurchaseInvoice : BaseRecord
     {
         public string PurchaseInvoiceID { get; set; }
@@ -173,14 +173,14 @@
         public string Status { get; set; }
     }
 
-    public class ItemClass: BaseRecord
+    public class ItemClass : BaseRecord
     {
         public string ItemCode { get; set; }
         public string ItemName { get; set; }
         public string ItemType { get; set; }
         public int Sellingrate { get; set; }
         public string Brand { get; set; }
-        public string Description { get; set;}
+        public string Description { get; set; }
         public int LeadTime { get; set; }
         public string Status { get; set; }
         public bool Compatible { get; set; }
@@ -199,7 +199,6 @@
     {
         public string ItemID { get; set; }
         public string CompatibilityID { get; set; }
-
     }
 
     public class AlternateItem : BaseRecord
