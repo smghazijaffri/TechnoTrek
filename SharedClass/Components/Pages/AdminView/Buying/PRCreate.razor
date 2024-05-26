@@ -317,7 +317,6 @@
             Snackbar.Clear();
             Snackbar.Add("Not Authorized", Severity.Error);
             NavigationManager.NavigateTo("/adminlogin");
-
         }
 
         base.OnInitialized();
@@ -430,7 +429,6 @@
                     if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "Purchase Request has already been submitted changes cannot be done";
 
                     if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Purchase Request has already been Cancelled";
-
                 }
                 else
                 {

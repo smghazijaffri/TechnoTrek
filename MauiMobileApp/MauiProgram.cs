@@ -24,6 +24,7 @@ namespace MauiMobileApp
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddScoped<BOM>();
             builder.Services.AddScoped<CRUD>();
             builder.Services.AddScoped<Login>();
             builder.Services.AddScoped<Insert>();
@@ -34,6 +35,9 @@ namespace MauiMobileApp
             builder.Services.AddScoped<SO_Item>();
             builder.Services.AddScoped<ItemUOM>();
             builder.Services.AddScoped<SI_Item>();
+            builder.Services.AddScoped<SI_Item>();
+            builder.Services.AddScoped<GI_Items>();
+            builder.Services.AddScoped<BOM_Item>();
             builder.Services.AddScoped<GR_Items>();
             builder.Services.AddScoped<PI_Items>();
             builder.Services.AddScoped<PR_Items>();
@@ -48,6 +52,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Quotation>();
             builder.Services.AddScoped<Connection>();
             builder.Services.AddScoped<BaseRecord>();
+            builder.Services.AddScoped<GoodsIssue>();
             builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddScoped<SalesInvoice>();
@@ -58,9 +63,6 @@ namespace MauiMobileApp
             builder.Services.AddScoped<PurchaseOrders>();
             builder.Services.AddScoped<SingleDropDown>();
             builder.Services.AddScoped<PurchaseInvoice>();
-            builder.Services.AddScoped<SI_Item>();
-            builder.Services.AddScoped<BOM_Item>();
-            builder.Services.AddScoped<BOM>();
             builder.Services.AddScoped<ExampleJsInterop>();
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();

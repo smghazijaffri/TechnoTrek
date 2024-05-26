@@ -61,6 +61,29 @@ namespace SharedClass.Components.Model
         public string Name { get; set; }
         public string Address { get; set; }
         public string Contact { get; set; }
+    }
 
+    public class GoodsIssue : BaseRecord
+    {
+        public string GoodsIssueID { get; set; }
+        public string GoodsIssueName { get; set; }
+        public string CustomerID { get; set; }
+        public string Status { get; set; }
+        public bool IsReturn { get; set; }
+        public int TotalAmount { get; set; }
+        public int TotalQuantity { get; set; }
+        public string RefrenceDocument { get; set; }
+        public DateTime? DocumentDate { get; set; }
+    }
+
+    public class GI_Items : BaseRecord {
+        public bool Selected { get; set; }
+        public string GoodsIssueID { get; set; }
+        public string Item { get; set; }
+        public string UOM { get; set; }
+        public int RowID { get; set; }
+        public int Quantity { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
     }
 }
