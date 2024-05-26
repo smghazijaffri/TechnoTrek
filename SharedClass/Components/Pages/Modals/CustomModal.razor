@@ -1,8 +1,10 @@
 ﻿@using System.ComponentModel.DataAnnotations;
 @using SharedClass.Components.Pages.CustomPC;
-@inject SharedClass.Components.Data.Update update;
-@inject IJSRuntime JSRuntime;
+
+@inject Update update;
 @inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
@@ -13,7 +15,7 @@
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                @if(ComponentName == "Motherboard")
+                @if (ComponentName == "Motherboard")
                 {
                     <Motherboard />
                 }
@@ -46,20 +48,19 @@
                     <Cooler />
                 }
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btnpc m-1" @onclick="Cancel" aria-label="Close">Cancel</button>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel" aria-label="Close">Cancel</button>
             </div>
         </div>
     </div>
 </div>
 <!-- Modal -->
-
 @code {
     public class BuildPcViewModel
     {
+        public string Id { get; set; }
         public bool IsModalOpen { get; set; }
         public string selectedComponentName { get; set; }
-        public string Id { get; set; }
         [Required]
         public string Contact { get; set; }
         [Required]
@@ -83,21 +84,25 @@
         set => Model.selectedComponentName = value;
     }
 
-    // Function to open the Quick View Modal
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
     private void ShowQuickView()
     {
         Model.IsModalOpen = true;
     }
 
-    // Function to close the Quick View Modal
-    private void CloseQuickView()
+    private async void CloseQuickView()
     {
         Model.IsModalOpen = false;
+        await OnClose.InvokeAsync(null);
     }
+
     private async void Cancel()
     {
         CloseQuickView();
-        await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
+        // await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
+        await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
         Snackbar.Clear();
         Snackbar.Add("Cancelled", Severity.Error);
     }

@@ -1,10 +1,17 @@
 ﻿@page "/buildpc";
-@using SharedClass.Components.Pages.Modals;
+
+@using Dapper
+@using Microsoft.Data.SqlClient
 @using SharedClass.Components.Data;
+@using SharedClass.Components.Pages.Modals;
 @using static SharedClass.Components.Pages.Modals.CustomModal
 @using static SharedClass.Components.Pages.Modals.CustomerModal
+
 @inject Insert insert;
+@inject Connection con;
+@inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="container">
     <div class="row justify-content-center">
@@ -19,14 +26,33 @@
         </div>
         <div class="col-md-3 p-auto m-auto" title="Pre-Builts">
             <div class="shadow p-auto m-auto" style="border-radius: 20px;">
-                <div class="container p-4">
-                    <img src="_content/SharedClass/Images/prebuilt.webp" class="card-img-top" alt="...">
-                </div>
-                <div class="card-body p-3 m-auto">
-                    <h5 class="card-title">Pre-Builts</h5>
-                    <p class="card-text">Choose from pre-built configurations</p>
-                    <NavLink href="#" class="btn btnpc  m-1" style="background-color:#A687CB; color:white" Match="NavLinkMatch.All">Buy</NavLink>
-                </div>
+                @if (!string.IsNullOrEmpty(Case) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Cooler) && !string.IsNullOrEmpty(Supply) &&
+                !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Motherboard))
+                {
+                    <div class="card-body p-3 m-auto">
+                        <h5 class="card-title pb-2">Total: </h5>
+                        <p class="card-text">Motherboard:</p>
+                        <p class="card-text">Processor:</p>
+                        <p class="card-text">Graphics Card:</p>
+                        <p class="card-text">Case:</p>
+                        <p class="card-text">Memory:</p>
+                        <p class="card-text">Storage:</p>
+                        <p class="card-text">Power Supply:</p>
+                        <p class="card-text">Cooler:</p>
+                        <NavLink href="#" class="btn btnpc m-1" style="background-color:#A687CB; color:white" Match="NavLinkMatch.All">Confirm</NavLink>
+                    </div>
+                }
+                else
+                {
+                    <div class="container p-4">
+                        <img src="_content/SharedClass/Images/prebuilt.webp" class="card-img-top" alt="...">
+                    </div>
+                    <div class="card-body p-3 m-auto">
+                        <h5 class="card-title">Pre-Builts</h5>
+                        <p class="card-text">Choose from pre-built configurations</p>
+                        <NavLink href="#" class="btn btnpc m-1" style="background-color:#A687CB; color:white" Match="NavLinkMatch.All">Buy</NavLink>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -41,8 +67,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Motherboard</h5>
-                    <p class="card-text">Choose your desired Motherboard</p>
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Motherboard"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Motherboard == "" || Motherboard == null)
+                        {
+                            <p class="card-text">Choose your desired Motherboard</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Motherboard">@Motherboard</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Motherboard"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -54,9 +89,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Processor</h5>
-                    <p class="card-text">Choose your desired Processor</p>
-
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Processor"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Processor == "" || Processor == null)
+                        {
+                            <p class="card-text">Choose your desired Processor</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Processor">@Processor</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Processor"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -67,9 +110,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Graphics Card</h5>
-                    <p class="card-text">Choose your desired GPU</p>
-
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Graphics Card"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Graphics == "" || Graphics == null)
+                        {
+                            <p class="card-text">Choose your desired Graphics Card</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Graphics">@Graphics</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Graphics Card"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -80,9 +131,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Gaming Case</h5>
-                    <p class="card-text">Choose your desired Case</p>
-
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Gaming Case"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Case == "" || Case == null)
+                        {
+                            <p class="card-text">Choose your desired Gaming Case</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Case">@Case</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Gaming Case"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -93,9 +152,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Memory</h5>
-                    <p class="card-text">Choose your desired Memory</p>
-
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Memory"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Memory == "" || Memory == null)
+                        {
+                            <p class="card-text">Choose your desired Memory</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Memory">@Memory</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Memory"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -106,9 +173,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Storage</h5>
-                    <p class="card-text">Choose your desired Storage</p>
-
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Storage"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Storage == "" || Storage == null)
+                        {
+                            <p class="card-text">Choose your desired Storage</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Storage">@Storage</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Storage"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -119,9 +194,17 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Power Supply</h5>
-                    <p class="card-text">Choose your desired PSU</p>
-
-                    <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Power Supply"))" Match="NavLinkMatch.All">Select</NavLink>
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Supply == "" || Supply == null)
+                        {
+                            <p class="card-text">Choose your desired Power PSU</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Supply">@Supply</p>
+                        }
+                    </div>
+                    <NavLink class="btn btnpc m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Power Supply"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
         </div>
@@ -132,8 +215,16 @@
                 </div>
                 <div class="card-body p-3 m-auto">
                     <h5 class="card-title text-truncate">Cooler</h5>
-                    <p class="card-text">Choose your desired Fans</p>
-
+                    <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @if (Cooler == "" || Cooler == null)
+                        {
+                            <p class="card-text">Choose your desired Fans</p>
+                        }
+                        else
+                        {
+                            <p class="card-text" title="@Cooler">@Cooler</p>
+                        }
+                    </div>
                     <NavLink class="btn btnpc  m-1" style="background-color:#A687CB; color:white" @onclick="@(args => ShowQuickView("Cooler"))" Match="NavLinkMatch.All">Select</NavLink>
                 </div>
             </div>
@@ -143,14 +234,26 @@
 
 <CustomerModal @bind-IsVisible="IsVisible" OnSaveChanges="HandleInputModalSaveChanges" />
 
-<CustomModal Model="model" IsVisible="isQuickViewVisible" ComponentName="@selectedComponentName" />
+<CustomModal Model="model" IsVisible="isQuickViewVisible" ComponentName="@selectedComponentName" OnClose="HandleCloseModal" />
 
 @code {
+
     BuildPcViewModel model = new BuildPcViewModel();
 
     bool isModalOpen = false;
+    bool readOnly = false;
+    private bool IsVisible { get; set; }
     private bool isQuickViewVisible = false;
-    private string selectedComponentName = " ";
+
+    private string selectedComponentName = "";
+    string Case { get; set; }
+    string Memory { get; set; }
+    string Cooler { get; set; }
+    string Supply { get; set; }
+    string Storage { get; set; }
+    string Graphics { get; set; }
+    string Processor { get; set; }
+    string Motherboard { get; set; }
 
     private void ShowQuickView(string val)
     {
@@ -159,16 +262,81 @@
         isQuickViewVisible = true;
     }
 
-    private bool IsVisible { get; set; }
-
-    protected override void OnInitialized()
+    protected async override void OnInitialized()
     {
-        // Set IsVisible to true when the component is initialized
         IsVisible = true;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
+            Memory = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Memory"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cooler"))
+            Cooler = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Cooler"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage"))
+            Storage = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Storage"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "[Gaming Case]"))
+            Case = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("[Gaming Case]"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+            Processor = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Processor"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "[Power Supply]"))
+            Supply = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("[Power Supply]"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard"))
+            Motherboard = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Motherboard"));
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "[Graphics Card]"))
+            Graphics = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("[Graphics Card]"));
+
+        if (!string.IsNullOrEmpty(Motherboard)) readOnly = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async void HandleInputModalSaveChanges(BuildPcViewModel model)
     {
-        await insert.InsertIntoCustomBuilt(model.Id, model.Name, model.Contact, JSRuntime);
+        // await insert.InsertIntoCustomBuilt(model.Id, model.Name, model.Contact, JSRuntime);
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName") &&
+        await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact"))
+        {
+            if (await _protectedLocalStore.GetLocalAsync<string>("customerName") != model.Name ||
+            await _protectedLocalStore.GetLocalAsync<string>("customerContact") != model.Contact)
+            {
+                await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
+                await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
+
+                await _protectedLocalStore.SetLocalAsync("Memory", "");
+                await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                await _protectedLocalStore.SetLocalAsync("Storage", "");
+                await _protectedLocalStore.SetLocalAsync("Processor", "");
+                await _protectedLocalStore.SetLocalAsync("Motherboard", "");
+                await _protectedLocalStore.SetLocalAsync("[Gaming Case]", "");
+                await _protectedLocalStore.SetLocalAsync("[Power Supply]", "");
+                await _protectedLocalStore.SetLocalAsync("[Graphics Card]", "");
+            }
+            else
+            {
+                await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
+                await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
+            }
+        }
+        else
+        {
+            await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
+            await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void HandleCloseModal()
+    {
+        await InvokeAsync(OnInitialized);
+        IsVisible = false;
+        isModalOpen = false;
+        isQuickViewVisible = false;
+        Snackbar.Clear();
+        Snackbar.Add("Selection Saved", Severity.Success);
+    }
+
+    public async Task<string> GetItemNameAsync(string ItemCode)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            return await db.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode });
+        }
     }
 }

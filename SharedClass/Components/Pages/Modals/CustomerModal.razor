@@ -6,7 +6,7 @@
 @inject ISnackbar Snackbar;
 <!-- InputModal.razor -->
 
-<div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
+<div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); backdrop-filter: blur(15px);">
     <div class="modal-dialog modal-sm p-4 border-0">
         <div class="modal-content bg-white shadow-lg border-0" style="border-radius: 20px;">
             <div class="modal-header heading">
