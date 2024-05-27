@@ -84,7 +84,7 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 400px; overflow-y: auto;">
         <h5>Description</h5>
         <form class="" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-3 p-3 mb-2">
+            <div class="col-md-6 p-3 mb-2">
                 <label class="form-label">Brand</label>
                 <input type="text" class="form-control" @bind="items.Brand">
             </div>
@@ -222,6 +222,7 @@
             if (nonNumberRegex.test(inputValue)) {
                 $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
             }
+        });
     </script>
 }
 
@@ -444,7 +445,7 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             int countname = 0;
-            countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName and ItemID != @ItemID", new { ItemName = items.ItemName, ItemID = items.ItemCode });
+            countname = db.QueryFirstOrDefault<int>("select count(1) from Items where ItemName = @ItemName and ItemCode != @ItemID", new { ItemName = items.ItemName, ItemID = items.ItemCode });
             if (countname > 0)
             {
                 return $"Item Already Exists";

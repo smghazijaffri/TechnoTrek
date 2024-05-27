@@ -78,7 +78,7 @@
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6" hidden="@DisplayPO">
-                <label class="form-label">Purchase Receipt Number</label>
+                <label class="form-label">Goods Issue Number</label>
                 <input type="text" class="form-control" @bind="issue.GoodsIssueID" readonly>
             </div>
             <div class="col-md-6">
@@ -89,7 +89,7 @@
                 <label class="form-label">Customer</label>
                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.Name"
-                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
+                           placeholder="Select a Customer" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
                     <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                         <li>
@@ -278,7 +278,6 @@
                 $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
             }
         });
-
     </script>
 }
 
@@ -302,20 +301,18 @@
     public SingleDropDown DropDownCustomer = new SingleDropDown();
 
     List<int> IsDelete = new List<int>();
-    public List<string> UOMName = new List<string>();
     private List<string> UOMList { get; set; }
+    public List<string> UOMName = new List<string>();
     public List<string> ItemName = new List<string>();
     private List<GI_Items> Items = new List<GI_Items>();
 
     public int SumAmounts
     {
-        // Using LINQ to sum the Amount property of each PO_Items object in the list
         get { return Items.Sum(item => item.Amount); }
     }
 
     public int SumQuantity
     {
-        // Using LINQ to sum the Amount property of each PO_Items object in the list
         get { return Items.Sum(item => item.Quantity); }
     }
 

@@ -49,9 +49,28 @@
 
     private async Task Select(ItemClass selectedCase)
     {
-        string component = "Gaming Case";
-        await _protectedLocalStore.SetLocalAsync(component, selectedCase.ItemCode);
-        Snackbar.Clear();
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cooler"))
+        {
+            string Processor = await _protectedLocalStore.GetLocalAsync<string>("Cooler");
+
+            if (!string.IsNullOrEmpty(Processor))
+            {
+                await _protectedLocalStore.SetLocalAsync("Cooler", "");
+
+                await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
+
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
+            }
+            else
+            {
+                await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
+            }
+        }
+        else
+        {
+            await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
+        }
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 
