@@ -11,7 +11,7 @@
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
         <div class="modal-content" style="border-radius:20px;">
             <div class="modal-header">
-                <h2 class="modal-title heading">@ComponentName  </h2>
+                <h3 class="modal-title heading">@ComponentName  </h3>
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -101,7 +101,6 @@
     private async void Cancel()
     {
         CloseQuickView();
-        // await update.UpdateCustomBuilt(Model.selectedComponentName, JSRuntime);
         await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
         Snackbar.Clear();
         Snackbar.Add("Cancelled", Severity.Error);

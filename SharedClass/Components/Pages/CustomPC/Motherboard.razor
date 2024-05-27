@@ -1,5 +1,8 @@
-﻿@inject Select select;
+﻿@using Microsoft.Data.SqlClient;
+
+@inject Select select;
 @inject Insert insert;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -47,9 +50,34 @@
 
     private async Task Select(ItemClass selectedMotherboard)
     {
-        string component = "Motherboard";
-        await _protectedLocalStore.SetLocalAsync(component, selectedMotherboard.ItemCode);
-        Snackbar.Clear();
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+        {
+            string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
+
+            if (!string.IsNullOrEmpty(Processor))
+            {
+                await _protectedLocalStore.SetLocalAsync("Memory", "");
+                await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                await _protectedLocalStore.SetLocalAsync("Storage", "");
+                await _protectedLocalStore.SetLocalAsync("Processor", "");
+                await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+                await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+
+                await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
+            }
+            else
+            {
+                await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+            }
+        }
+        else
+        {
+            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+        }
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 

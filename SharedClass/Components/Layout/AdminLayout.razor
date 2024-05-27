@@ -18,7 +18,7 @@
     <div style="display:flex;">
         <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
             <MudIconButton Icon="@(open ? Icons.Material.Outlined.Close : Icons.Material.Outlined.Menu)" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px"/>
+            <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
         </MudAppBar>
         <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive" PreserveOpenState="@preserveOpenState" Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
             <MudNavMenu Class="mb-5">
@@ -74,7 +74,7 @@
             </MudNavMenu>
         </MudDrawer>
     </div>
-    <MudMainContent Class="p-4" Style="margin-top:50px;">
+    <MudMainContent Class="p-4" Style="margin-top:50px; max-width: 100vw; overflow-x: hidden;">
         <MudThemeProvider />
         <MudDialogProvider FullWidth="true"
                            MaxWidth="MaxWidth.ExtraSmall"

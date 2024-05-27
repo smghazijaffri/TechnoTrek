@@ -43,26 +43,38 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var motherboardItemCode = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
         Processors = await select.GetItemsAsync("Processor");
-
-        // if (!string.IsNullOrEmpty(motherboardItemCode))
-        // {
-        //     var compatibleItemCodes = await select.GetCompatibleItemCodesAsync(motherboardItemCode);
-            // Processors = await select.GetItemsAsync("Processor", compatibleItemCodes.ToList());
-            // if(Processors.Count > 0)
-        // }
-        // else
-        // {
-        //     Processors = await select.GetItemsAsync("Processor");
-        // }
     }
 
     private async Task Select(ItemClass selectedProcessor)
     {
-        string component = "Processor";
-        await _protectedLocalStore.SetLocalAsync(component, selectedProcessor.ItemCode);
-        Snackbar.Clear();
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
+        {
+            string Processor = await _protectedLocalStore.GetLocalAsync<string>("Memory");
+
+            if (!string.IsNullOrEmpty(Processor))
+            {
+                await _protectedLocalStore.SetLocalAsync("Memory", "");
+                await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                await _protectedLocalStore.SetLocalAsync("Storage", "");
+                await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+                await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+
+                await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
+            }
+            else
+            {
+                await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+            }
+        }
+        else
+        {
+            await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+        }
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 

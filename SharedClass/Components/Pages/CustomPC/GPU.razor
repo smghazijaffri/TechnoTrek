@@ -46,9 +46,30 @@
 
     private async Task Select(ItemClass selectedGPU)
     {
-        string component = "Graphics Card";
-        await _protectedLocalStore.SetLocalAsync(component, selectedGPU.ItemCode);
-        Snackbar.Clear();
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Power Supply"))
+        {
+            string Processor = await _protectedLocalStore.GetLocalAsync<string>("Power Supply");
+
+            if (!string.IsNullOrEmpty(Processor))
+            {
+                await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+
+                await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
+
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
+            }
+            else
+            {
+                await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
+            }
+        }
+        else
+        {
+            await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
+        }
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 

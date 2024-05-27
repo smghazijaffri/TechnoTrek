@@ -195,7 +195,7 @@
                                 </div>
                             </td>
                             <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
-                            <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
+                            <td><input type="text" class="form-control" inputmode="numeric" @bind="item.Amount" readonly /></td>
                         </tr>
                     }
                 </tbody>
@@ -306,8 +306,6 @@
             {
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
-                    // var PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
-                    // var QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
                     bom.DocumentDate = DateTime.Now;
                     bom.Type = "Manual";
                     if (BOMID != null)
@@ -386,7 +384,7 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
+                StringBuilder titleBuilder = new StringBuilder("BOM for ");
 
                 foreach (string data in ItemName)
                 {
@@ -455,19 +453,17 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from BOM where BOMID = @BOMID", new { BOMID = bom.BOMID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == ProductionStatus.ToReceiveBill && !ToReceiveBill) { return "Purchase Order has already been submitted changes cannot be done"; }
+                    if (GetStatus == ProductionStatus.ToReceiveBill && !ToReceiveBill) { return "BOM has already been submitted changes cannot be done"; }
 
-                    if (GetStatus == ProductionStatus.Cancelled && !IsCancelled) { return "This Purchase Order has already been Cancelled"; }
+                    if (GetStatus == ProductionStatus.Cancelled && !IsCancelled) { return "This BOM has already been Cancelled"; }
                 }
                 else
                 {
-                    return "Purchase Order ID does not exist";
+                    return "BOM ID does not exist";
                 }
             }
 
             if (bom.DocumentDate == null) return "Please Enter Document Date";
-
-
 
             foreach (var PO in Items)
             {
@@ -502,22 +498,6 @@
             Snackbar.Add(notification, Severity.Error);
         }
     }
-
-    // private string GetSubmitButtonText()
-    // {
-    //     if (ToReceiveBill)
-    //     {
-    //         return "Cancel";
-    //     }
-    //     else if (IsDraft)
-    //     {
-    //         return "Submit";
-    //     }
-    //     else
-    //     {
-    //         return "Save";
-    //     }
-    // }
 
     private void ToggleApproval()
     {
@@ -560,23 +540,17 @@
 
     // private void HandleFormInput()
     // {
-    //     if (IsDraft)
+    //     if (Is)
     //     {
     //         IsSaving = true;
     //         IsDraft = false;
     //         StateHasChanged();
     //     }
     // }
+
     public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownItem.FilterOptions(e, rowIndex);
-        // if (result == true)
-        // {
-        //     if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
-        //     {
-        //         Items[rowIndex].Item = "";
-        //     }
-        // }
         StateHasChanged();
     }
 
@@ -602,6 +576,7 @@
         }
         StateHasChanged();
     }
+
     public void SelectUOMOption(option options, int rowIndex)
     {
         bool result = DropDownUOM.SelectOption(options, rowIndex);
@@ -628,7 +603,7 @@
 
         }
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel BOM", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
@@ -654,11 +629,8 @@
         }
     }
 
-
-
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
     }
-
 }
