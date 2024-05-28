@@ -9,6 +9,7 @@
 
 @layout AdminLayout;
 @inject Select select;
+@inject Delete delete;
 @inject ISnackbar Snackbar;
 @inject RequestForQuotation rfq;
 @inject ProtectedLocalStorage _protectedLocalStore;
@@ -16,46 +17,51 @@
 
 @if (isLoading)
 {
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="d-flex justify-content-end">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                                   Href="/requestforquotation/new-request-for-quotation" Size="Size.Large">Create</MudButton>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-12">
-                    <MudTable @ref="_table" T="RequestForQuotation" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                              OnRowClick="@OnRowClick" Filter="new Func<RequestForQuotation,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
-
-                        <ToolBarContent>
-                            <MudText Typo="Typo.h6">Requests for Quotation</MudText>
-                            <MudSpacer />
-                            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                        </ToolBarContent>
-
-                        <HeaderContent>
-                            <MudTh>Quotation Number</MudTh>
-                            <MudTh>Title</MudTh>
-                            <MudTh>Status</MudTh>
-                            <MudTh>Document Date</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Quotation Number">@context.RFQNumber</MudTd>
-                            <MudTd DataLabel="Title">@context.RFQName</MudTd>
-                            <MudTd DataLabel="Document Date">@context.Status</MudTd>
-                            <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
-                        </RowTemplate>
-                        <PagerContent>
-                            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-                        </PagerContent>
-                    </MudTable>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               Href="/requestforquotation/new-request-for-quotation" Size="Size.Large">Create</MudButton>
+                    @if (selectedItems.Any())
+                    {
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
+                                   Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                    }
                 </div>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <MudTable @ref="_table" T="RequestForQuotation" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                          OnRowClick="@OnRowClick" Filter="new Func<RequestForQuotation,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Requests for Quotation</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+
+                    <HeaderContent>
+                        <MudTh>Quotation Number</MudTh>
+                        <MudTh>Title</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Document Date</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Quotation Number">@context.RFQNumber</MudTd>
+                        <MudTd DataLabel="Title">@context.RFQName</MudTd>
+                        <MudTd DataLabel="Document Date">@context.Status</MudTd>
+                        <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                </MudTable>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -83,9 +89,8 @@
     //authorization
 
     private string searchString1 = "";
-    private bool _selectOnRowClick = false;
+    private bool _selectOnRowClick = true;
     private MudTable<RequestForQuotation> _table;
-    private string _selectedItemText = "No row clicked";
     private IEnumerable<RequestForQuotation> Elements = new List<RequestForQuotation>();
     private HashSet<RequestForQuotation> selectedItems = new HashSet<RequestForQuotation>();
 
@@ -110,5 +115,39 @@
         if ($"{element.RFQNumber} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
+    }
+
+    private async void DeleteSelectedItems()
+    {
+        if (selectedItems == null || !selectedItems.Any())
+        {
+            Snackbar.Add("No items selected to delete", Severity.Info);
+            return;
+        }
+
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Draft" || item.Status == "Cancelled").ToList();
+        if (itemsToDelete.Count == 0)
+        {
+            Snackbar.Add("No items with status 'Draft' or 'Cancelled' to delete", Severity.Info);
+            return;
+        }
+
+        try
+        {
+            foreach (var item in itemsToDelete)
+            {
+                await delete.DeleteFromTable("RequestForQuotation", "RFQNumber", item.RFQNumber, "RFQ_Items");
+            }
+
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.RFQNumber == e.RFQNumber)).ToList();
+            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+        }
+
+        selectedItems.Clear();
+        StateHasChanged();
     }
 }

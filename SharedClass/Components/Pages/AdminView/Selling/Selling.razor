@@ -10,31 +10,56 @@
 
 @if (isLoading)
 {
-        <div class="row">
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleorder" Style="border-radius:10px">
-                        Sales Order
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
-            
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/goodissue" Style="border-radius:10px">
-                        Goods Issue
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
+    <h4>Quick Access</h4>
+    <div class="row">
+        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+            <MudList Clickable="true">
+                <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
+                    Items
+                </MudListItem>
+            </MudList>
+        </MudPaper>
+        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+            <MudList Clickable="true">
+                <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
+                    UOM
+                </MudListItem>
+            </MudList>
+        </MudPaper>
+        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+            <MudList Clickable="true">
+                <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
+                    Vendor
+                </MudListItem>
+            </MudList>
+        </MudPaper>
+    </div>
+    <h4>Forms</h4>
+    <div class="row">
+        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+            <MudList Clickable="true">
+                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleorder" Style="border-radius:10px">
+                    Sales Order
+                </MudListItem>
+            </MudList>
+        </MudPaper>
 
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleinvoice" Style="border-radius:10px">
-                        Sales Invoice
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
-        </div>
+        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+            <MudList Clickable="true">
+                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/goodissue" Style="border-radius:10px">
+                    Goods Issue
+                </MudListItem>
+            </MudList>
+        </MudPaper>
+
+        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+            <MudList Clickable="true">
+                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleinvoice" Style="border-radius:10px">
+                    Sales Invoice
+                </MudListItem>
+            </MudList>
+        </MudPaper>
+    </div>
 }
 
 @code {

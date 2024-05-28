@@ -1,17 +1,19 @@
-﻿@using static MudBlazor.CategoryTypes
+﻿@page "/purchaseinvoice"
+
+@using static MudBlazor.CategoryTypes
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
 @using System.Globalization
 @using System.Net.Http.Json
-@page "/purchaseinvoice"
 
 @layout AdminLayout;
 @inject Select select;
+@inject Delete delete;
 @inject ISnackbar Snackbar;
 @inject PurchaseInvoice invoice;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -21,6 +23,11 @@
                 <div class="d-flex justify-content-end">
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
                                Href="/purchaseinvoice/new-purchase-invoice" Size="Size.Large">Create</MudButton>
+                    @if (selectedItems.Any())
+                    {
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
+                                   Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                    }
                 </div>
             </div>
         </div>
@@ -84,9 +91,8 @@
     //authorization
 
     private string searchString1 = "";
-    private bool _selectOnRowClick = false;
+    private bool _selectOnRowClick = true;
     private MudTable<PurchaseInvoice> _table;
-    private string _selectedItemText = "No row clicked";
     private IEnumerable<PurchaseInvoice> Elements = new List<PurchaseInvoice>();
     private HashSet<PurchaseInvoice> selectedItems = new HashSet<PurchaseInvoice>();
 
@@ -111,5 +117,39 @@
         if ($"{element.PurchaseInvoiceID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
+    }
+
+    private async void DeleteSelectedItems()
+    {
+        if (selectedItems == null || !selectedItems.Any())
+        {
+            Snackbar.Add("No items selected to delete", Severity.Info);
+            return;
+        }
+
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Draft" || item.Status == "Cancelled").ToList();
+        if (itemsToDelete.Count == 0)
+        {
+            Snackbar.Add("No items with status 'Draft' or 'Cancelled' to delete", Severity.Info);
+            return;
+        }
+
+        try
+        {
+            foreach (var item in itemsToDelete)
+            {
+                await delete.DeleteFromTable("PurchaseInvoice", "PurchaseInvoiceID", item.PurchaseInvoiceID, "PI_Items");
+            }
+
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.PurchaseInvoiceID == e.PurchaseInvoiceID)).ToList();
+            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+        }
+
+        selectedItems.Clear();
+        StateHasChanged();
     }
 }
