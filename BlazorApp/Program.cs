@@ -52,6 +52,7 @@ builder.Services.AddScoped<AlternateItem>();
 builder.Services.AddScoped<UnitofMeasure>();
 builder.Services.AddScoped<SingleDropDown>();
 builder.Services.AddScoped<PurchaseOrders>();
+builder.Services.AddScoped<ProductionOrder>();
 builder.Services.AddScoped<PurchaseInvoice>();
 builder.Services.AddScoped<ExampleJsInterop>();
 builder.Services.AddScoped<RequestForQuotation>();
