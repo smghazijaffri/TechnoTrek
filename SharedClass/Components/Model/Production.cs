@@ -10,8 +10,10 @@
         public DateTime DocumentDate { get; set; }
         public bool IsActive { get; set; }
     }
+
     public class BOM_Item : BaseRecord
     {
+        //public string ProductionOrderID { get; set; }
         public bool Selected { get; set; }
         public string BOMID { get; set; }
         public string Item { get; set; }
@@ -22,4 +24,12 @@
         public int Amount { get; set; }
     }
 
+    public class ProductionOrder : BaseRecord
+    {
+        public string ProductionOrderID { get; set; }
+        public string BOMID { get; set; }
+        public string Status { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+    }
 }

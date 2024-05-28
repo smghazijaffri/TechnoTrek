@@ -67,14 +67,14 @@
         <div class="col-6 d-flex justify-content-end">
             @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePR">
+                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                     @GetSubmitButtonText()
                 </button>
             }
             @if (IsApproved && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO"> Purchase Order</li>
                         <hr class="m-1 border-primary" />

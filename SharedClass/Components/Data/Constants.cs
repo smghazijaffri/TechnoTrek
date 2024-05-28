@@ -46,13 +46,19 @@
         public const string PartiallyPaid = "Partially Paid";
         public const string ToReceiveBill = "To Receive and Bill";
     }
+
     public class ProductionStatus
     {
-        public const string Active = "Active";
-        public const string ToReceiveBill = "InActive";
+        public const string Draft = "Draft";
         public const string Saved = "Saved";
+        public const string Active = "Active";
+        public const string Closed = "Closed";
+        public const string Stopped = "Stopped";
+        public const string InActive = "InActive";
+        public const string Process = "In Process";
         public const string Cancelled = "Cancelled";
-
-
+        public const string Submitted = "Submitted";
+        public const string Completed = "Completed";
+        public const string NotStarted = "Not Started";
     }
 }

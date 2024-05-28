@@ -63,14 +63,14 @@
         <div class="col-6 d-flex justify-content-end">
             @if (!ReadonlyHidden)
             {
-                <button type="submit" class="btn btn-primary rounded-3 text-sm-center" @onclick="SavePO">
+                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
                     @GetSubmitButtonText()
                 </button>
             }
             @if (ToReceiveBill && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
                         <hr class="m-1 border-primary" />
@@ -84,7 +84,7 @@
             @if (ToReceive || ToBill && !IsCancelled && !IsCompleted)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li hidden="@ToBill"><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Goods Receipt</a></li>
                         <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
@@ -475,7 +475,7 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
+                StringBuilder titleBuilder = new StringBuilder("Purchase Order for ");
 
                 foreach (string data in ItemName)
                 {
