@@ -75,10 +75,8 @@
 
     private async Task SubmitForm()
     {
-        // Call the JavaScript function to perform validation
         var isValid = await JSRuntime.InvokeAsync<bool>("validateForm");
 
-        // If validation passes, proceed with form submission
         if (isValid)
         {
             SaveChanges();
@@ -115,7 +113,6 @@
         }
         update.Uupdate(model.Id);
         OnSaveChanges.InvokeAsync(model);
-        // Close the modal after saving changes
         CloseModal();
     }
 

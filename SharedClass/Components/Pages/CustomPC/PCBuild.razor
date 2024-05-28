@@ -117,7 +117,7 @@
                                 <h5>Total:</h5>
                             </div>
                             <div class="col-6 text-right">
-                                <h6 >Rs. @totalPrice</h6>
+                                <h6>Rs. @totalPrice</h6>
                             </div>
                         </div>
 
@@ -493,24 +493,32 @@
 
     private async void HandleInputModalSaveChanges(BuildPcViewModel model)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName") &&
-        await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact"))
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName"))
         {
-            if (await _protectedLocalStore.GetLocalAsync<string>("customerName") != model.Name ||
-            await _protectedLocalStore.GetLocalAsync<string>("customerContact") != model.Contact)
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact"))
             {
-                await _protectedLocalStore.SetLocalAsync("Memory", "");
-                await _protectedLocalStore.SetLocalAsync("Cooler", "");
-                await _protectedLocalStore.SetLocalAsync("Storage", "");
-                await _protectedLocalStore.SetLocalAsync("Processor", "");
-                await _protectedLocalStore.SetLocalAsync("Motherboard", "");
-                await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-                await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-                await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
-            }
+                {
+                    if (await _protectedLocalStore.GetLocalAsync<string>("customerName") != model.Name ||
+                    await _protectedLocalStore.GetLocalAsync<string>("customerContact") != model.Contact)
+                    {
+                        await _protectedLocalStore.SetLocalAsync("Memory", "");
+                        await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                        await _protectedLocalStore.SetLocalAsync("Storage", "");
+                        await _protectedLocalStore.SetLocalAsync("Processor", "");
+                        await _protectedLocalStore.SetLocalAsync("Motherboard", "");
+                        await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                        await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+                        await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
 
-            await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
-            await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
+                        await InvokeAsync(OnInitialized);
+                        IsVisible = false;
+                        isModalOpen = false;
+                        isQuickViewVisible = false;
+                    }
+                    await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
+                    await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
+                }
+            }
         }
         else
         {
@@ -549,13 +557,13 @@
     //             {
     //                 titleBuilder.Append(data);
     //                 titleBuilder.Append(", ");
-    //             }
+        //             }
 
     //             if (BOMItems.Count > 0)
     //             {
     //                 titleBuilder.Length -= 2;
     //                 titleBuilder.Append(".");
-    //             }
+        //             }
 
     //             bom.BOMName = titleBuilder.ToString();
 
@@ -569,7 +577,7 @@
     //                 PO.Quantity = 1;
     //                 PO.UOM = "Each";
     //                 crud.CRD(PO, "BOMItem");
-    //             }
+        //             }
 
     //             return "BOM Saved Successfully";
     //         }
