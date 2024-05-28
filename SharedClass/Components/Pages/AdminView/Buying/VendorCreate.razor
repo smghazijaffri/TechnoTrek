@@ -250,6 +250,21 @@
             if (string.IsNullOrWhiteSpace(vendor.Address)) { return $"Please enter Vendor Address"; }
             if (string.IsNullOrWhiteSpace(vendor.Contact)) { return $"Please enter Vendor Contact"; }
             if (string.IsNullOrWhiteSpace(vendor.Email)) { return $"Please enter Vendor Email"; }
+            if (vendor.VendorID != null)
+            {
+                int countvendorEmail = db.QueryFirstOrDefault<int>("Select Count(1) from Vendor where VendorID != @VendorID and Email = @Email", new { VendorID = vendor.VendorID, Email = vendor.Email });
+                if (countvendorEmail == 0)
+                {
+                    return "This Email is already in use";
+                }
+                int countvendorContact = db.QueryFirstOrDefault<int>("Select Count(1) from Vendor where VendorID != @VendorID and Contact = @Contact", new { VendorID = vendor.VendorID, Contact = vendor.Contact });
+                if (countvendorEmail == 0)
+                {
+                    return "This Contact is already in use";
+                }
+            }
+            if (string.IsNullOrWhiteSpace(vendor.Email)) { return $"Please enter Vendor Email"; }
+            if (string.IsNullOrWhiteSpace(vendor.Email)) { return $"Please enter Vendor Email"; }
 
             return null;
         }
