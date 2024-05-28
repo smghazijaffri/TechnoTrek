@@ -119,18 +119,18 @@
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                    <input type="checkbox" class="me-1" @bind="item.Selected"/>
                                     @(index + 1)
-                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
+                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")">Delete</button>
                                 </div>
                             </td>
                             <td>
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
+                                    <input type="text" id="Item" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
                                            placeholder="Select Unit of Measure" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)"
                                         style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        aria-labelledby="dropdownMenuButton">
                                         <li>
                                             <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
                                                 @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
@@ -153,7 +153,7 @@
             </table>
         </form>
         <div class="col-12">
-            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+            <button class="btn btn-primary rounded-pill" @onclick="AddRow">Add Row</button>
         </div>
     </div>
 
@@ -237,11 +237,10 @@
     private bool IsEnabled = false;
     private bool IsDisabled = false;
     public bool isAuthorized { get; set; }
-    public bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
 
-    List<string> AlternateID = new List<string>();
     List<int> IsDelete = new List<int>();
     public DropDown DropDownUOM = new DropDown();
+    List<string> AlternateID = new List<string>();
     public List<string> UOMName = new List<string>();
     private List<ItemUOM> ItemUOM = new List<ItemUOM>();
     private IEnumerable<ItemClass> itemsFromDatabase = new List<ItemClass>();
