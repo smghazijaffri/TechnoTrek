@@ -4,12 +4,12 @@
 @using SharedClass.Components.Data
 @using System.Globalization
 @using System.Net.Http.Json
-@page "/vendors"
+@page "/customers"
 
 @layout AdminLayout;
 @inject Select select;
 @inject Delete delete;
-@inject Vendor vendor;
+@inject Customer customer;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
@@ -21,13 +21,14 @@
             <div class="col-md-12">
                 <div class="d-flex justify-content-end">
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                        Style="text-transform:none; margin-bottom: 20px;" Href="/vendors/new-vendor" Size="Size.Large">
-                        Create</MudButton>
+                               Style="text-transform:none; margin-bottom: 20px;" Href="/customers/new-customer" Size="Size.Large">
+                        Create
+                    </MudButton>
                     @if (selectedItems.Any())
                     {
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
-                            Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
-                            Size="Size.Large">Delete</MudButton>
+                                   Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
+                                   Size="Size.Large">Delete</MudButton>
                     }
                 </div>
             </div>
@@ -35,28 +36,28 @@
 
         <div class="row">
             <div class="col-md-12">
-                <MudTable @ref="_table" T="Vendor" Items="@Elements" MultiSelection="true"
-                    @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
-                    Filter="new Func<Vendor,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                <MudTable @ref="_table" T="Customer" Items="@Elements" MultiSelection="true"
+                          @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
+                          Filter="new Func<Customer,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                     <ToolBarContent>
-                        <MudText Typo="Typo.h6">Vendors</MudText>
+                        <MudText Typo="Typo.h6">Customers</MudText>
                         <MudSpacer />
                         <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
-                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
                     </ToolBarContent>
 
                     <HeaderContent>
-                        <MudTh>Vendor Name</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh>Vendor Group</MudTh>
-                        <MudTh>Vendor Type</MudTh>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Address</MudTh>
+                        <MudTh>Contact</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Vendor Name">@context.VendorName</MudTd>
-                        <MudTd DataLabel="Status">@context.Status</MudTd>
-                        <MudTd DataLabel="Vendor Group">@context.VendorGroup</MudTd>
-                        <MudTd DataLabel="Vendor Type">@context.VendorType</MudTd>
+                        <MudTd DataLabel="Supplier Name">@context.CustomerID</MudTd>
+                        <MudTd DataLabel="Status">@context.Name</MudTd>
+                        <MudTd DataLabel="Supplier Group">@context.Address</MudTd>
+                        <MudTd DataLabel="Supplier Type">@context.Contact</MudTd>
                     </RowTemplate>
                     <PagerContent>
                         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -91,32 +92,32 @@
     }
     //authorization
 
-    private MudTable<Vendor> _table;
+    private MudTable<Customer> _table;
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
-    private IEnumerable<Vendor> Elements = new List<Vendor>();
-    private HashSet<Vendor> selectedItems = new HashSet<Vendor>();
+    private IEnumerable<Customer> Elements = new List<Customer>();
+    private HashSet<Customer> selectedItems = new HashSet<Customer>();
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetVendorsDataAsync();
+        Elements = await select.GetCustomersDataAsync();
     }
 
-    void OnRowClick(TableRowClickEventArgs<Vendor> args)
+    void OnRowClick(TableRowClickEventArgs<Customer> args)
     {
-        vendor.VendorID = args.Item.VendorID;
-        NavigationManager.NavigateTo($"/vendors/{vendor.VendorID}");
+        customer.CustomerID = args.Item.CustomerID;
+        NavigationManager.NavigateTo($"/customers/{customer.CustomerID}");
     }
 
-    private bool FilterFunc1(Vendor element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(Customer element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(Vendor element, string searchString)
+    private bool FilterFunc(Customer element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.VendorType.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.VendorName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.VendorGroup.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.CustomerID.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Contact.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Address.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
@@ -129,22 +130,16 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
-        if (itemsToDelete.Count == 0)
-        {
-            Snackbar.Add("No vendors with status 'Disabled' to delete", Severity.Info);
-            return;
-        }
-
         try
         {
-            foreach (var item in itemsToDelete)
+            var items = selectedItems.ToList();
+            foreach (var item in items)
             {
-                await delete.DeleteFromTable("Vendor", "VendorID", item.VendorID);
+                await delete.DeleteFromTable("Customer", "CustomerID", item.CustomerID);
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.VendorID == e.VendorID)).ToList();
-            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+            Elements = Elements.Where(e => !items.Any(d => d.CustomerID == e.CustomerID)).ToList();
+            Snackbar.Add($"{items.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)
         {

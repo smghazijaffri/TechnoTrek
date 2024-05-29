@@ -12,7 +12,7 @@
         public DateTime? DeliveryDate { get; set; }
     }
 
-    public class SO_Item : BaseRecord 
+    public class SO_Item : BaseRecord
     {
         public bool Selected { get; set; }
         public string SaleOrderID { get; set; }
@@ -23,7 +23,7 @@
         public int Amount { get; set; }
     }
 
-    public class SalesInvoice : BaseRecord 
+    public class SalesInvoice : BaseRecord
     {
         public string SalesInvoiceID { get; set; }
         public string SalesInvoiceName { get; set; }
@@ -49,7 +49,7 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
-    public class Customer: BaseRecord
+    public class Customer : BaseRecord
     {
         public string CustomerID { get; set; }
         public string Name { get; set; }
@@ -70,7 +70,8 @@
         public DateTime? DocumentDate { get; set; }
     }
 
-    public class GI_Items : BaseRecord {
+    public class GI_Items : BaseRecord
+    {
         public bool Selected { get; set; }
         public string GoodsIssueID { get; set; }
         public string Item { get; set; }
