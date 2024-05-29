@@ -63,7 +63,7 @@
             @if (ToBill && !IsCancelled && !IsCompleted)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li><a @onclick="CreateSI" class="btn ms-2 m-1 text-sm-start">Sales Invoice</a></li>
                     </ul>
@@ -213,10 +213,8 @@
                             </td>
                             <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                             <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
-                           
                         </tr>
                     }
-
                 </tbody>
             </table>
         </form>
@@ -433,6 +431,7 @@
                 header = titleBuilder.ToString();
                 issue.TotalAmount = SumAmounts;
                 issue.TotalQuantity = SumQuantity;
+
                 if (IsSaving)
                 {
                     issue.Status = SaleStatus.Draft;
@@ -441,10 +440,19 @@
                 {
                     issue.Status = SaleStatus.ToBill;
                 }
+                else if (IsCompleted)
+                {
+                    issue.Status = SaleStatus.Completed;
+                }
+                else if (IsCancelled)
+                {
+                    issue.Status = SaleStatus.Cancelled;
+                }
 
-                issue.GoodsIssueID = crud.CRD(issue,"CreateGoodIssue");
+                issue.GoodsIssueID = crud.CRD(issue, "CreateGoodIssue");
                 GIItems.GoodsIssueID = issue.GoodsIssueID;
                 crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+
                 foreach (var GI in Items)
                 {
                     GI.GoodsIssueID = issue.GoodsIssueID;
@@ -452,12 +460,12 @@
                     crud.CRD(GI, "CreateGI_Items");
                 }
 
-                // foreach (var del in IsDelete)
-                // {
-                //     GIItems.RowID = del;
-                //     GIItems.GoodsIssueID = issue.GoodsIssueID;
-                //     crud.CRD(GIItems, "GoodIssueItems", IsDelete: true);
-                // }
+                foreach (var del in IsDelete)
+                {
+                    GIItems.RowID = del;
+                    GIItems.GoodsIssueID = issue.GoodsIssueID;
+                    crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+                }
 
                 IsDelete.Clear();
                 ToggleApproval();
@@ -714,16 +722,16 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodReceipt where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
             if (GetStatus == SaleStatus.Cancelled)
             {
                 Snackbar.Clear();
-                Snackbar.Add("This Good Receipt has already been Cancelled", Severity.Error);
+                Snackbar.Add("This Good Issue has already been Cancelled", Severity.Error);
                 return;
             }
         }
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Goods Receipt", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Goods Issue", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
@@ -737,7 +745,7 @@
         {
             CancelAll cancelall = new CancelAll();
             cancelall.ID = issue.GoodsIssueID;
-            cancelall.type = "Good Receipt";
+            cancelall.type = "Goods Issue";
             crud.CRD(cancelall, "CancelAll");
             ToggleApproval();
         }
@@ -751,7 +759,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from GoodReceipt where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
 
             if (GetStatus != SaleStatus.ToBill)
             {

@@ -34,154 +34,134 @@
         </ol>
     </nav> *@
 
-        <div class="row p-3 align-items-center">
-            <div class="col-6">
-                <h3>
+    <div class="row p-3 align-items-center">
+        <div class="col-6">
+            <h3>
                 @header
                 @if (IsSaving)
                 {
-                            <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsDraft)
                 {
-                            <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
-                }
-                @if (Unpaid)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Success">Unpaid</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
                 @if (PartiallyPaid)
                 {
-                            <MudChip Variant="Variant.Text" Color="Color.Surface">Partially Paid</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Surface">Partially Paid</MudChip>
                 }
                 @if (IsCancelled)
                 {
-                            <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
                 @if (Paid)
                 {
-                            <MudChip Variant="Variant.Text" Color="Color.Success">Paid</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Paid</MudChip>
                 }
                 @if (Overdue)
                 {
-                            <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
+                    <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
                 }
-                </h3>
-            </div>
-            <div class="col-6 d-flex justify-content-end">
-            @if (!Unpaid && !IsCancelled && !Paid && !Overdue)
+            </h3>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            @if (!IsCancelled && !Paid)
             {
-                        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
+                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                     @GetSubmitButtonText()
-                        </button>
+                </button>
             }
-            @* @if (Unpaid && !IsCancelled)
-        {
-        <div class="dropdown m-1" id="dropdown">
-        <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-        <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-        <li><a href="/purchaseorder/new-salesinvoice-order" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
-        <hr class="m-1 border-primary" />
-        <li><a href="/purchaseinvoice/new-salesinvoice-invoice-quotation" class="btn ms-2 m-1 text-sm-start">Request For Quotation</a></li>
-        </ul>
-        </div>
-        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-        Cancel
-        </button>
-        } *@
-            @if (Unpaid || Paid || Overdue && !IsCancelled)
+            @if (Paid || Overdue && !IsCancelled)
             {
-                        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                            Cancel
-                        </button>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                    Cancel
+                </button>
             }
-            </div>
         </div>
+    </div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6" hidden="@DisplaySI">
-                    <label class="form-label">Sales Invoice Number</label>
-                    <input type="text" class="form-control" @bind="salesinvoice.SalesInvoiceID" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Customer</label>
-                    <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
-                        <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.Name"
-                               placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
-                        <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
-                            aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                            <li>
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6" hidden="@DisplaySI">
+                <label class="form-label">Sales Invoice Number</label>
+                <input type="text" class="form-control" @bind="salesinvoice.SalesInvoiceID" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Customer</label>
+                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
+                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.Name"
+                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
+                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                        <li>
                             @if (DropDownCustomer.ListItems[0].FilteredOptions != null)
                             {
                                 @foreach (var option in DropDownCustomer.ListItems[0].FilteredOptions)
                                 {
-                                                <a class="dropdown-item" @onclick="() => SelectCustomerOption(option)">@option.Text</a>
-                                                <hr class="m-1 border-primary" />
+                                    <a class="dropdown-item" @onclick="() => SelectCustomerOption(option)">@option.Text</a>
+                                    <hr class="m-1 border-primary" />
                                 }
                             }
-                                <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
-                            </li>
-                        </ul>
-                    </div>
+                            <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Date</label>
-                    <input type="date" @bind="salesinvoice.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Due Date</label>
-                    <input type="date" @bind="salesinvoice.DueDate" class="form-control" readonly="@ReadonlyHidden">
-                </div>
-                <div class="col-md-6">
-                    <MudRadioGroup T="bool">
-                        <MudRadio @bind-Value="@IsPaid" Color="Color.Success" UnCheckedColor="Color.Default">Is Paid</MudRadio>
-                        <MudRadio @bind-Value="@PartiallyPaid" Color="Color.Success" UnCheckedColor="Color.Default">Is Partially Paid</MudRadio>
-                    </MudRadioGroup>
-                    <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" @bind="salesinvoice.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Due Date</label>
+                <input type="date" @bind="salesinvoice.DueDate" class="form-control" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <MudCheckBox @bind-Value="@salesinvoice.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
+                <MudCheckBox @bind-Value="@salesinvoice.IsPartiallyPaid" Size="Size.Small" Dense="true" Label="Partially Paid" readonly="@Hidden"></MudCheckBox>
+                <MudCheckBox @bind-Value="@salesinvoice.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
+            </div>
+        </form>
+    </div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <h5>Address and Contact</h5>
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6">
-                    <label class="form-label">Customer Address</label>
-                    <input type="text" class="form-control" @bind="customer.Address" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Customer Contact</label>
-                    <input type="text" class="form-control" @bind="customer.Contact" readonly>
-                </div>
-            </form>
-        </div>
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Address and Contact</h5>
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6">
+                <label class="form-label">Customer Address</label>
+                <input type="text" class="form-control" @bind="customer.Address" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Customer Contact</label>
+                <input type="text" class="form-control" @bind="customer.Contact" readonly>
+            </div>
+        </form>
+    </div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <h5>Items</h5>
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox>
-                <table class="table size table-hover">
-                    <thead>
-                        <tr>
-                            <th class="col col-auto" style="width: 50px;">
-                                No.
-                            </th>
-                            <th class="col col-auto">
-                                Item
-                            </th>
-                            <th class="col col-auto" style="width: 160px;">
-                                Quantity
-                            </th>
-                            <th class="col col-auto text-center" style="width: 150px;">
-                                Rate
-                            </th>
-                            <th class="col col-auto text-center" style="width: 150px;">
-                                Amount
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <h5>Items</h5>
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox>
+            <table class="table size table-hover">
+                <thead>
+                    <tr>
+                        <th class="col col-auto" style="width: 50px;">
+                            No.
+                        </th>
+                        <th class="col col-auto">
+                            Item
+                        </th>
+                        <th class="col col-auto" style="width: 160px;">
+                            Quantity
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Rate
+                        </th>
+                        <th class="col col-auto text-center" style="width: 150px;">
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
                     @for (int index = 0; index < Items.Count; index++)
                     {
                         var item = Items[index];
@@ -189,60 +169,60 @@
                         var rowIndex = item.RowID - 1;
                         DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                         item.Amount = (item.Rate * item.Quantity);
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center;">
-                                            <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                     @(index + 1)
-                                            <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                            <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
-                                                   placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                            <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                                aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                                <li>
+                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
                                             {
                                                 @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
-                                                                    <hr class="m-1 border-primary" />
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                                    <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </td>
+                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
 
-                                    <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                                    <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
-                                    <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
-                                </tr>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
+                        </tr>
                     }
-                    </tbody>
-                </table>
-            </form>
-            <div class="col-12">
-                <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
-            </div>
+                </tbody>
+            </table>
+        </form>
+        <div class="col-12">
+            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
         </div>
+    </div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6">
-                    <label class="form-label">Total Quantity</label>
-                    <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Total Amount</label>
-                    <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
-                </div>
-            </form>
-        </div>
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+            <div class="col-md-6">
+                <label class="form-label">Total Quantity</label>
+                <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly="@ReadonlyHidden">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Total Amount</label>
+                <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
+            </div>
+        </form>
+    </div>
 }
 
 @code {
@@ -251,7 +231,6 @@
     private string header = "Create Sales Invoice";
 
     bool isLoading = false;
-    private bool Unpaid = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool Overdue = false;
@@ -263,7 +242,9 @@
     private bool IsPaid { get; set; } = false;
     private bool IsReturn { get; set; } = false;
     private bool PartiallyPaid { get; set; } = false;
-    public bool ReadonlyHidden { get { return IsCancelled || Unpaid || PartiallyPaid || Paid; } }
+    public bool Readonly { get { return IsCancelled || Paid; } }
+    public bool Hidden { get { return IsCancelled || Paid || Overdue; } }
+    public bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid; } }
 
     public DropDown DropDownItem = new DropDown();
 
@@ -284,6 +265,19 @@
             {
                 salesinvoice.DocumentDate = DateTime.Now;
                 salesinvoice.DueDate = DateTime.Now;
+                var GoodsIssueID = string.Empty;
+                var SaleOrderID = string.Empty;
+
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodsIssueID"))
+                {
+                    GoodsIssueID = await _protectedLocalStore.GetLocalAsync<string>("GoodsIssueID");
+                }
+
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleOrderID"))
+                {
+                    SaleOrderID = await _protectedLocalStore.GetLocalAsync<string>("SaleOrderID");
+                }
+
                 if (SalesInvoiceID != null)
                 {
                     salesinvoice = db.QueryFirstOrDefault<SalesInvoice>("select * from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
@@ -295,12 +289,7 @@
 
                     DisplaySI = false;
                     header = salesinvoice.SalesInvoiceName;
-                    if (salesinvoice.Status == SaleStatus.Pending)
-                    {
-                        Unpaid = true;
-                        IsSaving = false;
-                    }
-                    else if (salesinvoice.Status == SaleStatus.Draft)
+                    if (salesinvoice.Status == SaleStatus.Draft)
                     {
                         IsDraft = true;
                         IsSaving = false;
@@ -312,14 +301,45 @@
                     }
                     else if (salesinvoice.Status == SaleStatus.Paid)
                     {
-                        IsPaid = true;
+                        Paid = true;
+                        salesinvoice.IsPaid = true;
+                        IsSaving = false;
+                    }
+                    else if (salesinvoice.Status == SaleStatus.PartiallyPaid)
+                    {
+                        salesinvoice.IsPartiallyPaid = true;
+                        PartiallyPaid = true;
+                        Paid = false;
+                        salesinvoice.IsPaid = false;
                         IsSaving = false;
                     }
                     else if (salesinvoice.Status == SaleStatus.Overdue)
                     {
                         Overdue = true;
+                        salesinvoice.IsPartiallyPaid = false;
+                        PartiallyPaid = false;
+                        Paid = false;
+                        salesinvoice.IsPaid = false;
                         IsSaving = false;
                     }
+                }
+                else if (!string.IsNullOrWhiteSpace(GoodsIssueID))
+                {
+                    salesinvoice.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                    Items = db.Query<SI_Item>("select Quantity ,* from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode  where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                    customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join GoodIssue so on so.CustomerID = c.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                    salesinvoice.RefrenceDocument = GoodsIssueID;
+                    await _protectedLocalStore.SetLocalAsync("GoodsIssueID", "");
+                }
+                else if (!string.IsNullOrWhiteSpace(SaleOrderID))
+                {
+                    salesinvoice.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                    Items = db.Query<SI_Item>("select Quantity ,* from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                    salesinvoice.RefrenceDocument = SaleOrderID;
+                    await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
                 }
                 else
                 {
@@ -392,9 +412,24 @@
                 }
                 else if (IsDraft)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Pending;
+                    if (salesinvoice.IsPaid)
+                    {
+                        salesinvoice.Status = PurchaseStatuses.Paid;
+                    }
+                    else if (salesinvoice.IsPartiallyPaid)
+                    {
+                        salesinvoice.Status = PurchaseStatuses.PartiallyPaid;
+                    }
                 }
-                else if (Unpaid || Paid || Overdue)
+                else if (salesinvoice.IsPaid)
+                {
+                    salesinvoice.Status = PurchaseStatuses.Paid;
+                }
+                else if (Overdue)
+                {
+                    salesinvoice.Status = PurchaseStatuses.Overdue;
+                }
+                else if (salesinvoice.IsPaid || Overdue)
                 {
                     salesinvoice.Status = PurchaseStatuses.Cancelled;
                 }
@@ -429,7 +464,7 @@
                     return "Invoice Saved Successfully";
                 }
 
-                else if (Unpaid || PartiallyPaid || Paid)
+                else if (PartiallyPaid || Paid)
                 {
                     return "Sale Invoice Submitted Successfully";
                 }
@@ -461,7 +496,7 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == SaleStatus.Pending && !Unpaid) return "Sale Invoice has already been submitted changes cannot be done";
+                    if (GetStatus == SaleStatus.Paid && Paid) return "Sale Invoice has already been paid changes cannot be done";
 
                     if (GetStatus == SaleStatus.Cancelled && !IsCancelled) return "This Sale Invoice has already been Cancelled";
 
@@ -476,7 +511,7 @@
 
             if (salesinvoice.CustomerID == null) return "Please Select a Customer";
 
-            // if (salesinvoice.VendorInvoiceNo == null) return "Please Enter Customer Invoice No.";
+            if (salesinvoice.IsPaid == true && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
 
@@ -510,6 +545,7 @@
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Error);
         }
+        StateHasChanged();
     }
 
     private string GetSubmitButtonText()
@@ -528,23 +564,44 @@
     {
         if (IsDraft)
         {
+            if (salesinvoice.IsPaid)
+            {
+                Paid = true;
+            }
+            if (salesinvoice.IsPartiallyPaid)
+            {
+                PartiallyPaid = true;
+            }
             IsDraft = false;
-            Unpaid = true;
             IsSaving = false;
+        }
+        else if (salesinvoice.IsPartiallyPaid)
+        {
+            salesinvoice.IsPartiallyPaid = true; ;
+            PartiallyPaid = true;
+            Paid = false;
+        }
+        else if (salesinvoice.IsPaid)
+        {
+            salesinvoice.IsPaid = true;
+            Overdue = false;
+            Paid = true;
+            PartiallyPaid = false;
+        }
+        else if (Overdue)
+        {
+            if (salesinvoice.IsPaid) { 
+                Overdue = false;
+                Paid = true;
+            }
+            else { Overdue = true; }
         }
         else if (IsSaving)
         {
             IsDraft = true;
             IsSaving = false;
         }
-        else if (Unpaid || Paid || Overdue)
-        {
-            IsCancelled = true;
-            IsSaving = false;
-            Unpaid = false;
-            Paid = false;
-            Overdue = false;
-        }
+        StateHasChanged();
     }
 
     private void AddRow()
