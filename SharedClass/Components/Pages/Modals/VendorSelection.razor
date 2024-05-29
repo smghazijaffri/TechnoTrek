@@ -1,11 +1,12 @@
 ﻿@using SharedClass.Components.Model
 @using Microsoft.Data.SqlClient
 @using Dapper
+
 @inject Vendor vendor;
 @inject Connection con;
 @inject RequestForQuotation rfq;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager navigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); margin-top:60px;">
     <div class="modal-dialog border-0">

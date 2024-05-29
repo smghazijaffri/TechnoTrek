@@ -34,103 +34,103 @@
         </ol>
     </nav> *@
 
-    <div class="row p-3 align-items-center">
-        <div class="col-6">
-            <h3>
+        <div class="row p-3 align-items-center">
+            <div class="col-6">
+                <h3>
                 @header
                 @if (IsSaving)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
                 }
                 @if (IsDraft)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
                 }
                 @if (IsApproved)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
                 }
                 @if (IsCancelled)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
                 }
                 @if (IsOrdered)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
                 }
                 @if (IsReceived)
                 {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
+                            <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
                 }
-            </h3>
-        </div>
-        <div class="col-6 d-flex justify-content-end">
+                </h3>
+            </div>
+            <div class="col-6 d-flex justify-content-end">
             @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
             {
-                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
+                        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                     @GetSubmitButtonText()
-                </button>
+                        </button>
             }
             @if (IsApproved && !IsCancelled)
             {
-                <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO"> Purchase Order</li>
-                        <hr class="m-1 border-primary" />
-                        <li @onclick="CreateRFQ" class="btn ms-2 m-1 text-sm-start">Request For Quotation</li>
-                    </ul>
-                </div>
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                    Cancel
-                </button>
+                        <div class="dropdown m-1" id="dropdown">
+                            <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                            <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                                <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Purchase Order</li>
+                                <hr class="m-1 border-primary" />
+                                <li @onclick="CreateRFQ" class="btn ms-2 m-1 text-sm-start">Request For Quotation</li>
+                            </ul>
+                        </div>
+                        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                            Cancel
+                        </button>
             }
             @if (!IsReceived && IsOrdered && !IsCancelled)
             {
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                    Cancel
-                </button>
+                        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                            Cancel
+                        </button>
             }
+            </div>
         </div>
-    </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6" hidden="@DisplayPR">
-                <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
-            </div>
-        </form>
-    </div>
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <div class="col-md-6" hidden="@DisplayPR">
+                    <label class="form-label">Purchase Requisition Number</label>
+                    <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Date</label>
+                    <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+                </div>
+            </form>
+        </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <table class="table size table-hover">
-                <thead>
-                    <tr>
-                        <th class="col col-auto" style="width: 50px;">
-                            No.
-                        </th>
-                        <th class="col col-auto">
-                            Item
-                        </th>
-                        <th class="col col-auto" style="width: 70px;">
-                            Quantity
-                        </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
-                            UOM
-                        </th>
-                        <th class="col col-auto" style="width: 150px;">
-                            Required By
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+            <h5>Items</h5>
+            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+                <table class="table size table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col col-auto" style="width: 50px;">
+                                No.
+                            </th>
+                            <th class="col col-auto">
+                                Item
+                            </th>
+                            <th class="col col-auto" style="width: 70px;">
+                                Quantity
+                            </th>
+                            <th class="col col-auto text-center" style="width: 150px;">
+                                UOM
+                            </th>
+                            <th class="col col-auto" style="width: 150px;">
+                                Required By
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
                     @for (int index = 0; index < Items.Count; index++)
                     {
                         var item = Items[index];
@@ -139,95 +139,95 @@
                         DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
 
                         var rowIndex = item.RowID - 1;
-                        <tr>
-                            <td>
-                                <div style="display: flex; align-items: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
-                                    <b>@(index + 1)</b>
-                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                        <li>
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center;">
+                                            <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                            <b>@(index + 1)</b>
+                                            <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                            <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                                   placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                            <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                                aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                                <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
                                             {
                                                 @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
-                                                    <hr class="m-1 border-primary" />
+                                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                                    <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
-                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                        <li>
-                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                                    <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                                    <td>
+                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                            <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                                   placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                            <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                                style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                                aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                                <li>
+                                                    <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
                                                 @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
                                                 {
                                                     @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
                                                     {
-                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                        <hr class="m-1 border-primary" />
+                                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                                        <hr class="m-1 border-primary" />
                                                     }
                                                 }
-                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
-                            </td>
-                        </tr>
+                                                        <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
+                                    </td>
+                                </tr>
                     }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
 
-        </form>
-        <div class="col-12">
-            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+            </form>
+            <div class="col-12">
+                <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+            </div>
         </div>
-    </div>
-    <script>
-        function toggleDropdown() {
-            var dropdownMenu = document.getElementById("dropdownMenu");
-            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
-        }
-        $('#quantity').on('input', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        <script>
+            function toggleDropdown() {
+                var dropdownMenu = document.getElementById("dropdownMenu");
+                dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
             }
-        });
-        $('#quantity').on('paste', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+            $('#quantity').on('input', function () {
+                debugger;
+                var inputValue = $(this).val();
+                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-    </script>
+                if (nonNumberRegex.test(inputValue)) {
+                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                }
+            });
+            $('#quantity').on('paste', function () {
+                debugger;
+                var inputValue = $(this).val();
+                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+                if (nonNumberRegex.test(inputValue)) {
+                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+                }
+            });
+        </script>
 }
 
 @code {

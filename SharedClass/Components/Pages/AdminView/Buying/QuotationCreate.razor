@@ -21,8 +21,8 @@
 @inject IJSRuntime JSRuntime;
 @inject RequestForQuotation rfq;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -58,7 +58,7 @@
             @if (IsApproved && !IsCancelled)
             {
                 <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                         <li @onclick="CreateQuotation"><a class="btn ms-2 m-1 text-sm-start">Vendor Quotation</a></li>
                     </ul>

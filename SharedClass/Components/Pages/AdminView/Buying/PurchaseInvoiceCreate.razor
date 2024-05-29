@@ -22,8 +22,8 @@
 @inject PurchaseInvoice purchase;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (isLoading)
 {
@@ -72,20 +72,8 @@
                     @GetSubmitButtonText()
                 </button>
             }
-            @* @if (Unpaid && !IsCancelled)
-        {
-        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-        Cancel
-        </button>
-        } *@
             @if (Unpaid || IsPaid || Overdue && !IsCancelled)
             {
-                @* <div class="dropdown m-1" id="dropdown">
-        <button type="reset" class="btn btn-primary m-1 rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-        <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-        <li><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Purchase Order</a></li>
-        </ul>
-        </div> *@
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
@@ -130,8 +118,8 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label"></label>
-                <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Is Paid" readonly="@ReadonlyHidden"></MudCheckBox>
-                <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Is Return" readonly="@ReadonlyHidden"></MudCheckBox>
+                <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@ReadonlyHidden"></MudCheckBox>
+                <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
 
             </div>
         </form>
