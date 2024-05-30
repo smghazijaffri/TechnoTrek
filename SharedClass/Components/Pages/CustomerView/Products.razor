@@ -1,0 +1,40 @@
+﻿@page "/products";
+
+@inject Select select;
+@inject Insert insert;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
+    <MudTabPanel Text="Motherboards" ToolTip="Motherboards">
+        <Motherboard isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="Processors" ToolTip="Processors">
+        <Processor isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="Graphics Cards" ToolTip="Graphics Cards">
+        <GPU isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="PC Cases" ToolTip="PC Cases">
+        <Case isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="Memory Sticks" ToolTip="Memory Sticks">
+        <Memory isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="Storage Devices" ToolTip="Storage Devices">
+        <Storage isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="Power Supplies" ToolTip="Power Supplies">
+        <PSU isBulk="true" />
+    </MudTabPanel>
+    <MudTabPanel Text="Coolers & Fans" ToolTip="Coolers & Fans">
+        <Cooler isBulk="true" />
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+
+}
