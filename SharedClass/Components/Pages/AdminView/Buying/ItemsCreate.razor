@@ -81,16 +81,16 @@
         </form>
     </div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 400px; overflow-y: auto;">
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Description</h5>
         <form class="" @oninput="HandleFormInput" autocomplete="off">
             <div class="col-md-6 p-3 mb-2">
                 <label class="form-label">Brand</label>
                 <input type="text" class="form-control" @bind="items.Brand">
             </div>
-            <div class="col-sm-9 p-3">
-                <label class="form-label">Description</label>
-                <textarea class="form-control" id="exampleFormControlTextarea1" @bind="items.Description" rows="5"></textarea>
+            <div class="col-md-6 p-3 mb-2">
+                <label class="form-label">Product Page Link</label>
+                <input type="text" @bind="items.Description" placeholder="Product link"></input>
             </div>
         </form>
     </div>
@@ -455,7 +455,7 @@
             if (items.Sellingrate <= 0) { return $"Selling Rate cannot be less than or equal to 0"; }
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
-            if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Description"; }
+            if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }
 
             foreach (var IT in ItemUOM)
             {
