@@ -1,13 +1,52 @@
 ﻿@page "/"
 
-@using SharedClass.Components.Data
-
 @inject Login login;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
 
-
+<MudCarousel Class="mud-width-full" Style="height:100vh" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="true" AutoCycle="true" TData="object">
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/261.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/266.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/274.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/asusBanner.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/caseBanner.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/mouseBanner.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/proArtBanner.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+            <MudImage Src="_content/SharedClass/Images/tufBanner.jpg" Elevation="25" Style="width:100vw;" Class="mx-auto my-auto" />
+        </div>
+    </MudCarouselItem>
+</MudCarousel>
 
 @code {
 
