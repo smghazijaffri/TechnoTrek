@@ -80,7 +80,6 @@
 
     protected override async void OnInitialized()
     {
-        // var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
         isAuthorized = cookieContent;
         if (isAuthorized)
