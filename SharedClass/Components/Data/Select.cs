@@ -142,6 +142,13 @@ namespace SharedClass.Components.Data
             con.Open();
             return await con.QueryAsync<GoodsIssue>("SELECT * FROM GoodIssue");
         }
+
+        public async Task<IEnumerable<Customer>> GetCustomersDataAsync()
+        {
+            con.Close();
+            con.Open();
+            return await con.QueryAsync<Customer>("SELECT * FROM Customer");
+        }
         public DataTable ConvertListToDataTable(List<string> list)
         {
             DataTable table = new DataTable();

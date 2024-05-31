@@ -172,6 +172,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MudBlazor" Version="6.19.1" />
+    <PackageReference Include="MudBlazor.ThemeManager" Version="1.0.9" />
     <PackageReference Include="ProtectedBrowserStorage.NETStandard" Version="1.1.2" />
     <PackageReference Include="Select2.js" Version="4.0.13" />
   </ItemGroup>
