@@ -1,7 +1,7 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Net;
-using System.Net.NetworkInformation;
+﻿using System.Net;
 using System.Net.Sockets;
+using Microsoft.Data.SqlClient;
+using System.Net.NetworkInformation;
 
 namespace SharedClass.Components.Data
 {

@@ -1,96 +1,75 @@
-﻿@using static MudBlazor.CategoryTypes
+﻿@page "/vendors"
+
+@using static MudBlazor.CategoryTypes
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
 @using System.Globalization
 @using System.Net.Http.Json
-@page "/vendors"
+@using Dapper
 
 @layout AdminLayout;
 @inject Select select;
 @inject Delete delete;
 @inject Vendor vendor;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="d-flex justify-content-end">
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                        Style="text-transform:none; margin-bottom: 20px;" Href="/vendors/new-vendor" Size="Size.Large">
-                        Create</MudButton>
-                    @if (selectedItems.Any())
-                    {
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
-                            Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
-                            Size="Size.Large">Delete</MudButton>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-12">
-                <MudTable @ref="_table" T="Vendor" Items="@Elements" MultiSelection="true"
-                    @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
-                    Filter="new Func<Vendor,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
-
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Vendors</MudText>
-                        <MudSpacer />
-                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
-                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
-                    </ToolBarContent>
-
-                    <HeaderContent>
-                        <MudTh>Vendor Name</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh>Vendor Group</MudTh>
-                        <MudTh>Vendor Type</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Vendor Name">@context.VendorName</MudTd>
-                        <MudTd DataLabel="Status">@context.Status</MudTd>
-                        <MudTd DataLabel="Vendor Group">@context.VendorGroup</MudTd>
-                        <MudTd DataLabel="Vendor Type">@context.VendorType</MudTd>
-                    </RowTemplate>
-                    <PagerContent>
-                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-                    </PagerContent>
-                </MudTable>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-end">
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
+                           Style="text-transform:none; margin-bottom: 20px;" Href="/vendors/new-vendor" Size="Size.Large">
+                    Create
+                </MudButton>
+                @if (selectedItems.Any())
+                {
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
+                               Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
+                               Size="Size.Large">Delete</MudButton>
+                }
             </div>
         </div>
     </div>
-}
+
+    <div class="row">
+        <div class="col-md-12">
+            <MudTable @ref="_table" T="Vendor" Items="@Elements" MultiSelection="true"
+                      @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
+                      Filter="new Func<Vendor,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Vendors</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+                </ToolBarContent>
+
+                <HeaderContent>
+                    <MudTh>Vendor Name</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Vendor Group</MudTh>
+                    <MudTh>Vendor Type</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Vendor Name">@context.VendorName</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Vendor Group">@context.VendorGroup</MudTd>
+                    <MudTd DataLabel="Vendor Type">@context.VendorType</MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                </PagerContent>
+            </MudTable>
+        </div>
+    </div>
+</div>
 
 @code {
-    //authorization
-    bool isLoading = false;
-    public bool isAuthorized { get; set; }
-    protected override async void OnInitialized()
-    {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
-        {
-            isLoading = true;
-            StateHasChanged();
-        }
-        else
-        {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-        }
-        base.OnInitialized();
-    }
-    //authorization
-
     private MudTable<Vendor> _table;
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
@@ -99,7 +78,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetVendorsDataAsync();
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        Elements = await db.QueryAsync<Vendor>("SELECT * FROM Vendor");
     }
 
     void OnRowClick(TableRowClickEventArgs<Vendor> args)

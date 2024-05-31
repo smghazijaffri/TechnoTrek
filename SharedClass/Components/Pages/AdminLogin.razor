@@ -28,13 +28,6 @@
     </div>
 </div>
 
-<script defer>
-    function CreateCookie() {
-        let CCookie = document.cookie = "Authorized=true";
-        return CCookie;
-    }
-</script>
-
 @code {
     private string Username = string.Empty;
     private string Password = string.Empty;
@@ -42,23 +35,15 @@
 
     private async void Pagelogin()
     {
-        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime);
+        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, Snackbar);
         if (IsLoginSuccessful)
         {
-            // await localStorage.SetItemAsync("Authorized", true);
             await _protectedLocalStore.SetLocalAsync("Authorized", true);
-            // await localStorage.SetItemAsync("Username", Username);
             await _protectedLocalStore.SetLocalAsync("Username", Username);
 
-            await JSRuntime.InvokeAsync<string>("CreateCookie");
             NavigationManager.NavigateTo("/dashboard");
             Snackbar.Clear();
             Snackbar.Add("Welcome " + Username, Severity.Success);
-        }
-        else
-        {
-            Snackbar.Clear();
-            Snackbar.Add("Invalid Credentials", Severity.Error);
         }
     }
 }

@@ -12,40 +12,38 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-    <h4>Quick Access</h4>
-    <div class="row">
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
-                    Items
-                </MudListItem>
-            </MudList>
-        </MudPaper>
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
-                    UOM
-                </MudListItem>
-            </MudList>
-        </MudPaper>
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
-                    Vendor
-                </MudListItem>
-            </MudList>
-        </MudPaper>
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Filled.Person" Href="/customers" Style="border-radius:10px">
-                    Customer
-                </MudListItem>
-            </MudList>
-        </MudPaper>
-    </div>
-    @* <div class="row">
+<h4>Quick Access</h4>
+<div class="row">
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
+                Items
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
+                UOM
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
+                Vendor
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Filled.Person" Href="/customers" Style="border-radius:10px">
+                Customer
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+</div>
+@* <div class="row">
         <div>
             <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options" />
         </div>
@@ -53,7 +51,6 @@
             <MudChart ChartType="ChartType.Bar" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px"></MudChart>
         </div>
     </div> *@
-}
 
 <script defer>
     window.disableBackGesture = function () {
@@ -73,7 +70,7 @@
 @code {
     bool isLoading = false;
     public string[] XAxisLabels;
-    public bool isAuthorized { get; set; }
+
     public ChartOptions Options = new ChartOptions();
     public List<ChartSeries> Series = new List<ChartSeries>();
 
@@ -82,33 +79,21 @@
     protected override async void OnInitialized()
     {
         var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
-        {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
 
-            isLoading = true;
+        var purchaseRequisitions = await select.GetPR1DataAsync();
+        var groupedData = purchaseRequisitions
+            .Where(pr => pr.DocumentDate.HasValue)
+            .GroupBy(pr => pr.DocumentDate.Value.Month)
+            .Select(group => new { Month = group.Key, Count = group.Count() })
+            .OrderBy(group => group.Month)
+            .ToList();
 
-            var purchaseRequisitions = await select.GetPR1DataAsync();
-            var groupedData = purchaseRequisitions
-                .Where(pr => pr.DocumentDate.HasValue)
-                .GroupBy(pr => pr.DocumentDate.Value.Month)
-                .Select(group => new { Month = group.Key, Count = group.Count() })
-                .OrderBy(group => group.Month)
-                .ToList();
+        Series.Add(new ChartSeries() { Name = "Purchase Requisitions", Data = groupedData.Select(x => (double)x.Count).ToArray() });
+        XAxisLabels = groupedData.Select(x => CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(x.Month)).ToArray();
 
-            Series.Add(new ChartSeries() { Name = "Purchase Requisitions", Data = groupedData.Select(x => (double)x.Count).ToArray() });
-            XAxisLabels = groupedData.Select(x => CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(x.Month)).ToArray();
+        StateHasChanged();
 
-            StateHasChanged();
-        }
-        else
-        {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-        }
         base.OnInitialized();
     }
 

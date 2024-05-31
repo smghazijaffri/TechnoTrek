@@ -24,9 +24,7 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-    @* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+@* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/buying">Buying</a></li>
             <li class="breadcrumb-item"><a href="/purchaserequisition">Purchase Requisition</a></li>
@@ -34,45 +32,45 @@
         </ol>
     </nav> *@
 
-    <div class="row p-3 align-items-center">
-        <div class="col-6">
-            <h3>
-                @header
-                @if (IsSaving)
-                {
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
                     <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
-                }
-                @if (IsDraft)
-                {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
-                }
-                @if (IsApproved)
-                {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
-                }
-                @if (IsCancelled)
-                {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
-                }
-                @if (IsOrdered)
-                {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
-                }
-                @if (IsReceived)
-                {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
-                }
-            </h3>
-        </div>
-        <div class="col-6 d-flex justify-content-end">
-            @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
-            {
-                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
-                    @GetSubmitButtonText()
-                </button>
             }
-            @if (IsApproved && !IsCancelled)
+            @if (IsDraft)
             {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+            }
+            @if (IsApproved)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+            }
+            @if (IsCancelled)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+            }
+            @if (IsOrdered)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
+            }
+            @if (IsReceived)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
+        {
+                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
+                @GetSubmitButtonText()
+                </button>
+        }
+        @if (IsApproved && !IsCancelled)
+        {
                 <div class="dropdown m-1" id="dropdown">
                     <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                     <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
@@ -84,61 +82,61 @@
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
-            }
-            @if (!IsReceived && IsOrdered && !IsCancelled)
-            {
+        }
+        @if (!IsReceived && IsOrdered && !IsCancelled)
+        {
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
-            }
+        }
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6" hidden="@DisplayPR">
+            <label class="form-label">Purchase Requisition Number</label>
+            <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
         </div>
-    </div>
+        <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+        </div>
+    </form>
+</div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6" hidden="@DisplayPR">
-                <label class="form-label">Purchase Requisition Number</label>
-                <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Date</label>
-                <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
-            </div>
-        </form>
-    </div>
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Items</h5>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
+        <table class="table size table-hover">
+            <thead>
+                <tr>
+                    <th class="col col-auto" style="width: 50px;">
+                        No.
+                    </th>
+                    <th class="col col-auto" style="min-width:150px">
+                        Item
+                    </th>
+                    <th class="col col-auto" style="width: 70px;">
+                        Quantity
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        UOM
+                    </th>
+                    <th class="col col-auto" style="width: 150px;">
+                        Required By
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                @for (int index = 0; index < Items.Count; index++)
+                {
+                    var item = Items[index];
+                    item.RowID = index + 1;
+                    DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
-            <table class="table size table-hover">
-                <thead>
-                    <tr>
-                        <th class="col col-auto" style="width: 50px;">
-                            No.
-                        </th>
-                        <th class="col col-auto" style="min-width:150px">
-                            Item
-                        </th>
-                        <th class="col col-auto" style="width: 70px;">
-                            Quantity
-                        </th>
-                        <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
-                            UOM
-                        </th>
-                        <th class="col col-auto" style="width: 150px;">
-                            Required By
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    @for (int index = 0; index < Items.Count; index++)
-                    {
-                        var item = Items[index];
-                        item.RowID = index + 1;
-                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-
-                        var rowIndex = item.RowID - 1;
+                    var rowIndex = item.RowID - 1;
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center;">
@@ -154,14 +152,14 @@
                                     <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
-                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                        @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                        {
+                                            @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
-                                                {
-                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
-                                                    <hr class="m-1 border-primary" />
-                                                }
+                                                            <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                            <hr class="m-1 border-primary" />
                                             }
+                                        }
                                             <button @onclick="NavigateItem" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
                                         </li>
                                     </ul>
@@ -177,14 +175,14 @@
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
-                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
-                                                    {
-                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                        <hr class="m-1 border-primary" />
-                                                    }
+                                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                                <hr class="m-1 border-primary" />
                                                 }
+                                            }
                                                 <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
                                             </div>
                                         </li>
@@ -195,40 +193,39 @@
                                 <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
                             </td>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                }
+            </tbody>
+        </table>
 
-        </form>
-        <div class="col-12">
-            <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
-        </div>
+    </form>
+    <div class="col-12">
+        <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
     </div>
-    <script>
-        function toggleDropdown() {
-            var dropdownMenu = document.getElementById("dropdownMenu");
-            dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+</div>
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+    $('#quantity').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
         }
-        $('#quantity').on('input', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+    });
+    $('#quantity').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-        $('#quantity').on('paste', function () {
-            debugger;
-            var inputValue = $(this).val();
-            var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
-
-            if (nonNumberRegex.test(inputValue)) {
-                $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-            }
-        });
-    </script>
-}
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    });
+</script>
 
 @code {
     [Parameter]
@@ -238,7 +235,6 @@
     bool isMobile = false;
     string DeviceType { get; set; }
 
-    bool isLoading = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool DisplayPR = true;
@@ -247,7 +243,7 @@
     private bool IsReceived = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
-    public bool isAuthorized { get; set; }
+
     public bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsOrdered || IsReceived; } }
 
     public DropDown DropDownUOM = new DropDown();
@@ -260,69 +256,56 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-            if (DeviceType == "Mobile") isMobile = true;
-            isLoading = true;
-            using (SqlConnection db = new SqlConnection(con.connectionString))
+            purchase.DocumentDate = DateTime.Now;
+            if (PRNumber != null)
             {
-                purchase.DocumentDate = DateTime.Now;
-                if (PRNumber != null)
-                {
-                    purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
-                    Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                    ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                    if (purchase == null || Items.Count == 0)
-                        NavigationManager.NavigateTo("/purchaserequisition/");
+                purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
+                Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                if (purchase == null || Items.Count == 0)
+                    NavigationManager.NavigateTo("/purchaserequisition/");
 
-                    DisplayPR = false;
-                    header = purchase.PRname;
-                    if (purchase.Status == PurchaseStatuses.Pending)
-                    {
-                        IsApproved = true;
-                        IsSaving = false;
-                    }
-                    else if (purchase.Status == PurchaseStatuses.Draft)
-                    {
-                        IsDraft = true;
-                        IsSaving = false;
-                    }
-                    else if (purchase.Status == PurchaseStatuses.Cancelled)
-                    {
-                        IsCancelled = true;
-                        IsSaving = false;
-                    }
-                    else if (purchase.Status == PurchaseStatuses.Ordered)
-                    {
-                        IsOrdered = true;
-                        IsSaving = false;
-                    }
-                    else if (purchase.Status == PurchaseStatuses.Received)
-                    {
-                        IsReceived = true;
-                        IsSaving = false;
-                    }
-                }
-                else
+                DisplayPR = false;
+                header = purchase.PRname;
+                if (purchase.Status == PurchaseStatuses.Pending)
                 {
-                    AddRow();
+                    IsApproved = true;
+                    IsSaving = false;
                 }
-
-                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
+                else if (purchase.Status == PurchaseStatuses.Draft)
+                {
+                    IsDraft = true;
+                    IsSaving = false;
+                }
+                else if (purchase.Status == PurchaseStatuses.Cancelled)
+                {
+                    IsCancelled = true;
+                    IsSaving = false;
+                }
+                else if (purchase.Status == PurchaseStatuses.Ordered)
+                {
+                    IsOrdered = true;
+                    IsSaving = false;
+                }
+                else if (purchase.Status == PurchaseStatuses.Received)
+                {
+                    IsReceived = true;
+                    IsSaving = false;
+                }
             }
-            StateHasChanged();
+            else
+            {
+                AddRow();
+            }
+
+            DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+            DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
         }
-        else
-        {
-            isLoading = false;
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-            NavigationManager.NavigateTo("/adminlogin");
-        }
+        StateHasChanged();
 
         base.OnInitialized();
     }

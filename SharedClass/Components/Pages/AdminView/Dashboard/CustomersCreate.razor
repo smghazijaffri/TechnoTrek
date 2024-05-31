@@ -20,91 +20,74 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-    <div class="row p-3 align-items-center">
-        <div class="col-6">
-            <h3>
-                @header
-                @if (IsSaving)
-                {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
-                }
-            </h3>
-        </div>
-        <div class="col-6 d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveCustomer">
-                Save
-            </button>
-        </div>
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+        </h3>
     </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveCustomer">
+            Save
+        </button>
+    </div>
+</div>
 
-    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-        <h5>Name and Type</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-            <div class="col-md-6" hidden>
-                <label class="form-label">Customer ID</label>
-                <input type="text" class="form-control" @bind="customer.CustomerID" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Customer Name</label>
-                <input type="text" @bind="customer.Name" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Customer Address</label>
-                <input type="text" @bind="customer.Address" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Contact Number</label>
-                <input type="text" class="form-control" @bind="customer.Contact">
-            </div>
-        </form>
-    </div>
-}
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Name and Type</h5>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6" hidden>
+            <label class="form-label">Customer ID</label>
+            <input type="text" class="form-control" @bind="customer.CustomerID" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Customer Name</label>
+            <input type="text" @bind="customer.Name" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Customer Address</label>
+            <input type="text" @bind="customer.Address" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Contact Number</label>
+            <input type="text" class="form-control" @bind="customer.Contact">
+        </div>
+    </form>
+</div>
 
 @code {
     [Parameter]
     public string? CustomerID { get; set; }
     private string header = "New Customer";
 
-    bool isLoading = false;
     private bool IsSaving = true;
-    public bool isAuthorized { get; set; }
     public bool ReadonlyHidden { get { return !IsSaving; } }
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
+
+        try
         {
-            isLoading = true;
-            try
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                using (SqlConnection db = new SqlConnection(con.connectionString))
+                if (CustomerID != null)
                 {
-                    if (CustomerID != null)
-                    {
-                        customer = db.QueryFirstOrDefault<Customer>("Select * from Customer where CustomerID = @CustomerID", new { CustomerID = CustomerID });
-                        if (customer == null)
-                            NavigationManager.NavigateTo("/customers/");
-                        header = customer.Name;
-                        IsSaving = false;
-                    }
+                    customer = db.QueryFirstOrDefault<Customer>("Select * from Customer where CustomerID = @CustomerID", new { CustomerID = CustomerID });
+                    if (customer == null)
+                        NavigationManager.NavigateTo("/customers/");
+                    header = customer.Name;
+                    IsSaving = false;
                 }
-                StateHasChanged();
             }
-            catch (Exception)
-            {
-                throw;
-            }
+            StateHasChanged();
         }
-        else
+        catch (Exception)
         {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
+            throw;
         }
 
         base.OnInitialized();
