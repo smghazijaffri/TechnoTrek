@@ -24,295 +24,292 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-        <div class="row p-3 align-items-center">
-            <div class="col-6">
-                <h3>
-                @header
-                @if (IsSaving)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
-                }
-                @if (IsDraft)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
-                }
-                @if (ToReceiveBill)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Warning">To Receive and Bill</MudChip>
-                }
-                @if (ToReceive)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Warning">To Receive</MudChip>
-                }
-                @if (ToBill)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Warning">To Bill</MudChip>
-                }
-                @if (IsCompleted)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Success">Completed</MudChip>
-                }
-                @if (IsCancelled)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
-                }
-                </h3>
-            </div>
-            <div class="col-6 d-flex justify-content-end">
-            @if (!ReadonlyHidden)
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
             {
-                        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
-                    @GetSubmitButtonText()
-                        </button>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
             }
-            @if (ToReceiveBill && !IsCancelled)
+            @if (IsDraft)
             {
-                        <div class="dropdown m-1" id="dropdown">
-                            <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-                            <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                                <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
-                                <hr class="m-1 border-primary" />
-                                <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePI">Purchase Invoice</li>
-                            </ul>
-                        </div>
-                        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                            Cancel
-                        </button>
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
             }
-            @if (ToReceive || ToBill && !IsCancelled && !IsCompleted)
+            @if (ToReceiveBill)
             {
-                        <div class="dropdown m-1" id="dropdown">
-                            <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-                            <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                                <li hidden="@ToBill"><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Goods Receipt</a></li>
-                                <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
-                                <li hidden="@ToReceive"><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
-                            </ul>
-                        </div>
-                        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                            Cancel
-                        </button>
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">To Receive and Bill</MudChip>
             }
-            </div>
-        </div>
+            @if (ToReceive)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">To Receive</MudChip>
+            }
+            @if (ToBill)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Warning">To Bill</MudChip>
+            }
+            @if (IsCompleted)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Success">Completed</MudChip>
+            }
+            @if (IsCancelled)
+            {
+                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        @if (!ReadonlyHidden)
+        {
+                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
+                @GetSubmitButtonText()
+                </button>
+        }
+        @if (ToReceiveBill && !IsCancelled)
+        {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateGR">Goods Receipt</li>
+                        <hr class="m-1 border-primary" />
+                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePI">Purchase Invoice</li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                    Cancel
+                </button>
+        }
+        @if (ToReceive || ToBill && !IsCancelled && !IsCompleted)
+        {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                        <li hidden="@ToBill"><a href="/goodsreceipt/new-goods-receipt" class="btn ms-2 m-1 text-sm-start">Goods Receipt</a></li>
+                        <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
+                        <li hidden="@ToReceive"><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
+                    </ul>
+                </div>
+                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                    Cancel
+                </button>
+        }
+    </div>
+</div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6" hidden="@DisplayPO">
-                    <label class="form-label">PurchaseORequisition Number</label>
-                    <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Date</label>
-                    <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Vendor</label>
-                    <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
-                        <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
-                               placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
-                        <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
-                            aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                            <li>
-                            @if (DropDownVendor.ListItems[0].FilteredOptions != null)
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6" hidden="@DisplayPO">
+            <label class="form-label">PurchaseORequisition Number</label>
+            <input type="text" class="form-control" @bind="purchase.PurchaseOrderID" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Vendor</label>
+            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e)">
+                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown()" @bind="vendor.VendorName"
+                       placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e)" />
+                <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                    <li>
+                        @if (DropDownVendor.ListItems[0].FilteredOptions != null)
+                        {
+                            @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
                             {
-                                @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
-                                {
-                                                <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
-                                                <hr class="m-1 border-primary" />
-                                }
+                                        <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                        <hr class="m-1 border-primary" />
                             }
-                                <button @onclick="NavigateVendor" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </form>
+                        }
+                        <button @onclick="NavigateVendor" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </form>
+</div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6">
-                    <label class="form-label">Vendor Address</label>
-                    <input type="text" class="form-control" @bind="vendor.Address" readonly>
-                </div>
-            @* <div class="col-md-6">
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Vendor Address</label>
+            <input type="text" class="form-control" @bind="vendor.Address" readonly>
+        </div>
+        @* <div class="col-md-6">
         <label class="form-label">company shipping address</label>
         <input type="text" class="form-control" @bind="purchase.companyshippingaddress" readonly>
         </div> *@
-                <div class="col-md-6">
-                    <label class="form-label">Vendor Contact</label>
-                    <input type="text" class="form-control" @bind="vendor.Contact" readonly>
-                </div>
-            @*  <div class="col-md-6">
+        <div class="col-md-6">
+            <label class="form-label">Vendor Contact</label>
+            <input type="text" class="form-control" @bind="vendor.Contact" readonly>
+        </div>
+        @*  <div class="col-md-6">
         <label class="form-label">company billing address</label>
         <input type="text" class="form-control" @bind="purchase.companybillingaddress" readonly>
         </div>  *@
-            </form>
-        </div>
+    </form>
+</div>
 
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <h5>Items</h5>
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
-                <table class="table size table-hover">
-                    <thead>
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Items</h5>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
+        <table class="table size table-hover">
+            <thead>
+                <tr>
+                    <th class="col col-auto" style="width: 50px;">
+                        No.
+                    </th>
+                    <th class="col col-auto" style="min-width:150px">
+                        Item
+                    </th>
+                    <th class="col col-auto" style="width: 70px;">
+                        Quantity
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        UOM
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        Rate
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        Amount
+                    </th>
+                    <th class="col col-auto" style="width: 150px;">
+                        Required By
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                @for (int index = 0; index < Items.Count; index++)
+                {
+                    var item = Items[index];
+                    item.RowID = index + 1;
+                    var rowIndex = item.RowID - 1;
+                    DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    item.Amount = (item.Rate * item.Quantity);
                         <tr>
-                            <th class="col col-auto" style="width: 50px;">
-                                No.
-                            </th>
-                            <th class="col col-auto" style="min-width:150px">
-                                Item
-                            </th>
-                            <th class="col col-auto" style="width: 70px;">
-                                Quantity
-                            </th>
-                            <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
-                                UOM
-                            </th>
-                            <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
-                                Rate
-                            </th>
-                            <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
-                                Amount
-                            </th>
-                            <th class="col col-auto" style="width: 150px;">
-                                Required By
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                    @for (int index = 0; index < Items.Count; index++)
-                    {
-                        var item = Items[index];
-                        item.RowID = index + 1;
-                        var rowIndex = item.RowID - 1;
-                        DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                        item.Amount = (item.Rate * item.Quantity);
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center;">
-                                            <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
-                                    @(index + 1)
-                                            <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToReceiveBill">Delete</button>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                            <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
-                                                   placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                            <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                                aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                                <li>
-                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                @(index + 1)
+                                    <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ToReceiveBill">Delete</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                        @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                        {
+                                            @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
+                                                            <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                            <hr class="m-1 border-primary" />
+                                            }
+                                        }
+                                            <button @onclick="NavigateItem" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                            <td>
+                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                        style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                        <li>
+                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
-                                                                    <hr class="m-1 border-primary" />
+                                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                                <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                                    <button @onclick="NavigateItem" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </td>
+                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                            <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
+                            <td>
+                                <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
+                            </td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+    <div class="col-12">
+        <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+    </div>
+</div>
 
-                                    <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                                    <td>
-                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                            <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
-                                                   placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                            <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                                style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                                aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                                <li>
-                                                    <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
-                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
-                                                {
-                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
-                                                    {
-                                                                        <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                                        <hr class="m-1 border-primary" />
-                                                    }
-                                                }
-                                                        <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </td>
-                                    <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
-                                    <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
-                                    <td>
-                                        <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
-                                    </td>
-                                </tr>
-                    }
-                    </tbody>
-                </table>
-            </form>
-            <div class="col-12">
-                <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
-            </div>
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Total Quantity</label>
+            <input type="text" class="form-control" value="@SumQuantity" readonly>
         </div>
-
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6">
-                    <label class="form-label">Total Quantity</label>
-                    <input type="text" class="form-control" value="@SumQuantity" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Total Amount</label>
-                    <input type="text" class="form-control" value="@SumAmounts" readonly>
-                </div>
-            </form>
+        <div class="col-md-6">
+            <label class="form-label">Total Amount</label>
+            <input type="text" class="form-control" value="@SumAmounts" readonly>
         </div>
-        <script>
-            function toggleDropdown() {
-                var dropdownMenu = document.getElementById("dropdownMenu");
-                dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
-            }
-            $('#quantity').on('input', function () {
-                debugger;
-                var inputValue = $(this).val();
-                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+    </form>
+</div>
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+    $('#quantity').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-                if (nonNumberRegex.test(inputValue)) {
-                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-                }
-            });
-            $('#quantity').on('paste', function () {
-                debugger;
-                var inputValue = $(this).val();
-                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    });
+    $('#quantity').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-                if (nonNumberRegex.test(inputValue)) {
-                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-                }
-            }); $('#rate').on('input', function () {
-                debugger;
-                var inputValue = $(this).val();
-                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    }); $('#rate').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-                if (nonNumberRegex.test(inputValue)) {
-                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-                }
-            });
-            $('#rate').on('paste', function () {
-                debugger;
-                var inputValue = $(this).val();
-                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    });
+    $('#rate').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
 
-                if (nonNumberRegex.test(inputValue)) {
-                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-                }
-            });
-        </script>
-}
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    });
+</script>
 
 @code {
     [Parameter]
@@ -322,7 +319,6 @@
     bool isMobile = false;
     string DeviceType { get; set; }
 
-    bool isLoading = false;
     bool IsKeyPresent = false;
     private bool ToBill = false;
     private bool IsDraft = false;
@@ -334,7 +330,7 @@
     private bool IsCancelled = false;
     private bool IsCompleted = false;
     private bool ToReceiveBill = false;
-    public bool isAuthorized { get; set; }
+
     public bool ReadonlyHidden { get { return IsCancelled || ToReceiveBill || ToReceive || ToBill || IsCompleted; } }
 
     public DropDown DropDownUOM = new DropDown();
@@ -357,113 +353,100 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+        try
         {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-            if (DeviceType == "Mobile") isMobile = true;
-            isLoading = true;
-            try
+            var PRNumber = string.Empty;
+            var QuotationID = string.Empty;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                var PRNumber = string.Empty;
-                var QuotationID = string.Empty;
-                using (SqlConnection db = new SqlConnection(con.connectionString))
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PRNumber"))
                 {
-                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PRNumber"))
-                    {
-                        PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
-                    }
-
-                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "QuotationID"))
-                    {
-                        QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
-                    }
-
-                    purchase.DocumentDate = DateTime.Now;
-
-                    if (PONumber != null)
-                    {
-                        purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        if (purchase == null)
-                            NavigationManager.NavigateTo("/purchaseorder/");
-                        Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                        DisplayPO = false;
-                        header = purchase.PurchaseOrderName;
-                        if (purchase.Status == PurchaseStatuses.ToReceiveBill)
-                        {
-                            ToReceiveBill = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.ToReceive)
-                        {
-                            ToReceive = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.ToBill)
-                        {
-                            ToBill = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Draft)
-                        {
-                            IsDraft = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Completed)
-                        {
-                            IsCompleted = true;
-                            IsSaving = false;
-                        }
-                        else if (purchase.Status == PurchaseStatuses.Cancelled)
-                        {
-                            IsCancelled = true;
-                            IsSaving = false;
-                        }
-                    }
-                    else if (!string.IsNullOrWhiteSpace(PRNumber))
-                    {
-                        Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                        ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                        purchase.RefrenceDocument = PRNumber;
-                        await _protectedLocalStore.SetLocalAsync("PRNumber", "");
-                    }
-                    else if (!string.IsNullOrWhiteSpace(QuotationID))
-                    {
-                        purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
-                        Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
-                        ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
-                        foreach (var item in Items)
-                        {
-                            item.RequiredBy = DateTime.Now;
-                        }
-                        vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
-                        purchase.RefrenceDocument = QuotationID;
-                        await _protectedLocalStore.SetLocalAsync("QuotationID", "");
-                    }
-                    else
-                    {
-                        AddRow();
-                    }
-                    DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
-                    DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
+                    PRNumber = await _protectedLocalStore.GetLocalAsync<string>("PRNumber");
                 }
-                StateHasChanged();
+
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "QuotationID"))
+                {
+                    QuotationID = await _protectedLocalStore.GetLocalAsync<string>("QuotationID");
+                }
+
+                purchase.DocumentDate = DateTime.Now;
+
+                if (PONumber != null)
+                {
+                    purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                    if (purchase == null)
+                        NavigationManager.NavigateTo("/purchaseorder/");
+                    Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                    vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
+                    DisplayPO = false;
+                    header = purchase.PurchaseOrderName;
+                    if (purchase.Status == PurchaseStatuses.ToReceiveBill)
+                    {
+                        ToReceiveBill = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.ToReceive)
+                    {
+                        ToReceive = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.ToBill)
+                    {
+                        ToBill = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Draft)
+                    {
+                        IsDraft = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Completed)
+                    {
+                        IsCompleted = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Cancelled)
+                    {
+                        IsCancelled = true;
+                        IsSaving = false;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(PRNumber))
+                {
+                    Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    purchase.RefrenceDocument = PRNumber;
+                    await _protectedLocalStore.SetLocalAsync("PRNumber", "");
+                }
+                else if (!string.IsNullOrWhiteSpace(QuotationID))
+                {
+                    purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                    Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    foreach (var item in Items)
+                    {
+                        item.RequiredBy = DateTime.Now;
+                    }
+                    vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
+                    purchase.RefrenceDocument = QuotationID;
+                    await _protectedLocalStore.SetLocalAsync("QuotationID", "");
+                }
+                else
+                {
+                    AddRow();
+                }
+                DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
+                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
             }
-            catch (Exception)
-            {
-                throw;
-            }
+            StateHasChanged();
         }
-        else
+        catch (Exception)
         {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
+            throw;
         }
 
         base.OnInitialized();
@@ -527,7 +510,7 @@
                 {
                     POItem.RowID = del;
                     POItem.PurchaseOrderID = purchase.PurchaseOrderID;
-                    crud.CRD(POItem, "PurchaseOrderItem",  IsDelete:true);
+                    crud.CRD(POItem, "PurchaseOrderItem", IsDelete: true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();

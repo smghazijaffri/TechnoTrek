@@ -11,47 +11,25 @@
 
 @layout AdminLayout;
 
-@if (isLoading)
-{
-    <h4>Forms</h4>
-    <div class="row">
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/billofmaterial" Style="border-radius:10px">
-                    Bill of Material
-                </MudListItem>
-            </MudList>
-        </MudPaper>
+<h4>Forms</h4>
+<div class="row">
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/billofmaterial" Style="border-radius:10px">
+                Bill of Material
+            </MudListItem>
+        </MudList>
+    </MudPaper>
 
-        <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-            <MudList Clickable="true">
-                <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/productionorder/new-production-order" Style="border-radius:10px">
-                    Production Order
-                </MudListItem>
-            </MudList>
-        </MudPaper>
-    </div>
-}
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/productionorder/new-production-order" Style="border-radius:10px">
+                Production Order
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+</div>
 
 @code {
-    bool isLoading = false;
-    public bool isAuthorized { get; set; }
-    protected override async void OnInitialized()
-    {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
-        {
-            isLoading = true;
-            StateHasChanged();
-        }
-        else
-        {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-        }
-        base.OnInitialized();
-    }
+
 }
