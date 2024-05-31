@@ -79,7 +79,7 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")))
+                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")))
                 {
 
                     string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
@@ -130,6 +130,12 @@
                                 }
                             }
 
+                        }
+                        else
+                        {
+                            await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+                            Snackbar.Clear();
+                            Snackbar.Add("Selection Saved", Severity.Success);
                         }
                     }
                     else

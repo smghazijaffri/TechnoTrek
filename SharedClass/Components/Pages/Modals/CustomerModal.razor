@@ -3,7 +3,9 @@
 @inject NavigationManager navigationManager;
 @inject IJSRuntime JSRuntime;
 @inject Update update;
+@inject CRUD crud;
 @inject ISnackbar Snackbar;
+@inject ProtectedLocalStorage _protectedLocalStore;
 <!-- InputModal.razor -->
 
 <div class="modal" tabindex="-1" id="inputModal" aria-labelledby="inputModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none"); backdrop-filter: blur(15px);">
@@ -25,8 +27,8 @@
                                 </div>
                                 <div class="modal-body">
                                     @* <div class="form-group">
-                                        <label for="name">Customer ID</label>
-                                        <input type="text" class="form-control" id="id" @bind="model.Id" />
+                                    <label for="name">Customer ID</label>
+                                    <input type="text" class="form-control" id="id" @bind="model.Id" />
                                     </div> *@
                                     <div class="form-group pb-4">
                                         @* <label for="name">Name</label> *@
@@ -79,9 +81,29 @@
 
         if (isValid)
         {
-            SaveChanges();
-            Snackbar.Clear();
-            Snackbar.Add("Saved", Severity.Success);
+            // SaveChanges();
+            OnSaveChanges.InvokeAsync(model);
+            Customer customer = new Customer();
+            customer.Name = model.Name;
+            customer.Contact = model.Contact;
+            var customerData = crud.CRD(customer, "CreateCustomer");
+            if (customerData.Contains("Failed"))
+            {
+                Snackbar.Clear();
+                Snackbar.Add(customerData, Severity.Error);
+            }
+            else
+            {
+                customer.CustomerID = customerData;
+                await _protectedLocalStore.SetLocalAsync("customerID", customer.CustomerID);
+                await _protectedLocalStore.SetLocalAsync("customerName", customer.Name);
+                await _protectedLocalStore.SetLocalAsync("customerContact", customer.Contact);
+                Snackbar.Clear();
+                Snackbar.Add("Weclome " + customer.Name, Severity.Success);
+                CloseModal();
+            }
+            // Snackbar.Clear();
+            // Snackbar.Add("Saved", Severity.Success);
         }
     }
 
@@ -103,7 +125,7 @@
         IsVisibleChanged.InvokeAsync(IsVisible);
     }
 
-    private void SaveChanges()
+    private async void SaveChanges()
     {
         // if(model.Id == null)
         // {
@@ -113,10 +135,9 @@
         // }
         // update.Uupdate(model.Id);
 
-        OnSaveChanges.InvokeAsync(model);
-
+       
         // Close the modal after saving changes
-        CloseModal();
+       
     }
 
     [Parameter]

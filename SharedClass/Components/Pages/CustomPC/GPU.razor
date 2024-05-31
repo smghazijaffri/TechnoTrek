@@ -51,7 +51,8 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")))
+                if ( !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+                && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")))
                 {
                     string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
                     string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
@@ -80,7 +81,8 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")))
+            if ( !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+             && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")))
             {
 
                 List<string> CompatItem = new List<string>();
@@ -134,6 +136,12 @@
                             Snackbar.Clear();
                             Snackbar.Add("Selection Saved", Severity.Success);
                         }
+                    }
+                    else
+                    {
+                        await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
+                        Snackbar.Clear();
+                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                 }
                 else

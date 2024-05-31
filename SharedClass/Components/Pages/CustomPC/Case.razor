@@ -52,7 +52,9 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Graphics Card") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Power Supply") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Power Supply")))
+                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+                && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory"))  && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage"))
+                && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Power Supply")))
                 {
                     string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
                     string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
@@ -84,7 +86,9 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Graphics Card") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Power Supply") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Power Supply")))
+            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+            && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage"))
+            && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Power Supply")))
             {
                 List<string> CompatItem = new List<string>();
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Motherboard"));
@@ -129,6 +133,12 @@
                                 Snackbar.Add("Selection Saved", Severity.Success);
                                 await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
                             }
+                        }
+                        else
+                        {
+                            Snackbar.Clear();
+                            Snackbar.Add("Selection Saved", Severity.Success);
+                            await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
                         }
                     }
                 }

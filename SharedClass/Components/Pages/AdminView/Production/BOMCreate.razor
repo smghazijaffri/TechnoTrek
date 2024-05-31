@@ -54,12 +54,12 @@
                     Save
                 </button>
             }
-            @if (IsSaving && !IsCancelled)
+            @* @if (IsSaving && !IsCancelled)
             {
                 <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                     Cancel
                 </button>
-            }
+            } *@
         </div>
     </div>
 
@@ -288,11 +288,11 @@
                         DisplayPO = false;
                         header = bom.BOMID;
                         IsSaving = true;
-                        if (bom.Status == ProductionStatus.Cancelled)
-                        {
-                            IsCancelled = true;
-                        }
-                        else if (bom.IsActive)
+                        // if (bom.Status == ProductionStatus.Cancelled)
+                        // {
+                        //     IsCancelled = true;
+                        // }
+                        if (bom.IsActive)
                         {
                             Active = true;
                         }
@@ -370,7 +370,7 @@
                 bom.BOMName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
 
-                bom.Status = ProductionStatus.Saved;
+                // bom.Status = ProductionStatus.Saved;
 
                 bom.BOMID = crud.CRD(bom, "CreateBOM");
 

@@ -48,7 +48,7 @@
                         <MudTh>Title</MudTh>
                         <MudTh>Item</MudTh>
                         <MudTh>Type</MudTh>
-                        <MudTh>Status</MudTh>
+                        @* <MudTh>Status</MudTh> *@
                         <MudTh>Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
@@ -56,7 +56,7 @@
                         <MudTd DataLabel="Title">@context.BOMName</MudTd>
                         <MudTd DataLabel="Title">@context.ItemName</MudTd>
                         <MudTd DataLabel="Title">@context.Type</MudTd>
-                        <MudTd DataLabel="Status">@context.Status</MudTd>
+                        @* <MudTd DataLabel="Status">@context.Status</MudTd> *@
                         <MudTd DataLabel="Date">@context.DocumentDate</MudTd>
                     </RowTemplate>
                     <PagerContent>
@@ -115,7 +115,7 @@
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.BOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        // if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.ItemName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if ($"{element.BOMID}".Contains(searchString)) return true;
@@ -131,10 +131,10 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "InActive" || item.Status == "Cancelled").ToList();
+        var itemsToDelete = selectedItems.Where(item => item.IsActive == false).ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No items with status 'InActive' or 'Cancelled' to delete", Severity.Info);
+            Snackbar.Add("No items with status 'InActive' to delete", Severity.Info);
             return;
         }
 
@@ -146,7 +146,7 @@
             }
 
             Elements = Elements.Where(e => !itemsToDelete.Any(d => d.BOMID == e.BOMID)).ToList();
-            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+            // Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)
         {

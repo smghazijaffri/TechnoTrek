@@ -5,6 +5,7 @@
 @using SharedClass.Components.Pages.Modals;
 @using SharedClass.Components.Data;
 @using Microsoft.Data.SqlClient;
+@using System.Data;
 @using System.Text
 @using Dapper;
 
@@ -123,7 +124,7 @@
 
                         <div class="row mt-3 m-auto">
                             <div class="col-12 text-center">
-                                <NavLink class="btn btnpc" style="background-color:#A687CB; color:white">Confirm</NavLink>
+                                <NavLink @onclick="SaveBOM" class="btn btnpc" style="background-color:#A687CB; color:white">Confirm</NavLink>
                             </div>
                         </div>
                     </div>
@@ -546,12 +547,75 @@
     }
     public async void SaveBOM()
     {
-        BOM bom = new BOM();
-        string BOMName = await _protectedLocalStore.GetLocalAsync<string>("customerName") + "-" + await _protectedLocalStore.GetLocalAsync<string>("customerContact")+"-"+ DateTime.Now.Date+"-PC";
-        bom.BOMName = BOMName;
-        bom.ItemName = 
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                BOM bom = new BOM();
+                string BOMName = "BOM for " + await _protectedLocalStore.GetLocalAsync<string>("customerName") + "-" + await _protectedLocalStore.GetLocalAsync<string>("customerContact") + "-" + DateTime.Now.Date;
+                bom.BOMName = BOMName;
+                bom.ItemName = await _protectedLocalStore.GetLocalAsync<string>("customerID") + " PC";
+                bom.DocumentDate = DateTime.Now.Date;
+                bom.IsActive = true;
+                bom.Type = "Customer";
+                bom.BOMID =  crud.CRD(bom, "CreateBOM");
 
+                List<CustomPC_Items> customItems = new List<CustomPC_Items>();
+                customItems.Add(new CustomPC_Items { ItemID = MotherboardCode, Quantity = 1 });
+                customItems.Add(new CustomPC_Items { ItemID = SupplyCode, Quantity = 1 });
+                customItems.Add(new CustomPC_Items { ItemID = CaseCode, Quantity = 1 });
+                customItems.Add(new CustomPC_Items { ItemID = CoolerCode, Quantity = 1 });
+                customItems.Add(new CustomPC_Items { ItemID = ProcessorCode, Quantity = 1 });
+                customItems.Add(new CustomPC_Items { ItemID = MemoryCode, Quantity = await _protectedLocalStore.GetLocalAsync<int>("RamQuantity") });
+                customItems.Add(new CustomPC_Items { ItemID = GraphicsCode, Quantity = 1 });
+                customItems.Add(new CustomPC_Items { ItemID = StorageCode, Quantity = await _protectedLocalStore.GetLocalAsync<int>("StorageQuantity") });
+                DataTable dataTable = new DataTable("CustomPC_ItemsTable");
 
+                dataTable.Columns.Add("ItemID", typeof(string));
+                dataTable.Columns.Add("Quantity", typeof(int));
+
+                foreach (var item in customItems)
+                {
+                    DataRow row = dataTable.NewRow();
+                    row["ItemID"] = item.ItemID;
+                    row["Quantity"] = item.Quantity;
+                    dataTable.Rows.Add(row);
+                }
+                var parameters = new DynamicParameters();
+                parameters.Add("@CustomPCItems", dataTable.AsTableValuedParameter("dbo.CustomPC_Items"));
+                parameters.Add("@BOMID", bom.BOMID);
+                parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
+
+                db.Execute("CustomPcBOM_Items", parameters, commandType: CommandType.StoredProcedure);
+                string ErrorMessage = parameters.Get<string>("@ErrorMessage");
+                if (ErrorMessage != null)
+                {
+                    Snackbar.Clear();
+                    Snackbar.Add(ErrorMessage, Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Clear();
+                    Snackbar.Add("Order Confirmed", Severity.Success);
+                    await _protectedLocalStore.SetLocalAsync("Memory", "");
+                    await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                    await _protectedLocalStore.SetLocalAsync("Storage", "");
+                    await _protectedLocalStore.SetLocalAsync("Processor", "");
+                    await _protectedLocalStore.SetLocalAsync("Motherboard", "");
+                    await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                    await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+                    await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+                }
+            }
+            StateHasChanged();
+        }
+        
+    catch (Exception ex)
+        {
+
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
     // public string createBOM()
     // {

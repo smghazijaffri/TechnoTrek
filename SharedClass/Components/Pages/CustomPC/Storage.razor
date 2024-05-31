@@ -21,6 +21,9 @@
                             <div class="card-body">
                                 <h5 class="card-title">@values.Brand</h5>
                                 <h5 class="card-title">@values.ItemName</h5>
+                                <h6>Select Quantity</h6>
+                                <p><MudSlider @bind-Value="quantity" Min="1" Max="4" Color="Color.Dark" ValueLabel="true" /></p>
+
                                 <div>
                                     <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
                                         <h6><span>Show Description</span></h6>
@@ -44,6 +47,8 @@
 
 @code {
     private IEnumerable<ItemClass> IStorage;
+    public double quantity { get; set; } = 1;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,7 +56,8 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
+                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+                && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
                 {
                     string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
                     string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
@@ -79,7 +85,8 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
+            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+            && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
             {
                 string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
                 List<string> CompatItem = new List<string>();
@@ -122,6 +129,7 @@
                             else
                             {
                                 await _protectedLocalStore.SetLocalAsync("Storage", selectedStorage.ItemCode);
+                                await _protectedLocalStore.SetLocalAsync("StorageQuantity", quantity);
                                 Snackbar.Clear();
                                 Snackbar.Add("Selection Saved", Severity.Success);
                             }
@@ -129,14 +137,23 @@
                         else
                         {
                             await _protectedLocalStore.SetLocalAsync("Storage", selectedStorage.ItemCode);
+                            await _protectedLocalStore.SetLocalAsync("StorageQuantity", quantity);
                             Snackbar.Clear();
                             Snackbar.Add("Selection Saved", Severity.Success);
                         }
+                    }
+                    else
+                    {
+                        await _protectedLocalStore.SetLocalAsync("Storage", selectedStorage.ItemCode);
+                        await _protectedLocalStore.SetLocalAsync("StorageQuantity", quantity);
+                        Snackbar.Clear();
+                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                 }
                 else
                 {
                     await _protectedLocalStore.SetLocalAsync("Storage", selectedStorage.ItemCode);
+                    await _protectedLocalStore.SetLocalAsync("StorageQuantity", quantity);
                     Snackbar.Clear();
                     Snackbar.Add("Selection Saved", Severity.Success);
                 }

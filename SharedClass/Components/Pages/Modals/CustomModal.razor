@@ -102,6 +102,15 @@
     {
         CloseQuickView();
         await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
+        if (Model.selectedComponentName == "Storage")
+        {
+            await _protectedLocalStore.SetLocalAsync("StorageQuantity", "");
+
+        }
+        if (Model.selectedComponentName == "Memory")
+        {
+            await _protectedLocalStore.SetLocalAsync("RamQuantity", "");
+        }
         Snackbar.Clear();
         Snackbar.Add("Cancelled", Severity.Error);
     }
