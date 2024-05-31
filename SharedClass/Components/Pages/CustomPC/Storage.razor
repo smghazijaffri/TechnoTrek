@@ -1,6 +1,7 @@
-﻿@using Microsoft.Data.SqlClient
+﻿@using Microsoft.Data.SqlClient;
 @using System.Data;
-@using Dapper
+@using Dapper;
+
 @inject Select select;
 @inject Insert insert;
 @inject Connection con;
@@ -16,56 +17,43 @@
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
                 @foreach (var values in IStorage)
                 {
-                    @if (isBulk)
-                    {
-                        <div class="col mb-4">
-                            <div class="card text-black" style="border-radius:20px;">
-                                <div class="card-body">
-                                    <h5 class="card-title">@values.Brand @values.ItemName</h5>
-                                    <h6 class="card-title">Price</h6>
-                                    <div>
-                                        <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
-                                            <h6><span>Visit Product Page</span></h6>
-                                        </div>
+                    <div class="col mb-4">
+                        <div class="card text-black" style="border-radius:20px;">
+                            <div class="card-body">
+                                <h5 class="card-title">@values.Brand @values.ItemName</h5>
+                                <h6 class="card-title">Price</h6>
+                                <div>
+                                    <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
+                                        <h6><span>Visit Product Page</span></h6>
                                     </div>
-                                    <h6>Select Quantity</h6>
+                                </div>
+                                @if (isBulk)
+                                {
+                                    <h6>Select Quantity: @quantity</h6>
                                     <p><MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
+                                    <h6>Total: @(ItemRates[values.ItemCode] * quantity)</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                                @onclick="() => Select(values)">
+                                                @onclick="() => Order(values, quantity)">
                                             Order
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="col mb-4">
-                            <div class="card text-black" style="border-radius:20px;">
-                                <div class="card-body">
-                                    <h5 class="card-title">@values.Brand</h5>
-                                    <h5 class="card-title">@values.ItemName</h5>
-                                     <h6>Select Quantity</h6>
- <p><MudSlider @bind-Value="Storagequantity" Min="1" Max="4" Color="Color.Dark" ValueLabel="true" /></p>
-
-                                    <div>
-                                        <div class="d-flex justify-content-center"
-                                             @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
-                                            <h6><span>Visit Product Page</span></h6>
-                                        </div>
-                                    </div>
+                                }
+                                else
+                                {
+                                    <h6>Select Quantity: @Storagequantity</h6>
+                                    <p><MudSlider @bind-Value="Storagequantity" Min="1" Max="4" Color="Color.Dark" ValueLabel="true" /></p>
+                                    <h6>Total: @(ItemRates[values.ItemCode] * Storagequantity)</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
                                                 @onclick="() => Select(values)">
                                             Select
                                         </button>
                                     </div>
-                                </div>
+                                }
                             </div>
                         </div>
-                    }
+                    </div>
                 }
             </div>
         }
@@ -86,11 +74,12 @@
     [Parameter]
     public bool isBulk { get; set; }
 
-    public double quantity { get; set; } = 20;
+    public int quantity { get; set; } = 20;
     public int Storagequantity { get; set; } = 1;
 
     private IEnumerable<ItemClass> IStorage;
 
+    private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,36 +87,49 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
-                && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
+                if (isBulk)
                 {
-                    string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
-                    string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
-                    string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
-
-                    IStorage = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "','" + Processor + "','" + Memory + "') and ItemType = 'Storage' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Storage' and Status = 'Enabled'").ToList();
+                    IStorage = await select.GetItemsAsync("Storage");
                 }
                 else
                 {
-                    Snackbar.Clear();
-                    Snackbar.Add("Please reselect other components", Severity.Info);
+                    if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor"))
+                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
+                    {
+                        string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
+                        string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
+                        string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
+
+                        IStorage = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "','" + Processor + "','" + Memory + "') and ItemType = 'Storage' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Storage' and Status = 'Enabled'").ToList();
+                    }
+                    else
+                    {
+                        Snackbar.Clear();
+                        Snackbar.Add("Please reselect other components", Severity.Info);
+                    }
+                }
+                if (IStorage.Any())
+                {
+                    foreach (var item in IStorage)
+                    {
+                        var stock = await select.GetStockDataAsync(item.ItemCode);
+                        ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+                    }
                 }
             }
         }
         catch (Exception ex)
         {
-
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
-        //IStorage = await select.GetItemsAsync("Storage");
     }
 
     private async Task Select(ItemClass selectedStorage)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) 
+            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor"))
             && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")))
             {
                 string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
@@ -135,7 +137,7 @@
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Motherboard"));
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Processor"));
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Memory"));
-                DataTable CompiItem = select.ConvertListToDataTable(CompatItem);
+                DataTable CompiItem = Data.Select.ConvertListToDataTable(CompatItem);
                 var parameters = new DynamicParameters();
                 parameters.Add("@ItemCode", selectedStorage.ItemCode);
                 parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
@@ -199,9 +201,6 @@
                     Snackbar.Clear();
                     Snackbar.Add("Selection Saved", Severity.Success);
                 }
-
-
-                
             }
             else
             {
@@ -209,6 +208,12 @@
                 Snackbar.Add("Please reselect other components", Severity.Info);
             }
         }
+    }
+
+    private async Task Order(ItemClass selected, int quantity)
+    {
+        await _protectedLocalStore.SetLocalAsync("BulkStorage", selected);
+        await _protectedLocalStore.SetLocalAsync("BulkStorageQuantity", quantity);
     }
 
     private async void OnButtonClicked(string message)

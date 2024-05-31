@@ -206,4 +206,11 @@
         public string AlternateID { get; set; }
         public string ItemID { get; set; }
     }
+
+    public class Stock : BaseRecord
+    {
+        public string ItemID { get; set; }
+        public int Quantity { get; set; }
+        public int Rate { get; set; }
+    }
 }
