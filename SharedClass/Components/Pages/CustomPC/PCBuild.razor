@@ -123,7 +123,7 @@
 
                         <div class="row mt-3 m-auto">
                             <div class="col-12 text-center">
-                                <NavLink href="#" class="btn btnpc" style="background-color:#A687CB; color:white">Confirm</NavLink>
+                                <NavLink class="btn btnpc" style="background-color:#A687CB; color:white">Confirm</NavLink>
                             </div>
                         </div>
                     </div>
@@ -544,7 +544,15 @@
             return await db.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode });
         }
     }
+    public async void SaveBOM()
+    {
+        BOM bom = new BOM();
+        string BOMName = await _protectedLocalStore.GetLocalAsync<string>("customerName") + "-" + await _protectedLocalStore.GetLocalAsync<string>("customerContact")+"-"+ DateTime.Now.Date+"-PC";
+        bom.BOMName = BOMName;
+        bom.ItemName = 
 
+
+    }
     // public string createBOM()
     // {
     //     try

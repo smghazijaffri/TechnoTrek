@@ -1,6 +1,8 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using SharedClass.Components.Model;
+using System.Data;
+using System.Xml.Linq;
 
 namespace SharedClass.Components.Data
 {
@@ -139,6 +141,18 @@ namespace SharedClass.Components.Data
             con.Close();
             con.Open();
             return await con.QueryAsync<GoodsIssue>("SELECT * FROM GoodIssue");
+        }
+        public DataTable ConvertListToDataTable(List<string> list)
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("Value", typeof(string));
+
+            foreach (string s in list)
+            {
+                table.Rows.Add(s);
+            }
+
+            return table;
         }
     }
 }

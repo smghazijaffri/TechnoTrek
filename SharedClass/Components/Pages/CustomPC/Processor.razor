@@ -1,5 +1,9 @@
-﻿@inject Select select;
+﻿@using Microsoft.Data.SqlClient
+@using System.Data;
+@using Dapper
+@inject Select select;
 @inject Insert insert;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -43,39 +47,113 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Processors = await select.GetItemsAsync("Processor");
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")))
+                {
+                    string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
+                    Processors = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "') and ItemType = 'Processor' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Processor' and Status = 'Enabled'").ToList();
+                }
+                else
+                {
+                    Snackbar.Clear();
+                    Snackbar.Add("Please reselect other components", Severity.Info);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        // Processors = await select.GetItemsAsync("Processor");
     }
 
     private async Task Select(ItemClass selectedProcessor)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
+        try
         {
-            string Processor = await _protectedLocalStore.GetLocalAsync<string>("Memory");
-
-            if (!string.IsNullOrEmpty(Processor))
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                await _protectedLocalStore.SetLocalAsync("Memory", "");
-                await _protectedLocalStore.SetLocalAsync("Cooler", "");
-                await _protectedLocalStore.SetLocalAsync("Storage", "");
-                await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-                await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-                await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")))
+                {
 
-                await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+                    string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
+                    List<string> CompatItem = new List<string>();
+                    CompatItem.Add(MotherBoard);
+                    DataTable CompiItem = select.ConvertListToDataTable(CompatItem);
+                    var parameters = new DynamicParameters();
+                    parameters.Add("@ItemCode", selectedProcessor.ItemCode);
+                    parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
+                    parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
+                    db.Execute("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
+                    string outputValue = parameters.Get<string>("@Output");
+                    if (outputValue != "Allow")
+                    {
+                        Snackbar.Clear();
+                        Snackbar.Add(outputValue, Severity.Error);
+                    }
 
-                Snackbar.Clear();
-                Snackbar.Add("Please reselect other components", Severity.Info);
+                    else if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+                    {
+                        string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
+                        if (Processor != selectedProcessor.ItemCode)
+                        {
+                            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
+                            {
+
+                                string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
+
+                                if (!string.IsNullOrEmpty(Memory))
+                                {
+                                    await _protectedLocalStore.SetLocalAsync("Memory", "");
+                                    await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                                    await _protectedLocalStore.SetLocalAsync("Storage", "");
+                                    await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                                    await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+                                    await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+
+                                    await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+
+                                    Snackbar.Clear();
+                                    Snackbar.Add("Please reselect other components", Severity.Info);
+                                }
+                                else
+                                {
+                                    await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+                                    Snackbar.Clear();
+                                    Snackbar.Add("Selection Saved", Severity.Success);
+                                }
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+                        Snackbar.Clear();
+                        Snackbar.Add("Selection Saved", Severity.Success);
+                    }
+                    
+                }
+                else
+                {
+                    Snackbar.Clear();
+                    Snackbar.Add("Please reselect other components", Severity.Info);
+                }
             }
-            else
-            {
-                await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
-            }
+
         }
-        else
+        catch (Exception ex)
         {
-            await _protectedLocalStore.SetLocalAsync("Processor", selectedProcessor.ItemCode);
+
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error); 
         }
-        Snackbar.Add("Selection Saved", Severity.Success);
     }
 
     private async void OnButtonClicked(string message)

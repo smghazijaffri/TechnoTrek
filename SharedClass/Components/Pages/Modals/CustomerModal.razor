@@ -105,14 +105,17 @@
 
     private void SaveChanges()
     {
-        if(model.Id == null)
-        {
-            Random random = new Random();
-            int randomNumber = random.Next(101);
-            model.Id = (model.Name + "#" + model.Contact + "#" + Convert.ToString(randomNumber));
-        }
-        update.Uupdate(model.Id);
+        // if(model.Id == null)
+        // {
+        //     Random random = new Random();
+        //     int randomNumber = random.Next(101);
+        //     model.Id = (model.Name + "#" + model.Contact + "#" + Convert.ToString(randomNumber));
+        // }
+        // update.Uupdate(model.Id);
+
         OnSaveChanges.InvokeAsync(model);
+
+        // Close the modal after saving changes
         CloseModal();
     }
 

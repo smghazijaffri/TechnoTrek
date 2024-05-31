@@ -522,7 +522,7 @@
                 {
                     POItem.RowID = del;
                     POItem.PurchaseOrderID = purchase.PurchaseOrderID;
-                    crud.CRD(POItem, "PurchaseOrderItem", System.Data.CommandType.StoredProcedure, true);
+                    crud.CRD(POItem, "PurchaseOrderItem",  IsDelete:true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();
