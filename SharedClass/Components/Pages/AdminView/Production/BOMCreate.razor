@@ -145,7 +145,7 @@
                                                     <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                            <button href="#" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                            <button @onclick="NavigateItem" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -599,5 +599,15 @@
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
+
+    public void NavigateItem()
+    {
+        NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+    }
+
+    public void NavigateItem()
+    {
+        NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
     }
 }
