@@ -48,14 +48,12 @@
                         <MudTh>Title</MudTh>
                         <MudTh>Status</MudTh>
                         <MudTh>Document Date</MudTh>
-                        <MudTh>Creation Date</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd DataLabel="Requisition Number">@context.PRNumber</MudTd>
                         <MudTd DataLabel="Title">@context.PRname</MudTd>
                         <MudTd DataLabel="Status">@context.Status</MudTd>
                         <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
-                        <MudTd DataLabel="Creation Date">@context.CreationDate</MudTd>
                     </RowTemplate>
                     <PagerContent>
                         <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />

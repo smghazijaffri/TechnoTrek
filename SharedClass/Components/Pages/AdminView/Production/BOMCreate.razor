@@ -102,13 +102,13 @@
                         <th class="col col-auto" style="width: 70px;">
                             Quantity
                         </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
+                      <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                             UOM
                         </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
+                      <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                             Rate
                         </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
+                      <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                             Amount
                         </th>
                     </tr>
@@ -134,7 +134,7 @@
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
@@ -157,7 +157,7 @@
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
                                            placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
@@ -235,6 +235,9 @@
     public string? BOMID { get; set; }
     private string header = "New Bill of Material";
 
+    bool isMobile = false;
+    string DeviceType { get; set; }
+
     bool isLoading = false;
     private bool DisplayPO = true;
     private bool IsActive { get; set; } = false;
@@ -270,6 +273,8 @@
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
             isLoading = true;
             try
             {

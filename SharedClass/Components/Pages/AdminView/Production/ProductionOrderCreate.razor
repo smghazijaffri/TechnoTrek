@@ -166,7 +166,7 @@
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
@@ -240,6 +240,9 @@
     public string? PONumber { get; set; }
     private string header = "New Production Order";
 
+    bool isMobile = false;
+    string DeviceType { get; set; }
+
     int value = 0;
 
     bool isLoading = false;
@@ -272,6 +275,8 @@
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
             isLoading = true;
             try
             {

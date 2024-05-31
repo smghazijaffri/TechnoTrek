@@ -85,7 +85,7 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Vendors</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
             <table class="table size table-hover">
                 <thead>
                     <tr>
@@ -122,7 +122,7 @@
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownVendor.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Vendor" readonly="@ReadonlyHidden" @onclick="() => DropDownVendor.ToggleDropdown(rowIndex)" @bind="VendorInfo[rowIndex].VendorName"
                                            placeholder="Select a Vendor" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterVendorOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownVendor.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             @if (DropDownVendor.ListItems[rowIndex].FilteredOptions != null)
@@ -157,20 +157,20 @@
 
     <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
         <h5>Items</h5>
-        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
             <table class="table size table-hover">
                 <thead>
                     <tr>
                         <th class="col col-auto" style="width: 50px;">
                             No.
                         </th>
-                        <th class="col col-auto">
+                        <th class="col col-auto" style="min-width:150px">
                             Item
                         </th>
                         <th class="col col-auto" style="width: 70px;">
                             Quantity
                         </th>
-                        <th class="col col-auto text-center" style="width: 150px;">
+                      <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                             UOM
                         </th>
                         <th class="col col-auto" style="width: 150px;">
@@ -198,7 +198,7 @@
                                 <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
                                            placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
@@ -221,7 +221,7 @@
                                     <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
                                            placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                     <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                        style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                        style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
                                         aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                                         <li>
                                             <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
@@ -285,6 +285,9 @@
     public string? RFQNumber { get; set; }
     private string header = "New Request for Quotation";
 
+    bool isMobile = false;
+    string DeviceType { get; set; }
+
     bool isLoading = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
@@ -316,6 +319,8 @@
         isAuthorized = cookieContent;
         if (isAuthorized)
         {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
             isLoading = true;
             try
             {
