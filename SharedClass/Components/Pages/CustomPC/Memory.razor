@@ -89,7 +89,6 @@
     public double quantity { get; set; } = 20;
     public int Ramquantity { get; set; } = 1;
     private IEnumerable<ItemClass> Memories;
-    public double quantity { get; set; } = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -220,6 +219,6 @@
 
     private async void OnButtonClicked(string message)
     {
-        await JSRuntime.InvokeVoidAsync("openInNewTab", link);
+        await JSRuntime.InvokeVoidAsync("openInNewTab", message);
     }
 }

@@ -90,7 +90,6 @@
     public int Storagequantity { get; set; } = 1;
 
     private IEnumerable<ItemClass> IStorage;
-    public double quantity { get; set; } = 1;
 
 
     protected override async Task OnInitializedAsync()
@@ -214,6 +213,6 @@
 
     private async void OnButtonClicked(string message)
     {
-        await JSRuntime.InvokeVoidAsync("openInNewTab", link);
+        await JSRuntime.InvokeVoidAsync("openInNewTab", message);
     }
 }
