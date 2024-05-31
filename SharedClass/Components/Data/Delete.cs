@@ -12,7 +12,6 @@ namespace SharedClass.Components.Data
         {
             con = GetSqlConnection();
         }
-
         public async Task DeleteFromCustomBuilt(string id, string component, IJSRuntime JSRuntime)
         {
             try
