@@ -21,13 +21,25 @@
 <body>
     <div class="status-bar-safe-area"></div>
 
-    <div id="app"><img id="loader" src="_content/SharedClass/Images/techlogo.png"/></div>
+    <div id="app"><img id="loader" src="_content/SharedClass/Images/techlogo.png" /></div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+    <script>
+        window.detectDeviceType = () => {
+            const userAgent = navigator.userAgent;
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+                return "Mobile";
+            } else if (/iPad/i.test(userAgent)) {
+                return "iPad";
+            } else {
+                return "Desktop";
+            }
+        }
+    </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_framework/blazor.webview.js" autostart="false"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.slim.min.js"></script>
