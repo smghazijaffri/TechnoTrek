@@ -352,62 +352,62 @@
     int totalPrice = 0;
     private string selectedComponentName = "";
 
-    private void ShowQuickView(string componentName)
-    {
-        if (componentName == "Motherboard")
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Processor" && !string.IsNullOrEmpty(Motherboard))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Memory" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Storage" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Graphics Card" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Power Supply" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Gaming Case" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Supply))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else if (componentName == "Cooler" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Supply) && !string.IsNullOrEmpty(Case))
-        {
-            isModalOpen = true;
-            selectedComponentName = componentName;
-            isQuickViewVisible = true;
-        }
-        else
-        {
-            Snackbar.Clear();
-            Snackbar.Add("Please select the previous components first", Severity.Error);
-        }
-    }
+    // private void ShowQuickView(string componentName)
+    // {
+    //     if (componentName == "Motherboard")
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Processor" && !string.IsNullOrEmpty(Motherboard))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Memory" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Storage" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Graphics Card" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Power Supply" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Gaming Case" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Supply))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else if (componentName == "Cooler" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Supply) && !string.IsNullOrEmpty(Case))
+    //     {
+    //         isModalOpen = true;
+    //         selectedComponentName = componentName;
+    //         isQuickViewVisible = true;
+    //     }
+    //     else
+    //     {
+    //         Snackbar.Clear();
+    //         Snackbar.Add("Please select the previous components first", Severity.Error);
+    //     }
+    // }
 
     protected async override void OnInitialized()
     {
@@ -475,35 +475,75 @@
         return (string.Empty, string.Empty, 0);
     }
 
+    private void ShowQuickView(string componentName)
+    {
+        var dependencies = new Dictionary<string, List<string>>()
+        {
+            { "Motherboard", new List<string>() },
+            { "Processor", new List<string> { "Motherboard" } },
+            { "Memory", new List<string> { "Motherboard", "Processor" } },
+            { "Storage", new List<string> { "Motherboard", "Processor", "Memory" } },
+            { "Graphics Card", new List<string> { "Motherboard", "Processor", "Memory", "Storage" } },
+            { "Power Supply", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics" } },
+            { "Gaming Case", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics", "Supply" } },
+            { "Cooler", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics", "Supply", "Case" } }
+        };
+
+        if (dependencies.TryGetValue(componentName, out var requiredComponents))
+        {
+            bool allDependenciesMet = requiredComponents.All(component => !string.IsNullOrEmpty(GetComponentValue(component)));
+
+            if (allDependenciesMet)
+            {
+                isModalOpen = true;
+                selectedComponentName = componentName;
+                isQuickViewVisible = true;
+            }
+            else
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Please select the previous components first", Severity.Error);
+            }
+        }
+    }
+
+    private string GetComponentValue(string componentName)
+    {
+        return componentName switch
+        {
+            "Motherboard" => Motherboard,
+            "Processor" => Processor,
+            "Memory" => Memory,
+            "Storage" => Storage,
+            "Graphics Card" => Graphics,
+            "Power Supply" => Supply,
+            "Gaming Case" => Case,
+            "Cooler" => Cooler,
+            _ => string.Empty
+        };
+    }
 
     private async void HandleInputModalSaveChanges(BuildPcViewModel model)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName"))
-        {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact"))
-            {
-                {
-                    if (await _protectedLocalStore.GetLocalAsync<string>("customerName") != model.Name ||
-                    await _protectedLocalStore.GetLocalAsync<string>("customerContact") != model.Contact)
-                    {
-                        await _protectedLocalStore.SetLocalAsync("Memory", "");
-                        await _protectedLocalStore.SetLocalAsync("Cooler", "");
-                        await _protectedLocalStore.SetLocalAsync("Storage", "");
-                        await _protectedLocalStore.SetLocalAsync("Processor", "");
-                        await _protectedLocalStore.SetLocalAsync("Motherboard", "");
-                        await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-                        await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-                        await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+        bool isCustomerNameStored = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName");
+        bool isCustomerContactStored = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact");
 
-                        await InvokeAsync(OnInitialized);
-                        IsVisible = false;
-                        isModalOpen = false;
-                        isQuickViewVisible = false;
-                    }
-                    await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
-                    await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
-                }
+        if (isCustomerNameStored && isCustomerContactStored)
+        {
+            string storedCustomerName = await _protectedLocalStore.GetLocalAsync<string>("customerName");
+            string storedCustomerContact = await _protectedLocalStore.GetLocalAsync<string>("customerContact");
+
+            if (storedCustomerName != model.Name || storedCustomerContact != model.Contact)
+            {
+                await ClearComponentSelectionsAsync();
+                await InvokeAsync(OnInitialized);
+                IsVisible = false;
+                isModalOpen = false;
+                isQuickViewVisible = false;
             }
+
+            await _protectedLocalStore.SetLocalAsync("customerName", model.Name);
+            await _protectedLocalStore.SetLocalAsync("customerContact", model.Contact);
         }
         else
         {
@@ -512,6 +552,16 @@
         }
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ClearComponentSelectionsAsync()
+    {
+        var componentKeys = new[] { "Memory", "Cooler", "Storage", "Processor", "Motherboard", "Gaming Case", "Power Supply", "Graphics Card" };
+
+        foreach (var key in componentKeys)
+        {
+            await _protectedLocalStore.SetLocalAsync(key, "");
+        }
     }
 
     private async void HandleCloseModal()
