@@ -1,8 +1,7 @@
-﻿using System.Data;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
-using Dapper;
 using MudBlazor;
+using Dapper;
 
 namespace SharedClass.Components.Data
 {
