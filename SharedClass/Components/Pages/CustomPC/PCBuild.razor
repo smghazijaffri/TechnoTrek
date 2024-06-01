@@ -545,6 +545,7 @@
             return await db.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode });
         }
     }
+
     public async void SaveBOM()
     {
         try
@@ -558,7 +559,7 @@
                 bom.DocumentDate = DateTime.Now.Date;
                 bom.IsActive = true;
                 bom.Type = "Customer";
-                bom.BOMID =  crud.CRD(bom, "CreateBOM");
+                bom.BOMID = crud.CRD(bom, "CreateBOM");
 
                 List<CustomPC_Items> customItems = new List<CustomPC_Items>();
                 customItems.Add(new CustomPC_Items { ItemID = MotherboardCode, Quantity = 1 });
@@ -609,54 +610,12 @@
             }
             StateHasChanged();
         }
-        
-    catch (Exception ex)
+
+        catch (Exception ex)
         {
 
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
-    // public string createBOM()
-    // {
-    //     try
-    //     {
-    //         using (SqlConnection db = new SqlConnection(con.connectionString))
-    //         {
-    //             StringBuilder titleBuilder = new StringBuilder("BOM for ");
-
-    //             foreach (string data in CustomItems)
-    //             {
-    //                 titleBuilder.Append(data);
-    //                 titleBuilder.Append(", ");
-        //             }
-
-    //             if (BOMItems.Count > 0)
-    //             {
-    //                 titleBuilder.Length -= 2;
-    //                 titleBuilder.Append(".");
-        //             }
-
-    //             bom.BOMName = titleBuilder.ToString();
-
-    //             bom.Status = ProductionStatus.Active;
-
-    //             bom.BOMID = crud.CRD(bom, "CreateBOM");
-
-    //             foreach (var PO in BOMItems)
-    //             {
-    //                 PO.BOMID = bom.BOMID;
-    //                 PO.Quantity = 1;
-    //                 PO.UOM = "Each";
-    //                 crud.CRD(PO, "BOMItem");
-        //             }
-
-    //             return "BOM Saved Successfully";
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return ex.Message;
-    //     }
-    // }
 }
