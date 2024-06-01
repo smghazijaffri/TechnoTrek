@@ -104,7 +104,7 @@
                         isLoading = false;
                         navigationManager.NavigateTo("/adminlogin");
                         Snackbar.Clear();
-                        Snackbar.Add("Invalid Credentials", Severity.Error);
+                        Snackbar.Add("Not Authorized", Severity.Error);
                     }
                 }
             }
@@ -113,7 +113,7 @@
                 isLoading = false;
                 navigationManager.NavigateTo("/adminlogin");
                 Snackbar.Clear();
-                Snackbar.Add("Invalid Credentials", Severity.Error);
+                Snackbar.Add("Not Authorized", Severity.Error);
             }
             await InvokeAsync(StateHasChanged);
             base.OnInitialized();
@@ -123,6 +123,7 @@
             Console.WriteLine(ex.Message);
         }
     }
+
     private void ToggleDrawer()
     {
         open = !open;
@@ -132,7 +133,7 @@
     {
         await _protectedLocalStore.SetLocalAsync("Authorized", false);
         string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
-        await login.LogOut(User);
+        login.LogOut(User);
         await _protectedLocalStore.SetLocalAsync("Username", "");
         Snackbar.Clear();
         Snackbar.Add("Logged Out", Severity.Error);
