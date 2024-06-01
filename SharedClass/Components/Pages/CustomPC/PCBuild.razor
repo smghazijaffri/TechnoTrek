@@ -413,77 +413,44 @@
     {
         IsVisible = true;
 
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            Memory = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Memory"));
-            MemoryCode = await _protectedLocalStore.GetLocalAsync<string>("Memory");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                MemoryPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = MemoryCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cooler"))
-        {
-            Cooler = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Cooler"));
-            CoolerCode = await _protectedLocalStore.GetLocalAsync<string>("Cooler");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                CoolerPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = CoolerCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage"))
-        {
-            Storage = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Storage"));
-            StorageCode = await _protectedLocalStore.GetLocalAsync<string>("Storage");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                StoragePrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = StorageCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Gaming Case"))
-        {
-            Case = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Gaming Case"));
-            CaseCode = await _protectedLocalStore.GetLocalAsync<string>("Gaming Case");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                CasePrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = CaseCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
-        {
-            Processor = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Processor"));
-            ProcessorCode = await _protectedLocalStore.GetLocalAsync<string>("Processor");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                ProcessorPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = ProcessorCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Power Supply"))
-        {
-            Supply = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Power Supply"));
-            SupplyCode = await _protectedLocalStore.GetLocalAsync<string>("Power Supply");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                SupplyPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = SupplyCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard"))
-        {
-            Motherboard = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Motherboard"));
-            MotherboardCode = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                MotherboardPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = MotherboardCode });
-            }
-        }
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Graphics Card"))
-        {
-            Graphics = await GetItemNameAsync(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card"));
-            GraphicsCode = await _protectedLocalStore.GetLocalAsync<string>("Graphics Card");
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                GraphicsPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode ", new { ItemCode = GraphicsCode });
-            }
+            var itemNames = new[] { "Memory", "Cooler", "Storage", "Gaming Case", "Processor", "Power Supply", "Motherboard", "Graphics Card" };
+            var itemTasks = itemNames.Select(itemName => LoadItemDataAsync(itemName)).ToList();
+
+            var itemResults = await Task.WhenAll(itemTasks);
+
+            Memory = itemResults[0].Name;
+            MemoryCode = itemResults[0].Code;
+            MemoryPrice = itemResults[0].Price;
+
+            Cooler = itemResults[1].Name;
+            CoolerCode = itemResults[1].Code;
+            CoolerPrice = itemResults[1].Price;
+
+            Storage = itemResults[2].Name;
+            StorageCode = itemResults[2].Code;
+            StoragePrice = itemResults[2].Price;
+
+            Case = itemResults[3].Name;
+            CaseCode = itemResults[3].Code;
+            CasePrice = itemResults[3].Price;
+
+            Processor = itemResults[4].Name;
+            ProcessorCode = itemResults[4].Code;
+            ProcessorPrice = itemResults[4].Price;
+
+            Supply = itemResults[5].Name;
+            SupplyCode = itemResults[5].Code;
+            SupplyPrice = itemResults[5].Price;
+
+            Motherboard = itemResults[6].Name;
+            MotherboardCode = itemResults[6].Code;
+            MotherboardPrice = itemResults[6].Price;
+
+            Graphics = itemResults[7].Name;
+            GraphicsCode = itemResults[7].Code;
+            GraphicsPrice = itemResults[7].Price;
         }
 
         totalPrice = 0;
@@ -491,6 +458,23 @@
 
         await InvokeAsync(StateHasChanged);
     }
+
+    private async Task<(string Name, string Code, int Price)> LoadItemDataAsync(string itemName)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName))
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string itemCode = await _protectedLocalStore.GetLocalAsync<string>(itemName);
+                string itemNameResult = await db.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { itemCode });
+                int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = itemCode });
+
+                return (itemNameResult, itemCode, itemPrice);
+            }
+        }
+        return (string.Empty, string.Empty, 0);
+    }
+
 
     private async void HandleInputModalSaveChanges(BuildPcViewModel model)
     {
@@ -536,14 +520,6 @@
         IsVisible = false;
         isModalOpen = false;
         isQuickViewVisible = false;
-    }
-
-    public async Task<string> GetItemNameAsync(string ItemCode)
-    {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        {
-            return await db.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode });
-        }
     }
 
     public async void SaveBOM()
