@@ -352,63 +352,6 @@
     int totalPrice = 0;
     private string selectedComponentName = "";
 
-    // private void ShowQuickView(string componentName)
-    // {
-    //     if (componentName == "Motherboard")
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Processor" && !string.IsNullOrEmpty(Motherboard))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Memory" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Storage" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Graphics Card" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Power Supply" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Gaming Case" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Supply))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else if (componentName == "Cooler" && !string.IsNullOrEmpty(Motherboard) && !string.IsNullOrEmpty(Processor) && !string.IsNullOrEmpty(Memory) && !string.IsNullOrEmpty(Storage) && !string.IsNullOrEmpty(Graphics) && !string.IsNullOrEmpty(Supply) && !string.IsNullOrEmpty(Case))
-    //     {
-    //         isModalOpen = true;
-    //         selectedComponentName = componentName;
-    //         isQuickViewVisible = true;
-    //     }
-    //     else
-    //     {
-    //         Snackbar.Clear();
-    //         Snackbar.Add("Please select the previous components first", Severity.Error);
-    //     }
-    // }
-
     protected async override void OnInitialized()
     {
         IsVisible = true;
