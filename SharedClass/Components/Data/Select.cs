@@ -1,11 +1,11 @@
-﻿using Dapper;
+﻿using SharedClass.Components.Model;
 using Microsoft.Data.SqlClient;
-using SharedClass.Components.Model;
 using System.Data;
+using Dapper;
 
 namespace SharedClass.Components.Data
 {
-    public class Select : Update
+    public class Select : CRUD
     {
         private readonly SqlConnection con;
 

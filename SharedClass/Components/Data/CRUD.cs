@@ -1,10 +1,10 @@
-﻿using Dapper;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using System.Data;
+using Dapper;
 
 namespace SharedClass.Components.Data
 {
-    public class CRUD : Connection
+    public class CRUD : Login
     {
         public string CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
         {

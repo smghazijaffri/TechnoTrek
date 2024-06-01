@@ -2,16 +2,9 @@
 
 @using static SharedClass.Components.Pages.Modals.CustomerModal
 @using static SharedClass.Components.Pages.Modals.CustomModal
-@using SharedClass.Components.Pages.Modals;
-@using SharedClass.Components.Data;
-@using Microsoft.Data.SqlClient;
-@using System.Data;
-@using System.Text
-@using Dapper;
 
 @inject BOM bom;
 @inject CRUD crud;
-@inject Insert insert;
 @inject Connection con;
 @inject BOM_Item BOMItem;
 @inject ISnackbar Snackbar;
