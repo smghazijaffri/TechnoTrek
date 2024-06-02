@@ -373,9 +373,10 @@
                     else if (!string.IsNullOrWhiteSpace(SaleOrderID))
                     {
                         issue.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
-                        Items = db.Query<GI_Items>("select Quantity ,* from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                        Items = db.Query<GI_Items>("select * from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                         ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                         customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                        UOMName = db.Query<string>("select UOMName from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                         issue.RefrenceDocument = SaleOrderID;
                         await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
                     }

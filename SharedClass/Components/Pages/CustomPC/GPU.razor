@@ -132,6 +132,7 @@
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Processor"));
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Memory"));
                 CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Storage"));
+                
                 DataTable CompiItem = select.ConvertListToDataTable(CompatItem);
                 var parameters = new DynamicParameters();
                 parameters.Add("@ItemCode", selectedGPU.ItemCode);

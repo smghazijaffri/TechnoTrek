@@ -287,7 +287,7 @@
                         if (saleorder == null) { NavigationManager.NavigateTo("/saleorder/"); }
                         Items = db.Query<SO_Item>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                         ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                        customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleOrder si on si.CustomerID = si.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                        customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.CustomerID,c.Address,c.Contact,c.CreationDate,c.CustomerID + ' ' + c.Name as Name from customer c inner join SaleOrder si on si.CustomerID = si.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                         DisplaySO = false;
                         header = saleorder.SaleOrderName;
                         if (saleorder.Status == SaleStatus.ToBill)
@@ -335,7 +335,7 @@
                     {
                         AddRow();
                     }
-                    DropDownCustomer.Options = db.Query<option>("select CustomerID as Value, Name as Text from Customer").ToList();
+                    DropDownCustomer.Options = db.Query<option>("select CustomerID as Value, CustomerID +' ' + Name as Text from Customer").ToList();
                     DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
                 }
                 StateHasChanged();
@@ -603,12 +603,13 @@
         bool result = DropDownCustomer.SelectOption(options);
         if (result == false)
         {
-            customer.Name = options.Text;
             saleorder.CustomerID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                customer = db.QueryFirstOrDefault<Customer>("Select * from Customer where CustomerID = @CustomerID", new { CustomerID = options.Value });
+                customer = db.QueryFirstOrDefault<Customer>("Select Address,Contact from Customer where CustomerID = @CustomerID", new { CustomerID = options.Value });
             }
+            customer.Name = options.Text;
+
         }
     }
 
