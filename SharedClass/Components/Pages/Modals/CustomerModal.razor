@@ -76,7 +76,6 @@
         }
         else
         {
-            await OnSaveChanges.InvokeAsync(model);
             Customer customer = new Customer();
             customer.Name = model.Name;
             customer.Contact = model.Contact;
