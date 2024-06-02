@@ -26,15 +26,15 @@
             @header
             @if (IsSaving)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                        <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
             }
             @if (IsEnabled)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+                        <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
             }
             @if (IsDisabled)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+                        <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
             }
         </h3>
     </div>
@@ -211,6 +211,7 @@
             if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
 
             if (string.IsNullOrWhiteSpace(uom.UOMName)) { return $"Please enter UOM Name"; }
+            if (string.IsNullOrWhiteSpace((uom.StockQuantity).ToString()) || uom.StockQuantity == 0) { return $"Please enter Default Quantity"; }
 
             return null;
         }
