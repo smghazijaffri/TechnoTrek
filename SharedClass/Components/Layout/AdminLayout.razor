@@ -133,7 +133,7 @@
     {
         await _protectedLocalStore.SetLocalAsync("Authorized", false);
         string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
-        login.LogOut(User);
+        await login.LogOut(User);
         await _protectedLocalStore.SetLocalAsync("Username", "");
         Snackbar.Clear();
         Snackbar.Add("Logged Out", Severity.Error);

@@ -111,7 +111,7 @@
                                 <hr class="m-1 border-primary" />
                             }
                         }
-                        <button href="#" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
+                        <button @onclick="NavigateCustomer" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
                     </li>
                 </ul>
             </div>
@@ -725,5 +725,10 @@
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+    }
+
+    public void NavigateCustomer()
+    {
+        NavigationManager.NavigateTo($"/customers/new-customer", forceLoad: true);
     }
 }

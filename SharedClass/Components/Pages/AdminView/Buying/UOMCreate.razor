@@ -26,15 +26,15 @@
             @header
             @if (IsSaving)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                        <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
             }
             @if (IsEnabled)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+                        <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
             }
             @if (IsDisabled)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+                        <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
             }
         </h3>
     </div>
@@ -56,10 +56,35 @@
             <input type="text" @bind="uom.UOMName" class="form-control">
         </div>
         <div class="col-md-6">
+            <label class="form-label">Default Quantity</label>
+            <input type="text" id="quantity" inputmode="numeric" @bind="uom.StockQuantity" class="form-control">
+        </div>
+        <div class="col-md-6">
             <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
         </div>
     </form>
 </div>
+
+<script>
+    $('#quantity').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
+        }
+    });
+    $('#quantity').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
+        }
+    });
+</script>
 
 @code {
     [Parameter]
