@@ -115,7 +115,7 @@
                 Snackbar.Clear();
                 Snackbar.Add("Not Authorized", Severity.Error);
             }
-            await InvokeAsync(StateHasChanged);
+            StateHasChanged();
             base.OnInitialized();
         }
         catch (Exception ex)
