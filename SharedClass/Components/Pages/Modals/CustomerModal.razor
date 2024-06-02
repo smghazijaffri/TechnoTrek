@@ -48,32 +48,33 @@
     </div>
 </div>
 
-<script defer>
-    function validateForm() {
-        var name = document.getElementById('name').value;
-        var contact = document.getElementById('contact').value;
-        // var id = document.getElementById('id').value;
-
-        if (name.trim() === '' || contact.trim() === '' && id.trim() == '') {
-            alert('Name and Contact cannot be empty');
-            return false;
-        }
-        if (!/^\d{11}$/.test(contact.trim())) {
-            alert('Contact should be a number and must be 11 digits long');
-            return false;
-        }
-        return true;
-    }
-</script>
-
 @code {
     BuildPcViewModel model = new BuildPcViewModel();
 
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<BuildPcViewModel> OnSaveChanges { get; set; }
+
     private async Task SubmitForm()
     {
-        var isValid = await JSRuntime.InvokeAsync<bool>("validateForm");
-
-        if (isValid)
+        if (string.IsNullOrWhiteSpace(model.Name))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Name not valid", Severity.Error);
+            return;
+        }
+        else if (string.IsNullOrWhiteSpace(model.Contact) || (model.Contact).Length != 11)
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Contact not valid", Severity.Error);
+            return;
+        }
+        else
         {
             await OnSaveChanges.InvokeAsync(model);
             Customer customer = new Customer();
@@ -84,6 +85,7 @@
             {
                 Snackbar.Clear();
                 Snackbar.Add(customerData, Severity.Error);
+                return;
             }
             else
             {
@@ -98,24 +100,16 @@
         }
     }
 
-    [Parameter]
-    public bool IsVisible { get; set; }
-
-    [Parameter]
-    public EventCallback<bool> IsVisibleChanged { get; set; }
-
     private void CloseInputModal()
     {
         IsVisible = false;
         IsVisibleChanged.InvokeAsync(IsVisible);
         navigationManager.NavigateTo("/");
     }
+
     private void CloseModal()
     {
         IsVisible = false;
         IsVisibleChanged.InvokeAsync(IsVisible);
     }
-
-    [Parameter]
-    public EventCallback<BuildPcViewModel> OnSaveChanges { get; set; }
 }

@@ -293,7 +293,7 @@
                 }
                 DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
             }
-            await InvokeAsync(StateHasChanged);
+            StateHasChanged();
         }
         catch (Exception)
         {
