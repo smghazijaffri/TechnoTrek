@@ -170,6 +170,7 @@
     {
         public string UOMID { get; set; }
         public string UOMName { get; set; }
+        public int StockQuantity { get; set; }
         public string Status { get; set; }
     }
 
