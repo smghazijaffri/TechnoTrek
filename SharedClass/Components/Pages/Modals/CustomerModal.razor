@@ -77,21 +77,18 @@
         }
         else
         {
-            // await OnSaveChanges.InvokeAsync(model);
             Customer customer = new Customer();
             customer.Name = model.Name;
             customer.Contact = model.Contact;
             var customerData = crud.CRD(customer, "CreateCustomer");
             if (customerData.Contains("Failed"))
             {
-                
                 Snackbar.Clear();
                 Snackbar.Add(customerData, Severity.Error);
-                
-
             }
             else
             {
+                await OnSaveChanges.InvokeAsync(model);
                 customer.CustomerID = customerData;
                 await _protectedLocalStore.SetLocalAsync("customerID", customer.CustomerID);
                 await _protectedLocalStore.SetLocalAsync("customerName", customer.Name);

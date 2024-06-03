@@ -54,6 +54,15 @@
     </div>
 </div>
 <!-- Modal -->
+
+<script>
+    window.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            DotNet.invokeMethodAsync('SharedClass', 'CloseModal');
+        }
+    });
+</script>
+
 @code {
     public class BuildPcViewModel
     {
@@ -86,6 +95,11 @@
     [Parameter]
     public EventCallback OnClose { get; set; }
 
+    protected override void OnInitialized()
+    {
+        _instance = this;
+    }
+
     private void ShowQuickView()
     {
         Model.IsModalOpen = true;
@@ -112,5 +126,17 @@
         }
         Snackbar.Clear();
         Snackbar.Add("Cancelled", Severity.Error);
+    }
+
+    private static CustomModal? _instance;
+
+    [JSInvokable]
+    public static Task CloseModal()
+    {
+        if (_instance != null)
+        {
+            _instance.CloseQuickView();
+        }
+        return Task.CompletedTask;
     }
 }

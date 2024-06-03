@@ -9,6 +9,7 @@
 @inject BOM_Item BOMItem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="container" style="max-width: 100vw; overflow-x: hidden; padding-bottom: 20px;">
@@ -395,14 +396,14 @@
         StateHasChanged();
     }
 
-    private async Task<(string Name, string Code, int Price)> LoadItemDataAsync(string itemName)
+    private async Task<(string? Name, string Code, int Price)> LoadItemDataAsync(string itemName)
     {
         if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName))
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 string itemCode = await _protectedLocalStore.GetLocalAsync<string>(itemName);
-                string itemNameResult = await db.QuerySingleOrDefaultAsync<string>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { itemCode });
+                string? itemNameResult = await db.QuerySingleOrDefaultAsync<string?>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { itemCode });
                 int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = itemCode });
 
                 return (itemNameResult, itemCode, itemPrice);
@@ -560,17 +561,13 @@
                 {
                     Snackbar.Clear();
                     Snackbar.Add("Order Confirmed", Severity.Success);
-                    await _protectedLocalStore.SetLocalAsync("Memory", "");
-                    await _protectedLocalStore.SetLocalAsync("Cooler", "");
-                    await _protectedLocalStore.SetLocalAsync("Storage", "");
-                    await _protectedLocalStore.SetLocalAsync("Processor", "");
-                    await _protectedLocalStore.SetLocalAsync("Motherboard", "");
-                    await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-                    await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-                    await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+                    await _protectedLocalStore.SetLocalAsync("customerName", "");
+                    await _protectedLocalStore.SetLocalAsync("customerContact", "");
+                    await ClearComponentSelectionsAsync();
                 }
             }
             StateHasChanged();
+            NavigationManager.NavigateTo("/", forceLoad: true);
         }
 
         catch (Exception ex)
