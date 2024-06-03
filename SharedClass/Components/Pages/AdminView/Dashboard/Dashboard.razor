@@ -1,7 +1,5 @@
 ﻿@page "/dashboard";
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Data
 @using System.Globalization
 
 @layout AdminLayout;
@@ -13,7 +11,7 @@
 @inject ProtectedLocalStorage _protectedLocalStore;
 
 <h4>Quick Access</h4>
-<div class="row">
+<div class="row m-auto">
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
@@ -50,14 +48,8 @@
         </MudList>
     </MudPaper>
 </div>
-@* <div class="row">
-        <div>
-            <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options" />
-        </div>
-        <div>
-            <MudChart ChartType="ChartType.Bar" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px"></MudChart>
-        </div>
-    </div> *@
+
+<Analytics />
 
 <script defer>
     window.disableBackGesture = function () {
@@ -86,18 +78,6 @@
     protected override async void OnInitialized()
     {
         var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-
-        var purchaseRequisitions = await select.GetPR1DataAsync();
-        var groupedData = purchaseRequisitions
-            .Where(pr => pr.DocumentDate.HasValue)
-            .GroupBy(pr => pr.DocumentDate.Value.Month)
-            .Select(group => new { Month = group.Key, Count = group.Count() })
-            .OrderBy(group => group.Month)
-            .ToList();
-
-        Series.Add(new ChartSeries() { Name = "Purchase Requisitions", Data = groupedData.Select(x => (double)x.Count).ToArray() });
-        XAxisLabels = groupedData.Select(x => CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(x.Month)).ToArray();
 
         StateHasChanged();
 
@@ -106,6 +86,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+
         if (firstRender)
         {
             await JSRuntime.InvokeVoidAsync("disableBackGesture");
