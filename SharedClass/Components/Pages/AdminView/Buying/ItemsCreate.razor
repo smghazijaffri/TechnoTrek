@@ -24,219 +24,214 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-        <div class="row p-3 align-items-center">
-            <div class="col-6">
-                <h3>
-                @header
-                @if (IsSaving)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
-                }
-                @if (IsEnabled)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
-                }
-                @if (IsDisabled)
-                {
-                            <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
-                }
-                </h3>
-            </div>
-            <div class="col-6 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUOM">
-                    Save
-                </button>
-            </div>
-        </div>
-
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <h5>Name and Type</h5>
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6" hidden>
-                    <label class="form-label">Item ID</label>
-                    <input type="text" class="form-control" @bind="items.ItemCode" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Item Name</label>
-                    <input type="text" @bind="items.ItemName" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Item Type</label>
-                    <input type="text" @bind="items.ItemType" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Standard Selling Rate</label>
-                    <input type="text" inputmode="numeric" id="num" @bind="items.Sellingrate" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Lead Time in Days</label>
-                    <input type="text" inputmode="numeric" id="num" @bind="items.LeadTime" class="form-control">
-                    <label class="form-label">Average time taken by the supplier to deliver</label>
-                </div>
-                <div class="col-md-6">
-                    <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
-                </div>
-            </form>
-        </div>
-
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <h5>Description</h5>
-            <form class="" @oninput="HandleFormInput" autocomplete="off">
-                <div class="col-md-6 p-3 mb-2">
-                    <label class="form-label">Brand</label>
-                    <input type="text" class="form-control" @bind="items.Brand">
-                </div>
-                <div class="col-md-6 p-3 mb-2">
-                    <label class="form-label">Product Page Link</label>
-                    <input type="text" @bind="items.Description" placeholder="Product link"></input>
-                </div>
-            </form>
-        </div>
-
-        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
-            <h5>Units of Measure</h5>
-            <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-                <table class="table size table-hover">
-                    <thead>
-                        <tr>
-                            <th class="col col-auto" style="width: 50px;">
-                                No.
-                            </th>
-                            <th class="col col-auto">
-                                Unit of Measure
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                    @for (int index = 0; index < ItemUOM.Count; index++)
-                    {
-                        var item = ItemUOM[index];
-                        item.RowID = index + 1;
-                        var rowIndex = item.RowID - 1;
-                        DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center;">
-                                            <input type="checkbox" class="me-1" @bind="item.Selected"/>
-                                    @(index + 1)
-                                            <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")">Delete</button>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                            <input type="text" id="Item" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
-                                                   placeholder="Select Unit of Measure" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                            <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)"
-                                                style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                                aria-labelledby="dropdownMenuButton">
-                                                <li>
-                                                    <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
-                                                @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
-                                                {
-                                                    @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
-                                                    {
-                                                                        <a class="dropdown-item" bind="@item.UOMID" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                                        <hr class="m-1 border-primary" />
-                                                    }
-                                                }
-                                                        <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </td>
-                                </tr>
-                    }
-                    </tbody>
-                </table>
-            </form>
-            <div class="col-12">
-                <button class="btn btn-primary rounded-pill" @onclick="AddRow">Add Row</button>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col">
-                <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 300px; overflow-y: auto;">
-                    <h5>Compatability</h5>
-                    <label class="form-label">Check Compatible Items</label>
-                    <form class="" @oninput="HandleFormInput" autocomplete="off">
-                    @foreach (var item in itemsFromDatabase)
-                    {
-                        @if (item.ItemCode != items.ItemCode)
-                        {
-                            @if (item.ItemType != items.ItemType)
-                            {
-                                                <div>
-                                                    <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
-                                                </div>
-                            }
-                        }
-                    }
-                    </form>
-                </div>
-            </div>
-            <div class="col">
-                <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 300px; overflow-y: auto;">
-                    <h5>Alternatives</h5>
-                    <label class="form-label">Check Alternate Items</label>
-                    <form class="" @oninput="HandleFormInput" autocomplete="off">
-                    @foreach (var item in itemsFromDatabase)
-                    {
-                        @if (item.ItemCode != items.ItemCode)
-                        {
-                            @if (item.ItemType == items.ItemType)
-                            {
-                                                <div>
-                                                    <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
-                                                </div>
-                            }
-                        }
-                    }
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            function toggleDropdown() {
-                var dropdownMenu = document.getElementById("dropdownMenu");
-                dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
             }
-            $('#num').on('input', function () {
-                debugger;
-                var inputValue = $(this).val();
-                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+            @if (IsEnabled)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+            }
+            @if (IsDisabled)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUOM">
+            Save
+        </button>
+    </div>
+</div>
 
-                if (nonNumberRegex.test(inputValue)) {
-                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
-                }
-            });
-            $('#num').on('paste', function () {
-                debugger;
-                var inputValue = $(this).val();
-                var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Name and Type</h5>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6" hidden>
+            <label class="form-label">Item ID</label>
+            <input type="text" class="form-control" @bind="items.ItemCode" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Item Name</label>
+            <input type="text" @bind="items.ItemName" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Item Type</label>
+            <input type="text" @bind="items.ItemType" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Standard Selling Rate</label>
+            <input type="text" inputmode="numeric" id="num" @bind="items.Sellingrate" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Lead Time in Days</label>
+            <input type="text" inputmode="numeric" id="num" @bind="items.LeadTime" class="form-control">
+            <label class="form-label">Average time taken by the supplier to deliver</label>
+        </div>
+        <div class="col-md-6">
+            <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+        </div>
+    </form>
+</div>
 
-                if (nonNumberRegex.test(inputValue)) {
-                    $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Description</h5>
+    <form class="" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6 p-3 mb-2">
+            <label class="form-label">Brand</label>
+            <input type="text" class="form-control" @bind="items.Brand">
+        </div>
+        <div class="col-md-6 p-3 mb-2">
+            <label class="form-label">Product Page Link</label>
+            <input type="text" @bind="items.Description" class="form-control"></input>
+        </div>
+    </form>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Units of Measure</h5>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <table class="table size table-hover">
+            <thead>
+                <tr>
+                    <th class="col col-auto" style="width: 50px;">
+                        No.
+                    </th>
+                    <th class="col col-auto">
+                        Unit of Measure
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                @for (int index = 0; index < ItemUOM.Count; index++)
+                {
+                    var item = ItemUOM[index];
+                    item.RowID = index + 1;
+                    var rowIndex = item.RowID - 1;
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" class="me-1" @bind="item.Selected" />
+                                @(index + 1)
+                                <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")">Delete</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select Unit of Measure" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)"
+                                    style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.UOMID" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
                 }
-            });
-        </script>
-}
+            </tbody>
+        </table>
+    </form>
+    <div class="col-12">
+        <button class="btn btn-primary rounded-pill" @onclick="AddRow">Add Row</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 300px; overflow-y: auto;">
+            <h5>Compatability</h5>
+            <label class="form-label">Check Compatible Items</label>
+            <form class="" @oninput="HandleFormInput" autocomplete="off">
+                @foreach (var item in itemsFromDatabase)
+                {
+                    @if (item.ItemCode != items.ItemCode)
+                    {
+                        @if (item.ItemType != items.ItemType)
+                        {
+                            <div>
+                                <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                            </div>
+                        }
+                    }
+                }
+            </form>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 300px; overflow-y: auto;">
+            <h5>Alternatives</h5>
+            <label class="form-label">Check Alternate Items</label>
+            <form class="" @oninput="HandleFormInput" autocomplete="off">
+                @foreach (var item in itemsFromDatabase)
+                {
+                    @if (item.ItemCode != items.ItemCode)
+                    {
+                        @if (item.ItemType == items.ItemType)
+                        {
+                            <div>
+                                <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                            </div>
+                        }
+                    }
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+    $('#num').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    });
+    $('#num').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+        }
+    });
+</script>
 
 @code {
     [Parameter]
     public string? ItemID { get; set; }
     private string header = "New Item";
 
-    bool isLoading = false;
     private bool IsSaving = true;
     private bool Disabled = false;
     private bool IsEnabled = false;
     private bool IsDisabled = false;
-    public bool isAuthorized { get; set; }
 
     List<int> IsDelete = new List<int>();
     public DropDown DropDownUOM = new DropDown();
@@ -247,22 +242,17 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
+        itemsFromDatabase = await select.GetItemsAsync();
+        try
         {
-            isLoading = true;
-            itemsFromDatabase = await select.GetItemsAsync();
-            try
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                using (SqlConnection db = new SqlConnection(con.connectionString))
+                if (ItemID != null)
                 {
-                    if (ItemID != null)
-                    {
-                        items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
-                        ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
-                        UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
-                        itemsFromDatabase = db.Query<ItemClass>(@"SELECT
+                    items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
+                    ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                    itemsFromDatabase = db.Query<ItemClass>(@"SELECT
                                                 it.*,
                                                 MAX(CASE WHEN ic.ItemID = @ItemID THEN 1 ELSE 0 END) AS Compatible,
                                                 MAX(CASE WHEN ia.ItemID = @ItemID THEN 1 ELSE 0 END) AS Alternate
@@ -282,40 +272,32 @@
                                                    it.CreationDate,
                                                    it.Brand,
                                                    it.Sellingrate", new { ItemID = ItemID });
-                        if (items == null)
-                            NavigationManager.NavigateTo("/vendors/");
-                        header = items.ItemName;
-                        if (items.Status == PurchaseStatuses.Enabled)
-                        {
-                            IsEnabled = true;
-                            IsSaving = false;
-                        }
-                        else if (items.Status == PurchaseStatuses.Disabled)
-                        {
-                            Disabled = true;
-                            IsDisabled = true;
-                            IsSaving = false;
-                        }
-                    }
-                    else
+                    if (items == null)
+                        NavigationManager.NavigateTo("/vendors/");
+                    header = items.ItemName;
+                    if (items.Status == PurchaseStatuses.Enabled)
                     {
-                        AddRow();
+                        IsEnabled = true;
+                        IsSaving = false;
                     }
-                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
+                    else if (items.Status == PurchaseStatuses.Disabled)
+                    {
+                        Disabled = true;
+                        IsDisabled = true;
+                        IsSaving = false;
+                    }
                 }
-                await InvokeAsync(StateHasChanged);
+                else
+                {
+                    AddRow();
+                }
+                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
             }
-            catch (Exception)
-            {
-                throw;
-            }
+            StateHasChanged();
         }
-        else
+        catch (Exception)
         {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
+            throw;
         }
 
         base.OnInitialized();

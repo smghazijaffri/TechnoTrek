@@ -13,24 +13,6 @@ namespace SharedClass.Components.Data
             con = GetSqlConnection();
         }
 
-        public async Task DeleteFromCustomBuilt(string id, string component, IJSRuntime JSRuntime)
-        {
-            try
-            {
-                con.Open();
-
-                // Delete the record based on the provided 'id' and 'component'
-                string deleteQuery = $"DELETE FROM Custom_Built WHERE Id = @Id";
-                await con.ExecuteAsync(deleteQuery, new { Id = id });
-                con.Close();
-            }
-            catch (SqlException ex)
-            {
-                con.Close();
-                await JSRuntime.InvokeVoidAsync("alert", ex.Message.ToString());
-            }
-        }
-
         public async Task DeleteFromTable(string table1, string column, string id, string table2)
         {
             try

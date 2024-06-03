@@ -1,114 +1,80 @@
 ﻿@page "/buying";
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Data
-@using System.Globalization
-
-@inject ISnackbar Snackbar;
-@inject IJSRuntime JSRuntime;
-@inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
-
 @layout AdminLayout;
 
-@if (isLoading)
-{
-        <h4>Quick Access</h4>
-        <div class="row">
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
-                        Items
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
-                        UOM
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
-                        Vendor
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
-        </div>
-        <h4>Forms</h4>
-        <div class="row">
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaserequisition" Style="border-radius:10px">
-                        Purchase Requisition
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
+<h4>Quick Access</h4>
+<div class="row">
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
+                Items
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
+                UOM
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
+                Vendor
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+</div>
+<h4>Forms</h4>
+<div class="row">
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaserequisition" Style="border-radius:10px">
+                Purchase Requisition
+            </MudListItem>
+        </MudList>
+    </MudPaper>
 
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/requestforquotation" Style="border-radius:10px">
-                        Request for Quotation
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/requestforquotation" Style="border-radius:10px">
+                Request for Quotation
+            </MudListItem>
+        </MudList>
+    </MudPaper>
 
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaseorder" Style="border-radius:10px">
-                        Purchase Order
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaseorder" Style="border-radius:10px">
+                Purchase Order
+            </MudListItem>
+        </MudList>
+    </MudPaper>
 
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/goodsreceipt" Style="border-radius:10px">
-                        Goods Receipt
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/goodsreceipt" Style="border-radius:10px">
+                Goods Receipt
+            </MudListItem>
+        </MudList>
+    </MudPaper>
 
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/purchaseinvoice" Style="border-radius:10px">
-                        Purchase Invoice
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/purchaseinvoice" Style="border-radius:10px">
+                Purchase Invoice
+            </MudListItem>
+        </MudList>
+    </MudPaper>
 
 
-            <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-                <MudList Clickable="true">
-                    <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/vendorquotation" Style="border-radius:10px">
-                        Vendor Quotation
-                    </MudListItem>
-                </MudList>
-            </MudPaper>
-        </div>
-}
-
-@code {
-    bool isLoading = false;
-    public bool isAuthorized { get; set; }
-    protected override async void OnInitialized()
-    {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
-        {
-            isLoading = true;
-            StateHasChanged();
-        }
-        else
-        {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-        }
-        base.OnInitialized();
-    }
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/vendorquotation" Style="border-radius:10px">
+                Vendor Quotation
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+</div>
 }

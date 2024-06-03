@@ -1,66 +1,37 @@
 ﻿@page "/signup";
 @using SharedClass.Components.Layout
-@using System.Globalization
-@using SharedClass.Components.Data
-@inject IJSRuntime JSRuntime;
-@inject ISnackbar Snackbar;
+
 @inject Login login;
-@inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 @layout AdminLayout;
 
-@if (isLoading)
-{
-        <div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:20px;max-inline-size: fit-content;">
-            <div class="modal-header text-center" style="align-self: center;">
-                <h5 class="modal-title heading text-center p-1">Create User</h5>
+<div class="mt-5 bg-white modal-content p-1 m-auto shadow-sm" style="border-radius:20px;max-inline-size: fit-content;">
+    <div class="modal-header text-center" style="align-self: center;">
+        <h5 class="modal-title heading text-center p-1">Create User</h5>
+    </div>
+    <div class="modal-body p-1 m-auto">
+        <EditForm Model="@login">
+            <div class="mb-3">
+                @* <label for="usernameInput" class="form-label text-black">Username</label> *@
+                <InputText id="usernameInput" placeholder="Username" class="form-control" @bind-Value="Username" />
             </div>
-            <div class="modal-body p-1 m-auto">
-                <EditForm Model="@login">
-                    <div class="mb-3">
-                    @* <label for="usernameInput" class="form-label text-black">Username</label> *@
-                        <InputText id="usernameInput" placeholder="Username" class="form-control" @bind-Value="Username" />
-                    </div>
-                    <div class="mb-3">
-                    @* <label for="passwordInput" class="form-label text-black">Password</label> *@
-                        <InputText id="passwordInput" placeholder="Password" type="password" class="form-control" @bind-Value="Password" />
-                    </div>
-                    <div class="mb-3">
-                    @* <label for="contactInput" class="form-label text-black">Contact</label> *@
-                        <InputText id="ContactInput" placeholder="Contact" type="contact" class="form-control" @bind-Value="Contact" />
-                    </div>
-                    <div class="mb-3">
-                    @* <label for="roleInput" class="form-label text-black">Role</label> *@
-                        <InputText id="RoleInput" placeholder="Role" type="role" class="form-control" @bind-Value="Role" />
-                    </div>
-                    <button type="submit" class="btn btnpc btn-primary m-1">Create</button>
-                </EditForm>
+            <div class="mb-3">
+                @* <label for="passwordInput" class="form-label text-black">Password</label> *@
+                <InputText id="passwordInput" placeholder="Password" type="password" class="form-control" @bind-Value="Password" />
             </div>
-        </div>
-}
+            <div class="mb-3">
+                @* <label for="contactInput" class="form-label text-black">Contact</label> *@
+                <InputText id="ContactInput" placeholder="Contact" type="contact" class="form-control" @bind-Value="Contact" />
+            </div>
+            <div class="mb-3">
+                @* <label for="roleInput" class="form-label text-black">Role</label> *@
+                <InputText id="RoleInput" placeholder="Role" type="role" class="form-control" @bind-Value="Role" />
+            </div>
+            <button type="submit" class="btn btnpc btn-primary m-1">Create</button>
+        </EditForm>
+    </div>
+</div>
 
 @code {
-    bool isLoading = false;
-    public bool isAuthorized { get; set; }
-    protected override async void OnInitialized()
-    {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
-        {
-            isLoading = true;
-            StateHasChanged();
-        }
-        else
-        {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-        }
-        base.OnInitialized();
-    }
-
     private string Username = string.Empty;
     private string Password = string.Empty;
     private string Contact = string.Empty;

@@ -27,10 +27,9 @@ namespace MauiMobileApp
             builder.Services.AddScoped<BOM>();
             builder.Services.AddScoped<CRUD>();
             builder.Services.AddScoped<Login>();
-            builder.Services.AddScoped<Insert>();
+            builder.Services.AddScoped<Stock>();
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Delete>();
-            builder.Services.AddScoped<Update>();
             builder.Services.AddScoped<Vendor>();
             builder.Services.AddScoped<SO_Item>();
             builder.Services.AddScoped<ItemUOM>();

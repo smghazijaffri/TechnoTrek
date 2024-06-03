@@ -1,39 +1,36 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
+using MudBlazor;
+using Dapper;
 
 namespace SharedClass.Components.Data
 {
     public class Login : Connection
     {
-        private SqlCommand? cmd;
-        private SqlDataReader? dr;
-        protected bool Authorized { get; set; }
-        public async Task<bool> Access(string Username, string Password, IJSRuntime JSRuntime)
+        private readonly SqlConnection con;
+        
+        public Login()
         {
+            con = GetSqlConnection();
+        }
+
+        public async Task<bool> Access(string username, string password, IJSRuntime jsRuntime, ISnackbar Snackbar)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
             try
             {
-                if (Username != "" && Password != "")
+                var query = "SELECT * FROM Users WHERE Username = @Username AND Password = @Password";
+                var parameters = new { Username = username, Password = password };
+                var Authorized = await con.QueryFirstOrDefaultAsync<bool>(query, parameters);
+
+                if (Authorized)
                 {
-                    using SqlConnection con = GetSqlConnection();
-                    using (cmd = new SqlCommand("SELECT * FROM [Users] WHERE Username = @Username AND Password = @Password", con))
-                    {
-                        cmd.Parameters.AddWithValue("@Username", Username);
-                        cmd.Parameters.AddWithValue("@Password", Password);
-                        con.Open();
-                        using (dr = cmd.ExecuteReader())
-                        {
-                            if (dr.Read())
-                            {
-                                Authorized = dr.GetBoolean(dr.GetOrdinal("Authorized"));
-                                UpdateAuthorizationStatus(con, Username, true);
-                                return true;
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-                    }
+                    await UpdateAuthorizationStatus(username, true);
+                    return true;
                 }
                 else
                 {
@@ -42,28 +39,22 @@ namespace SharedClass.Components.Data
             }
             catch (SqlException ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while accessing the database: " + ex.Message.ToString());
+                Snackbar.Clear();
+                Snackbar.Add($"An error occurred while verifying the credentials: {ex.Message}", Severity.Error);
                 return false;
             }
         }
 
-        private static void UpdateAuthorizationStatus(SqlConnection con, string username, bool isAuthorized)
+        private async Task UpdateAuthorizationStatus(string username, bool isAuthorized)
         {
-            con.Close();
-            con.Open();
-            using (SqlCommand updateCmd = new("UPDATE [Users] SET Authorized = @Authorized WHERE Username = @Username", con))
-            {
-                updateCmd.Parameters.AddWithValue("@Authorized", isAuthorized);
-                updateCmd.Parameters.AddWithValue("@Username", username);
-                updateCmd.ExecuteNonQuery();
-            }
-            con.Close();
+            var updateQuery = "UPDATE Users SET Authorized = @Authorized WHERE Username = @Username";
+            var updateParameters = new { Authorized = isAuthorized, Username = username };
+            await con.ExecuteAsync(updateQuery, updateParameters);
         }
 
-        public void LogOut(string AuthUser)
+        public async Task LogOut(string authUser)
         {
-            using SqlConnection conn = GetSqlConnection();
-            UpdateAuthorizationStatus(conn, AuthUser, false);
+            await UpdateAuthorizationStatus(authUser, false);
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿@using Microsoft.Data.SqlClient
-@using System.Data;
-@using Dapper
-@inject Select select;
-@inject Insert insert;
+﻿@inject Select select;
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
@@ -13,65 +9,52 @@
     <div class="container py-5">
         @if (Memories != null && Memories.Any())
         {
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
                 @foreach (var values in Memories)
                 {
-                    @if (isBulk)
-                    {
-                        <div class="col mb-4">
-                            <div class="card text-black" style="border-radius:20px;">
-                                <div class="card-body">
-                                    <h5 class="card-title">@values.Brand @values.ItemName</h5>
-                                    <h6 class="card-title">Price</h6>
-                                    <div>
-                                        <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
-                                            <h6><span>Visit Product Page</span></h6>
+                            <div class="col mb-4">
+                                <div class="card text-black" style="border-radius:20px;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">@values.Brand @values.ItemName</h5>
+                                        <h6 class="card-title">Price</h6>
+                                        <div>
+                                            <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
+                                                <h6><span>Visit Product Page</span></h6>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <h6>Select Quantity</h6>
-                                    <p><MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <div>
-                                        <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                                @onclick="() => Select(values)">
-                                            Order
-                                        </button>
+                                @if (isBulk)
+                                {
+                                                <h6>Select Quantity: @quantity</h6>
+                                                <p><MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
+                                                <h6>Total: @(ItemRates[values.ItemCode] * quantity)</h6>
+                                                <div>
+                                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
+                                                            @onclick="() => Order(values, quantity)">
+                                                        Order
+                                                    </button>
+                                                </div>
+                                }
+                                else
+                                {
+                                                <h6>Select Quantity: @Ramquantity</h6>
+                                                <p><MudSlider @bind-Value="Ramquantity" Min="1" Max="4" Color="Color.Dark" ValueLabel="true" /></p>
+                                                <h6>Total: @(ItemRates[values.ItemCode] * Ramquantity)</h6>
+                                                <div>
+                                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
+                                                            @onclick="() => Select(values)">
+                                                        Select
+                                                    </button>
+                                                </div>
+                                }
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="col mb-4">
-                            <div class="card text-black" style="border-radius:20px;">
-                                <div class="card-body">
-                                    <h5 class="card-title">@values.Brand</h5>
-                                    <h5 class="card-title">@values.ItemName</h5>
-                                    <h6>Select Quantity</h6>
-                                    <p><MudSlider @bind-Value="Ramquantity" Min="1" Max="4" Color="Color.Dark" ValueLabel="true" /></p>
-
-                                    <div>
-                                        <div class="d-flex justify-content-center"
-                                             @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
-                                            <h6><span>Visit Product Page</span></h6>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                                @onclick="() => Select(values)">
-                                            Select
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
                 }
-            </div>
+                </div>
         }
         else
         {
-            <h1>Sorry, no product available</h1>
+                <h1>Sorry, no product available</h1>
         }
     </div>
 </section>
@@ -86,9 +69,12 @@
     [Parameter]
     public bool isBulk { get; set; }
 
-    public double quantity { get; set; } = 20;
+    public int quantity { get; set; } = 20;
     public int Ramquantity { get; set; } = 1;
-    private IEnumerable<ItemClass> Memories;
+
+    private IEnumerable<ItemClass>? Memories;
+
+    private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,17 +82,32 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) &&
-                !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+                if (isBulk)
                 {
-                    string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
-                    string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
-                    Memories = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "','" + Processor + "') and Status = 'Enabled' and ItemType = 'Memory' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Memory' and Status = 'Enabled'").ToList();
+                    Memories = await select.GetItemsAsync("Memory");
                 }
                 else
                 {
-                    Snackbar.Clear();
-                    Snackbar.Add("Please reselect other components", Severity.Info);
+                    if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) &&
+                    !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+                    {
+                        string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
+                        string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
+                        Memories = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "','" + Processor + "') and Status = 'Enabled' and ItemType = 'Memory' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Memory' and Status = 'Enabled'").ToList();
+                    }
+                    else
+                    {
+                        Snackbar.Clear();
+                        Snackbar.Add("Please reselect other components", Severity.Info);
+                    }
+                }
+                if (Memories.Any())
+                {
+                    foreach (var item in Memories)
+                    {
+                        var stock = await select.GetStockDataAsync(item.ItemCode);
+                        ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+                    }
                 }
             }
         }
@@ -116,8 +117,8 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
-        // Memories = await select.GetItemsAsync("Memory");
     }
+
     private async Task Select(ItemClass selectedMemory)
     {
         try
@@ -131,7 +132,7 @@
                     List<string> CompatItem = new List<string>();
                     CompatItem.Add(MotherBoard);
                     CompatItem.Add(Processors);
-                    DataTable CompiItem = select.ConvertListToDataTable(CompatItem);
+                    DataTable CompiItem = Data.Select.ConvertListToDataTable(CompatItem);
                     var parameters = new DynamicParameters();
                     parameters.Add("@ItemCode", selectedMemory.ItemCode);
                     parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
@@ -143,7 +144,6 @@
                         Snackbar.Clear();
                         Snackbar.Add(outputValue, Severity.Error);
                     }
-
                     else if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
                     {
                         string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
@@ -176,7 +176,6 @@
                             }
                             else
                             {
-
                                 await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
                                 await _protectedLocalStore.SetLocalAsync("RamQuantity", Ramquantity);
                                 Snackbar.Clear();
@@ -185,7 +184,6 @@
                         }
                         else
                         {
-
                             await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
                             await _protectedLocalStore.SetLocalAsync("RamQuantity", Ramquantity);
                             Snackbar.Clear();
@@ -199,22 +197,25 @@
                         Snackbar.Clear();
                         Snackbar.Add("Selection Saved", Severity.Success);
                     }
-
                 }
-
                 else
                 {
                     Snackbar.Clear();
                     Snackbar.Add("Please reselect other components", Severity.Info);
                 }
             }
-
         }
         catch (Exception ex)
         {
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    private async Task Order(ItemClass selected, int quantity)
+    {
+        await _protectedLocalStore.SetLocalAsync("BulkMemory", selected);
+        await _protectedLocalStore.SetLocalAsync("BulkMemoryQuantity", quantity);
     }
 
     private async void OnButtonClicked(string message)

@@ -1,94 +1,72 @@
-﻿@using static MudBlazor.CategoryTypes
+﻿@page "/saleinvoice"
+
+@using static MudBlazor.CategoryTypes
 @using SharedClass.Components.Layout
 @using SharedClass.Components.Model
 @using SharedClass.Components.Data
+@using Microsoft.Data.SqlClient
 @using System.Globalization
 @using System.Net.Http.Json
-@page "/saleinvoice"
+@using Dapper
 
 @layout AdminLayout;
 @inject Select select;
 @inject Delete delete;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject SalesInvoice invoice;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (isLoading)
-{
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="d-flex justify-content-end">
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                               Href="/saleinvoice/new-sales-invoice" Size="Size.Large">Create</MudButton>
-                    @if (selectedItems.Any())
-                    {
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
-                                   Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-12">
-                <MudTable @ref="_table" T="SalesInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                          OnRowClick="@OnRowClick" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
-
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Sales Invoices</MudText>
-                        <MudSpacer />
-                        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </ToolBarContent>
-
-                    <HeaderContent>
-                        <MudTh>Sales Invoice ID</MudTh>
-                        <MudTh>Title</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh>Grand Total</MudTh>
-                        <MudTh>Document Date</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Sales Invoice Number">@context.SalesInvoiceID</MudTd>
-                        <MudTd DataLabel="Title">@context.SalesInvoiceName</MudTd>
-                        <MudTd DataLabel="Status">@context.Status</MudTd>
-                        <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                        <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
-                    </RowTemplate>
-                    <PagerContent>
-                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-                    </PagerContent>
-                </MudTable>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-end">
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                           Href="/saleinvoice/new-sales-invoice" Size="Size.Large">Create</MudButton>
+                @if (selectedItems.Any())
+                {
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
+                               Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                }
             </div>
         </div>
     </div>
-}
+
+    <div class="row">
+        <div class="col-md-12">
+            <MudTable @ref="_table" T="SalesInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                      OnRowClick="@OnRowClick" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Sales Invoices</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+
+                <HeaderContent>
+                    <MudTh>Sales Invoice ID</MudTh>
+                    <MudTh>Title</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Grand Total</MudTh>
+                    <MudTh>Document Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Sales Invoice Number">@context.SalesInvoiceID</MudTd>
+                    <MudTd DataLabel="Title">@context.SalesInvoiceName</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                </PagerContent>
+            </MudTable>
+        </div>
+    </div>
+</div>
 
 @code {
-    //authorization
-    bool isLoading = false;
-    public bool isAuthorized { get; set; }
-    protected override async void OnInitialized()
-    {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        isAuthorized = cookieContent;
-        if (isAuthorized)
-        {
-            isLoading = true;
-            StateHasChanged();
-        }
-        else
-        {
-            isLoading = false;
-            NavigationManager.NavigateTo("/adminlogin");
-            Snackbar.Clear();
-            Snackbar.Add("Not Authorized", Severity.Error);
-        }
-        base.OnInitialized();
-    }
-    //authorization
-
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
     private MudTable<SalesInvoice> _table;
@@ -97,7 +75,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetSaleInvoiceDataAsync();
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        Elements = await db.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice");
     }
 
     void OnRowClick(TableRowClickEventArgs<SalesInvoice> args)
