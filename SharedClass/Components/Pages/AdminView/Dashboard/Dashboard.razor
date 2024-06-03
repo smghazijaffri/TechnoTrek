@@ -51,32 +51,30 @@
     </MudPaper>
 </div> *@
 
-<div class="row m-auto">
-    <div class="m-auto">
-        <Analytics />
-    </div>
-    <div class="col-md-12 mt-3" style="width:40%;">
-        <MudTable @ref="_table" T="BOM" Items="@BOMElements" Hover="true" Style="border-radius:20px"
-                  OnRowClick="@OnRowClick" Filter="new Func<BOM,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6">Custom PC BOM</MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </ToolBarContent>
+<div class="m-auto">
+    <Analytics />
+</div>
+<div class="m-auto mt-3" style="width:40%; justify-content: flex-start; display: inline-grid;">
+    <MudTable @ref="_table" T="BOM" Items="@BOMElements" Hover="true" OnRowClick="@OnRowClick"
+              Filter="new Func<BOM,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Custom PC BOM</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
 
-            <HeaderContent>
-                <MudTh>BOM ID</MudTh>
-                <MudTh>Title</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="BOM ID">@context.BOMID</MudTd>
-                <MudTd DataLabel="Title">@context.BOMName</MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager PageSizeOptions="new int[] {5}" />
-            </PagerContent>
-        </MudTable>
-    </div>
+        <HeaderContent>
+            <MudTh>BOM ID</MudTh>
+            <MudTh>Title</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="BOM ID">@context.BOMID</MudTd>
+            <MudTd DataLabel="Title">@context.BOMName</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] {5}" />
+        </PagerContent>
+    </MudTable>
 </div>
 
 @* <div class="m-auto">
