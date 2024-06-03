@@ -1,11 +1,6 @@
-﻿@page "/purchaserequisition/new-purchase-request"
-@page "/purchaserequisition/{PRNumber?}"
+﻿@page "/stock-entry/new-stock-entry"
+@page "/stock-entry/{StockID?}"
 
-@using SharedClass.Components.Pages.Modals
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
 @using System.Globalization
 @using System.Reflection
 @using System.Text
@@ -13,24 +8,15 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
+@inject Stock stock;
 @inject Select select;
 @inject Connection con;
-@inject PR_Items pritem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject PurchaseRequisition purchase;
 @inject IDialogService DialogService;
 @inject SingleDropDown singledropdown;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
-
-@* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/buying">Buying</a></li>
-            <li class="breadcrumb-item"><a href="/purchaserequisition">Purchase Requisition</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@header</li>
-        </ol>
-    </nav> *@
 
 <div class="row p-3 align-items-center">
     <div class="col-6">
@@ -44,46 +30,24 @@
             {
                 <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
             }
-            @if (IsApproved)
+            @if (IsSubmitted)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
             }
             @if (IsCancelled)
             {
                 <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
             }
-            @if (IsOrdered)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
-            }
-            @if (IsReceived)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
-            }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
+        @if (!IsSubmitted && !IsCancelled)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                 @GetSubmitButtonText()
             </button>
         }
-        @if (IsApproved && !IsCancelled)
-        {
-            <div class="dropdown m-1" id="dropdown">
-                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Purchase Order</li>
-                    <hr class="m-1 border-primary" />
-                    <li @onclick="CreateRFQ" class="btn ms-2 m-1 text-sm-start">Request For Quotation</li>
-                </ul>
-            </div>
-            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                Cancel
-            </button>
-        }
-        @if (!IsReceived && IsOrdered && !IsCancelled)
+        @if (!IsCancelled && IsSubmitted)
         {
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
@@ -95,12 +59,16 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplayPR">
-            <label class="form-label">Purchase Requisition Number</label>
-            <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
+            <label class="form-label">Stock Entry ID</label>
+            <input type="text" class="form-control" @bind="stock.StockID" hidden>
         </div>
         <div class="col-md-6">
-            <label class="form-label">Date</label>
-            <input type="date" @bind="purchase.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+            <label class="form-label">Stock Entry Type</label>
+            <select class="form-select" aria-label="Stock Entry Type" @bind="stock.Type">
+                <option value=""></option>
+                <option value="Goods Receipt">Goods Receipt</option>
+                <option value="Goods Issue">Goods Issue</option>
+            </select>
         </div>
     </form>
 </div>
@@ -117,14 +85,11 @@
                     <th class="col col-auto" style="min-width:150px">
                         Item
                     </th>
-                    <th class="col col-auto" style="width: 70px;">
+                    <th class="col col-auto" style="width: 70px; min-width: 70px;">
                         Quantity
                     </th>
-                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
-                        UOM
-                    </th>
-                    <th class="col col-auto" style="width: 150px;">
-                        Required By
+                    <th class="col col-auto" style="width: 150px; min-width: 150px;">
+                        Basic Rate
                     </th>
                 </tr>
             </thead>
@@ -134,7 +99,6 @@
                     var item = Items[index];
                     item.RowID = index + 1;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
 
                     var rowIndex = item.RowID - 1;
                     <tr>
@@ -156,7 +120,7 @@
                                         {
                                             @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                <a class="dropdown-item" bind="@item.ItemID" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
                                                 <hr class="m-1 border-primary" />
                                             }
                                         }
@@ -166,42 +130,17 @@
                             </div>
                         </td>
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                        <td>
-                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
-                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                    <li>
-                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
-                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
-                                            {
-                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
-                                                {
-                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                    <hr class="m-1 border-primary" />
-                                                }
-                                            }
-                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td>
-                            <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
-                        </td>
+                        <td><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                     </tr>
                 }
             </tbody>
         </table>
-
     </form>
     <div class="col-12">
         <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
     </div>
 </div>
+
 <script>
     function toggleDropdown() {
         var dropdownMenu = document.getElementById("dropdownMenu");
@@ -229,7 +168,7 @@
 
 @code {
     [Parameter]
-    public string? PRNumber { get; set; }
+    public string? StockID { get; set; }
     private string header = "Create Purchase Request";
 
     bool isMobile = false;
@@ -238,21 +177,17 @@
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool DisplayPR = true;
-    private bool IsOrdered = false;
-    private bool IsApproved = false;
-    private bool IsReceived = false;
     private bool IsSubmitted = false;
     private bool IsCancelled = false;
 
-    public bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsOrdered || IsReceived; } }
+    public bool ReadonlyHidden { get { return IsCancelled || IsSubmitted; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
-    private List<PR_Items> Items = new List<PR_Items>();
+    private List<Stock> Items = new List<Stock>();
 
     protected override async void OnInitialized()
     {
@@ -260,40 +195,29 @@
         if (DeviceType == "Mobile") isMobile = true;
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            purchase.DocumentDate = DateTime.Now;
-            if (PRNumber != null)
+            if (StockID != null)
             {
-                purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
-                Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                if (purchase == null || Items.Count == 0)
-                    NavigationManager.NavigateTo("/purchaserequisition/");
+                stock = db.QueryFirstOrDefault<Stock>("select * from Stock where StockID = @StockID", new { StockID = StockID });
+                Items = db.Query<Stock>("Select * from Stock where StockID = @StockID", new { StockID = StockID }).ToList();
+                ItemName = db.Query<string>("select ItemName from Items inner join Items on Item = ItemCode where StockID = @StockID", new { StockID = StockID }).ToList();
+                if (stock == null || Items.Count == 0)
+                    NavigationManager.NavigateTo("/stock-entry/");
 
                 DisplayPR = false;
-                header = purchase.PRname;
-                if (purchase.Status == PurchaseStatuses.Pending)
+                header = stock.Type;
+                if (stock.Status == PurchaseStatuses.Submitted)
                 {
-                    IsApproved = true;
+                    IsSubmitted = true;
                     IsSaving = false;
                 }
-                else if (purchase.Status == PurchaseStatuses.Draft)
+                else if (stock.Status == PurchaseStatuses.Draft)
                 {
                     IsDraft = true;
                     IsSaving = false;
                 }
-                else if (purchase.Status == PurchaseStatuses.Cancelled)
+                else if (stock.Status == PurchaseStatuses.Cancelled)
                 {
                     IsCancelled = true;
-                    IsSaving = false;
-                }
-                else if (purchase.Status == PurchaseStatuses.Ordered)
-                {
-                    IsOrdered = true;
-                    IsSaving = false;
-                }
-                else if (purchase.Status == PurchaseStatuses.Received)
-                {
-                    IsReceived = true;
                     IsSaving = false;
                 }
             }
@@ -303,7 +227,6 @@
             }
 
             DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-            DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
         }
         StateHasChanged();
 
@@ -322,7 +245,7 @@
                     return validate;
                 }
 
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Request for ");
+                StringBuilder titleBuilder = new StringBuilder("Stock Entry for ");
 
                 foreach (string data in ItemName)
                 {
@@ -336,23 +259,23 @@
                     titleBuilder.Append("...");
                 }
 
-                purchase.PRname = titleBuilder.ToString();
+                stock.Type = titleBuilder.ToString();
                 header = titleBuilder.ToString();
 
                 if (IsSaving)
                 {
-                    purchase.Status = PurchaseStatuses.Draft;
+                    stock.Status = PurchaseStatuses.Draft;
                 }
                 else if (IsDraft)
                 {
-                    purchase.Status = PurchaseStatuses.Pending;
+                    stock.Status = PurchaseStatuses.Submitted;
                 }
-                else if (IsApproved || IsOrdered || IsReceived)
+                else if (IsSubmitted)
                 {
-                    purchase.Status = PurchaseStatuses.Cancelled;
+                    stock.Status = PurchaseStatuses.Cancelled;
                 }
 
-                purchase.PRNumber = crud.CRD(purchase, "CreatePurchaseRequest");
+                stock.StockID = crud.CRD(stock, "CreatePurchaseRequest");
 
                 foreach (var PR in Items)
                 {
@@ -360,36 +283,36 @@
                     {
                         IsDelete.Remove(PR.RowID);
                     }
-                    PR.PRNumber = purchase.PRNumber;
+                    PR.StockID = stock.StockID;
                     DisplayPR = false;
                     crud.CRD(PR, "PurhcaseRequestItems");
                 }
 
                 foreach (var del in IsDelete)
                 {
-                    pritem.RowID = del;
-                    pritem.PRNumber = purchase.PRNumber;
-                    crud.CRD(pritem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
+                    stock.RowID = del;
+                    stock.StockID = stock.StockID;
+                    crud.CRD(stock, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
                 }
                 IsDelete.Clear();
                 ToggleApproval();
-                if (PRNumber == null)
+                if (StockID == null)
                 {
-                    NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PRNumber}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/stock-entry/{stock.StockID}", forceLoad: true);
                 }
                 if (IsDraft)
                 {
                     return "Resquest Saved Successfully";
                 }
 
-                else if (IsApproved)
+                else if (IsSubmitted)
                 {
-                    return "Purchase Request Submitted Successfully";
+                    return "Stock Entry Submitted Successfully";
                 }
 
                 else if (IsCancelled)
                 {
-                    return "Purchase Request Cancelled Successfully";
+                    return "Stock Entry Cancelled Successfully";
                 }
 
                 else
@@ -409,32 +332,28 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (purchase.PRNumber != null)
+            if (stock.StockID != null)
             {
-                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where StockID = @StockID", new { StockID = stock.StockID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Pending && !IsApproved) return "Purchase Request has already been submitted changes cannot be done";
+                    if (GetStatus == PurchaseStatuses.Submitted && !IsCancelled) return "Stock Entry has already been submitted changes cannot be done";
 
-                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Purchase Request has already been Cancelled";
+                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Stock Entry has already been Cancelled";
                 }
                 else
                 {
-                    return "Purchase Request ID does not exist";
+                    return "Stock Entry ID does not exist";
                 }
             }
-
-            if (purchase.DocumentDate == null) return "Please Enter Document Date";
 
             foreach (var PR in Items)
             {
                 if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1])) return $"Please Enter Item on Row: {PR.RowID}";
 
-                if (string.IsNullOrWhiteSpace(PR.UOM)) return $"Please Enter UOM on Row: {PR.RowID}";
-
                 if (PR.Quantity <= 0) return $"Row {PR.RowID}: Quantity cannot be less than or equal to 0";
 
-                if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {PR.RowID}";
+                if (PR.Rate <= 0 || string.IsNullOrWhiteSpace((PR.Rate).ToString())) return $"Row {PR.RowID}: Rate cannot be less than or equal to 0";
 
                 if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1])) return $"Item on Row: {PR.RowID} does not exist";
             }
@@ -475,7 +394,7 @@
         if (IsDraft)
         {
             IsDraft = false;
-            IsApproved = true;
+            IsSubmitted = true;
             IsSaving = false;
         }
         else if (IsSaving)
@@ -483,22 +402,20 @@
             IsDraft = true;
             IsSaving = false;
         }
-        else if (IsApproved || IsOrdered || IsReceived)
+        else if (IsSubmitted)
         {
             IsCancelled = true;
             IsSaving = false;
-            IsApproved = false;
-            IsOrdered = false;
-            IsReceived = false;
+            IsSubmitted = false;
         }
     }
 
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new PR_Items
+        Items.Add(new Stock
             {
-                RequiredBy = DateTime.Now,
+                Rate = 0,
                 Quantity = 1
             });
         ItemName.Add("");
@@ -534,9 +451,9 @@
         bool result = DropDownItem.FilterOptions(e, rowIndex);
         if (result == true)
         {
-            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].ItemID))
             {
-                Items[rowIndex].Item = "";
+                Items[rowIndex].ItemID = "";
             }
         }
         StateHasChanged();
@@ -549,29 +466,7 @@
         {
 
             ItemName[rowIndex] = options.Text;
-            Items[rowIndex].Item = options.Value;
-        }
-    }
-
-    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
-    {
-        bool result = DropDownUOM.FilterOptions(e, rowIndex);
-        if (result == true)
-        {
-            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
-            {
-                Items[rowIndex].UOM = "";
-            }
-        }
-        StateHasChanged();
-    }
-
-    public void SelectUOMOption(option options, int rowIndex)
-    {
-        bool result = DropDownUOM.SelectOption(options, rowIndex);
-        if (result == false)
-        {
-            Items[rowIndex].UOM = options.Value;
+            Items[rowIndex].ItemID = options.Value;
         }
     }
 
@@ -579,18 +474,18 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where StockID = @StockID", new { StockID = stock.StockID });
             if (GetStatus != null)
             {
                 if (GetStatus == PurchaseStatuses.Cancelled)
                 {
                     Snackbar.Clear();
-                    Snackbar.Add("This Purchase Request has already been Cancelled", Severity.Error);
+                    Snackbar.Add("This Stock Entry has already been Cancelled", Severity.Error);
                     return;
                 }
             }
             var options = new DialogOptions { ClassBackground = "dialog" };
-            var result = await DialogService.Show<Dialog>("Cancel Purchase Request", options).Result;
+            var result = await DialogService.Show<Dialog>("Cancel Stock Entry", options).Result;
 
             if (result.Data is bool && (bool)result.Data)
             {
@@ -604,8 +499,8 @@
         try
         {
             CancelAll cancelall = new CancelAll();
-            cancelall.ID = purchase.PRNumber;
-            cancelall.type = "Purhcase Request";
+            cancelall.ID = stock.StockID;
+            cancelall.type = "Stock Entry";
             crud.CRD(cancelall, "CancelAll");
             ToggleApproval();
         }
@@ -613,56 +508,6 @@
         {
 
         }
-    }
-    public void CreatePO()
-    {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
-
-            if (GetStatus != PurchaseStatuses.Pending)
-            {
-                Snackbar.Clear();
-                Snackbar.Add("Cannot create Purchase Order Purchase request has already been " + GetStatus, Severity.Error);
-                return;
-            }
-            else if (GetStatus == null)
-            {
-                Snackbar.Clear();
-                Snackbar.Add("Purchase Request ID does not exist", Severity.Error);
-                return;
-            }
-            _protectedLocalStore.SetLocalAsync("PRNumber", purchase.PRNumber);
-
-            NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
-        }
-    }
-    public void CreateRFQ()
-    {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from PurchaseRequest where PRnumber = @PRnumber", new { PRnumber = purchase.PRNumber });
-
-            if (GetStatus != PurchaseStatuses.Pending)
-            {
-                Snackbar.Clear();
-                Snackbar.Add("Cannot create Purchase Order Purchase request has already been " + GetStatus, Severity.Error);
-                return;
-            }
-            else if (GetStatus == null)
-            {
-                Snackbar.Clear();
-                Snackbar.Add("Purchase Request ID does not exist", Severity.Error);
-                return;
-            }
-            _protectedLocalStore.SetLocalAsync("PRNumber", purchase.PRNumber);
-            NavigationManager.NavigateTo("/requestforquotation/new-request-for-quotation");
-        }
-    }
-
-    public void NavigateUOM()
-    {
-        NavigationManager.NavigateTo($"/uom/new-uom", forceLoad: true);
     }
 
     public void NavigateItem()
