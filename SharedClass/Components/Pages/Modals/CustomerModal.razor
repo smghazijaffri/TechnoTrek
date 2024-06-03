@@ -62,6 +62,7 @@
 
     private async Task SubmitForm()
     {
+        bool check = IsVisible;
         if (string.IsNullOrWhiteSpace(model.Name))
         {
             Snackbar.Clear();
@@ -76,16 +77,18 @@
         }
         else
         {
-            await OnSaveChanges.InvokeAsync(model);
+            // await OnSaveChanges.InvokeAsync(model);
             Customer customer = new Customer();
             customer.Name = model.Name;
             customer.Contact = model.Contact;
             var customerData = crud.CRD(customer, "CreateCustomer");
             if (customerData.Contains("Failed"))
             {
+                
                 Snackbar.Clear();
                 Snackbar.Add(customerData, Severity.Error);
-                return;
+                
+
             }
             else
             {
