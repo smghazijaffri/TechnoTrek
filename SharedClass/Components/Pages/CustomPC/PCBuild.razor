@@ -420,9 +420,9 @@
             { "Memory", new List<string> { "Motherboard", "Processor" } },
             { "Storage", new List<string> { "Motherboard", "Processor", "Memory" } },
             { "Graphics Card", new List<string> { "Motherboard", "Processor", "Memory", "Storage" } },
-            { "Power Supply", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics" } },
-            { "Gaming Case", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics", "Supply" } },
-            { "Cooler", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics", "Supply", "Case" } }
+            { "Power Supply", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics Card" } },
+            { "Gaming Case", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics Card", "Power Supply" } },
+            { "Cooler", new List<string> { "Motherboard", "Processor", "Memory", "Storage", "Graphics Card", "Power Supply", "Gaming Case" } }
         };
 
         if (dependencies.TryGetValue(componentName, out var requiredComponents))

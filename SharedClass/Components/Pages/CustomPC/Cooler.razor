@@ -16,7 +16,7 @@
                         <div class="card text-black" style="border-radius:20px;">
                             <div class="card-body">
                                 <h5 class="card-title">@values.Brand @values.ItemName</h5>
-                                <h6 class="card-title">Price</h6>
+                                <h6 class="card-title">Rs. @(ItemRates.ContainsKey(values.ItemCode) ? ItemRates[values.ItemCode]?.ToString() ?? "N/A" : "Loading...")</h6>
                                 @if (!isMobile || !string.IsNullOrEmpty(values.Description))
                                 {
                                     <div>
