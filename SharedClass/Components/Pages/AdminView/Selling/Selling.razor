@@ -9,7 +9,7 @@
 @layout AdminLayout;
 
 <h4>Quick Access</h4>
-<div class="row">
+<div class="row m-auto">
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
@@ -26,6 +26,13 @@
     </MudPaper>
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/stock-entry" Style="border-radius:10px">
+                Stock Entry
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
                 Vendor
             </MudListItem>
@@ -33,7 +40,7 @@
     </MudPaper>
 </div>
 <h4>Forms</h4>
-<div class="row">
+<div class="row m-auto">
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleorder" Style="border-radius:10px">

@@ -1,13 +1,8 @@
 ﻿@page "/billofmaterial"
 
 @using static MudBlazor.CategoryTypes
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
 @using System.Globalization
 @using System.Net.Http.Json
-@using Dapper
 
 @inject BOM bom;
 @layout AdminLayout;
@@ -93,10 +88,10 @@
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.BOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        // if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.ItemName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if ($"{element.BOMID}".Contains(searchString)) return true;
+        if ($"{element.DocumentDate}".Contains(searchString)) return true;
 
         return false;
     }

@@ -12,7 +12,6 @@
 
     public class BOM_Item : BaseRecord
     {
-        //public string ProductionOrderID { get; set; }
         public bool Selected { get; set; }
         public string BOMID { get; set; }
         public string Item { get; set; }

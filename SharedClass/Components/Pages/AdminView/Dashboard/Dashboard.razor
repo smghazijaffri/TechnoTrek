@@ -1,19 +1,19 @@
 ﻿@page "/dashboard";
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Data
 @using System.Globalization
 
+@inject BOM bom;
 @layout AdminLayout;
 @inject Login login;
 @inject Select select;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-<h4>Quick Access</h4>
-<div class="row">
+@* <h4>Quick Access</h4>
+<div class="row m-auto">
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
@@ -25,6 +25,13 @@
         <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
                 UOM
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/stock-entry" Style="border-radius:10px">
+                Stock Entry
             </MudListItem>
         </MudList>
     </MudPaper>
@@ -42,15 +49,39 @@
             </MudListItem>
         </MudList>
     </MudPaper>
+</div> *@
+
+<div class="row m-auto">
+    <div class="m-auto">
+        <Analytics />
+    </div>
+    <div class="col-md-12 mt-3" style="width:40%;">
+        <MudTable @ref="_table" T="BOM" Items="@BOMElements" Hover="true" Style="border-radius:20px"
+                  OnRowClick="@OnRowClick" Filter="new Func<BOM,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Custom PC BOM</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+
+            <HeaderContent>
+                <MudTh>BOM ID</MudTh>
+                <MudTh>Title</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="BOM ID">@context.BOMID</MudTd>
+                <MudTd DataLabel="Title">@context.BOMName</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] {5}" />
+            </PagerContent>
+        </MudTable>
+    </div>
 </div>
-@* <div class="row">
-        <div>
-            <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options" />
-        </div>
-        <div>
-            <MudChart ChartType="ChartType.Bar" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px"></MudChart>
-        </div>
-    </div> *@
+
+@* <div class="m-auto">
+    <Analytics />
+</div> *@
 
 <script defer>
     window.disableBackGesture = function () {
@@ -68,7 +99,12 @@
 </script>
 
 @code {
-    bool isLoading = false;
+    private MudTable<BOM> _table;
+    private string searchString1 = "";
+    private bool _selectOnRowClick = false;
+    private IEnumerable<BOM> BOMElements = new List<BOM>();
+    private HashSet<BOM> selectedItems = new HashSet<BOM>();
+
     public string[] XAxisLabels;
 
     public ChartOptions Options = new ChartOptions();
@@ -78,19 +114,10 @@
 
     protected override async void OnInitialized()
     {
-        var cookieContent = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-
-        var purchaseRequisitions = await select.GetPR1DataAsync();
-        var groupedData = purchaseRequisitions
-            .Where(pr => pr.DocumentDate.HasValue)
-            .GroupBy(pr => pr.DocumentDate.Value.Month)
-            .Select(group => new { Month = group.Key, Count = group.Count() })
-            .OrderBy(group => group.Month)
-            .ToList();
-
-        Series.Add(new ChartSeries() { Name = "Purchase Requisitions", Data = groupedData.Select(x => (double)x.Count).ToArray() });
-        XAxisLabels = groupedData.Select(x => CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(x.Month)).ToArray();
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            BOMElements = await db.QueryAsync<BOM>("SELECT * FROM BOM Where Type = 'Customer' AND IsActive = 'true'");
+        }
 
         StateHasChanged();
 
@@ -99,6 +126,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+
         if (firstRender)
         {
             await JSRuntime.InvokeVoidAsync("disableBackGesture");
@@ -108,5 +137,22 @@
     public void Dispose()
     {
         JSRuntime.InvokeVoidAsync("enableBackGesture");
+    }
+
+    void OnRowClick(TableRowClickEventArgs<BOM> args)
+    {
+        bom.BOMID = args.Item.BOMID;
+        NavigationManager.NavigateTo($"/billofmaterial/{bom.BOMID}");
+    }
+
+    private bool FilterFunc1(BOM element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(BOM element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.BOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.BOMID}".Contains(searchString)) return true;
+
+        return false;
     }
 }

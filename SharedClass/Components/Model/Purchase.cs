@@ -170,6 +170,7 @@
     {
         public string UOMID { get; set; }
         public string UOMName { get; set; }
+        public int StockQuantity { get; set; }
         public string Status { get; set; }
     }
 
@@ -209,8 +210,13 @@
 
     public class Stock : BaseRecord
     {
+        public string StockID { get; set; }
         public string ItemID { get; set; }
+        public string Type { get; set; }
         public int Quantity { get; set; }
         public int Rate { get; set; }
+        public int RowID { get; set; }
+        public bool Selected { get; set; }
+        public string Status { get; set; }
     }
 }

@@ -242,36 +242,36 @@
     $('#quantity').on('input', function () {
         debugger;
         var inputValue = $(this).val();
-        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
 
         if (nonNumberRegex.test(inputValue)) {
-            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
         }
     });
     $('#quantity').on('paste', function () {
         debugger;
         var inputValue = $(this).val();
-        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
 
         if (nonNumberRegex.test(inputValue)) {
-            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
         }
     }); $('#rate').on('input', function () {
         debugger;
         var inputValue = $(this).val();
-        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
 
         if (nonNumberRegex.test(inputValue)) {
-            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
         }
     });
     $('#rate').on('paste', function () {
         debugger;
         var inputValue = $(this).val();
-        var nonNumberRegex = /[^0-9]|[-]{2,}/g; // Regex to match non-numeric characters and more than one occurrence of plus or minus sign
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
 
         if (nonNumberRegex.test(inputValue)) {
-            $(this).val(inputValue.replace(nonNumberRegex, '')); // Remove non-numeric characters and more than one occurrence of plus or minus sign
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
         }
     });
 </script>
