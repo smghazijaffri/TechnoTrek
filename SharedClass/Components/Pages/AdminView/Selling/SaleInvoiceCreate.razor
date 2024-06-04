@@ -88,7 +88,7 @@
             <label class="form-label">Customer</label>
             <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
                 <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.Name"
-                       placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
+                       placeholder="Select a Customer" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
                 <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
                     aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
                     <li>
@@ -498,7 +498,9 @@
 
             if (salesinvoice.CustomerID == null) return "Please Select a Customer";
 
-            if (salesinvoice.IsPaid == true && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+            if (salesinvoice.IsPaid && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+
+            if (!salesinvoice.IsPaid && !salesinvoice.IsPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
 
@@ -567,6 +569,7 @@
             salesinvoice.IsPartiallyPaid = true; ;
             PartiallyPaid = true;
             Paid = false;
+            IsSaving = false;
         }
         else if (salesinvoice.IsPaid)
         {
@@ -574,6 +577,7 @@
             Overdue = false;
             Paid = true;
             PartiallyPaid = false;
+            IsSaving = false;
         }
         else if (Overdue)
         {

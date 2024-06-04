@@ -338,46 +338,46 @@
                     if (issue == null || Items.Count == 0)
                         NavigationManager.NavigateTo("/goodissue/");
 
-                        DisplayPO = false;
-                        header = issue.GoodsIssueName;
-                        if (issue.Status == SaleStatus.ToBill)
-                        {
-                            ToBill = true;
-                            IsSaving = false;
-                        }
-                        else if (issue.Status == SaleStatus.Draft)
-                        {
-                            IsDraft = true;
-                            IsSaving = false;
-                        }
-                        else if (issue.Status == SaleStatus.Cancelled)
-                        {
-                            IsCancelled = true;
-                            IsSaving = false;
-                        }
-                        else if (issue.Status == SaleStatus.Completed)
-                        {
-                            IsCompleted = true;
-                            IsSaving = false;
-                        }
-                    }
-                    else if (!string.IsNullOrWhiteSpace(SaleOrderID))
+                    DisplayPO = false;
+                    header = issue.GoodsIssueName;
+                    if (issue.Status == SaleStatus.ToBill)
                     {
-                        issue.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
-                        Items = db.Query<GI_Items>("select * from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                        ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                        customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
-                        UOMName = db.Query<string>("select UOMName from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                        issue.RefrenceDocument = SaleOrderID;
-                        await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
+                        ToBill = true;
+                        IsSaving = false;
                     }
-                    else
+                    else if (issue.Status == SaleStatus.Draft)
                     {
-                        AddRow();
+                        IsDraft = true;
+                        IsSaving = false;
                     }
-                    DropDownCustomer.Options = db.Query<option>("select CustomerID as Value, Name as Text from Customer").ToList();
-                    DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
-                    DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                    else if (issue.Status == SaleStatus.Cancelled)
+                    {
+                        IsCancelled = true;
+                        IsSaving = false;
+                    }
+                    else if (issue.Status == SaleStatus.Completed)
+                    {
+                        IsCompleted = true;
+                        IsSaving = false;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(SaleOrderID))
+                {
+                    issue.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                    Items = db.Query<GI_Items>("select * from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                    UOMName = db.Query<string>("select UOMName from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    issue.RefrenceDocument = SaleOrderID;
+                    await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
+                }
+                else
+                {
+                    AddRow();
+                }
+                DropDownCustomer.Options = db.Query<option>("select CustomerID as Value, Name as Text from Customer").ToList();
+                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
+                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
 
 
             }
@@ -496,51 +496,58 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (issue.GoodsIssueID != null)
+            try
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
-                if (GetStatus != null)
+                if (issue.GoodsIssueID != null)
                 {
-                    if (GetStatus == SaleStatus.ToBill && !ToBill) { return "Goods Issue has already been submitted changes cannot be done"; }
-                    if (GetStatus == SaleStatus.Cancelled && !IsCancelled) { return "This Goods Issue has already been Cancelled"; }
+                    string GetStatus = db.QueryFirstOrDefault<string>("Select Status from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
+                    if (GetStatus != null)
+                    {
+                        if (GetStatus == SaleStatus.ToBill && !ToBill) { return "Goods Issue has already been submitted changes cannot be done"; }
+                        if (GetStatus == SaleStatus.Cancelled && !IsCancelled) { return "This Goods Issue has already been Cancelled"; }
+                    }
+                    else
+                    {
+                        return "Goods Issue ID does not exist";
+                    }
                 }
-                else
-                {
-                    return "Goods Issue ID does not exist";
-                }
-            }
-            foreach (var GI in Items)
-            {
-                int CheckItem = 0;
-                CheckItem = db.QueryFirstOrDefault<int>("Select Quantity: @quantity from Stock where ItemID = @ItemID", new { ItemID = GI.Item });
-                if (CheckItem == 0) { return $"Item on Row: {GI.RowID} does not have enough Quantity"; }
-            }
-
-            if (issue.DocumentDate == null) { return "Please Enter Document Date"; }
-            if (string.IsNullOrWhiteSpace(issue.CustomerID)) return $"Please select Customer";
-            if (string.IsNullOrWhiteSpace(customer.Name)) { return "Please select Customer"; }
-            if (!DropDownCustomer.Options.Any(option => option.Text == customer.Name)) { return "Please Enter Valid Customer"; }
-            if (Items.Count > 0)
-            {
                 foreach (var GI in Items)
                 {
-                    if (string.IsNullOrWhiteSpace(GI.Item)) return $"Please select Item on Row: {GI.RowID}";
-
-                    if (string.IsNullOrWhiteSpace(ItemName[GI.RowID - 1])) return $"Please Enter Item on Row: {GI.RowID}";
-
-                    if (GI.Quantity <= 0) return $"Row {GI.RowID}: Quantity cannot be less than or equal to 0";
-
-                    if (string.IsNullOrWhiteSpace(GI.UOM)) return $"Please Enter UOM on Row: {GI.RowID}";
-
-                    if (GI.Rate <= 0) return $"Row {GI.RowID}: Rate cannot be less than or equal to 0";
-
-                    if (GI.Amount <= 0) return $"Row {GI.RowID}: Amount cannot be less than or equal to 0";
-
-                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[GI.RowID - 1])) return $"Item on Row: {GI.RowID} does not exist";
-
+                    int CheckItem = 0;
+                    CheckItem = db.QueryFirstOrDefault<int>("Select Quantity from Stock where ItemID = @ItemID", new { ItemID = GI.Item });
+                    if (CheckItem == 0) { return $"Item on Row: {GI.RowID} does not have enough Quantity"; }
                 }
+
+                if (issue.DocumentDate == null) { return "Please Enter Document Date"; }
+                if (string.IsNullOrWhiteSpace(issue.CustomerID)) return $"Please select Customer";
+                if (string.IsNullOrWhiteSpace(customer.Name)) { return "Please select Customer"; }
+                if (!DropDownCustomer.Options.Any(option => option.Text == customer.Name)) { return "Please Enter Valid Customer"; }
+                if (Items.Count > 0)
+                {
+                    foreach (var GI in Items)
+                    {
+                        if (string.IsNullOrWhiteSpace(GI.Item)) return $"Please select Item on Row: {GI.RowID}";
+
+                        if (string.IsNullOrWhiteSpace(ItemName[GI.RowID - 1])) return $"Please Enter Item on Row: {GI.RowID}";
+
+                        if (GI.Quantity <= 0) return $"Row {GI.RowID}: Quantity cannot be less than or equal to 0";
+
+                        if (string.IsNullOrWhiteSpace(GI.UOM)) return $"Please Enter UOM on Row: {GI.RowID}";
+
+                        if (GI.Rate <= 0) return $"Row {GI.RowID}: Rate cannot be less than or equal to 0";
+
+                        if (GI.Amount <= 0) return $"Row {GI.RowID}: Amount cannot be less than or equal to 0";
+
+                        if (!DropDownItem.Options.Any(option => option.Text == ItemName[GI.RowID - 1])) return $"Item on Row: {GI.RowID} does not exist";
+
+                    }
+                }
+                return null;
             }
-            return null;
+            catch(Exception ex)
+            {
+                return ex.Message;
+            }
         }
     }
 
