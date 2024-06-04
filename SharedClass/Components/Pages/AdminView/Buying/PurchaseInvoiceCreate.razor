@@ -61,10 +61,14 @@
             {
                 <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
             }
+            @if (UnpaidtoPaid)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        @if (!Unpaid && !IsCancelled && !IsPaid && !Overdue)
+        @if (!Unpaid && !IsCancelled && !IsPaid && !Overdue && (UnpaidtoPaid || IsSaving || IsDraft))
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                 @GetSubmitButtonText()
@@ -116,7 +120,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label"></label>
-            <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@ReadonlyHidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
             <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
 
         </div>
@@ -289,6 +293,7 @@
     string DeviceType { get; set; }
 
     private bool Unpaid = false;
+    private bool UnpaidtoPaid = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool Overdue = false;
@@ -296,7 +301,8 @@
     private bool UpdateStock = false;
     private bool IsCancelled = false;
     private bool IsPaid { get; set; } = false;
-    public bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue; } }
+    public bool Readonly { get { return IsCancelled || IsPaid; } }
+    public bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue || UnpaidtoPaid; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
@@ -346,6 +352,7 @@
                     if (purchase.Status == PurchaseStatuses.Unpaid)
                     {
                         Unpaid = true;
+                        purchase.IsPaid = false;
                         IsSaving = false;
                     }
                     else if (purchase.Status == PurchaseStatuses.Draft)
@@ -357,11 +364,13 @@
                     {
                         IsCancelled = true;
                         IsSaving = false;
+                        UnpaidtoPaid = false;
                     }
                     else if (purchase.Status == PurchaseStatuses.Paid)
                     {
                         IsPaid = true;
                         IsSaving = false;
+                        UnpaidtoPaid = false;
                     }
                     else if (purchase.Status == PurchaseStatuses.Overdue)
                     {
@@ -476,6 +485,10 @@
                         }
                     }
                 }
+                else if (UnpaidtoPaid)
+                {
+                    purchase.Status = PurchaseStatuses.Paid;
+                }
                 else if (Unpaid || IsPaid || Overdue)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
@@ -514,8 +527,9 @@
                     return "Invoice Saved Successfully";
                 }
 
-                else if (Unpaid || IsPaid || Overdue)
+                else if (Unpaid || IsPaid || Overdue || UnpaidtoPaid)
                 {
+                    UnpaidtoPaid = false;
                     return "Purchase Invoice Submitted Successfully";
                 }
 
@@ -592,6 +606,7 @@
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Error);
         }
+        StateHasChanged();
     }
 
     private string GetSubmitButtonText()
@@ -632,6 +647,12 @@
         {
             IsDraft = true;
             IsSaving = false;
+        }
+        else if (UnpaidtoPaid)
+        {
+            IsPaid = true;
+            IsSaving = false;
+            UnpaidtoPaid = false;
         }
 
         else if (Unpaid || IsPaid || Overdue)
@@ -676,6 +697,12 @@
             IsDraft = false;
             GetSubmitButtonText();
             StateHasChanged();
+        }
+        if (Unpaid)
+        {
+            Unpaid = false;
+            UnpaidtoPaid = true;
+            IsSaving = false;
         }
     }
 
