@@ -1,0 +1,99 @@
+﻿@inject Select select;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<section>
+    <div class="container py-5">
+        @if (Accessories != null && Accessories.Any())
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+                @foreach (var values in Accessories)
+                {
+                    <div class="col mb-4">
+                        <div class="card text-black" style="border-radius:20px;">
+                            <div class="card-body">
+                                <h5 class="card-title">@values.Brand @values.ItemName</h5>
+                                <h6 class="card-title">Rs. @(ItemRates.ContainsKey(values.ItemCode) ?
+                            ItemRates[values.ItemCode]?.ToString() ?? "N/A" : "Loading...")</h6>
+                                @if (!string.IsNullOrEmpty(values.Description))
+                                {
+                                    <div>
+                                        <div class="d-flex justify-content-center"
+                                            @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
+                                            <h6><span>Product Page</span></h6>
+                                        </div>
+                                    </div>
+                                }
+                                <h6>Select Quantity: @quantity</h6>
+                                <p>
+                                    <MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
+                                </p>
+                                <h6>Total: @(ItemRates[values.ItemCode] * quantity)</h6>
+                                <div>
+                                    <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
+                                        @onclick="() => Order(values, quantity)">
+                                        Order
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<script>
+    function openInNewTab(url) {
+        window.open(url, '_blank');
+    }
+</script>
+
+@code {
+    bool isMobile = false;
+    string? DeviceType { get; set; }
+
+    public int quantity { get; set; } = 20;
+
+    private IEnumerable<ItemClass>? Accessories;
+
+    private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+
+        Accessories = await select.GetItemsAsync("Accessories");
+        if (Accessories.Any())
+        {
+            foreach (var item in Accessories)
+            {
+                var stock = await select.GetStockDataAsync(item.ItemCode);
+                ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+            }
+        }
+    }
+
+    private async Task Order(ItemClass selected, int quantity)
+    {
+        await _protectedLocalStore.SetLocalAsync("BulkAccessory", selected);
+        await _protectedLocalStore.SetLocalAsync("BulkAccessoryQuantity", quantity);
+    }
+
+    private async void OnButtonClicked(string link)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("openInNewTab", link);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

@@ -7,33 +7,91 @@
 @inject IDialogService DialogService;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-<MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
-    <MudTabPanel Text="Motherboards" ToolTip="Motherboards">
+@* <MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
+    <MudTabPanel Text="Motherboards"">
         <Motherboard isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="Processors" ToolTip="Processors">
+    <MudTabPanel Text="Processors">
         <Processor isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="Graphics Cards" ToolTip="Graphics Cards">
+    <MudTabPanel Text="Graphics Cards">
         <GPU isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="PC Cases" ToolTip="PC Cases">
+    <MudTabPanel Text="PC Cases">
         <Case isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="Memory Sticks" ToolTip="Memory Sticks">
+    <MudTabPanel Text="Memory Sticks">
         <Memory isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="Storage Devices" ToolTip="Storage Devices">
+    <MudTabPanel Text="Storage Devices">
         <Storage isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="Power Supplies" ToolTip="Power Supplies">
+    <MudTabPanel Text="Power Supplies">
         <PSU isBulk="true" />
     </MudTabPanel>
-    <MudTabPanel Text="Coolers & Fans" ToolTip="Coolers & Fans">
+    <MudTabPanel Text="Coolers & Fans">
         <Cooler isBulk="true" />
     </MudTabPanel>
+</MudTabs> *@
+
+<MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
+    @foreach (var itemType in GetItemTypes())
+    {
+        <MudTabPanel Text="@itemType">
+            @if (itemType == "Motherboard")
+            {
+                <Motherboard isBulk="true" />
+            }
+            else if (itemType == "Processor")
+            {
+                <Processor isBulk="true" />
+            }
+            else if (itemType == "Graphics Card")
+            {
+                <GPU isBulk="true" />
+            }
+            else if (itemType == "Gaming Case")
+            {
+                <Case isBulk="true" />
+            }
+            else if (itemType == "Memory")
+            {
+                <Memory isBulk="true" />
+            }
+            else if (itemType == "Storage")
+            {
+                <Storage isBulk="true" />
+            }
+            else if (itemType == "Power Supply")
+            {
+                <PSU isBulk="true" />
+            }
+            else if (itemType == "Cooler")
+            {
+                <Cooler isBulk="true" />
+            }
+            else if (itemType == "Laptop")
+            {
+                <Laptop />
+            }
+            else if (itemType == "Accessories")
+            {
+                <Accessory />
+            }
+            else
+            {
+                <h1>Inventory is empty</h1>
+            }
+        </MudTabPanel>
+    }
 </MudTabs>
 
 @code {
-
+    private List<string> GetItemTypes()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            return db.Query<string>("SELECT DISTINCT ItemType FROM Items").ToList();
+        }
+    }
 }
