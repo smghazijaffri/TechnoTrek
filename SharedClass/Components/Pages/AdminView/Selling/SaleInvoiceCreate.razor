@@ -498,7 +498,9 @@
 
             if (salesinvoice.CustomerID == null) return "Please Select a Customer";
 
-            if (salesinvoice.IsPaid == true && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+            if (salesinvoice.IsPaid && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+
+            if (!salesinvoice.IsPaid && !salesinvoice.IsPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
 
@@ -567,6 +569,7 @@
             salesinvoice.IsPartiallyPaid = true; ;
             PartiallyPaid = true;
             Paid = false;
+            IsSaving = false;
         }
         else if (salesinvoice.IsPaid)
         {
@@ -574,6 +577,7 @@
             Overdue = false;
             Paid = true;
             PartiallyPaid = false;
+            IsSaving = false;
         }
         else if (Overdue)
         {
