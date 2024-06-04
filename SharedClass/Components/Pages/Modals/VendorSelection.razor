@@ -1,8 +1,4 @@
-﻿@using SharedClass.Components.Model
-@using Microsoft.Data.SqlClient
-@using Dapper
-
-@inject Vendor vendor;
+﻿@inject Vendor vendor;
 @inject Connection con;
 @inject RequestForQuotation rfq;
 @inject NavigationManager navigationManager;
@@ -27,8 +23,8 @@
                                 {
                                     @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
                                     {
-                                                <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
-                                                <hr class="m-1 border-primary" />
+                                        <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                        <hr class="m-1 border-primary" />
                                     }
                                 }
                                 <button @onclick="NavigateVendor" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Vendor</button>
@@ -55,11 +51,11 @@
     public EventCallback<bool> IsVisibleChanged { get; set; }
 
     public string VendorName = "";
+
     protected override void OnInitialized()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
-            DropDownVendor.Options = db.Query<option>("	Select v.VendorID as Value, VendorName as Text from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
-
+        { DropDownVendor.Options = db.Query<option>("Select v.VendorID as Value, VendorName as Text from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList(); }
     }
 
     private void CloseModal()

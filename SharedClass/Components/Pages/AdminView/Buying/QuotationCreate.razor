@@ -1,20 +1,13 @@
 ﻿@page "/requestforquotation/new-request-for-quotation"
 @page "/requestforquotation/{RFQNumber?}"
 
-@using SharedClass.Components.Pages.Modals
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
 @using System.Globalization
 @using System.Reflection
 @using System.Text
-@using Dapper
 
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
-@inject Vendor Vendorlist;
 @inject Connection con;
 @inject RFQ_Items RFQItem;
 @inject ISnackbar Snackbar;
@@ -754,7 +747,7 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 
