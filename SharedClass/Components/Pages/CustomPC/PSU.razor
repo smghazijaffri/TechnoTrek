@@ -17,11 +17,11 @@
                             <div class="card-body">
                                 <h5 class="card-title">@values.Brand @values.ItemName</h5>
                                 <h6 class="card-title">Rs. @(ItemRates.ContainsKey(values.ItemCode) ? ItemRates[values.ItemCode]?.ToString() ?? "N/A" : "Loading...")</h6>
-                                @if (!isMobile || !string.IsNullOrEmpty(values.Description))
+                                @if (!string.IsNullOrEmpty(values.Description))
                                 {
                                     <div>
                                         <div class="d-flex justify-content-center" @onclick="() => OnButtonClicked(values.Description)" style="cursor: pointer;">
-                                            <h6><span>Visit Product Page</span></h6>
+                                            <h6><span>Product Page</span></h6>
                                         </div>
                                     </div>
                                 }
@@ -52,10 +52,6 @@
                 }
             </div>
         }
-        else
-        {
-            <h1>Sorry, no product available</h1>
-        }
     </div>
 </section>
 
@@ -80,9 +76,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-        if (DeviceType == "Mobile") isMobile = true;
-
         try
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -218,6 +211,24 @@
 
     private async void OnButtonClicked(string link)
     {
-        await JSRuntime.InvokeVoidAsync("openInNewTab", link);
+        try
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+            if (!isMobile)
+            {
+                await JSRuntime.InvokeVoidAsync("openInNewTab", link);
+            }
+            else
+            {
+                bool? result = await DialogService.ShowMessageBox("Product Link", link);
+                StateHasChanged();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
 }

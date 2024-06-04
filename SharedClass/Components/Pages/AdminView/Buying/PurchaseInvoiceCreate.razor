@@ -787,7 +787,7 @@
 
         }
         var options = new DialogOptions { ClassBackground = "dialog" };
-        var result = await DialogService.Show<Dialog>("Cancel Purchase Order", options).Result;
+        var result = await DialogService.Show<Dialog>("Cancel Purchase Invoice", options).Result;
 
         if (result.Data is bool && (bool)result.Data)
         {
