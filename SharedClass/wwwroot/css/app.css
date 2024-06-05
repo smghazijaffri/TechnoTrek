@@ -342,3 +342,9 @@ h1:focus {
     margin-left: 8%;
     margin-top: 5.5%;
 }
+
+@media (min-width: 1025px) {
+    .h-custom {
+        height: 100vh !important;
+    }
+}

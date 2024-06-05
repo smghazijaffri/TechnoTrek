@@ -87,7 +87,7 @@
     {
         try
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Authorized"))
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Authorized") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
             {
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {

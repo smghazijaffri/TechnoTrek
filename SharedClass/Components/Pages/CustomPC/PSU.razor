@@ -1,5 +1,6 @@
 ﻿@inject Select select;
 @inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -205,8 +206,14 @@
 
     private async Task Order(ItemClass selected, int quantity)
     {
-        await _protectedLocalStore.SetLocalAsync("BulkPSU", selected);
-        await _protectedLocalStore.SetLocalAsync("BulkPSUQuantity", quantity);
+        await _protectedLocalStore.SetLocalAsync("BulkPSU", selected.ItemCode);
+        await _protectedLocalStore.SetLocalAsync("BulkPSUQuantity", quantity.ToString());
+        // var isOrdered = await _protectedLocalStore.GetLocalAsync<string>("BulkMotherboard");
+        // if (!string.IsNullOrEmpty(isOrdered) && isOrdered != selected.ItemCode)
+        // {
+        AppState.CartItemCount++;
+        // }
+        Snackbar.Add("Added to cart", Severity.Success);
     }
 
     private async void OnButtonClicked(string link)

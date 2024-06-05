@@ -1,5 +1,6 @@
 ﻿@inject Select select;
 @inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -125,19 +126,6 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-            if (DeviceType == "Mobile")
-            {
-                isMobile = true;
-                StateHasChanged();
-            }
-        }
-    }
-
     private async Task Select(ItemClass selectedCooler)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -186,8 +174,14 @@
 
     private async Task Order(ItemClass selected, int quantity)
     {
-        await _protectedLocalStore.SetLocalAsync("BulkCooler", selected);
-        await _protectedLocalStore.SetLocalAsync("BulkCoolerQuantity", quantity);
+        await _protectedLocalStore.SetLocalAsync("BulkCooler", selected.ItemCode);
+        await _protectedLocalStore.SetLocalAsync("BulkCoolerQuantity", quantity.ToString());
+        // var isOrdered = await _protectedLocalStore.GetLocalAsync<string>("BulkMotherboard");
+        // if (!string.IsNullOrEmpty(isOrdered) && isOrdered != selected.ItemCode)
+        // {
+        AppState.CartItemCount++;
+        // }
+        Snackbar.Add("Added to cart", Severity.Success);
     }
 
     private async void OnButtonClicked(string link)

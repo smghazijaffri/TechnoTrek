@@ -7,6 +7,7 @@ using ProtectedLocalStore;
 using SharedClass;
 using SharedClass.Components.Data;
 using SharedClass.Components.Model;
+using SharedClass.Components.State;
 using System.Text.Json;
 
 namespace MauiMobileApp
@@ -53,6 +54,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<BaseRecord>();
             builder.Services.AddScoped<GoodsIssue>();
             builder.Services.AddScoped<GoodReceipt>();
+            builder.Services.AddSingleton<AppState>();
             builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddScoped<SalesInvoice>();
             builder.Services.AddScoped<BindDropdown>();
