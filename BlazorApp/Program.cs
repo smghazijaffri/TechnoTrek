@@ -7,6 +7,7 @@ using SharedClass;
 using SharedClass.Components;
 using SharedClass.Components.Data;
 using SharedClass.Components.Model;
+using SharedClass.Components.State;
 using System.Text.Json;
 using static SharedClass.Components.Pages.AdminView.Buying.ItemsCreate;
 
@@ -44,6 +45,7 @@ builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodsIssue>();
 builder.Services.AddScoped<GoodReceipt>();
+builder.Services.AddSingleton<AppState>();
 builder.Services.AddScoped<SalesInvoice>();
 builder.Services.AddScoped<BindDropdown>();
 builder.Services.AddScoped<Compatibility>();

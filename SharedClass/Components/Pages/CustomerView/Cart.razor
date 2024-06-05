@@ -1,0 +1,256 @@
+﻿@page "/cart"
+@inject CRUD crud;
+@inject Connection con;
+@inject AppState AppState;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<section class="h-100 h-custom" style="background-color: #B8AAF8; border-radius: 10px;">
+    <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col">
+                <div class="card" style="border-radius: 10px;">
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-lg-7">
+
+                                <h5 class="mb-3">
+                                    <a href="/" class="text-body">
+                                        <i class="bi bi-arrow-left-circle me-2"></i>Continue shopping
+                                    </a>
+                                </h5>
+                                <hr>
+
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <p class="mb-1">Shopping cart</p>
+                                        <p class="mb-0">You have @AppState.CartItemCount items in your cart</p>
+                                    </div>
+                                </div>
+
+                                @foreach (var item in items)
+                                {
+                                    if (!string.IsNullOrEmpty(item.Name))
+                                    {
+                                        <div class="card mb-3" style="border-radius: 10px;">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between">
+                                                    <div class="d-flex flex-row align-items-center">
+                                                        <div class="ms-3 me-1">
+                                                            <h6>@item.Brand</h6>
+                                                            <p class="small mb-0">@item.Name</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex flex-row align-items-center">
+                                                        <div style="width: 50px;">
+                                                            <label>QTY</label>
+                                                            <h6 class="fw-normal ms-1 mb-0">@item.Quantity</h6>
+                                                        </div>
+                                                        <div style="width: 100px;">
+                                                            <label>Rs.</label>
+                                                            <h6 class="mb-0">@item.Price</h6>
+                                                        </div>
+                                                        <a @onclick="() => DeleteItem(item.Key, item.QuantityKey)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card text-white rounded-3" style="background-color:#B8AAF8; border-radius: 10px;">
+                                    <div class="card-body">
+
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h4 class="mb-0">Please Enter Your Details</h4>
+                                        </div>
+
+                                        <form class="mt-4">
+                                            <div data-mdb-input-init class="form-outline form-white mb-4">
+                                                <input type="text" id="typeName" class="form-control form-control-lg" size="17"
+                                                       @bind="Name" placeholder="Full Name" />
+                                            </div>
+
+                                            <div data-mdb-input-init class="form-outline form-white mb-4">
+                                                <input type="text" id="typeText" class="form-control form-control-lg" size="17"
+                                                       @bind="Contact" placeholder="Contact No." minlength="11" maxlength="11" />
+                                            </div>
+
+                                            <div data-mdb-input-init class="form-outline form-white mb-4">
+                                                <input type="text" id="typeName" class="form-control form-control-lg" size="17"
+                                                       @bind="Address" placeholder="Address" />
+                                            </div>
+                                        </form>
+
+                                        <hr class="my-4">
+
+                                        <div class="d-flex justify-content-between mb-4">
+                                            <h4 class="mb-2">Total</h4>
+                                            <h4 class="mb-2">Rs. @totalAmount</h4>
+                                        </div>
+
+                                        <button type="button" data-mdb-button-init data-mdb-ripple-init @onclick="Checkout" class="btn" style="background-color:gold">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Checkout <i class="bi bi-arrow-right-circle ms-2"></i></span>
+                                            </div>
+                                        </button>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private class BulkItem
+    {
+        public string? Key { get; set; }
+        public string? QuantityKey { get; set; }
+        public string? Name { get; set; }
+        public string? Brand { get; set; }
+        public string? Code { get; set; }
+        public int Price { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    public string? Name { get; set; }
+    public string? Contact { get; set; }
+    public string? Address { get; set; }
+
+    private int totalAmount { get; set; } = 0;
+
+    private List<BulkItem> items = new List<BulkItem>();
+
+    string[] itemNames = new[] { "BulkMemory", "BulkCooler", "BulkStorage", "BulkCase", "BulkProcessor", "BulkPSU", "BulkMotherboard", "BulkGPU", "BulkAccessory", "BulkLaptop" };
+    string[] itemQuantities = new[] { "BulkMemoryQuantity", "BulkCoolerQuantity", "BulkStorageQuantity", "BulkCaseQuantity", "BulkProcessorQuantity", "BulkPSUQuantity", "BulkMotherboardQuantity", "BulkGPUQuantity", "BulkAccessoryQuantity", "BulkLaptopQuantity" };
+
+    protected async override void OnInitialized()
+    {
+        await LoadItems();
+    }
+
+    private async Task LoadItems()
+    {
+        try
+        {
+            items.Clear();
+
+            var itemTasks = itemNames.Zip(itemQuantities, (name, quantity) => LoadItemDataAsync(name, quantity)).ToList();
+
+            var itemResults = await Task.WhenAll(itemTasks);
+
+            foreach (var result in itemResults)
+            {
+                if (!string.IsNullOrEmpty(result.Name) && result.Quantity >= 20 && result.Quantity <= 50)
+                {
+                    items.Add(new BulkItem
+                        {
+                            Key = result.Key,
+                            QuantityKey = result.QuantityKey,
+                            Name = result.Name,
+                            Brand = result.Brand,
+                            Code = result.Code,
+                            Price = result.Price * result.Quantity,
+                            Quantity = result.Quantity
+                        });
+                }
+            }
+
+            AppState.CartItemCount = items.Select(item => item.Code).Distinct().Count();
+
+            totalAmount = items.Sum(item => item.Price);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task<(string? Key, string? QuantityKey, string? Name, string Brand, string Code, int Price, int Quantity)> LoadItemDataAsync(string itemName, string itemQuantityKey)
+    {
+        try
+        {
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemQuantityKey))
+            {
+                var quantity = await _protectedLocalStore.GetLocalAsync<string>(itemQuantityKey);
+                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>(itemName)) && int.Parse(quantity) >= 20 && int.Parse(quantity) <= 50)
+                {
+                    string itemCode = await _protectedLocalStore.GetLocalAsync<string>(itemName);
+
+                    using (SqlConnection db = new SqlConnection(con.connectionString))
+                    {
+                        var itemDetails = await db.QuerySingleOrDefaultAsync<(string?, string)>("SELECT ItemName, Brand FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { itemCode });
+                        int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = itemCode });
+
+                        return (itemName, itemQuantityKey, itemDetails.Item1, itemDetails.Item2, itemCode, itemPrice, int.Parse(quantity));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        return (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, 0, 0);
+    }
+
+    private async Task DeleteItem(string? Key1, string? Key2)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", Key1) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", Key2))
+        {
+            await _protectedLocalStore.SetLocalAsync(Key1, "");
+            await _protectedLocalStore.SetLocalAsync(Key2, "");
+
+            await LoadItems();
+        }
+    }
+
+    private async void Checkout()
+    {
+        try
+        {
+            if (AppState.CartItemCount > 0)
+            {
+                foreach (var itemName in itemNames)
+                {
+                    await _protectedLocalStore.SetLocalAsync(itemName, "");
+                }
+
+                foreach (var itemQuantity in itemQuantities)
+                {
+                    await _protectedLocalStore.SetLocalAsync(itemQuantity, "");
+                }
+
+                items.Clear();
+
+                AppState.CartItemCount = 0;
+                totalAmount = 0;
+
+                StateHasChanged();
+
+                Snackbar.Add("Checkout completed successfully.", Severity.Success);
+
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                Snackbar.Add("Cart is empty.", Severity.Error);
+                NavigationManager.NavigateTo("/products", forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error during checkout: {ex.Message}", Severity.Error);
+        }
+    }
+}

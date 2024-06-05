@@ -1,4 +1,6 @@
-﻿<nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;">
+﻿@inject AppState AppState;
+
+<nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;">
     <div class="container-fluid">
         <a class="navbar-brand m-0" id="Logo"><img src="_content/SharedClass/Images/techlogo.png" alt="Logo" style="width: 200px" /></a>
         <button class="navbar-toggler @NavButtonCssClass" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
@@ -23,8 +25,8 @@
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-item nav-link" href="#" style="color: #5535F0; font-size:16px;">
-                        <MudBadge Origin="@Origin.TopRight" Content="@BadgeContent" Color="Color.Primary" Overlap="false" Class="">
+                    <NavLink class="nav-item nav-link" href="/cart" style="color: #5535F0; font-size:16px;">
+                        <MudBadge Origin="@Origin.TopRight" Content="@AppState.CartItemCount" Color="Color.Primary" Overlap="false" Class="">
                             <span class="bi bi-cart"></span> Cart
                         </MudBadge>
                     </NavLink>
@@ -44,7 +46,15 @@
     private string? NavBarCssClass => collapseNavMenu ? null : "show";
     private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
 
-    public int? BadgeContent { get; set; } = 0;
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += async () => await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= async () => await InvokeAsync(StateHasChanged);
+    }
 
     private void ToggleNavMenu()
     {

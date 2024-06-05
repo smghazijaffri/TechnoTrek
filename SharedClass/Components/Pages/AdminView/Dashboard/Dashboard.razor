@@ -124,8 +124,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-
         if (firstRender)
         {
             await JSRuntime.InvokeVoidAsync("disableBackGesture");

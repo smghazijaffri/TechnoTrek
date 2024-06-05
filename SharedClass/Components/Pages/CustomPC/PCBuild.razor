@@ -306,11 +306,7 @@
 <CustomModal Model="model" IsVisible="isQuickViewVisible" ComponentName="@selectedComponentName" OnClose="HandleCloseModal" />
 
 @code {
-    public DropDown DropDownUOM = new DropDown();
-
     public List<string> CustomItems = new List<string>();
-    public List<int> CustomItemsPrice = new List<int>();
-    private List<BOM_Item> BOMItems = new List<BOM_Item>();
 
     BuildPcViewModel model = new BuildPcViewModel();
 
@@ -321,29 +317,36 @@
     string Case { get; set; }
     string CaseCode { get; set; }
     int CasePrice { get; set; }
+
     string Memory { get; set; }
     string MemoryCode { get; set; }
     int MemoryPrice { get; set; }
+
     string Cooler { get; set; }
     string CoolerCode { get; set; }
     int CoolerPrice { get; set; }
+
     string Supply { get; set; }
     string SupplyCode { get; set; }
     int SupplyPrice { get; set; }
+
     string Storage { get; set; }
     string StorageCode { get; set; }
     int StoragePrice { get; set; }
+
     string Graphics { get; set; }
     string GraphicsCode { get; set; }
     int GraphicsPrice { get; set; }
+
     string Processor { get; set; }
     string ProcessorCode { get; set; }
     int ProcessorPrice { get; set; }
+
     string Motherboard { get; set; }
     string MotherboardCode { get; set; }
     int MotherboardPrice { get; set; }
 
-    int totalPrice = 0;
+    int totalPrice { get; set; } = 0;
     private string selectedComponentName = "";
 
     protected async override void OnInitialized()
