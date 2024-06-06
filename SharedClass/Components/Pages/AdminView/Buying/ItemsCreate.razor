@@ -175,13 +175,25 @@
             <form class="" @oninput="HandleFormInput" autocomplete="off">
                 @foreach (var item in itemsFromDatabase)
                 {
-                    @if (item.ItemCode != items.ItemCode)
+                    @if (item.ItemType != "Accessories" || item.ItemType != "Laptop")
                     {
-                        @if (item.ItemType != items.ItemType)
+                        @if (item.ItemCode != items.ItemCode)
                         {
-                            <div>
-                                <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
-                            </div>
+                            @if (item.ItemType == "Memory" || item.ItemType == "Storage")
+                            {
+                                <div>
+                                    <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                                </div>
+                            }
+                            else
+                            {
+                                if (item.ItemType != items.ItemType)
+                                {
+                                    <div>
+                                        <MudCheckBox @bind-Value="@item.Compatible" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
+                                    </div>
+                                }
+                            }
                         }
                     }
                 }

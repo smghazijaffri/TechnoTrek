@@ -1,4 +1,6 @@
-﻿@inject Select select;
+﻿@using static SharedClass.Components.Pages.CustomPC.Motherboard
+
+@inject Select select;
 @inject Connection con;
 @inject AppState AppState;
 @inject ISnackbar Snackbar;
@@ -30,14 +32,14 @@
                                         </div>
                                     </div>
                                 }
-                                <h6>Select Quantity: @quantity</h6>
+                                <h6>Select Quantity: @quantities[values.ItemCode]</h6>
                                 <p>
-                                    <MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
+                                    <MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
                                 </p>
-                                <h6>Total: @(ItemRates[values.ItemCode] * quantity)</h6>
+                                <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
                                 <div>
                                     <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                            @onclick="() => Order(values, quantity)">
+                                            @onclick="() => Order(values, quantities[values.ItemCode])">
                                         Order
                                     </button>
                                 </div>
@@ -58,11 +60,12 @@
 
 @code {
     bool isMobile = false;
+    
     string? DeviceType { get; set; }
 
-    public int quantity { get; set; } = 20;
-
     private IEnumerable<ItemClass>? Laptops;
+
+    private Dictionary<string, int> quantities = new Dictionary<string, int>();
 
     private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
@@ -75,20 +78,55 @@
             {
                 var stock = await select.GetStockDataAsync(item.ItemCode);
                 ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+                quantities[item.ItemCode] = 20;
             }
         }
     }
 
     private async Task Order(ItemClass selected, int quantity)
     {
-        await _protectedLocalStore.SetLocalAsync("BulkLaptop", selected.ItemCode);
-        await _protectedLocalStore.SetLocalAsync("BulkLaptopQuantity", quantity.ToString());
-        // var isOrdered = await _protectedLocalStore.GetLocalAsync<string>("BulkMotherboard");
-        // if (!string.IsNullOrEmpty(isOrdered) && isOrdered != selected.ItemCode)
-        // {
-        AppState.CartItemCount++;
-        // }
-        Snackbar.Add("Added to cart", Severity.Success);
+        try
+        {
+            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
+            List<Bulk> orderedItems = new List<Bulk>();
+
+            if (cartExists)
+            {
+                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
+
+                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
+                {
+                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
+                }
+            }
+
+            bool itemFound = false;
+
+            for (int i = 0; i < orderedItems.Count; i++)
+            {
+                if (orderedItems[i].Code == selected.ItemCode)
+                {
+                    orderedItems[i].Quantity = quantity;
+                    Snackbar.Add("Quantity Updated.", Severity.Success);
+                    itemFound = true;
+                    break;
+                }
+            }
+
+            if (!itemFound)
+            {
+                orderedItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
+                AppState.CartItemCount++;
+                Snackbar.Add("Added to cart.", Severity.Success);
+            }
+
+            var serializedItems = JsonSerializer.Serialize(orderedItems);
+            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
+        }
     }
 
     private async void OnButtonClicked(string link)

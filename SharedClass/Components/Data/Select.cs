@@ -1,5 +1,6 @@
 ﻿using SharedClass.Components.Model;
 using Microsoft.Data.SqlClient;
+using System.Text.Json;
 using System.Data;
 using Dapper;
 
@@ -54,6 +55,25 @@ namespace SharedClass.Components.Data
             query += " ORDER BY ItemID";
 
             return await con.QueryAsync<Stock>(query, new { ItemID });
+        }
+
+        public bool IsValidJson(string input)
+        {
+            input = input.Trim();
+            if ((input.StartsWith("{") && input.EndsWith("}")) ||
+                (input.StartsWith("[") && input.EndsWith("]")))
+            {
+                try
+                {
+                    JsonDocument.Parse(input);
+                    return true;
+                }
+                catch (JsonException)
+                {
+                    return false;
+                }
+            }
+            return false;
         }
     }
 }

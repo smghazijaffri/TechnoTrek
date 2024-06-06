@@ -250,8 +250,8 @@
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.40" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.40" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
-    <PackageReference Include="MudBlazor" Version="6.19.1" />
-    <PackageReference Include="MudBlazor.ThemeManager" Version="1.0.9" />
+    <PackageReference Include="MudBlazor" Version="6.20.0" />
+    <PackageReference Include="MudBlazor.ThemeManager" Version="1.1.0" />
     <PackageReference Include="ProtectedBrowserStorage.NETStandard" Version="1.1.2" />
     <PackageReference Include="Select2.js" Version="4.0.13" />
   </ItemGroup>

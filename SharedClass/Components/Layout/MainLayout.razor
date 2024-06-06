@@ -25,9 +25,6 @@
 </main>
 
 @code {
-    string[] itemNames = new[] { "BulkMemory", "BulkCooler", "BulkStorage", "BulkCase", "BulkProcessor", "BulkPSU", "BulkMotherboard", "BulkGPU", "BulkAccessory", "BulkLaptop" };
-    string[] itemQuantities = new[] { "BulkMemoryQuantity", "BulkCoolerQuantity", "BulkStorageQuantity", "BulkCaseQuantity", "BulkProcessorQuantity", "BulkPSUQuantity", "BulkMotherboardQuantity", "BulkGPUQuantity", "BulkAccessoryQuantity", "BulkLaptopQuantity" };
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -40,15 +37,15 @@
                 await _protectedLocalStore.SetLocalAsync("Username", "");
             }
 
-            foreach (var itemName in itemNames)
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerID") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName")
+            && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact"))
             {
-                await _protectedLocalStore.SetLocalAsync(itemName, "");
+                await _protectedLocalStore.SetLocalAsync("customerID", "");
+                await _protectedLocalStore.SetLocalAsync("customerName", "");
+                await _protectedLocalStore.SetLocalAsync("customerContact", "");
             }
 
-            foreach (var itemQuantity in itemQuantities)
-            {
-                await _protectedLocalStore.SetLocalAsync(itemQuantity, "");
-            }
+            await _protectedLocalStore.SetLocalAsync("Cart", "");
         }
         StateHasChanged();
     }

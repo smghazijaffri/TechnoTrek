@@ -28,12 +28,12 @@
                                 }
                                 @if (isBulk)
                                 {
-                                    <h6>Select Quantity: @quantity</h6>
-                                    <p><MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <h6>Total: @(ItemRates[values.ItemCode] * quantity)</h6>
+                                    <h6>Select Quantity: @quantities[values.ItemCode]</h6>
+                                    <p><MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
+                                    <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                                @onclick="() => Order(values, quantity)">
+                                                @onclick="() => Order(values, quantities[values.ItemCode])">
                                             Order
                                         </button>
                                     </div>
@@ -67,11 +67,12 @@
     public bool isBulk { get; set; }
 
     bool isMobile = false;
+
     string? DeviceType { get; set; }
 
-    public int quantity { get; set; } = 20;
-
     private IEnumerable<ItemClass>? Motherboards;
+
+    private Dictionary<string, int> quantities = new Dictionary<string, int>();
 
     private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
@@ -84,44 +85,83 @@
             {
                 var stock = await select.GetStockDataAsync(item.ItemCode);
                 ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+                quantities[item.ItemCode] = 20;
             }
         }
     }
 
     private async Task Select(ItemClass selectedMotherboard)
     {
-        if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
         {
-            await _protectedLocalStore.SetLocalAsync("Memory", "");
-            await _protectedLocalStore.SetLocalAsync("Cooler", "");
-            await _protectedLocalStore.SetLocalAsync("Storage", "");
-            await _protectedLocalStore.SetLocalAsync("Processor", "");
-            await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-            await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-            await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
+            {
+                var components = new[] { "Memory", "Cooler", "Storage", "Processor", "Gaming Case", "Power Supply", "Graphics Card" };
 
-            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+                foreach (var component in components)
+                {
+                    await _protectedLocalStore.SetLocalAsync(component, "");
+                }
 
-            Snackbar.Clear();
-            Snackbar.Add("Please reselect other components", Severity.Info);
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
+            }
         }
-        else
-        {
-            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
-        }
+
+        await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 
     private async Task Order(ItemClass selected, int quantity)
     {
-        await _protectedLocalStore.SetLocalAsync("BulkMotherboard", selected.ItemCode);
-        await _protectedLocalStore.SetLocalAsync("BulkMotherboardQuantity", quantity.ToString());
-        // var isOrdered = await _protectedLocalStore.GetLocalAsync<string>("BulkMotherboard");
-        // if (!string.IsNullOrEmpty(isOrdered) && isOrdered != selected.ItemCode)
-        // {
-            AppState.CartItemCount++;
-        // }
-        Snackbar.Add("Added to cart", Severity.Success);
+        try
+        {
+            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
+            List<Bulk> orderedItems = new List<Bulk>();
+
+            if (cartExists)
+            {
+                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
+
+                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
+                {
+                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
+                }
+            }
+
+            bool itemFound = false;
+
+            for (int i = 0; i < orderedItems.Count; i++)
+            {
+                if (orderedItems[i].Code == selected.ItemCode)
+                {
+                    orderedItems[i].Quantity = quantity;
+                    Snackbar.Add("Quantity Updated.", Severity.Success);
+                    itemFound = true;
+                    break;
+                }
+            }
+
+            if (!itemFound)
+            {
+                orderedItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
+                AppState.CartItemCount++;
+                Snackbar.Add("Added to cart.", Severity.Success);
+            }
+
+            var serializedItems = JsonSerializer.Serialize(orderedItems);
+            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public class Bulk
+    {
+        public string? Code { get; set; }
+        public int Quantity { get; set; }
     }
 
     private async void OnButtonClicked(string link)
