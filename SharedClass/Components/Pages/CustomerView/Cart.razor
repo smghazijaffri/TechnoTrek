@@ -1,4 +1,7 @@
 ﻿@page "/cart"
+
+@using static SharedClass.Components.Pages.CustomPC.Motherboard
+
 @inject CRUD crud;
 @inject Connection con;
 @inject AppState AppState;
@@ -52,7 +55,7 @@
                                                             <label>Rs.</label>
                                                             <h6 class="mb-0">@item.Price</h6>
                                                         </div>
-                                                        <a @onclick="() => DeleteItem(item.Key, item.QuantityKey)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
+                                                        <a @onclick="() => DeleteItem(item.Key, item.Code)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -121,6 +124,8 @@
         public int Quantity { get; set; }
     }
 
+    Bulk bulk = new Bulk();
+
     public string? Name { get; set; }
     public string? Contact { get; set; }
     public string? Address { get; set; }
@@ -129,8 +134,8 @@
 
     private List<BulkItem> items = new List<BulkItem>();
 
-    string[] itemNames = new[] { "BulkMemory", "BulkCooler", "BulkStorage", "BulkCase", "BulkProcessor", "BulkPSU", "BulkMotherboard", "BulkGPU", "BulkAccessory", "BulkLaptop" };
-    string[] itemQuantities = new[] { "BulkMemoryQuantity", "BulkCoolerQuantity", "BulkStorageQuantity", "BulkCaseQuantity", "BulkProcessorQuantity", "BulkPSUQuantity", "BulkMotherboardQuantity", "BulkGPUQuantity", "BulkAccessoryQuantity", "BulkLaptopQuantity" };
+    // string[] itemNames = new[] { "BulkMemory", "BulkCooler", "BulkStorage", "BulkCase", "BulkProcessor", "BulkPSU", "BulkMotherboard", "BulkGPU", "BulkAccessory", "BulkLaptop" };
+    string[] itemNames = new[] { "BulkMotherboard" };
 
     protected async override void OnInitialized()
     {
@@ -143,24 +148,26 @@
         {
             items.Clear();
 
-            var itemTasks = itemNames.Zip(itemQuantities, (name, quantity) => LoadItemDataAsync(name, quantity)).ToList();
+            var itemTasks = itemNames.Select(name => LoadItemDataAsync(name)).ToList();
 
             var itemResults = await Task.WhenAll(itemTasks);
 
-            foreach (var result in itemResults)
+            foreach (var itemList in itemResults)
             {
-                if (!string.IsNullOrEmpty(result.Name) && result.Quantity >= 20 && result.Quantity <= 50)
+                foreach (var result in itemList)
                 {
-                    items.Add(new BulkItem
-                        {
-                            Key = result.Key,
-                            QuantityKey = result.QuantityKey,
-                            Name = result.Name,
-                            Brand = result.Brand,
-                            Code = result.Code,
-                            Price = result.Price * result.Quantity,
-                            Quantity = result.Quantity
-                        });
+                    if (!string.IsNullOrEmpty(result.Name) && result.Quantity >= 20 && result.Quantity <= 50)
+                    {
+                        items.Add(new BulkItem
+                            {
+                                Key = result.Key,
+                                Name = result.Name,
+                                Brand = result.Brand,
+                                Code = result.Code,
+                                Price = result.Price * result.Quantity,
+                                Quantity = result.Quantity
+                            });
+                    }
                 }
             }
 
@@ -176,23 +183,36 @@
         }
     }
 
-    private async Task<(string? Key, string? QuantityKey, string? Name, string Brand, string Code, int Price, int Quantity)> LoadItemDataAsync(string itemName, string itemQuantityKey)
+    private async Task<List<(string Key, string Name, string Brand, string Code, int Price, int Quantity)>> LoadItemDataAsync(string itemName)
     {
+        var resultList = new List<(string Key, string Name, string Brand, string Code, int Price, int Quantity)>();
+
         try
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemQuantityKey))
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName))
             {
-                var quantity = await _protectedLocalStore.GetLocalAsync<string>(itemQuantityKey);
-                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>(itemName)) && int.Parse(quantity) >= 20 && int.Parse(quantity) <= 50)
+                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>(itemName)))
                 {
-                    string itemCode = await _protectedLocalStore.GetLocalAsync<string>(itemName);
+                    var result = await _protectedLocalStore.GetLocalAsync<string>(itemName);
+                    var orderedItems = string.IsNullOrEmpty(result) ? new List<Bulk>() : JsonSerializer.Deserialize<List<Bulk>>(result);
 
-                    using (SqlConnection db = new SqlConnection(con.connectionString))
+                    foreach (var item in orderedItems)
                     {
-                        var itemDetails = await db.QuerySingleOrDefaultAsync<(string?, string)>("SELECT ItemName, Brand FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { itemCode });
-                        int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = itemCode });
+                        var Code = item.Code;
+                        var Quantity = item.Quantity;
+                        string Details1, Details2;
+                        int Price;
 
-                        return (itemName, itemQuantityKey, itemDetails.Item1, itemDetails.Item2, itemCode, itemPrice, int.Parse(quantity));
+                        using (SqlConnection db = new SqlConnection(con.connectionString))
+                        {
+                            var itemDetails = await db.QuerySingleOrDefaultAsync<(string?, string)>("SELECT ItemName, Brand FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode = Code });
+                            int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = Code });
+                            Details1 = itemDetails.Item1;
+                            Details2 = itemDetails.Item2;
+                            Price = itemPrice;
+                        }
+
+                        resultList.Add((itemName, Details1, Details2, Code, Price, Quantity));
                     }
                 }
             }
@@ -201,15 +221,24 @@
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
-        return (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, 0, 0);
+
+        return resultList;
     }
 
-    private async Task DeleteItem(string? Key1, string? Key2)
+    private async Task DeleteItem(string? Key, string? ItemCode)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", Key1) && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", Key2))
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", Key))
         {
-            await _protectedLocalStore.SetLocalAsync(Key1, "");
-            await _protectedLocalStore.SetLocalAsync(Key2, "");
+            try
+            {
+                items.RemoveAll(item => item.Code == ItemCode);
+                var serializedItems = JsonSerializer.Serialize(items);
+                await _protectedLocalStore.SetLocalAsync(Key, serializedItems);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
 
             await LoadItems();
         }
@@ -224,11 +253,6 @@
                 foreach (var itemName in itemNames)
                 {
                     await _protectedLocalStore.SetLocalAsync(itemName, "");
-                }
-
-                foreach (var itemQuantity in itemQuantities)
-                {
-                    await _protectedLocalStore.SetLocalAsync(itemQuantity, "");
                 }
 
                 items.Clear();
