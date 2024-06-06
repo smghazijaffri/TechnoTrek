@@ -67,11 +67,12 @@
     public bool isBulk { get; set; }
 
     bool isMobile = false;
+
     string? DeviceType { get; set; }
 
-    private Dictionary<string, int> quantities = new Dictionary<string, int>();
-
     private IEnumerable<ItemClass>? Motherboards;
+
+    private Dictionary<string, int> quantities = new Dictionary<string, int>();
 
     private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
@@ -91,25 +92,23 @@
 
     private async Task Select(ItemClass selectedMotherboard)
     {
-        if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
         {
-            await _protectedLocalStore.SetLocalAsync("Memory", "");
-            await _protectedLocalStore.SetLocalAsync("Cooler", "");
-            await _protectedLocalStore.SetLocalAsync("Storage", "");
-            await _protectedLocalStore.SetLocalAsync("Processor", "");
-            await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-            await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-            await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
+            {
+                var components = new[] { "Memory", "Cooler", "Storage", "Processor", "Gaming Case", "Power Supply", "Graphics Card" };
 
-            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+                foreach (var component in components)
+                {
+                    await _protectedLocalStore.SetLocalAsync(component, "");
+                }
 
-            Snackbar.Clear();
-            Snackbar.Add("Please reselect other components", Severity.Info);
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
+            }
         }
-        else
-        {
-            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
-        }
+
+        await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
         Snackbar.Add("Selection Saved", Severity.Success);
     }
 
@@ -117,8 +116,19 @@
     {
         try
         {
-            var result = await _protectedLocalStore.GetLocalAsync<string>("BulkMotherboard");
-            var orderedItems = string.IsNullOrEmpty(result) ? new List<Bulk>() : JsonSerializer.Deserialize<List<Bulk>>(result);
+            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
+            List<Bulk> orderedItems = new List<Bulk>();
+
+            if (cartExists)
+            {
+                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
+
+                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
+                {
+                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
+                }
+            }
+
             bool itemFound = false;
 
             for (int i = 0; i < orderedItems.Count; i++)
@@ -140,7 +150,7 @@
             }
 
             var serializedItems = JsonSerializer.Serialize(orderedItems);
-            await _protectedLocalStore.SetLocalAsync("BulkMotherboard", serializedItems);
+            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
         }
         catch (Exception ex)
         {

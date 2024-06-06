@@ -116,15 +116,12 @@
     private class BulkItem
     {
         public string? Key { get; set; }
-        public string? QuantityKey { get; set; }
         public string? Name { get; set; }
         public string? Brand { get; set; }
         public string? Code { get; set; }
         public int Price { get; set; }
         public int Quantity { get; set; }
     }
-
-    Bulk bulk = new Bulk();
 
     public string? Name { get; set; }
     public string? Contact { get; set; }
@@ -134,8 +131,7 @@
 
     private List<BulkItem> items = new List<BulkItem>();
 
-    // string[] itemNames = new[] { "BulkMemory", "BulkCooler", "BulkStorage", "BulkCase", "BulkProcessor", "BulkPSU", "BulkMotherboard", "BulkGPU", "BulkAccessory", "BulkLaptop" };
-    string[] itemNames = new[] { "BulkMotherboard" };
+    string[] itemNames = new[] { "Cart" };
 
     protected async override void OnInitialized()
     {

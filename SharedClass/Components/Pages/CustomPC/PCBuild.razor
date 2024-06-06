@@ -564,6 +564,7 @@
                 {
                     Snackbar.Clear();
                     Snackbar.Add("Order Confirmed", Severity.Success);
+                    await _protectedLocalStore.SetLocalAsync("customerID", "");
                     await _protectedLocalStore.SetLocalAsync("customerName", "");
                     await _protectedLocalStore.SetLocalAsync("customerContact", "");
                     await ClearComponentSelectionsAsync();

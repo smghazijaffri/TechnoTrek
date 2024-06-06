@@ -1,4 +1,6 @@
-﻿@inject Select select;
+﻿@using static SharedClass.Components.Pages.CustomPC.Motherboard
+
+@inject Select select;
 @inject Connection con;
 @inject AppState AppState;
 @inject ISnackbar Snackbar;
@@ -28,12 +30,12 @@
                                 }
                                 @if (isBulk)
                                 {
-                                    <h6>Select Quantity: @quantity</h6>
-                                    <p><MudSlider @bind-Value="quantity" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <h6>Total: @(ItemRates[values.ItemCode] * quantity)</h6>
+                                    <h6>Select Quantity: @quantities[values.ItemCode]</h6>
+                                    <p><MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
+                                    <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
-                                                @onclick="() => Order(values, quantity)">
+                                                @onclick="() => Order(values, quantities[values.ItemCode])">
                                             Order
                                         </button>
                                     </div>
@@ -70,12 +72,14 @@
     public bool isBulk { get; set; }
 
     bool isMobile = false;
+
     string? DeviceType { get; set; }
 
-    public int quantity { get; set; } = 20;
     public int Ramquantity { get; set; } = 1;
 
     private IEnumerable<ItemClass>? Memories;
+
+    private Dictionary<string, int> quantities = new Dictionary<string, int>();
 
     private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
@@ -110,6 +114,7 @@
                     {
                         var stock = await select.GetStockDataAsync(item.ItemCode);
                         ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+                        quantities[item.ItemCode] = 20;
                     }
                 }
             }
@@ -128,46 +133,56 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
                 {
-                    string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
-                    string Processors = await _protectedLocalStore.GetLocalAsync<string>("Processor");
-                    List<string> CompatItem = new List<string>();
-                    CompatItem.Add(MotherBoard);
-                    CompatItem.Add(Processors);
-                    DataTable CompiItem = Data.Select.ConvertListToDataTable(CompatItem);
-                    var parameters = new DynamicParameters();
-                    parameters.Add("@ItemCode", selectedMemory.ItemCode);
-                    parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
-                    parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
-                    db.Execute("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
-                    string outputValue = parameters.Get<string>("@Output");
-                    if (outputValue != "Allow")
+                    if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
                     {
-                        Snackbar.Clear();
-                        Snackbar.Add(outputValue, Severity.Error);
-                    }
-                    else if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
-                    {
-                        string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
-                        if (Memory != selectedMemory.ItemCode)
+                        string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
+                        string Processors = await _protectedLocalStore.GetLocalAsync<string>("Processor");
+                        List<string> CompatItem = new List<string>();
+                        CompatItem.Add(MotherBoard);
+                        CompatItem.Add(Processors);
+                        DataTable CompiItem = Data.Select.ConvertListToDataTable(CompatItem);
+                        var parameters = new DynamicParameters();
+                        parameters.Add("@ItemCode", selectedMemory.ItemCode);
+                        parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
+                        parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
+                        db.Execute("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
+                        string outputValue = parameters.Get<string>("@Output");
+                        if (outputValue != "Allow")
                         {
-                            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage"))
+                            Snackbar.Clear();
+                            Snackbar.Add(outputValue, Severity.Error);
+                        }
+                        else if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory"))
+                        {
+                            string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
+                            if (Memory != selectedMemory.ItemCode)
                             {
-                                string Processor = await _protectedLocalStore.GetLocalAsync<string>("Storage");
-
-                                if (!string.IsNullOrEmpty(Processor))
+                                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage"))
                                 {
-                                    await _protectedLocalStore.SetLocalAsync("Cooler", "");
-                                    await _protectedLocalStore.SetLocalAsync("Storage", "");
-                                    await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-                                    await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-                                    await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
+                                    string Processor = await _protectedLocalStore.GetLocalAsync<string>("Storage");
 
-                                    await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
+                                    if (!string.IsNullOrEmpty(Processor))
+                                    {
+                                        await _protectedLocalStore.SetLocalAsync("Cooler", "");
+                                        await _protectedLocalStore.SetLocalAsync("Storage", "");
+                                        await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
+                                        await _protectedLocalStore.SetLocalAsync("Power Supply", "");
+                                        await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
 
-                                    Snackbar.Clear();
-                                    Snackbar.Add("Please reselect other components", Severity.Info);
+                                        await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
+
+                                        Snackbar.Clear();
+                                        Snackbar.Add("Please reselect other components", Severity.Info);
+                                    }
+                                    else
+                                    {
+                                        await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
+                                        await _protectedLocalStore.SetLocalAsync("RamQuantity", Ramquantity);
+                                        Snackbar.Clear();
+                                        Snackbar.Add("Selection Saved", Severity.Success);
+                                    }
                                 }
                                 else
                                 {
@@ -187,24 +202,17 @@
                         }
                         else
                         {
-                            await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
                             await _protectedLocalStore.SetLocalAsync("RamQuantity", Ramquantity);
+                            await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
                             Snackbar.Clear();
                             Snackbar.Add("Selection Saved", Severity.Success);
                         }
-                    }
-                    else
-                    {
-                        await _protectedLocalStore.SetLocalAsync("RamQuantity", Ramquantity);
-                        await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
-                        Snackbar.Clear();
-                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                 }
                 else
                 {
                     Snackbar.Clear();
-                    Snackbar.Add("Please reselect other components", Severity.Info);
+                    Snackbar.Add("Please Select Previous Component", Severity.Info);
                 }
             }
         }
@@ -217,14 +225,48 @@
 
     private async Task Order(ItemClass selected, int quantity)
     {
-        await _protectedLocalStore.SetLocalAsync("BulkMemory", selected.ItemCode);
-        await _protectedLocalStore.SetLocalAsync("BulkMemoryQuantity", quantity.ToString());
-        // var isOrdered = await _protectedLocalStore.GetLocalAsync<string>("BulkMotherboard");
-        // if (!string.IsNullOrEmpty(isOrdered) && isOrdered != selected.ItemCode)
-        // {
-        AppState.CartItemCount++;
-        // }
-        Snackbar.Add("Added to cart", Severity.Success);
+        try
+        {
+            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
+            List<Bulk> orderedItems = new List<Bulk>();
+
+            if (cartExists)
+            {
+                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
+
+                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
+                {
+                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
+                }
+            }
+
+            bool itemFound = false;
+
+            for (int i = 0; i < orderedItems.Count; i++)
+            {
+                if (orderedItems[i].Code == selected.ItemCode)
+                {
+                    orderedItems[i].Quantity = quantity;
+                    Snackbar.Add("Quantity Updated.", Severity.Success);
+                    itemFound = true;
+                    break;
+                }
+            }
+
+            if (!itemFound)
+            {
+                orderedItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
+                AppState.CartItemCount++;
+                Snackbar.Add("Added to cart.", Severity.Success);
+            }
+
+            var serializedItems = JsonSerializer.Serialize(orderedItems);
+            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
+        }
     }
 
     private async void OnButtonClicked(string link)
