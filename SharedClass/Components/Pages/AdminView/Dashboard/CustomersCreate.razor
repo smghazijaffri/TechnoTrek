@@ -24,10 +24,6 @@
     <div class="col-6">
         <h3>
             @header
-            @if (IsSaving)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
-            }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
@@ -64,10 +60,7 @@
     public string? CustomerID { get; set; }
     private string header = "New Customer";
 
-    private bool IsSaving = true;
-    public bool ReadonlyHidden { get { return !IsSaving; } }
-
-    protected override async void OnInitialized()
+    protected override void OnInitialized()
     {
 
         try
@@ -77,10 +70,8 @@
                 if (CustomerID != null)
                 {
                     customer = db.QueryFirstOrDefault<Customer>("Select * from Customer where CustomerID = @CustomerID", new { CustomerID = CustomerID });
-                    if (customer == null)
-                        NavigationManager.NavigateTo("/customers/");
+                    if (customer == null) NavigationManager.NavigateTo("/customers/");
                     header = customer.Name;
-                    IsSaving = false;
                 }
             }
             StateHasChanged();
@@ -107,22 +98,23 @@
 
                 header = customer.Name;
 
-                IsSaving = false;
-
-                customer.CustomerID = crud.CRD(customer, "CreateCustomer");
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(customer, "CreateCustomer_Admin", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                else
+                {
+                    customer.CustomerID = output.Output;
+                }
 
                 if (CustomerID == null)
                 {
                     NavigationManager.NavigateTo($"/customers/{customer.CustomerID}", forceLoad: true);
                 }
-                if (IsSaving)
-                {
-                    return "Customer Created Successfully";
-                }
-                else
-                {
-                    return "Error in saving request";
-                }
+
+                return "Customer Created Successfully";
             }
         }
         catch (Exception ex)
@@ -157,7 +149,7 @@
             if (customer.CustomerID != null)
             {
                 int countcustomerContact = db.QueryFirstOrDefault<int>("Select Count(1) from Customer where CustomerID != @CustomerID and Contact = @Contact", new { CustomerID = customer.CustomerID, Contact = customer.Contact });
-                if (countcustomerContact == 0)
+                if (countcustomerContact > 0)
                 {
                     return "This Contact is already in use";
                 }
@@ -169,7 +161,6 @@
 
     private void HandleFormInput()
     {
-        IsSaving = true;
         StateHasChanged();
     }
 }

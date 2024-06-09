@@ -209,7 +209,6 @@
         }
     });
 </script>
-}
 
 @code {
     [Parameter]
@@ -620,7 +619,9 @@
             production.BOMID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                BOM = db.QueryFirstOrDefault<BOM>("Select * from BOM where BOMID BOMID = @BOMID", new { BOMID = options.Value });
+                Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
+                ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
+
             }
         }
     }
