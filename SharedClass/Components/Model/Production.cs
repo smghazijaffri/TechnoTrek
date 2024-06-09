@@ -25,6 +25,7 @@
     public class ProductionOrder : BaseRecord
     {
         public string ProductionOrderID { get; set; }
+        public string ProductionOrderName { get; set; }
         public string BOMID { get; set; }
         public string Status { get; set; }
         public DateTime StartDate { get; set; }

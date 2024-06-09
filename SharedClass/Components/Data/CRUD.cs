@@ -53,7 +53,7 @@ namespace SharedClass.Components.Data
                 }
                 Model.CreationDate = DateTime.Now;
 
-                var parameters = new DynamicParameters();
+                var parameters = new DynamicParameters(Model);
                 if (outputMessage == true)
                 {
                     parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000); // Assuming output parameter size is 50
@@ -63,7 +63,7 @@ namespace SharedClass.Components.Data
                     parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000); // Assuming output parameter size is 50
                 }
 
-                db.Execute("SP", parameters, commandType: CommandType.StoredProcedure);
+                db.Execute(SP, parameters, commandType: CommandType.StoredProcedure);
 
                 // Retrieve the output parameter value
                 if (outputMessage == true)
