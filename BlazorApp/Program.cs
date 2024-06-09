@@ -1,15 +1,11 @@
-using Blazored.LocalStorage;
-using Blazored.SessionStorage;
-using MudBlazor;
-using MudBlazor.Services;
-using ProtectedLocalStore;
-using SharedClass;
-using SharedClass.Components;
-using SharedClass.Components.Data;
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
-using System.Text.Json;
-using static SharedClass.Components.Pages.AdminView.Buying.ItemsCreate;
+using SharedClass.Components.Data;
+using SharedClass.Components;
+using ProtectedLocalStore;
+using MudBlazor.Services;
+using SharedClass;
+using MudBlazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
