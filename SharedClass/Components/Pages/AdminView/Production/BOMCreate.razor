@@ -115,7 +115,6 @@
                     var rowIndex = item.RowID - 1;
 
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
-                    item.Rate = Rate[index];
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
@@ -277,6 +276,7 @@
                     Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     UOMName = db.Query<string>("select UOMName from BOM_Item inner join UOM on UOMID = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join BOM_Item  on uom = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     DisplayPO = false;
                     header = bom.BOMID;
                     IsSaving = true;
@@ -508,7 +508,7 @@
             {
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
-                Rate[rowIndex] = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
             }
         }
