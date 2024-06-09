@@ -18,8 +18,8 @@
 @inject Connection con;
 @inject QU_Items QUItem;
 @inject ISnackbar Snackbar;
-@inject IJSRuntime JSRuntime;
 @inject Quotation purchase;
+@inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
@@ -438,10 +438,6 @@
                 {
                     purchase.Status = PurchaseStatuses.Submitted;
                 }
-                // else if (IsApproved)
-                // {
-                //     purchase.Status = PurchaseStatuses.Cancelled;
-                // }
                 else if (IsExpired)
                 {
                     purchase.Status = PurchaseStatuses.Expired;

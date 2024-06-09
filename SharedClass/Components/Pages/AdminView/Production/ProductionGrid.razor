@@ -4,6 +4,7 @@
 @using System.Globalization
 @using System.Net.Http.Json
 
+@inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
 @inject Delete delete;
@@ -30,8 +31,8 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="ProductionOrder" Items="@Elements" MultiSelection="true" Virtualize="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                      OnRowClick="@OnRowClick" Filter="new Func<ProductionOrder,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+            <MudTable @ref="_table" T="ProductionOrder" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<ProductionOrder,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Production Orders</MudText>
@@ -93,7 +94,7 @@
         return false;
     }
 
-    private async void DeleteSelectedItems()
+    private void DeleteSelectedItems()
     {
         if (selectedItems == null || !selectedItems.Any())
         {
@@ -112,11 +113,16 @@
         {
             foreach (var item in itemsToDelete)
             {
-                await delete.DeleteFromTable("ProductionOrder", "ProductionOrderID", item.ProductionOrderID, "PRO_Items");
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(item, "Create_ProductionOrder", IsDelete: true, errorMessage: true, outputMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    Snackbar.Add(output.ErrorMessage, Severity.Error);
+                    return;
+                }
             }
 
             Elements = Elements.Where(e => !itemsToDelete.Any(d => d.ProductionOrderID == e.ProductionOrderID)).ToList();
-            // Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)
         {

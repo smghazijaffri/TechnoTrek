@@ -9,6 +9,7 @@
 @using System.Net.Http.Json
 @using Dapper
 
+@inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
 @inject Delete delete;
@@ -36,7 +37,7 @@
     <div class="row">
         <div class="col-md-12">
             <MudTable @ref="_table" T="SalesInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                      OnRowClick="@OnRowClick" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Sales Invoices</MudText>
@@ -97,7 +98,7 @@
         return false;
     }
 
-    private async void DeleteSelectedItems()
+    private void DeleteSelectedItems()
     {
         if (selectedItems == null || !selectedItems.Any())
         {
@@ -116,7 +117,13 @@
         {
             foreach (var item in itemsToDelete)
             {
-                await delete.DeleteFromTable("SaleInvoice", "SalesInvoiceID", item.SalesInvoiceID, "SI_Item");
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(item, "CreateSaleInvoice", IsDelete: true, errorMessage: true, outputMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    Snackbar.Add(output.ErrorMessage, Severity.Error);
+                    return;
+                }
             }
 
             Elements = Elements.Where(e => !itemsToDelete.Any(d => d.SalesInvoiceID == e.SalesInvoiceID)).ToList();

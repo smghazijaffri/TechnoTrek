@@ -4,6 +4,7 @@
 @using System.Globalization
 @using System.Net.Http.Json
 
+@inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
 @inject Delete delete;
@@ -33,7 +34,7 @@
     <div class="row">
         <div class="col-md-12">
             <MudTable @ref="_table" T="RequestForQuotation" Items="@Elements" MultiSelection="true"
-                      @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
+                      @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
                       Filter="new Func<RequestForQuotation,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick"
                       Elevation="4">
 
@@ -96,7 +97,7 @@
         return false;
     }
 
-    private async void DeleteSelectedItems()
+    private void DeleteSelectedItems()
     {
         if (selectedItems == null || !selectedItems.Any())
         {
@@ -115,7 +116,13 @@
         {
             foreach (var item in itemsToDelete)
             {
-                await delete.DeleteFromTable("RequestForQuotation", "RFQNumber", item.RFQNumber, "RFQ_Items");
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(item, "CreateRFQ", IsDelete: true, errorMessage: true, outputMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    Snackbar.Add(output.ErrorMessage, Severity.Error);
+                    return;
+                }
             }
 
             Elements = Elements.Where(e => !itemsToDelete.Any(d => d.RFQNumber == e.RFQNumber)).ToList();
