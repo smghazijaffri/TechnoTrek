@@ -1,1 +1,129 @@
-﻿
+﻿@page "/productionorder"
+
+@using static MudBlazor.CategoryTypes
+@using System.Globalization
+@using System.Net.Http.Json
+
+@layout AdminLayout;
+@inject Select select;
+@inject Delete delete;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject ProductionOrder production;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-end">
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                           Href="/productionorder/new-production-order" Size="Size.Large">Create</MudButton>
+                @if (selectedItems.Any())
+                {
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
+                               Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <MudTable @ref="_table" T="ProductionOrder" Items="@Elements" MultiSelection="true" Virtualize="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                      OnRowClick="@OnRowClick" Filter="new Func<ProductionOrder,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Production Orders</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Title</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Start Date</MudTh>
+                    <MudTh>End Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID">@context.ProductionOrderID</MudTd>
+                    <MudTd DataLabel="Title">@context.ProductionOrderName</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Start Date">@context.StartDate</MudTd>
+                    <MudTd DataLabel="End Date">@context.EndDate</MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                </PagerContent>
+            </MudTable>
+        </div>
+    </div>
+</div>
+
+@code {
+    private MudTable<ProductionOrder> _table;
+    private string searchString1 = "";
+    private bool _selectOnRowClick = true;
+    private IEnumerable<ProductionOrder> Elements = new List<ProductionOrder>();
+    private HashSet<ProductionOrder> selectedItems = new HashSet<ProductionOrder>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        Elements = await db.QueryAsync<ProductionOrder>("SELECT * FROM ProductionOrder ORDER BY CAST(SUBSTRING(BOMID, 5, LEN(BOMID) - 5) AS INT)");
+    }
+
+    void OnRowClick(TableRowClickEventArgs<ProductionOrder> args)
+    {
+        production.ProductionOrderID = args.Item.ProductionOrderID;
+        NavigationManager.NavigateTo($"/productionorder/{production.ProductionOrderID}");
+    }
+
+    private bool FilterFunc1(ProductionOrder element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(ProductionOrder element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.ProductionOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.ProductionOrderID}".Contains(searchString)) return true;
+        if ($"{element.StartDate} {element.EndDate}".Contains(searchString)) return true;
+
+        return false;
+    }
+
+    private async void DeleteSelectedItems()
+    {
+        if (selectedItems == null || !selectedItems.Any())
+        {
+            Snackbar.Add("No items selected to delete", Severity.Info);
+            return;
+        }
+
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Closed" || item.Status == "Completed").ToList();
+        if (itemsToDelete.Count == 0)
+        {
+            Snackbar.Add("No items with status 'Closed' or 'Completed' to delete", Severity.Info);
+            return;
+        }
+
+        try
+        {
+            foreach (var item in itemsToDelete)
+            {
+                await delete.DeleteFromTable("ProductionOrder", "ProductionOrderID", item.ProductionOrderID, "PRO_Items");
+            }
+
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.ProductionOrderID == e.ProductionOrderID)).ToList();
+            // Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+        }
+
+        selectedItems.Clear();
+        StateHasChanged();
+    }
+}

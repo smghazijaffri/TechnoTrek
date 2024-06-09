@@ -31,7 +31,7 @@
     <div class="row">
         <div class="col-md-12">
             <MudTable @ref="_table" T="BOM" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                      OnRowClick="@OnRowClick" Filter="new Func<BOM,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                      Virtualize="true" OnRowClick="@OnRowClick" Filter="new Func<BOM,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Bill of Materials</MudText>
