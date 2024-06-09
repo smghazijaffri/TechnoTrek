@@ -1,5 +1,5 @@
 ﻿@page "/productionorder/new-production-order"
-@page "/productionorder/{PONumber?}"
+@page "/productionorder/{ProductionOrderID?}"
 
 @using SharedClass.Components.Pages.Modals
 @using SharedClass.Components.Layout
@@ -159,7 +159,7 @@
                                 @(index + 1)
                             </div>
                         </td>
-                        <td><input type="text" class="form-control" @bind="ItemName[rowIndex]" readonly/></td>
+                        <td><input type="text" class="form-control" @bind="ItemName[rowIndex]" readonly /></td>
                         <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Quantity" readonly /></td>
                         <td><input type="text" class="form-control" @bind="UOMName[rowIndex]" readonly /></td>
                         <td><input type="text" inputmode="numeric" class="form-control" id="rate" @bind="item.Rate" readonly /></td>
@@ -210,7 +210,7 @@
 
 @code {
     [Parameter]
-    public string? PONumber { get; set; }
+    public string? ProductionOrderID { get; set; }
     private string header = "New Production Order";
 
     bool isMobile = false;
@@ -246,6 +246,8 @@
         if (DeviceType == "Mobile") isMobile = true;
         try
         {
+            production.StartDate = DateTime.Today;
+            production.EndDate = DateTime.Today;
             var BOMID = string.Empty;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
@@ -254,72 +256,63 @@
                     BOMID = await _protectedLocalStore.GetLocalAsync<string>("BOMID");
 
                 }
-                // if (PONumber != null)
-                // {
-                //     purchase = db.QueryFirstOrDefault<PurchaseOrders>("Select * from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                //     if (purchase == null)
-                //         NavigationManager.NavigateTo("/purchaseorder/");
-                //     Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                //     ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
-                //     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
-                //     DisplayPO = false;
-                //     header = purchase.PurchaseOrderName;
-                //     if (purchase.Status == ProductionStatus.ToReceiveBill)
-                //     {
-                //         ToReceiveBill = true;
-                //         IsSaving = false;
-                //     }
-                //     else if (purchase.Status == ProductionStatus.ToReceive)
-                //     {
-                //         ToReceive = true;
-                //         IsSaving = false;
-                //     }
-                //     else if (purchase.Status == ProductionStatus.ToBill)
-                //     {
-                //         ToBill = true;
-                //         IsSaving = false;
-                //     }
-                //     else if (purchase.Status == ProductionStatus.Draft)
-                //     {
-                //         IsDraft = true;
-                //         IsSaving = false;
-                //     }
-                //     else if (purchase.Status == ProductionStatus.Completed)
-                //     {
-                //         IsCompleted = true;
-                //         IsSaving = false;
-                //     }
-                //     else if (purchase.Status == ProductionStatus.Cancelled)
-                //     {
-                //         IsCancelled = true;
-                //         IsSaving = false;
-                //     }
-                // }
-                // else if (!string.IsNullOrWhiteSpace(PRNumber))
-                // {
-                //     Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                //     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                //     purchase.RefrenceDocument = PRNumber;
-                //     await localStorage.SetItemAsync("PRNumber", "");
-                // }
-                // else if (!string.IsNullOrWhiteSpace(QuotationID))
-                // {
-                //     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
-                //     Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
-                //     ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
-                //     foreach (var item in Items)
-                //     {
-                //         item.RequiredBy = DateTime.Now;
-                //     }
-                //     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join Quotation po on po.VendorID = v.VendorID where QuotationID = @QuotationID", new { QuotationID = QuotationID });
-                //     purchase.RefrenceDocument = QuotationID;
-                //     await localStorage.SetItemAsync("QuotationID", "");
-                // }
-                // else
-                // {
-                //     AddRow();
-                // }
-                DropDownBOM.Options = db.Query<option>("Select BOMID as Value, BOMName as Text from BOM").ToList();
+                if (ProductionOrderID != null)
+                {
+                    production = db.QueryFirstOrDefault<ProductionOrder>("Select * from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
+                    if (production == null) NavigationManager.NavigateTo("/productionorder/");
+                    Items = db.Query<BOM_Item>("select * from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode  where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    BOM = db.QueryFirstOrDefault<BOM>("select v.* from BOM v inner join ProductionOrder po on po.BOMID = v.BOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
+                    DisplayPO = false;
+                    header = production.ProductionOrderName;
+                    if (production.Status == ProductionStatus.Submitted)
+                    {
+                        IsSubmitted = true;
+                        IsSaving = false;
+                    }
+                    else if (production.Status == ProductionStatus.NotStarted)
+                    {
+                        IsNotStarted = true;
+                        IsSaving = false;
+                    }
+                    else if (production.Status == ProductionStatus.Process)
+                    {
+                        InProcess = true;
+                        IsSaving = false;
+                    }
+                    else if (production.Status == ProductionStatus.Stopped)
+                    {
+                        IsStopped = true;
+                        IsSaving = false;
+                    }
+                    else if (production.Status == ProductionStatus.Draft)
+                    {
+                        IsDraft = true;
+                        IsSaving = false;
+                    }
+                    else if (production.Status == ProductionStatus.Completed)
+                    {
+                        IsCompleted = true;
+                        IsSaving = false;
+                    }
+                    else if (production.Status == ProductionStatus.Closed)
+                    {
+                        IsClosed = true;
+                        IsSaving = false;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(BOMID))
+                {
+                    Items = db.Query<BOM_Item>("Select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                    production.BOMID = BOMID;
+                    await _protectedLocalStore.SetLocalAsync("BOMID", "");
+                }
+                else
+                {
+                    AddRow();
+                }
+                DropDownBOM.Options = db.Query<option>("Select BOMID as Value, BOMName as Text from BOM Where IsActive = 'true' ORDER BY CAST(SUBSTRING(BOMID, 5, LEN(BOMID)-5) AS INT)").ToList();
             }
             StateHasChanged();
         }
@@ -358,6 +351,7 @@
 
                 production.ProductionOrderName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
+
                 if (IsSaving)
                 {
                     production.Status = ProductionStatus.Draft;
@@ -369,7 +363,8 @@
 
                 OutputClass output = new OutputClass();
                 output = crud.CRD2(production, "Create_ProductionOrder", outputMessage: true, errorMessage: true);
-                if (output.ErrorMessage == null)
+
+                if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
                 }
@@ -377,11 +372,14 @@
                 {
                     production.ProductionOrderID = output.Output;
                 }
+
                 ToggleApproval();
-                if (PONumber == null)
+
+                if (ProductionOrderID == null)
                 {
                     NavigationManager.NavigateTo($"/productionorder/{production.ProductionOrderID}", forceLoad: true);
                 }
+
                 if (IsDraft)
                 {
                     return "Order Saved Successfully";
