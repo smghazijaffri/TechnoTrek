@@ -12,4 +12,9 @@ namespace SharedClass.Components.Model
         public DateTime CreationDate { get; set; }
         public string Output { get; set; }
     }
+    public class OutputClass
+    {
+        public string Output { get; set; }
+        public string ErrorMessage { get; set; }
+    }
 }

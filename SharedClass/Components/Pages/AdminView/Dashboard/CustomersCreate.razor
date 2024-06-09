@@ -108,9 +108,13 @@
                 header = customer.Name;
 
                 IsSaving = false;
-
-                customer.CustomerID = crud.CRD(customer, "CreateCustomer");
-
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(customer, "CreateCustomer_Admin", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                
                 if (CustomerID == null)
                 {
                     NavigationManager.NavigateTo($"/customers/{customer.CustomerID}", forceLoad: true);

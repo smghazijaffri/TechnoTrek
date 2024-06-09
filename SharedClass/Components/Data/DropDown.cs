@@ -16,7 +16,7 @@ namespace SharedClass.Components.Data
             }
         }
 
-        public void ToggleDropdown(int rowIndex)
+        public void ToggleDropdown(int rowIndex, bool UOM = false)
         {
             if (openDropdownIndex.HasValue && openDropdownIndex != rowIndex)
             {
@@ -24,15 +24,22 @@ namespace SharedClass.Components.Data
             }
 
             ListItems[rowIndex].IsDropdownOpen = !ListItems[rowIndex].IsDropdownOpen;
-
-            if (ListItems[rowIndex].IsDropdownOpen)
+            if (UOM == true)
             {
-                ListItems[rowIndex].FilteredOptions = Options;
                 openDropdownIndex = rowIndex;
+
             }
             else
             {
-                openDropdownIndex = null;
+                if (ListItems[rowIndex].IsDropdownOpen)
+                {
+                    ListItems[rowIndex].FilteredOptions = Options;
+                    openDropdownIndex = rowIndex;
+                }
+                else
+                {
+                    openDropdownIndex = null;
+                }
             }
         }
 

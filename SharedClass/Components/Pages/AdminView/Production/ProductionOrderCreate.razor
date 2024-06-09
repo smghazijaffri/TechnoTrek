@@ -189,9 +189,9 @@
             </tbody>
         </table>
     </form>
-    <div class="col-12">
+  @*   <div class="col-12">
         <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
-    </div>
+    </div> *@
 </div>
 
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
@@ -347,7 +347,7 @@
                 //     AddRow();
                 // }
                 DropDownBOM.Options = db.Query<option>("Select BOMID as Value, BOMName as Text from BOM").ToList();
-                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemCode as Text from Items").ToList();
+                DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
             }
             StateHasChanged();
         }
@@ -647,7 +647,9 @@
             production.BOMID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                BOM = db.QueryFirstOrDefault<BOM>("Select * from BOM where BOMID BOMID = @BOMID", new { BOMID = options.Value });
+                Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
+                ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
+
             }
         }
     }
