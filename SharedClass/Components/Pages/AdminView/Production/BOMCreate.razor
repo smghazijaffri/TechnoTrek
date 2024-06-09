@@ -45,7 +45,7 @@
         <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
             Save
         </button>
-        @if (Active)
+        @if (Createbutton)
         {
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
@@ -113,9 +113,11 @@
                     var item = Items[index];
                     item.RowID = index + 1;
                     var rowIndex = item.RowID - 1;
+
+                    item.Amount = (item.Rate * (item.Quantity*quantity[index]));
+                    item.Rate = Rate[index];
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                    item.Amount = (item.Rate * item.Quantity);
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center;">
@@ -148,7 +150,7 @@
                         <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                         <td>
                             <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex]"
                                        placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                 <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
                                     style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
@@ -234,9 +236,11 @@
     private bool DisplayPO = true;
     private bool Active = false;
     private bool IsCustomer = false;
-
-    private bool IsSaving = false;
-    public bool ReadonlyHidden { get { return !IsSaving || Active || !Active; } }
+    public List<int> quantity = new List<int>();
+    public List<int> Rate = new List<int>();
+    private bool IsSaving = true;
+    public bool Createbutton = false;
+    public bool ReadonlyHidden { get { return !IsSaving; } }
 
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
@@ -281,6 +285,7 @@
                     {
                         Active = true;
                     }
+                    CheckStatus();
                 }
                 // else if (!string.IsNullOrWhiteSpace(PRNumber))
                 // {
@@ -309,7 +314,7 @@
                     AddRow();
                 }
                 DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
+                // DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
             }
             StateHasChanged();
         }
@@ -380,9 +385,9 @@
                 {
                     NavigationManager.NavigateTo($"/billofmaterial/{bom.BOMID}", forceLoad: true);
                 }
+                CheckStatus();
 
                 return "BOM Saved Successfully";
-
             }
         }
         catch (Exception ex)
@@ -395,9 +400,14 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (bom.BOMID == null)
+            if (bom.BOMID != null)
             {
-                return "BOM ID does not exist";
+                int GetCount = db.QueryFirstOrDefault<int>("Select Count(1) from BOM where BOMID = @BOMID", new { BOMID = bom.BOMID });
+                if (GetCount == 0)
+                {
+                    return "BOM ID does not exist";
+
+                }
             }
 
             if (bom.DocumentDate == null) return "Please Enter Document Date";
@@ -456,6 +466,8 @@
             });
         ItemName.Add("");
         UOMName.Add("");
+        quantity.Add(0);
+        Rate.Add(0);
     }
 
     private void DeleteRow(int index)
@@ -468,6 +480,8 @@
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
+                quantity.RemoveAt(i);
+                Rate.RemoveAt(i);
             }
         }
     }
@@ -487,11 +501,16 @@
 
     private void SelectItemOption(option options, int rowIndex)
     {
-        bool result = DropDownItem.SelectOption(options, rowIndex);
-        if (result == false)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            ItemName[rowIndex] = options.Text;
-            Items[rowIndex].Item = options.Value;
+            bool result = DropDownItem.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                ItemName[rowIndex] = options.Text;
+                Items[rowIndex].Item = options.Value;
+                Rate[rowIndex] = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+            }
         }
     }
 
@@ -510,11 +529,15 @@
 
     public void SelectUOMOption(option options, int rowIndex)
     {
-        bool result = DropDownUOM.SelectOption(options, rowIndex);
-        if (result == false)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            UOMName[rowIndex] = options.Text;
-            Items[rowIndex].UOM = options.Value;
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                Items[rowIndex].UOM = options.Value;
+                quantity[rowIndex] = db.QueryFirstOrDefault<int>("select StockQuantity from UOM where UOMID = @UOMID", new { UOMID = options.Value });
+            }
         }
     }
 
@@ -549,5 +572,16 @@
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+    }
+    public void CheckStatus()
+    {
+        if (Active)
+        {
+            Createbutton = true;
+        }
+        else
+        {
+            Createbutton = false;
+        }
     }
 }
