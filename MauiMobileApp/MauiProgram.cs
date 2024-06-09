@@ -1,14 +1,11 @@
-﻿using Blazored.LocalStorage;
-using Blazored.SessionStorage;
-using Microsoft.Extensions.Logging;
-using MudBlazor;
-using MudBlazor.Services;
-using ProtectedLocalStore;
-using SharedClass;
-using SharedClass.Components.Data;
+﻿using Microsoft.Extensions.Logging;
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
-using System.Text.Json;
+using SharedClass.Components.Data;
+using ProtectedLocalStore;
+using MudBlazor.Services;
+using SharedClass;
+using MudBlazor;
 
 namespace MauiMobileApp
 {
