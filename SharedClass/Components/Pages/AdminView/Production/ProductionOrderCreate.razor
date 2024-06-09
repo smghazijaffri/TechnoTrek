@@ -91,7 +91,7 @@
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplayPO">
             <label class="form-label">Production Order ID</label>
-            <input type="text" class="form-control" @bind="production.ProductionOrderID" readonly hidden>
+            <input type="text" class="form-control" @bind="production.ProductionOrderID" readonly>
         </div>
         <div class="col-md-6" hidden="@DisplayPO">
             <label class="form-label">Bom No.</label>
@@ -262,6 +262,7 @@
                     if (production == null) NavigationManager.NavigateTo("/productionorder/");
                     Items = db.Query<BOM_Item>("select * from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode  where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PRO_Items pr inner join UOM u on pr.UOMID = u.UOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
                     BOM = db.QueryFirstOrDefault<BOM>("select v.* from BOM v inner join ProductionOrder po on po.BOMID = v.BOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
                     DisplayPO = false;
                     header = production.ProductionOrderName;

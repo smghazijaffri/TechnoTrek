@@ -15,6 +15,7 @@
 @inject Connection con;
 @inject Customer customer;
 @inject ISnackbar Snackbar;
+@inject CRUD crud;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
@@ -57,19 +58,19 @@
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Supplier Name">@context.CustomerID</MudTd>
-                    <MudTd DataLabel="Status">@context.Name</MudTd>
-                    <MudTd DataLabel="Supplier Group">@context.Address</MudTd>
-                    <MudTd DataLabel="Supplier Type">@context.Contact</MudTd>
-                </RowTemplate>
-                <PagerContent>
-                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-                </PagerContent>
-            </MudTable>
+                        <MudTd DataLabel="Status">@context.Name</MudTd>
+                        <MudTd DataLabel="Supplier Group">@context.Address</MudTd>
+                        <MudTd DataLabel="Supplier Type">@context.Contact</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                </MudTable>
+            </div>
         </div>
     </div>
-</div>
 
-@code {
+    @code {
     private MudTable<Customer> _table;
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
@@ -114,7 +115,14 @@
             var items = selectedItems.ToList();
             foreach (var item in items)
             {
-                await delete.DeleteFromTable("Customer", "CustomerID", item.CustomerID);
+                // await delete.DeleteFromTable("Customer", "CustomerID", item.CustomerID);
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(item, "CreateCustomer_Admin", IsDelete: true, errorMessage: true, outputMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    Snackbar.Add(output.ErrorMessage, Severity.Error);
+                    return;
+                }
             }
 
             Elements = Elements.Where(e => !items.Any(d => d.CustomerID == e.CustomerID)).ToList();
