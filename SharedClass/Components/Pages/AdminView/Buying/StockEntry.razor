@@ -170,10 +170,10 @@
 @code {
     [Parameter]
     public string? StockID { get; set; }
-    private string header = "Create Purchase Request";
+    private string header = "Create Stock Entry";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
     private bool IsDraft = false;
     private bool IsSaving = true;
@@ -507,7 +507,7 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 
