@@ -20,7 +20,7 @@
                                Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
                 <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
             </MudAppBar>
-            <MudDrawer @bind-Open="@open" Breakpoint="@breakpoint" Elevation="1" Variant="@DrawerVariant.Responsive"
+            <MudDrawer @bind-Open="@open" Breakpoint="Breakpoint.Lg" Elevation="1" Variant="@DrawerVariant.Responsive"
                        PreserveOpenState="@preserveOpenState"
                        Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
                 <MudNavMenu Class="mb-5">
@@ -52,6 +52,13 @@
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.VerifiedUser"
                                    Style="background-color:transparent;" Color="Color.Info">Create User</MudButton>
                     </MudNavLink>
+                    @if (!isMobile)
+                    {
+                        <MudNavLink Match="NavLinkMatch.All" Href="/reportviewer">
+                            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Assessment"
+                                       Style="background-color:transparent;" Color="Color.Info">Reports</MudButton>
+                        </MudNavLink>
+                    }
                     <MudNavLink Match="NavLinkMatch.All" OnClick="Logout">
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Logout" OnClick="Logout"
                                    Style="background-color:transparent;" Color="Color.Error">Sign Out</MudButton>
@@ -73,6 +80,9 @@
     bool open = false;
     bool preserveOpenState = false;
     Breakpoint breakpoint = Breakpoint.Lg;
+
+    bool isMobile = false;
+    string? DeviceType { get; set; }
 
     protected bool isLoading = false;
     protected bool Authorized { get; set; }
@@ -117,6 +127,13 @@
         {
             Console.WriteLine(ex.Message);
         }
+    }
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+        StateHasChanged();
     }
 
     private void ToggleDrawer()
