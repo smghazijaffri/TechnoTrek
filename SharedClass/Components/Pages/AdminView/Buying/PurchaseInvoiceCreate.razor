@@ -1,15 +1,9 @@
 ﻿@page "/purchaseinvoice/new-purchase-invoice"
 @page "/purchaseinvoice/{PurchaseInvoiceID?}"
 
-@using SharedClass.Components.Pages.Modals
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
 @using System.Globalization
 @using System.Reflection
 @using System.Text
-@using Dapper
 
 @inject CRUD crud;
 @layout AdminLayout;
@@ -158,7 +152,6 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Items</h5>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
-        @* <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox> *@
         <table class="table size table-hover">
             <thead>
                 <tr>
@@ -290,7 +283,7 @@
     private string header = "Create Purchase Invoice";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
     private bool Unpaid = false;
     private bool UnpaidtoPaid = false;
@@ -298,7 +291,6 @@
     private bool IsSaving = true;
     private bool Overdue = false;
     private bool DisplayPR = true;
-    private bool UpdateStock = false;
     private bool IsCancelled = false;
     private bool IsPaid { get; set; } = false;
     public bool Readonly { get { return IsCancelled || IsPaid; } }
@@ -414,8 +406,7 @@
         }
         catch (Exception ex)
         {
-
-            throw;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 
@@ -574,7 +565,10 @@
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
 
             if (purchase.VendorID == null) return "Please Select a Vendor";
+
             if (purchase.DueDate < purchase.DocumentDate) return "DueDate cannot be before DocumentDate";
+
+            if (purchase.IsPaid && purchase.IsReturn) return "Document cannot be set to PAID and RETURN at the same time";
 
             foreach (var PI in Items)
             {

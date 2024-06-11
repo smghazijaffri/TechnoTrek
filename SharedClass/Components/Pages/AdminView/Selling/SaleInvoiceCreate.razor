@@ -227,13 +227,12 @@
     private string header = "Create Sales Invoice";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool Overdue = false;
     private bool DisplaySI = true;
-    private bool UpdateStock = false;
     private bool IsCancelled = false;
 
     private bool Paid { get; set; } = false;

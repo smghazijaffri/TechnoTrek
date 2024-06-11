@@ -83,7 +83,7 @@
 
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Items</h5>
-    <form class="row g-3" autocomplete="off">
+    <form class="row g-3" autocomplete="off" @oninput="HandleFormInput" style="overflow-x: @(isMobile? "scroll" : "")">
         <table class="table size table-hover">
             <thead>
                 <tr>
@@ -230,7 +230,7 @@
     private string header = "New Bill of Material";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
     private bool DisplayPO = true;
     private bool Active = false;
