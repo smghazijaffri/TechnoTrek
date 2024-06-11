@@ -265,7 +265,7 @@
     private string header = "New Goods Receipt";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
     private bool ToBill = false;
     private bool IsDraft = false;
@@ -682,7 +682,7 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 

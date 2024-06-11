@@ -317,16 +317,13 @@
     private string header = "New Purchase Order";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
-    bool IsKeyPresent = false;
     private bool ToBill = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool DisplayPO = true;
     private bool ToReceive = false;
-    private bool IsRejected = false;
-    private bool IsSubmitted = false;
     private bool IsCancelled = false;
     private bool IsCompleted = false;
     private bool ToReceiveBill = false;

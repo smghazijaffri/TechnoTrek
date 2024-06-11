@@ -233,7 +233,8 @@
     private string header = "Create Purchase Request";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
+
 
     private bool IsDraft = false;
     private bool IsSaving = true;
@@ -241,7 +242,6 @@
     private bool IsOrdered = false;
     private bool IsApproved = false;
     private bool IsReceived = false;
-    private bool IsSubmitted = false;
     private bool IsCancelled = false;
 
     public bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsOrdered || IsReceived; } }
@@ -611,7 +611,7 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
     public void CreatePO()

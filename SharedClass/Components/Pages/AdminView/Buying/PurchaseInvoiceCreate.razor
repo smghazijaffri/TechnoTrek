@@ -158,7 +158,6 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Items</h5>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
-        @* <MudCheckBox @bind-Value="@UpdateStock" Size="Size.Small" Dense="true" Label="Update Stock" readonly="@ReadonlyHidden"></MudCheckBox> *@
         <table class="table size table-hover">
             <thead>
                 <tr>
@@ -290,7 +289,7 @@
     private string header = "Create Purchase Invoice";
 
     bool isMobile = false;
-    string DeviceType { get; set; }
+    string? DeviceType { get; set; }
 
     private bool Unpaid = false;
     private bool UnpaidtoPaid = false;
@@ -298,7 +297,6 @@
     private bool IsSaving = true;
     private bool Overdue = false;
     private bool DisplayPR = true;
-    private bool UpdateStock = false;
     private bool IsCancelled = false;
     private bool IsPaid { get; set; } = false;
     public bool Readonly { get { return IsCancelled || IsPaid; } }
@@ -414,8 +412,7 @@
         }
         catch (Exception ex)
         {
-
-            throw;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 

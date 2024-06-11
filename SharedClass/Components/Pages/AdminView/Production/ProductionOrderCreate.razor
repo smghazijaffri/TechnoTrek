@@ -126,7 +126,7 @@
 </div>
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Required Items</h5>
-    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
         <table class="table size table-hover">
             <thead>
                 <tr>
