@@ -286,12 +286,12 @@
     string? DeviceType { get; set; }
 
     private bool Unpaid = false;
-    private bool UnpaidtoPaid = false;
     private bool IsDraft = false;
     private bool IsSaving = true;
     private bool Overdue = false;
     private bool DisplayPR = true;
     private bool IsCancelled = false;
+    private bool UnpaidtoPaid = false;
     private bool IsPaid { get; set; } = false;
     public bool Readonly { get { return IsCancelled || IsPaid; } }
     public bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue || UnpaidtoPaid; } }
