@@ -4,6 +4,7 @@ using SharedClass.Components.Data;
 using SharedClass.Components;
 using ProtectedLocalStore;
 using MudBlazor.Services;
+using BlazorApp.Api;
 using SharedClass;
 using MudBlazor;
 
@@ -12,6 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ReportController>();
+
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Stock>();
@@ -86,5 +92,7 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapControllers();
 
 app.Run();

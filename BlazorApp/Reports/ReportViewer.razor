@@ -1,0 +1,23 @@
+﻿@page "/reportviewer"
+
+@layout AdminLayout;
+@inject IJSRuntime JSRuntime;
+
+<div id="report-viewer" style="height: 100vh; min-width: 96vw"></div>
+
+@code {
+    ReportOptions viewerOptions = new();
+
+    public async void RenderReportViewer()
+    {
+        viewerOptions.ReportName = "Sample Inventory";
+        viewerOptions.ServiceURL = "/api/Report";
+        
+        await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        RenderReportViewer();
+    }
+}
