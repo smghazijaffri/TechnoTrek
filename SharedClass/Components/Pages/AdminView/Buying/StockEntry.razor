@@ -1,5 +1,5 @@
 ﻿@page "/stock-entry/new-stock-entry"
-@page "/stock-entry/{StockID?}"
+@page "/stock-entry/{EntryID?}"
 
 @using System.Globalization
 @using System.Reflection
@@ -60,7 +60,7 @@
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplayPR">
             <label class="form-label">Stock Entry ID</label>
-            <input type="text" class="form-control" @bind="stock.StockID" hidden>
+            <input type="text" class="form-control" @bind="stock.EntryID" hidden>
         </div>
         <div class="col-md-6">
             <label class="form-label">Stock Entry Type</label>
@@ -169,7 +169,7 @@
 
 @code {
     [Parameter]
-    public string? StockID { get; set; }
+    public string? EntryID { get; set; }
     private string header = "Create Stock Entry";
 
     bool isMobile = false;
@@ -196,11 +196,11 @@
         if (DeviceType == "Mobile") isMobile = true;
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (StockID != null)
+            if (EntryID != null)
             {
-                stock = db.QueryFirstOrDefault<Stock>("select * from Stock where StockID = @StockID", new { StockID = StockID });
-                Items = db.Query<Stock>("Select * from Stock where StockID = @StockID", new { StockID = StockID }).ToList();
-                ItemName = db.Query<string>("select ItemName from Items inner join Items on Item = ItemCode where StockID = @StockID", new { StockID = StockID }).ToList();
+                stock = db.QueryFirstOrDefault<Stock>("select * from StockEntries where EntryID = @EntryID", new { EntryID = EntryID });
+                Items = db.Query<Stock>("Select * from StockEntries where EntryID = @EntryID", new { EntryID = EntryID }).ToList();
+                ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntries SE INNER JOIN Items I1 ON SE.ItemID = I1.ItemCode WHERE SE.EntryID = @EntryID", new { EntryID = EntryID }).ToList();
                 if (stock == null || Items.Count == 0)
                     NavigationManager.NavigateTo("/stock-entry/");
 
@@ -240,80 +240,50 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string validate = ValidatePR();
+                string validate = ValidateSE();
                 if (validate != null)
                 {
                     return validate;
                 }
 
-                StringBuilder titleBuilder = new StringBuilder("Stock Entry for ");
-
-                foreach (string data in ItemName)
-                {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
-                    titleBuilder.Length -= 2;
-                    titleBuilder.Append("...");
-                }
-
-                stock.Type = titleBuilder.ToString();
-                header = titleBuilder.ToString();
+                header = stock.Type;
 
                 if (IsSaving)
                 {
-                    stock.Status = PurchaseStatuses.Draft;
+                    stock.Status = ProductionStatus.Draft;
                 }
                 else if (IsDraft)
                 {
-                    stock.Status = PurchaseStatuses.Submitted;
-                }
-                else if (IsSubmitted)
-                {
-                    stock.Status = PurchaseStatuses.Cancelled;
+                    stock.Status = ProductionStatus.Submitted;
                 }
 
-                stock.StockID = crud.CRD(stock, "CreatePurchaseRequest");
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(stock, "Manage_StockEntry", outputMessage: true, errorMessage: true);
 
-                foreach (var PR in Items)
+                if (output.ErrorMessage != null)
                 {
-                    if (IsDelete.Any(Del => Del == PR.RowID))
-                    {
-                        IsDelete.Remove(PR.RowID);
-                    }
-                    PR.StockID = stock.StockID;
-                    DisplayPR = false;
-                    crud.CRD(PR, "PurhcaseRequestItems");
+                    return output.ErrorMessage;
+                }
+                else
+                {
+                    stock.EntryID = output.Output;
                 }
 
-                foreach (var del in IsDelete)
-                {
-                    stock.RowID = del;
-                    stock.StockID = stock.StockID;
-                    crud.CRD(stock, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
-                }
-                IsDelete.Clear();
                 ToggleApproval();
-                if (StockID == null)
+
+                if (EntryID == null)
                 {
-                    NavigationManager.NavigateTo($"/stock-entry/{stock.StockID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/stock-entry/{stock.EntryID}", forceLoad: true);
                 }
+
                 if (IsDraft)
                 {
-                    return "Resquest Saved Successfully";
+                    return "Entry Saved Successfully";
                 }
 
                 else if (IsSubmitted)
                 {
                     return "Stock Entry Submitted Successfully";
-                }
-
-                else if (IsCancelled)
-                {
-                    return "Stock Entry Cancelled Successfully";
                 }
 
                 else
@@ -329,13 +299,13 @@
         }
     }
 
-    public string ValidatePR()
+    public string ValidateSE()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (stock.StockID != null)
+            if (stock.EntryID != null)
             {
-                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where StockID = @StockID", new { StockID = stock.StockID });
+                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where EntryID = @EntryID", new { EntryID = stock.EntryID });
                 if (GetStatus != null)
                 {
                     if (GetStatus == PurchaseStatuses.Submitted && !IsCancelled) return "Stock Entry has already been submitted changes cannot be done";
@@ -475,7 +445,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where StockID = @StockID", new { StockID = stock.StockID });
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where EntryID = @EntryID", new { EntryID = stock.EntryID });
             if (GetStatus != null)
             {
                 if (GetStatus == PurchaseStatuses.Cancelled)
@@ -500,7 +470,7 @@
         try
         {
             CancelAll cancelall = new CancelAll();
-            cancelall.ID = stock.StockID;
+            cancelall.ID = stock.EntryID;
             cancelall.type = "Stock Entry";
             crud.CRD(cancelall, "CancelAll");
             ToggleApproval();

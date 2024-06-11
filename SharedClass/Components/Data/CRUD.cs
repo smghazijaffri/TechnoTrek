@@ -38,7 +38,6 @@ namespace SharedClass.Components.Data
         }
 
         public OutputClass CRD2(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
-
         {
             OutputClass output = new OutputClass();
 

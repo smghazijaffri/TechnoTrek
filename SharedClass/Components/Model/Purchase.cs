@@ -210,7 +210,7 @@
 
     public class Stock : BaseRecord
     {
-        public string StockID { get; set; }
+        public string EntryID { get; set; }
         public string ItemID { get; set; }
         public string Type { get; set; }
         public int Quantity { get; set; }
