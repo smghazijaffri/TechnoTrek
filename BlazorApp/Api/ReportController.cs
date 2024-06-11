@@ -27,7 +27,7 @@ public class ReportController : ControllerBase, IReportController
     public void OnInitReportOptions(ReportViewerOptions reportOption)
     {
         //string basePath = _hostingEnvironment.WebRootPath;
-        FileStream inputStream = new("D:/FYP2/TechnoTrek/SharedClass/wwwroot/reports/Sample Inventory.rdl",
+        FileStream inputStream = new("D:\\FYP2\\TechnoTrek\\BlazorApp\\wwwroot\\reports\\Sample Inventory.rdl",
             FileMode.Open, FileAccess.Read);
         MemoryStream reportStream = new MemoryStream();
         inputStream.CopyTo(reportStream);

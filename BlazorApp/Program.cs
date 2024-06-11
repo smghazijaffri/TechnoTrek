@@ -1,6 +1,7 @@
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
+using SharedClass.Components.Api;
 using SharedClass.Components;
 using ProtectedLocalStore;
 using MudBlazor.Services;
@@ -10,13 +11,15 @@ using MudBlazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ReportController>();
+builder.Services.AddScoped<IReportControllerWrapper, ReportControllerWrapper>();
+
+Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();

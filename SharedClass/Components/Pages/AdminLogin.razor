@@ -45,5 +45,10 @@
             Snackbar.Clear();
             Snackbar.Add("Welcome " + Username, Severity.Success);
         }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Invalid Credentials", Severity.Error);
+        }
     }
 }

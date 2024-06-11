@@ -2,6 +2,7 @@
 
 @layout AdminLayout;
 @inject IJSRuntime JSRuntime;
+@inject IReportControllerWrapper ReportControllerWrapper;
 
 <div id="report-viewer" style="height: 100vh; min-width: 96vw"></div>
 
@@ -12,12 +13,13 @@
     {
         viewerOptions.ReportName = "Sample Inventory";
         viewerOptions.ServiceURL = "/api/Report";
-        
+
         await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
         RenderReportViewer();
+        StateHasChanged();
     }
 }
