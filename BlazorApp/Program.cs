@@ -8,11 +8,23 @@ using MudBlazor.Services;
 using BlazorApp.Api;
 using SharedClass;
 using MudBlazor;
+using System.Web.Services.Description;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddMemoryCache();
@@ -20,6 +32,9 @@ builder.Services.AddSingleton<ReportController>();
 builder.Services.AddScoped<IReportControllerWrapper, ReportControllerWrapper>();
 
 Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
+
+builder.Services.AddOptions();
+builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();
@@ -95,6 +110,8 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.UseCors("AllowAll");
 
 app.MapControllers();
 
