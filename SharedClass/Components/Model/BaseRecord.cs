@@ -10,11 +10,11 @@ namespace SharedClass.Components.Model
     {
         public int ForInsert { get; set; }
         public DateTime CreationDate { get; set; }
-        public string Output { get; set; }
+        public string? Output { get; set; }
     }
     public class OutputClass
     {
-        public string Output { get; set; }
-        public string ErrorMessage { get; set; }
+        public string? Output { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 }
