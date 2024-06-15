@@ -18,6 +18,7 @@
         public string SaleOrderID { get; set; }
         public string Item { get; set; }
         public int RowID { get; set; }
+        public string UOM { get; set; }
         public int Quantity { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
