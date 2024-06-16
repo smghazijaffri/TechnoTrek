@@ -142,6 +142,9 @@
                     <th class="col col-auto" style="width: 70px;">
                         Quantity
                     </th>
+                    <th class="col col-auto" style="width: 70px;">
+                        UOM
+                    </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         Rate
                     </th>
@@ -157,6 +160,7 @@
                     item.RowID = index + 1;
                     var rowIndex = item.RowID - 1;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * item.Quantity);
                     <tr>
                         <td>
@@ -188,6 +192,29 @@
                         </td>
 
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                         <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
                     </tr>
@@ -237,9 +264,10 @@
 
     public bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted || PartiallyPaid; } }
 
+    public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
-    public SingleDropDown DropDownCustomer = new SingleDropDown();
     public List<string> UOMName = new List<string>();
+    public SingleDropDown DropDownCustomer = new SingleDropDown();
 
     List<int> IsDelete = new List<int>();
     public List<string> ItemName = new List<string>();
@@ -323,6 +351,7 @@
                 }
                 DropDownCustomer.Options = db.Query<option>("select CustomerID as Value, Name as Text from Customer").ToList();
                 DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
             }
             StateHasChanged();
         }
@@ -607,6 +636,29 @@
         }
     }
 
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    public void SelectUOMOption(option options, int rowIndex)
+    {
+        bool result = DropDownUOM.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+            Items[rowIndex].UOM = options.Value;
+            UOMName[rowIndex] = options.Text;
+        }
+    }
+
     private async Task OpenDialog()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -715,6 +767,11 @@
             _protectedLocalStore.SetLocalAsync("SaleOrderID", saleorder.SaleOrderID);
             NavigationManager.NavigateTo("/saleinvoice/new-sales-invoice");
         }
+    }
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
     }
 
     public void NavigateItem()

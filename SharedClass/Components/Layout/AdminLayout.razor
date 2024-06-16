@@ -20,7 +20,7 @@
     <MudLayout>
         <div style="display:flex;">
             <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
-                <MudIconButton Icon="@(open ? Icons.Material.Outlined.Close : Icons.Material.Outlined.Menu)"
+                <MudIconButton Icon="@(open ? Icons.Material.TwoTone.Close : Icons.Material.TwoTone.Menu)"
                                Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
                 <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
             </MudAppBar>
@@ -29,31 +29,35 @@
                        Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
                 <MudNavMenu Class="mb-5">
                     <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SpaceDashboard"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.SpaceDashboard"
                                    Style="background-color:transparent;" Color="Color.Info">Dashboard</MudButton>
                     </MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.All" Href="/home">
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Home"
+                                   Style="background-color:transparent;" Color="Color.Info">Home</MudButton>
+                    </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Href="/buying">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Inventory2"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Inventory2"
                                    Style="background-color:transparent;" Color="Color.Info">Inventory</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Href="/selling">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Sell"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Sell"
                                    Style="background-color:transparent;" Color="Color.Info">Selling</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Href="/production">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Create"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Create"
                                    Style="background-color:transparent;" Color="Color.Info">Production</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Href="/returns">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.KeyboardReturn"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.KeyboardReturn"
                                    Style="background-color:transparent;" Color="Color.Info">Returns</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Href="/pos">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.PointOfSale"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.PointOfSale"
                                    Style="background-color:transparent;" Color="Color.Info">Point of Sale</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Href="/signup">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.VerifiedUser"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.VerifiedUser"
                                    Style="background-color:transparent;" Color="Color.Info">Create User</MudButton>
                     </MudNavLink>
                     @* @if (!isMobile)
@@ -64,7 +68,7 @@
                         </MudNavLink>
                     @* } *@
                     <MudNavLink Match="NavLinkMatch.All" OnClick="Logout">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Logout" OnClick="Logout"
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Logout" OnClick="Logout"
                                    Style="background-color:transparent;" Color="Color.Error">Sign Out</MudButton>
                     </MudNavLink>
                 </MudNavMenu>
@@ -111,7 +115,7 @@
                     else
                     {
                         isLoading = false;
-                        navigationManager.NavigateTo("/adminlogin");
+                        navigationManager.NavigateTo("/adminlogin", forceLoad: true);
                         Snackbar.Clear();
                         Snackbar.Add("Not Authorized", Severity.Error);
                     }
@@ -120,7 +124,7 @@
             else
             {
                 isLoading = false;
-                navigationManager.NavigateTo("/adminlogin");
+                navigationManager.NavigateTo("/adminlogin", forceLoad: true);
                 Snackbar.Clear();
                 Snackbar.Add("Not Authorized", Severity.Error);
             }

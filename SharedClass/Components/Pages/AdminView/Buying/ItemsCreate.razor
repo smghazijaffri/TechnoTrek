@@ -77,10 +77,6 @@
             </select>
         </div>
         <div class="col-md-6">
-            <label class="form-label">Standard Selling Rate</label>
-            <input type="text" inputmode="numeric" id="num" @bind="items.Sellingrate" class="form-control">
-        </div>
-        <div class="col-md-6">
             <label class="form-label">Lead Time in Days</label>
             <input type="text" inputmode="numeric" id="num" @bind="items.LeadTime" class="form-control">
             <label class="form-label">Average time taken by the supplier to deliver</label>
@@ -458,7 +454,6 @@
 
             if (string.IsNullOrWhiteSpace(items.ItemName)) { return $"Please enter Item Name"; }
             if (string.IsNullOrWhiteSpace(items.ItemType)) { return $"Please enter Item Type"; }
-            if (items.Sellingrate <= 0) { return $"Selling Rate cannot be less than or equal to 0"; }
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }

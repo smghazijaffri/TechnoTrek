@@ -1,12 +1,10 @@
 ﻿@page "/selling";
-@using SharedClass.Components.Layout
-@using System.Globalization
-@using SharedClass.Components.Data
-@inject IJSRuntime JSRuntime;
+
+@layout AdminLayout;
 @inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
-@layout AdminLayout;
 
 <h4>Quick Access</h4>
 <div class="row m-auto">
@@ -33,13 +31,6 @@
     </MudPaper>
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
-            <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
-                Vendor
-            </MudListItem>
-        </MudList>
-    </MudPaper>
-    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
-        <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Filled.Person" Href="/customers" Style="border-radius:10px">
                 Customer
             </MudListItem>
@@ -48,6 +39,14 @@
 </div>
 <h4>Forms</h4>
 <div class="row m-auto">
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaserequisition" Style="border-radius:10px">
+                Purchase Requisition
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
             <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/saleorder" Style="border-radius:10px">

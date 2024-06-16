@@ -1,38 +1,38 @@
-﻿@page "/production";
+﻿@page "/home";
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Data
-@using System.Globalization
-
+@layout AdminLayout;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@layout AdminLayout;
-
-<h4>Forms</h4>
+<h4>Quick Access</h4>
 <div class="row m-auto">
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
-            <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/purchaserequisition" Style="border-radius:10px">
-                Purchase Requisition
+            <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/item" Style="border-radius:10px">
+                Items
             </MudListItem>
         </MudList>
     </MudPaper>
-
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
-            <MudListItem Avatar="@Icons.Material.Outlined.RequestPage" Href="/billofmaterial" Style="border-radius:10px">
-                Bill of Material
+            <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/uom" Style="border-radius:10px">
+                UOM
             </MudListItem>
         </MudList>
     </MudPaper>
-
     <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
         <MudList Clickable="true">
-            <MudListItem Avatar="@Icons.Material.Outlined.RequestQuote" Href="/productionorder/" Style="border-radius:10px">
-                Production Order
+            <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/vendors" Style="border-radius:10px">
+                Vendor
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Filled.Person" Href="/customers" Style="border-radius:10px">
+                Customer
             </MudListItem>
         </MudList>
     </MudPaper>
