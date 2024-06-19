@@ -53,7 +53,7 @@
     <h5>Name and Type</h5>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden>
-            <label class="form-label">Item ID</label>
+            <label class="form-label">Item Code</label>
             <input type="text" class="form-control" @bind="items.ItemCode" readonly>
         </div>
         <div class="col-md-6">
@@ -110,6 +110,9 @@
                     <th class="col col-auto" style="width: 50px;">
                         No.
                     </th>
+                    <th hidden>
+                        RowID
+                    </th>
                     <th class="col col-auto">
                         Unit of Measure
                     </th>
@@ -119,8 +122,7 @@
                 @for (int index = 0; index < ItemUOM.Count; index++)
                 {
                     var item = ItemUOM[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                   var rowindex = index;
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
                         <td>
@@ -130,20 +132,23 @@
                                 <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")">Delete</button>
                             </div>
                         </td>
+                        <td hidden>
+                            <input type="text" class="me-1" @bind="item.RowID" />
+                        </td>
                         <td>
-                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                <input type="text" id="Item" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="UOMName[rowIndex]"
-                                       placeholder="Select Unit of Measure" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)"
-                                    style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowindex)">
+                                <input type="text" id="Item" @onclick="() => DropDownUOM.ToggleDropdown(rowindex)" @bind="UOMName[rowindex]"
+                                       placeholder="Select Unit of Measure" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowindex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownUOM.HandleDropdownFocusOut(rowindex)"
+                                    style="max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowindex].IsDropdownOpen ? "block" : "none");"
                                     aria-labelledby="dropdownMenuButton">
                                     <li>
-                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
-                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowindex)">
+                                            @if (DropDownUOM.ListItems[rowindex].FilteredOptions != null)
                                             {
-                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                @foreach (var option in DropDownUOM.ListItems[rowindex].FilteredOptions)
                                                 {
-                                                    <a class="dropdown-item" bind="@item.UOMID" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <a class="dropdown-item" bind="@item.UOMID" @onclick="() => SelectUOMOption(option, rowindex)">@option.Text</a>
                                                     <hr class="m-1 border-primary" />
                                                 }
                                             }
@@ -257,6 +262,7 @@
     public DropDown DropDownUOM = new DropDown();
     List<string> AlternateID = new List<string>();
     public List<string> UOMName = new List<string>();
+    public List<int> ItemDelete = new List<int>();
     private List<ItemUOM> ItemUOM = new List<ItemUOM>();
     private IEnumerable<ItemClass> itemsFromDatabase = new List<ItemClass>();
 
@@ -348,54 +354,81 @@
                     IsSaving = false;
                 }
 
-                items.ItemCode = crud.CRD(items, "Add_Item");
-                var compatibleItems = itemsFromDatabase.Where(item => item.Compatible).ToList();
-                var AlternateItems = itemsFromDatabase.Where(item => item.Alternate).ToList();
-                if (ItemUOM.Count == 0)
+
+                var compatibleItems = itemsFromDatabase.Where(item => item.Compatible).Select(item => item.ItemCode).ToList();
+                var AlternateItems = itemsFromDatabase.Where(item => item.Alternate).Select(item => item.ItemCode).ToList();
+              
+                DataTable dataTable = new DataTable("UOMItem");
+
+                dataTable.Columns.Add("ItemID", typeof(string));
+                dataTable.Columns.Add("UOMID", typeof(string));
+                dataTable.Columns.Add("RowID", typeof(int));
+
+                foreach (var item in ItemUOM)
                 {
-                    itemuom.ItemID = items.ItemCode;
-                    crud.CRD(itemuom, "CreateItemUOM", IsDelete: true);
+                    DataRow row = dataTable.NewRow();
+                    row["RowID"] = item.RowID;
+                    row["ItemID"] = items.ItemCode;
+                    row["UOMID"] = item.UOMID;
+                    dataTable.Rows.Add(row);
                 }
-                else
+                DataTable DeleteTable = new DataTable("UOMDelete");
+                DeleteTable.Columns.Add("DeleteItemUOM", typeof(int));
+                foreach (int deleteItem in ItemDelete)
                 {
-                    itemuom.ItemID = items.ItemCode;
-                    crud.CRD(itemuom, "CreateItemUOM", IsDelete: true);
-                    foreach (var item in ItemUOM)
-                    {
-                        item.ItemID = items.ItemCode;
-                        crud.CRD(item, "CreateItemUOM");
-                    }
+                    DataRow row = DeleteTable.NewRow();
+                    row["DeleteItemUOM"] = deleteItem;
+                    DeleteTable.Rows.Add(row);
                 }
-                if (compatibleItems.Count == 0)
+                DataTable CompTable = Select.ConvertListToDataTable(compatibleItems);
+                DataTable AltTable = Select.ConvertListToDataTable(AlternateItems);
+               
+                var parameters = new DynamicParameters(items);
+                parameters.Add("@ItemUOM", dataTable.AsTableValuedParameter("UOMItem"));
+                parameters.Add("@ItemUOMDelete", DeleteTable.AsTableValuedParameter("UOMDelete"));
+                parameters.Add("@ItemCompatible", CompTable.AsTableValuedParameter("CompatibleItems"));
+                parameters.Add("@AlternateItems", AltTable.AsTableValuedParameter("AlternateItems"));
+                OutputClass output = new OutputClass();
+                output = crud.CRD3(parameters, "Add_Item", outputMessage: true, errorMessage: true);
+                items.ItemCode = output.Output;
+                string ErrorMessage = output.ErrorMessage;
+                if (!string.IsNullOrWhiteSpace(ErrorMessage))
                 {
-                    compatibility.ItemID = items.ItemCode;
-                    crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
-                }
-                else
-                {
-                    compatibility.ItemID = items.ItemCode;
-                    crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
-                    foreach (var item in compatibleItems)
-                    {
-                        compatibility.CompatibilityID = item.ItemCode;
-                        crud.CRD(compatibility, "CreateCompabilityItem");
-                    }
-                }
-                if (AlternateItems.Count == 0)
-                {
-                    alternateitem.ItemID = items.ItemCode;
-                    crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
-                }
-                else
-                {
-                    alternateitem.ItemID = items.ItemCode;
-                    crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
-                    foreach (var item in AlternateItems)
-                    {
-                        alternateitem.AlternateID = item.ItemCode;
-                        crud.CRD(alternateitem, "CreateAlternateItem");
-                    }
-                }
+                    return ErrorMessage;
+                }   
+
+                // if (compatibleItems.Count == 0)
+                // {
+                //     compatibility.ItemID = items.ItemCode;
+                //     crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
+                // }
+                // else
+                // {
+                //     compatibility.ItemID = items.ItemCode;
+                //     crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
+                //     foreach (var item in compatibleItems)
+                //     {
+                //         compatibility.CompatibilityID = item.ItemCode;
+                //         crud.CRD(compatibility, "CreateCompabilityItem");
+                //     }
+                // }
+                // if (AlternateItems.Count == 0)
+                // {
+                //     alternateitem.ItemID = items.ItemCode;
+                //     crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
+                // }
+                // else
+                // {
+                //     alternateitem.ItemID = items.ItemCode;
+                //     crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
+                //     foreach (var item in AlternateItems)
+                //     {
+                //         alternateitem.AlternateID = item.ItemCode;
+                //         crud.CRD(alternateitem, "CreateAlternateItem");
+                //     }
+                // }
+                ItemDelete.Clear();
+
                 if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
                 if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
                 if (ItemID == null)
@@ -457,10 +490,11 @@
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }
-
+            int count = 0;
             foreach (var IT in ItemUOM)
             {
-                if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row: {IT.RowID}";
+                count++;
+                if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row:" + count;
             }
 
             return null;
@@ -495,10 +529,14 @@
         {
             if (ItemUOM[i].Selected)
             {
-
+                if (ItemUOM[i].RowID != 0)
+                {
+                    ItemDelete.Add(ItemUOM[i].RowID);
+                }
                 ItemUOM.RemoveAt(i);
                 DropDownUOM.ListItems.RemoveAt(i);
                 UOMName.RemoveAt(i);
+                
             }
         }
     }

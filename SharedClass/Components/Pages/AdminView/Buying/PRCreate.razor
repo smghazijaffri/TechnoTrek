@@ -95,7 +95,7 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplayPR">
-            <label class="form-label">Purchase Requisition Number</label>
+            <label class="form-label">Purchase Requisition ID</label>
             <input type="text" class="form-control" @bind="purchase.PRNumber" readonly>
         </div>
         <div class="col-md-6">
@@ -113,6 +113,9 @@
                 <tr>
                     <th class="col col-auto" style="width: 50px;">
                         No.
+                    </th>
+                    <th hidden>
+                        RowID
                     </th>
                     <th class="col col-auto" style="min-width:150px">
                         Item
@@ -132,11 +135,10 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
 
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center;">
@@ -144,6 +146,9 @@
                                 <b>@(index + 1)</b>
                                 <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
                             </div>
+                        </td>
+                        <td hidden>
+                            <input type="text" class="me-1" @bind="item.RowID" />
                         </td>
                         <td>
                             <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
@@ -168,7 +173,7 @@
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                         <td>
                             <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex] "
                                        placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                 <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
                                     style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
@@ -250,8 +255,10 @@
 
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
+    public List<string> UOMName = new List<string>();
     public List<string> ItemName = new List<string>();
     private List<PR_Items> Items = new List<PR_Items>();
+
 
     protected override async void OnInitialized()
     {
@@ -264,9 +271,13 @@
             {
                 purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
                 Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                 ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                 if (purchase == null || Items.Count == 0)
+                {
                     NavigationManager.NavigateTo("/purchaserequisition/");
+                    return;
+                }
 
                 DisplayPR = false;
                 header = purchase.PRname;
@@ -302,7 +313,6 @@
             }
 
             DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-            DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
         }
         StateHasChanged();
 
@@ -351,25 +361,46 @@
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
 
-                purchase.PRNumber = crud.CRD(purchase, "CreatePurchaseRequest");
-
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = new DataTable("PRType");
+                ItemTable.Columns.Add("RowID", typeof(string));
+                ItemTable.Columns.Add("Item", typeof(string));
+                ItemTable.Columns.Add("Quantity", typeof(int));
+                ItemTable.Columns.Add("UOM", typeof(string));
+                ItemTable.Columns.Add("RequiredBy", typeof(DateTime));
                 foreach (var PR in Items)
                 {
-                    if (IsDelete.Any(Del => Del == PR.RowID))
-                    {
-                        IsDelete.Remove(PR.RowID);
-                    }
-                    PR.PRNumber = purchase.PRNumber;
-                    DisplayPR = false;
-                    crud.CRD(PR, "PurhcaseRequestItems");
+                    ItemTable.Rows.Add(PR.RowID, PR.Item, PR.Quantity, PR.UOM, PR.RequiredBy);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(purchase);
+                parameters.Add("@PRItems", ItemTable.AsTableValuedParameter("PRType"));
+                parameters.Add("@DeletePRItem", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = new OutputClass();
+                output = crud.CRD3(parameters, "CreatePurchaseRequest", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    pritem.RowID = del;
-                    pritem.PRNumber = purchase.PRNumber;
-                    crud.CRD(pritem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                purchase.PRNumber = output.Output;
+
+                // foreach (var PR in Items)
+                // {
+                //     if (IsDelete.Any(Del => Del == PR.RowID))
+                //     {
+                //         IsDelete.Remove(PR.RowID);
+                //     }k
+                //     }k
+                //     PR.PRNumber = purchase.PRNumber;
+                //     DisplayPR = false;
+                //     crud.CRD(PR, "PurhcaseRequestItems");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     pritem.RowID = del;
+                //     pritem.PRNumber = purchase.PRNumber;
+                //     crud.CRD(pritem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (PRNumber == null)
@@ -424,18 +455,19 @@
             }
 
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
-
+            int count = 0;
             foreach (var PR in Items)
             {
-                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1])) return $"Please Enter Item on Row: {PR.RowID}";
+                count++;
+                if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                if (string.IsNullOrWhiteSpace(PR.UOM)) return $"Please Enter UOM on Row: {PR.RowID}";
+                if (string.IsNullOrWhiteSpace(PR.UOM)) return $"Please Enter UOM on Row: {count}";
 
-                if (PR.Quantity <= 0) return $"Row {PR.RowID}: Quantity cannot be less than or equal to 0";
+                if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {PR.RowID}";
+                if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {count}";
 
-                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1])) return $"Item on Row: {PR.RowID} does not exist";
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
             }
 
             return null;
@@ -501,6 +533,7 @@
                 Quantity = 1
             });
         ItemName.Add("");
+        UOMName.Add("");
     }
 
     private void DeleteRow(int index)
@@ -509,7 +542,10 @@
         {
             if (Items[i].Selected)
             {
-                IsDelete.Add(Items[i].RowID);
+                if (Items[i].RowID != 0)
+                {
+                    IsDelete.Add(Items[i].RowID);
+                }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
@@ -543,12 +579,19 @@
 
     private void SelectItemOption(option options, int rowIndex)
     {
-        bool result = DropDownItem.SelectOption(options, rowIndex);
-        if (result == false)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-
-            ItemName[rowIndex] = options.Text;
-            Items[rowIndex].Item = options.Value;
+            bool result = DropDownItem.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                if (Items[rowIndex].Item != options.Value)
+                {
+                    UOMName[rowIndex] = "";
+                }
+                ItemName[rowIndex] = options.Text;
+                Items[rowIndex].Item = options.Value;
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+            }
         }
     }
 
@@ -567,10 +610,14 @@
 
     public void SelectUOMOption(option options, int rowIndex)
     {
-        bool result = DropDownUOM.SelectOption(options, rowIndex);
-        if (result == false)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            Items[rowIndex].UOM = options.Value;
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                Items[rowIndex].UOM = options.Value;
+            }
         }
     }
 

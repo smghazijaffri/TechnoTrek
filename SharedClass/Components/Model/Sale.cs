@@ -8,8 +8,8 @@
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
         public string? Status { get; set; }
-        public DateTime? DocumentDate { get; set; }
-        public DateTime? DeliveryDate { get; set; }
+        public DateTime DocumentDate { get; set; }
+        public DateTime DeliveryDate { get; set; }
     }
 
     public class SO_Item : BaseRecord
@@ -33,8 +33,8 @@
         public string? RefrenceDocument { get; set; }
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
-        public DateTime? DocumentDate { get; set; }
-        public DateTime? DueDate { get; set; }
+        public DateTime DocumentDate { get; set; }
+        public DateTime DueDate { get; set; }
         public bool IsPaid { get; set; }
         public bool IsPartiallyPaid { get; set; }
         public bool IsReturn { get; set; }
@@ -68,7 +68,7 @@
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
         public string? RefrenceDocument { get; set; }
-        public DateTime? DocumentDate { get; set; }
+        public DateTime DocumentDate { get; set; }
     }
 
     public class GI_Items : BaseRecord

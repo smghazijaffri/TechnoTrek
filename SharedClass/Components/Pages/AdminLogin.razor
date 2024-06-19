@@ -39,5 +39,10 @@
             Snackbar.Clear();
             Snackbar.Add("Welcome " + Username, Severity.Success);
         }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Login failed. Please check your credentials.", Severity.Error);
+        }
     }
 }

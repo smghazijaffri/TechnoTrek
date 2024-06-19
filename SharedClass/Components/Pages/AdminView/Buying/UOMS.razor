@@ -52,12 +52,16 @@
                 </ToolBarContent>
 
                 <HeaderContent>
+                    <MudTh>UOM ID</MudTh>
                     <MudTh>UOM Name</MudTh>
                     <MudTh>Status</MudTh>
+                    <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
+                    <MudTd DataLabel="UOM ID">@context.UOMID</MudTd>
                     <MudTd DataLabel="UOM Name">@context.UOMName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -93,6 +97,7 @@
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.UOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate} {element.UOMID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
@@ -117,7 +122,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateUOM", IsDelete: true, errorMessage: true, outputMessage: true);
+                output = crud.CRD2(item, "CreateUOM", IsDelete: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);

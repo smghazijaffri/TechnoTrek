@@ -82,12 +82,16 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplaySO">
-            <label class="form-label">Sales Order Number</label>
+            <label class="form-label">Sales Order ID</label>
             <input type="text" class="form-control" @bind="saleorder.SaleOrderID" readonly>
         </div>
         <div class="col-md-6">
             <label class="form-label">Date</label>
             <input type="date" @bind="saleorder.DocumentDate" class="form-control" readonly="@ReadonlyHidden">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input type="date" @bind="saleorder.DeliveryDate" class="form-control" readonly="@ReadonlyHidden">
         </div>
         <div class="col-md-6">
             <label class="form-label">Customer</label>
