@@ -118,7 +118,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateGoodIssue", IsDelete: true, errorMessage: true, outputMessage: true);
+                output = crud.CRD2(item, "CreateGoodIssue", IsDelete: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);

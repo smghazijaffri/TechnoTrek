@@ -317,7 +317,10 @@
                     ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
                     if (purchase == null || Items.Count == 0)
+                    {
                         NavigationManager.NavigateTo("/goodsreceipt/");
+                        return;
+                    }
 
                     DisplayPO = false;
                     header = purchase.GoodReceiptName;

@@ -506,6 +506,11 @@
             bool result = DropDownItem.SelectOption(options, rowIndex);
             if (result == false)
             {
+                if (Items[rowIndex].Item != options.Value)
+                {
+                    UOMName[rowIndex] = "";     
+                }
+
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
                 Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });

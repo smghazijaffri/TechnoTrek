@@ -295,11 +295,11 @@
     private bool IsPaid { get; set; } = false;
     public bool Readonly { get { return IsCancelled || IsPaid; } }
     public bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue || UnpaidtoPaid; } }
-
+    public List<string> UOMName = new List<string>();
     public DropDown DropDownUOM = new DropDown();
     public DropDown DropDownItem = new DropDown();
     public SingleDropDown DropDownVendor = new SingleDropDown();
-
+    public List<int> quantity = new List<int>();
     List<int> IsDelete = new List<int>();
     private List<string> UOMList { get; set; }
     public List<string> ItemName = new List<string>();
@@ -334,10 +334,15 @@
                     purchase = db.QueryFirstOrDefault<PurchaseInvoice>("select * from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
                     Items = db.Query<PI_Items>("Select * from PI_Items where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
                     ItemName = db.Query<string>("select ItemName from PI_Items inner join Items on Item = ItemCode  where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
+                    // UOMName = db.Query<string>("select UOMName from BOM_Item inner join UOM on UOMID = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseInvoice pi on pi.VendorID = v.VendorID where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID });
 
                     if (purchase == null || Items.Count == 0)
+                    {
                         NavigationManager.NavigateTo("/PurchaseInvoice/");
+                        return;
+
+                    }
 
                     DisplayPR = false;
                     header = purchase.PurchaseInvoiceName;

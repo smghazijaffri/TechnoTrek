@@ -209,7 +209,7 @@
                         <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                         <td>
                             <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex)" @bind="item.UOM"
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="item.UOM"
                                        placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                 <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
                                     style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
@@ -299,6 +299,7 @@
     public List<Vendor> VendorInfo = new List<Vendor>();
     private List<RFQ_Items> Items = new List<RFQ_Items>();
     private List<RFQVendor> RFQVendor = new List<RFQVendor>();
+    public List<string> UOMName = new List<string>();
 
     protected override async void OnInitialized()
     {
@@ -322,8 +323,12 @@
                     ItemName = db.Query<string>("select ItemName from RFQ_Items inner join Items on Item = ItemCode  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     VendorInfo = db.Query<Vendor>("Select VendorName,Contact from Vendor v inner join RFQVendor rv on v.VendorID = rv.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     RFQVendor = db.Query<RFQVendor>("select * from RFQVendor where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                    UOMName = db.Query<string>("select UOMName from RFQ_Items pr inner join UOM u on pr.UOM = u.UOMID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     if (rfq == null || Items.Count == 0)
+                    {
                         NavigationManager.NavigateTo("/requestforquotation/");
+                        return;
+                    }
 
                     DisplayPO = false;
                     header = rfq.RFQName;
@@ -358,7 +363,6 @@
                 }
                 DropDownVendor.Options = db.Query<option>("Select VendorID as Value, VendorName as Text from Vendor").ToList();
                 DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
-                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMName as Value from UOM").ToList();
 
             }
             StateHasChanged();
@@ -679,12 +683,16 @@
 
     private void SelectItemOption(option options, int rowIndex)
     {
-        bool result = DropDownItem.SelectOption(options, rowIndex);
-        if (result == false)
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
+            bool result = DropDownItem.SelectOption(options, rowIndex);
+            if (result == false)
+            {
 
-            ItemName[rowIndex] = options.Text;
-            Items[rowIndex].Item = options.Value;
+                ItemName[rowIndex] = options.Text;
+                Items[rowIndex].Item = options.Value;
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+            }
         }
     }
 
