@@ -43,7 +43,7 @@
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Requisition Number</MudTh>
+                    <MudTh>Requisition ID</MudTh>
                     <MudTh>Title</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Document Date</MudTh>
@@ -52,7 +52,7 @@
                     <MudTd DataLabel="Requisition Number">@context.PRNumber</MudTd>
                     <MudTd DataLabel="Title">@context.PRname</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />

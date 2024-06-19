@@ -5,116 +5,76 @@
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
 
-<MudCarousel Class="mud-width-full" Style="height:50vw" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="true" AutoCycle="true" TData="object">
+<MudCarousel Class="mud-width-full mt-0" Style="height:50vw" ShowArrows="false" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="true" TData="object">
     <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-        <div class="d-flex justify-content-center align-items-center">
-            <MudImage Src="_content/SharedClass/Images/261.jpg" Elevation="25" Style="width:100vw;" />
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
+            <video style="width:100vw;" autoplay loop muted>
+                <source src="_content/SharedClass/Images/corsair1.webm" type="video/webm">
+                Your browser does not support the video tag.
+            </video>
         </div>
     </MudCarouselItem>
     <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-        <div class="d-flex justify-content-center align-items-center">
-            <MudImage Src="_content/SharedClass/Images/266.jpg" Elevation="25" Style="width:100vw;" />
-        </div>
-    </MudCarouselItem>
-    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-        <div class="d-flex justify-content-center align-items-center">
-            <MudImage Src="_content/SharedClass/Images/274.jpg" Elevation="25" Style="width:100vw;" />
-        </div>
-    </MudCarouselItem>
-    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
             <MudImage Src="_content/SharedClass/Images/asusBanner.jpg" Elevation="25" Style="width:100vw;" />
         </div>
     </MudCarouselItem>
-    @* <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-    <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-    <MudImage Src="_content/SharedClass/Images/caseBanner.jpg" Elevation="25" Style="width:100vw;" />
-    </div>
-    </MudCarouselItem> *@
-    @* <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-    <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-    <MudImage Src="_content/SharedClass/Images/mouseBanner.jpg" Elevation="25" Style="width:100vw;" />
-    </div>
-    </MudCarouselItem> *@
     <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
+            <MudImage Src="_content/SharedClass/Images/asus1.webp" Elevation="25" Style="width:100vw;" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
             <MudImage Src="_content/SharedClass/Images/proArtBanner.jpg" Elevation="25" Style="width:100vw;" />
         </div>
     </MudCarouselItem>
-    @* <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-    <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-    <MudImage Src="_content/SharedClass/Images/tufBanner.jpg" Elevation="25" Style="width:100vw;" />
-    </div>
-    </MudCarouselItem> *@
+    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
+            <MudImage Src="_content/SharedClass/Images/asus2.webp" Elevation="25" Style="width:100vw;" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
+            <MudImage Src="_content/SharedClass/Images/asus3.jpg" Elevation="25" Style="width:100vw;" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
+            <MudImage Src="_content/SharedClass/Images/asus4.webp" Elevation="25" Style="width:100vw;" />
+        </div>
+    </MudCarouselItem>
+    <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
+        <div class="d-flex justify-content-center align-items-center" style="height: 100%; background-color:white;">
+            <MudImage Src="_content/SharedClass/Images/msi1.jpeg" Elevation="25" Style="width:100vw;" />
+        </div>
+    </MudCarouselItem>
 </MudCarousel>
 
-<MudGrid Style="margin: auto; width:95vw;">
+<MudGrid Class="content h-100 mt-1" Style="margin: auto; width:98vw; background-image: url('https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/page/alienware/alien-site-assets/aw-gaming-home-video-rollup-desktop.jpg'); background-size: cover; background-position: center;">
     <MudItem xs="12">
-        <MudGrid Justify="@Justify.Center">
+        <MudGrid Justify="@Justify.Center" Style="height: 100vh; align-items: center;">
             <MudItem xs="12" sm="6">
-                <MudCard>
-                    <MudCardMedia Image="_content/SharedClass/Images/buildPC.webp" Height="400">
-                        <MudCarousel Class="mud-width-full" Style="height:50vw" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="true" AutoCycle="true" TData="object">
-                            <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <MudImage Src="_content/SharedClass/Images/261.jpg" Elevation="25" Style="width:100vw;" />
-                                </div>
-                            </MudCarouselItem>
-                            <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <MudImage Src="_content/SharedClass/Images/266.jpg" Elevation="25" Style="width:100vw;" />
-                                </div>
-                            </MudCarouselItem>
-                            <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <MudImage Src="_content/SharedClass/Images/274.jpg" Elevation="25" Style="width:100vw;" />
-                                </div>
-                            </MudCarouselItem>
-                            <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                                <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-                                    <MudImage Src="_content/SharedClass/Images/asusBanner.jpg" Elevation="25" Style="width:100vw;" />
-                                </div>
-                            </MudCarouselItem>
-                            @* <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                            <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-                            <MudImage Src="_content/SharedClass/Images/caseBanner.jpg" Elevation="25" Style="width:100vw;" />
-                            </div>
-                            </MudCarouselItem> *@
-                            @* <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                            <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-                            <MudImage Src="_content/SharedClass/Images/mouseBanner.jpg" Elevation="25" Style="width:100vw;" />
-                            </div>
-                            </MudCarouselItem> *@
-                            <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                                <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-                                    <MudImage Src="_content/SharedClass/Images/proArtBanner.jpg" Elevation="25" Style="width:100vw;" />
-                                </div>
-                            </MudCarouselItem>
-                            @* <MudCarouselItem Transition="@Transition.Slide" Class="m-auto">
-                            <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-                            <MudImage Src="_content/SharedClass/Images/tufBanner.jpg" Elevation="25" Style="width:100vw;" />
-                            </div>
-                            </MudCarouselItem> *@
-                        </MudCarousel>
-                    </MudCardMedia>
-                    <MudCardContent Style="text-align: center;">
+                <MudCard Style="background-color: transparent;">
+                    @* <MudCardMedia Image="_content/SharedClass/Images/buildPC.webp" Height="400" /> *@
+                    <MudCardContent Style="text-align: center; background-color: transparent; color: white;">
                         <MudText Typo="Typo.h5">Custom PC Configuration</MudText>
                         <MudText Typo="Typo.body2">Customize your own PC according to your desire</MudText>
                     </MudCardContent>
-                    <MudCardActions Style="justify-content: center;">
-                        <MudButton Variant="Variant.Text" Href="/buildpc" Color="Color.Primary">BUILD</MudButton>
+                    <MudCardActions Style="justify-content: center; background-color: transparent; color: white;">
+                        <MudButton Variant="Variant.Outlined" Href="/buildpc" StartIcon="@Icons.Material.Filled.Computer" Size="Size.Large" Color="Color.Success">BUILD</MudButton>
                     </MudCardActions>
                 </MudCard>
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudCard>
-                    <MudCardMedia Image="_content/SharedClass/Images/products.webp" Height="400" />
-                    <MudCardContent Style="text-align: center;">
+                <MudCard Style="background-color: transparent;">
+                    @* <MudCardMedia Image="_content/SharedClass/Images/products.webp" Height="400" /> *@
+                    <MudCardContent Style="text-align: center; background-color: transparent; color: white;">
                         <MudText Typo="Typo.h5">Place an Order</MudText>
                         <MudText Typo="Typo.body2">Browse through a wide range of products</MudText>
                     </MudCardContent>
-                    <MudCardActions Style="justify-content: center;">
-                        <MudButton Variant="Variant.Text" Href="/products" Color="Color.Primary">BROWSE</MudButton>
+                    <MudCardActions Style="justify-content: center; background-color: transparent; color: white;">
+                        <MudButton Variant="Variant.Outlined" Href="/products" StartIcon="@Icons.Material.Outlined.ShoppingBag" Size="Size.Large" Color="Color.Success">BROWSE</MudButton>
                     </MudCardActions>
                 </MudCard>
             </MudItem>

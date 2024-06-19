@@ -53,7 +53,7 @@
     <h5>Name and Type</h5>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden>
-            <label class="form-label">Item ID</label>
+            <label class="form-label">Item Code</label>
             <input type="text" class="form-control" @bind="items.ItemCode" readonly>
         </div>
         <div class="col-md-6">
@@ -75,10 +75,6 @@
                 <option value="Power Supply">Power Supply</option>
                 <option value="Storage">Storage</option>
             </select>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">Standard Selling Rate</label>
-            <input type="text" inputmode="numeric" id="num" @bind="items.Sellingrate" class="form-control">
         </div>
         <div class="col-md-6">
             <label class="form-label">Lead Time in Days</label>
@@ -491,7 +487,6 @@
 
             if (string.IsNullOrWhiteSpace(items.ItemName)) { return $"Please enter Item Name"; }
             if (string.IsNullOrWhiteSpace(items.ItemType)) { return $"Please enter Item Type"; }
-            if (items.Sellingrate <= 0) { return $"Selling Rate cannot be less than or equal to 0"; }
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }

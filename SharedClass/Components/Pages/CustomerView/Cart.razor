@@ -10,97 +10,110 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-<section class="h-100 h-custom" style="background-color: #B8AAF8; border-radius: 10px;">
-    <div class="container py-5 h-100">
-        <div class="row d-flex justify-content-center align-items-center h-100">
-            <div class="col">
-                <div class="card" style="border-radius: 10px;">
-                    <div class="card-body p-4">
-                        <div class="row">
-                            <div class="col-lg-7">
+<div class="video-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+    <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;">
+        <source src="https://assets.corsair.com/video/upload/f_auto,ac_none/q_75/v1675883779/akamai/pdp/k65-rgb-mini/assets/videos/scene-rainbow.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+<div class="content-container" style="position: relative; width: 100%; height: 100%; overflow-y: auto;">
+    <section class="h-100 h-custom" style="border-radius: 10px; background-color:transparent;">
+        <div class="container h-100">
+            <div class="row d-flex justify-content-center align-items-center h-100">
+                <div class="col">
+                    <div class="card" style="border-radius: 10px; background-color:transparent;">
+                        <div class="card-body p-4">
+                            <div class="row">
+                                <div class="col-lg-7" style="color:white;">
 
-                                <h5 class="mb-3">
-                                    <a href="/" class="text-body">
-                                        <i class="bi bi-arrow-left-circle me-2"></i>Continue shopping
-                                    </a>
-                                </h5>
-                                <hr>
+                                    <h5 class="mb-3">
+                                        <a href="/products" style="color:white;">
+                                            <i class="bi bi-arrow-left-circle me-2"></i>Continue shopping
+                                        </a>
+                                    </h5>
+                                    <hr>
 
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <div>
-                                        <p class="mb-1">Shopping cart</p>
-                                        <p class="mb-0">You have @AppState.CartItemCount items in your cart</p>
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <div>
+                                            <p class="mb-1">Shopping cart</p>
+                                            <p class="mb-0">You have @AppState.CartItemCount items in your cart</p>
+                                        </div>
                                     </div>
-                                </div>
-
-                                @foreach (var item in items)
-                                {
-                                    if (!string.IsNullOrEmpty(item.Name))
-                                    {
-                                        <div class="card mb-3" style="border-radius: 10px;">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between">
-                                                    <div class="d-flex flex-row align-items-center">
-                                                        <div class="ms-3 me-1">
-                                                            <h6>@item.Brand</h6>
-                                                            <p class="small mb-0">@item.Name</p>
+                                    <div>
+                                        @foreach (var item in items)
+                                        {
+                                            if (!string.IsNullOrEmpty(item.Name))
+                                            {
+                                                <div class="card mb-3 shadow-lg" style="border-radius: 10px; backdrop-filter: blur(2px); background-color: transparent; color: white;">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between">
+                                                            <div class="d-flex flex-row align-items-center">
+                                                                <div class="ms-3 me-1">
+                                                                    <h6>@item.Brand</h6>
+                                                                    <p class="small mb-0">@item.Name</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="d-flex flex-row align-items-center">
+                                                                <div style="width: 50px;">
+                                                                    <label>QTY</label>
+                                                                    <h6 class="fw-normal ms-1 mb-0">@item.Quantity</h6>
+                                                                </div>
+                                                                <div style="width: 100px;">
+                                                                    <label>Rs.</label>
+                                                                    <h6 class="mb-0">@item.Price</h6>
+                                                                </div>
+                                                                <a @onclick="() => DeleteItem(item.Key, item.Code)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="d-flex flex-row align-items-center">
-                                                        <div style="width: 50px;">
-                                                            <label>QTY</label>
-                                                            <h6 class="fw-normal ms-1 mb-0">@item.Quantity</h6>
-                                                        </div>
-                                                        <div style="width: 100px;">
-                                                            <label>Rs.</label>
-                                                            <h6 class="mb-0">@item.Price</h6>
-                                                        </div>
-                                                        <a @onclick="() => DeleteItem(item.Key, item.Code)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
                                                     </div>
                                                 </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-lg-5">
+                                    <div class="card text-white rounded-3" style="background-color: transparent; backdrop-filter: blur(2px); border-radius: 10px;">
+                                        <div class="card-body">
+
+                                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                                <h4 class="mb-0">Please Enter Your Details</h4>
                                             </div>
+
+                                            <form class="mt-4" autocomplete="off">
+                                                <div data-mdb-input-init class="form-outline form-white mb-4">
+                                                    <label>Name</label>
+                                                    <input type="text" id="typeName" class="form-control form-control-lg" size="17"
+                                                           @bind="Name" style="background-color: transparent; color: white; font-style: italic;" />
+                                                </div>
+
+                                                <div data-mdb-input-init class="form-outline form-white mb-4">
+                                                    <label>Contact No.</label>
+                                                    <input type="text" id="typeText" class="form-control form-control-lg" size="17"
+                                                           @bind="Contact" minlength="11" maxlength="11"
+                                                           style="background-color: transparent; color: white; font-style: italic;" />
+                                                </div>
+
+                                                <div data-mdb-input-init class="form-outline form-white mb-4">
+                                                    <label>Address</label>
+                                                    <input type="text" id="typeName" class="form-control form-control-lg" size="17"
+                                                           @bind="Address" style="background-color: transparent; color: white; font-style: italic;" />
+                                                </div>
+                                            </form>
+
+                                            <hr class="my-4">
+
+                                            <div class="d-flex justify-content-between mb-4">
+                                                <h4 class="mb-2">Total</h4>
+                                                <h4 class="mb-2">Rs. @totalAmount</h4>
+                                            </div>
+
+                                            <button type="button" data-mdb-button-init data-mdb-ripple-init @onclick="Checkout" class="btn" style="background-color:gold">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Checkout <i class="bi bi-arrow-right-circle ms-2"></i></span>
+                                                </div>
+                                            </button>
+
                                         </div>
-                                    }
-                                }
-                            </div>
-                            <div class="col-lg-5">
-                                <div class="card text-white rounded-3" style="background-color:#B8AAF8; border-radius: 10px;">
-                                    <div class="card-body">
-
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <h4 class="mb-0">Please Enter Your Details</h4>
-                                        </div>
-
-                                        <form class="mt-4">
-                                            <div data-mdb-input-init class="form-outline form-white mb-4">
-                                                <input type="text" id="typeName" class="form-control form-control-lg" size="17"
-                                                       @bind="Name" placeholder="Full Name" />
-                                            </div>
-
-                                            <div data-mdb-input-init class="form-outline form-white mb-4">
-                                                <input type="text" id="typeText" class="form-control form-control-lg" size="17"
-                                                       @bind="Contact" placeholder="Contact No." minlength="11" maxlength="11" />
-                                            </div>
-
-                                            <div data-mdb-input-init class="form-outline form-white mb-4">
-                                                <input type="text" id="typeName" class="form-control form-control-lg" size="17"
-                                                       @bind="Address" placeholder="Address" />
-                                            </div>
-                                        </form>
-
-                                        <hr class="my-4">
-
-                                        <div class="d-flex justify-content-between mb-4">
-                                            <h4 class="mb-2">Total</h4>
-                                            <h4 class="mb-2">Rs. @totalAmount</h4>
-                                        </div>
-
-                                        <button type="button" data-mdb-button-init data-mdb-ripple-init @onclick="Checkout" class="btn" style="background-color:gold">
-                                            <div class="d-flex justify-content-between">
-                                                <span>Checkout <i class="bi bi-arrow-right-circle ms-2"></i></span>
-                                            </div>
-                                        </button>
-
                                     </div>
                                 </div>
                             </div>
@@ -109,8 +122,8 @@
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 
 @code {
     private class BulkItem

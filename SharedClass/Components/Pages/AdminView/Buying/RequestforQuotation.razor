@@ -56,7 +56,7 @@
                     <MudTd DataLabel="Quotation Number">@context.RFQNumber</MudTd>
                     <MudTd DataLabel="Title">@context.RFQName</MudTd>
                     <MudTd DataLabel="Document Date">@context.Status</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
