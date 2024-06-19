@@ -362,12 +362,7 @@
                 }
 
                 DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
-                DataTable ItemTable = new DataTable("PRType");
-                ItemTable.Columns.Add("RowID", typeof(string));
-                ItemTable.Columns.Add("Item", typeof(string));
-                ItemTable.Columns.Add("Quantity", typeof(int));
-                ItemTable.Columns.Add("UOM", typeof(string));
-                ItemTable.Columns.Add("RequiredBy", typeof(DateTime));
+                DataTable ItemTable = Select.PRItemTable();
                 foreach (var PR in Items)
                 {
                     ItemTable.Rows.Add(PR.RowID, PR.Item, PR.Quantity, PR.UOM, PR.RequiredBy);

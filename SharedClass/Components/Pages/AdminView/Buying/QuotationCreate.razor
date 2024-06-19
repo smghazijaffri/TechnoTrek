@@ -98,8 +98,7 @@
                 @for (int index = 0; index < RFQVendor.Count; index++)
                 {
                     var vendor = RFQVendor[index];
-                    vendor.RowID = index + 1;
-                    var rowIndex = vendor.RowID - 1;
+                    var rowIndex = index;
                     DropDownVendor.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
                         <td>
@@ -173,8 +172,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
@@ -411,45 +409,70 @@
                 {
                     rfq.Status = PurchaseStatuses.Submitted;
                 }
-                rfq.RFQNumber = crud.CRD(rfq, "CreateRFQ");
+                DataTable DeleteVendor = Select.ConvertIntToDataTable(IsDeleteVendor);
+                DataTable DeleteItems = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.PRItemTable();
+                foreach (var PR in Items)
+                {
+                    ItemTable.Rows.Add(PR.RowID, PR.Item, PR.Quantity, PR.UOM, PR.RequiredBy);
+                }
+                DataTable VendorTable = Select.VendorTable();
+                foreach (var PR in RFQVendor)
+                {
+                    VendorTable.Rows.Add(PR.VendorID, PR.RowID, PR.SendEmail);
+                }
+                var parameters = new DynamicParameters(rfq);
+                parameters.Add("@RFQItems", ItemTable.AsTableValuedParameter("PRType"));
+                parameters.Add("@Vendors", VendorTable.AsTableValuedParameter("VendorType"));
+                parameters.Add("@DeleteVendor", DeleteVendor.AsTableValuedParameter("DeleteType"));
+                parameters.Add("@DeleteRFQItem", DeleteItems.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateRFQ", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                rfq.RFQNumber = output.Output;
+                // rfq.RFQNumber = crud.CRD(rfq, "CreateRFQ");
 
-                foreach (var RF in Items)
-                {
-                    foreach (int del in IsDelete)
-                    {
-                        if (IsDelete.Any(Del => Del == RF.RowID))
-                        {
-                            IsDelete.Remove(RF.RowID);
-                        }
-                    }
-                    RF.RFQNumber = rfq.RFQNumber;
-                    DisplayPO = false;
-                    crud.CRD(RF, "RFQItems");
-                }
-                foreach (var VR in RFQVendor)
-                {
-                    if (IsDeleteVendor.Any(Del => Del == VR.RowID))
-                    {
-                        IsDelete.Remove(VR.RowID);
-                    }
-                    VR.RFQNumber = rfq.RFQNumber;
-                    DisplayPO = false;
-                    crud.CRD(VR, "RFQVendors");
-                }
-                foreach (var del in IsDelete)
-                {
-                    RFQItem.RowID = del;
-                    RFQItem.RFQNumber = rfq.RFQNumber;
-                    crud.CRD(RFQItem, "RFQItems", IsDelete: true);
-                }
-                foreach (var del in IsDeleteVendor)
-                {
-                    RFQItem.RowID = del;
-                    RFQItem.RFQNumber = rfq.RFQNumber;
-                    crud.CRD(RFQItem, "RFQVendors", IsDelete: true);
-                }
+
+                // foreach (var RF in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (IsDelete.Any(Del => Del == RF.RowID))
+                //         {
+                //             IsDelete.Remove(RF.RowID);
+                //         }
+                //     }
+                //     RF.RFQNumber = rfq.RFQNumber;
+                //     DisplayPO = false;
+                //     crud.CRD(RF, "RFQItems");
+                // }
+                // foreach (var VR in RFQVendor)
+                // {
+                //     if (IsDeleteVendor.Any(Del => Del == VR.RowID))
+                //     {
+                //         IsDelete.Remove(VR.RowID);
+                //     }
+                //     VR.RFQNumber = rfq.RFQNumber;
+                //     DisplayPO = false;
+                //     crud.CRD(VR, "RFQVendors");
+                // }
+                // foreach (var del in IsDelete)
+                // {
+                //     RFQItem.RowID = del;
+                //     RFQItem.RFQNumber = rfq.RFQNumber;
+                //     crud.CRD(RFQItem, "RFQItems", IsDelete: true);
+                // }
+                // foreach (var del in IsDeleteVendor)
+                // {
+                //     RFQItem.RowID = del;
+                //     RFQItem.RFQNumber = rfq.RFQNumber;
+                //     crud.CRD(RFQItem, "RFQVendors", IsDelete: true);
+                // }
 
                 IsDelete.Clear();
+                IsDeleteVendor.Clear();
                 ToggleApproval();
                 if (RFQNumber == null)
                 {
@@ -506,29 +529,33 @@
             // if (string.IsNullOrWhiteSpace(vendor.VendorName)) return "Please Enter Vendor";
 
             // if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) return "Please Enter Valid Vendor";
-
+            int count = 0;
             foreach (var PO in Items)
             {
-                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
+                count++;
+                if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {count}";
 
-                if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+                if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
+                if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {count}";
 
-                if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+                if (PO.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                if (PO.RequiredBy == null) return $"Please Enter Required By date on Row: {PO.RowID}";
+                if (PO.RequiredBy == null) return $"Please Enter Required By date on Row: {count}";
 
-                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
 
             }
+            int count1 = 0;
+
             foreach (var VR in RFQVendor)
             {
-                if (string.IsNullOrWhiteSpace(VR.VendorID)) return $"Please select Vendor on Row: {VR.RowID}";
+                count1++;
+                if (string.IsNullOrWhiteSpace(VR.VendorID)) return $"Please select Vendor on Row: {count1}";
 
-                if (string.IsNullOrWhiteSpace(VendorInfo[VR.RowID - 1].VendorName)) return $"Please Enter Vendor on Row: {VR.RowID}";
+                if (string.IsNullOrWhiteSpace(VendorInfo[count1 - 1].VendorName)) return $"Please Enter Vendor on Row: {count1}";
 
-                if (!DropDownVendor.Options.Any(option => option.Text == VendorInfo[VR.RowID - 1].VendorName)) return $"Vendor on Row: {VR.RowID} does not exist";
+                if (!DropDownVendor.Options.Any(option => option.Text == VendorInfo[count1 - 1].VendorName)) return $"Vendor on Row: {count1} does not exist";
             }
 
             return null;
@@ -611,7 +638,10 @@
         {
             if (Items[i].Selected)
             {
-                IsDelete.Add(Items[i].RowID);
+                if (Items[i].RowID != 0)
+                {
+                    IsDelete.Add(Items[i].RowID);
+                }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
@@ -625,7 +655,10 @@
         {
             if (RFQVendor[i].Selected)
             {
-                IsDeleteVendor.Add(RFQVendor[i].RowID);
+                if (RFQVendor[i].RowID != 0)
+                {
+                    IsDeleteVendor.Add(RFQVendor[i].RowID);
+                }
                 RFQVendor.RemoveAt(i);
                 VendorInfo.RemoveAt(i);
                 DropDownVendor.ListItems.RemoveAt(i);
