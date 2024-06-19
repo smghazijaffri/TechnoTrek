@@ -46,18 +46,18 @@
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Purchase Invoice Number</MudTh>
+                    <MudTh>Purchase Invoice ID</MudTh>
                     <MudTh>Title</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Grand Total</MudTh>
                     <MudTh>Document Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Purchase Invoice Number">@context.PurchaseInvoiceID</MudTd>
+                    <MudTd DataLabel="Purchase Invoice ID">@context.PurchaseInvoiceID</MudTd>
                     <MudTd DataLabel="Title">@context.PurchaseInvoiceName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />

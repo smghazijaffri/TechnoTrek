@@ -57,7 +57,7 @@
                     <MudTd DataLabel="Title">@context.SalesInvoiceName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -93,7 +93,7 @@
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.SalesInvoiceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.SalesInvoiceID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.SalesInvoiceID} {element.TotalAmount} {element.DocumentDate}".Contains(searchString)) return true;
 
         return false;
     }

@@ -51,16 +51,20 @@
                 </ToolBarContent>
 
                 <HeaderContent>
+                    <MudTh>Vendor ID</MudTh>
                     <MudTh>Vendor Name</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Vendor Group</MudTh>
                     <MudTh>Vendor Type</MudTh>
+                    <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
+                    <MudTd DataLabel="Vendor ID">@context.VendorID</MudTd>
                     <MudTd DataLabel="Vendor Name">@context.VendorName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Vendor Group">@context.VendorGroup</MudTd>
                     <MudTd DataLabel="Vendor Type">@context.VendorType</MudTd>
+                    <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -98,6 +102,7 @@
         if (element.VendorType.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.VendorName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.VendorGroup.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate} {element.VendorID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
