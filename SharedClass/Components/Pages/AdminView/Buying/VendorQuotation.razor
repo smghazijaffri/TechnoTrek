@@ -56,7 +56,7 @@
                     <MudTd DataLabel="Quotation Number">@context.QuotationID</MudTd>
                     <MudTd DataLabel="Title">@context.QuotationName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                     @* <MudTd DataLabel="Valid Till">@context.</MudTd> *@
                 </RowTemplate>
                 <PagerContent>

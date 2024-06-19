@@ -5,7 +5,7 @@
         public string? PRNumber { get; set; }
         public string? PRname { get; set; }
         public string? Status { get; set; }
-        public DateTime? DocumentDate { get; set; }
+        public DateTime DocumentDate { get; set; }
     }
 
     public class PR_Items : BaseRecord
@@ -16,7 +16,7 @@
         public int Quantity { get; set; }
         public bool Selected { get; set; }
         public string? PRNumber { get; set; }
-        public DateTime? RequiredBy { get; set; }
+        public DateTime RequiredBy { get; set; }
     }
 
     public class PurchaseOrders : BaseRecord
@@ -28,7 +28,7 @@
         public int TotalQuantity { get; set; }
         public string? Status { get; set; }
         public string? RefrenceDocument { get; set; }
-        public DateTime? DocumentDate { get; set; }
+        public DateTime DocumentDate { get; set; }
     }
 
     public class PO_Items : BaseRecord
@@ -41,7 +41,7 @@
         public string? UOM { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
-        public DateTime? RequiredBy { get; set; }
+        public DateTime RequiredBy { get; set; }
     }
 
     public class Vendor : BaseRecord
@@ -61,7 +61,7 @@
         public string? RFQNumber { get; set; }
         public string? RFQName { get; set; }
         public string? Status { get; set; }
-        public DateTime? DocumentDate { get; set; }
+        public DateTime DocumentDate { get; set; }
         public string? RefrenceDocument { get; set; }
     }
 
@@ -82,7 +82,7 @@
         public int RowID { get; set; }
         public int Quantity { get; set; }
         public string? UOM { get; set; }
-        public DateTime? RequiredBy { get; set; }
+        public DateTime RequiredBy { get; set; }
     }
 
     public class GoodReceipt : BaseRecord
@@ -94,7 +94,7 @@
         public string? RefrenceDocument { get; set; }
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
-        public DateTime? DocumentDate { get; set; }
+        public DateTime DocumentDate { get; set; }
     }
 
     public class GR_Items : BaseRecord
@@ -117,7 +117,7 @@
         public string? RefrenceDocument { get; set; }
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
-        public DateTime? DocumentDate { get; set; }
+        public DateTime DocumentDate { get; set; }
     }
 
     public class QU_Items : BaseRecord
@@ -147,8 +147,8 @@
         public string? RefrenceDocument { get; set; }
         public int TotalAmount { get; set; }
         public int TotalQuantity { get; set; }
-        public DateTime? DocumentDate { get; set; }
-        public DateTime? DueDate { get; set; }
+        public DateTime DocumentDate { get; set; }
+        public DateTime DueDate { get; set; }
         public bool IsPaid { get; set; }
         public bool IsReturn { get; set; }
         public string? VendorInvoiceNumber { get; set; }

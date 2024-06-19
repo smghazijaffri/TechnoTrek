@@ -53,8 +53,8 @@
                     <MudTd DataLabel="Title">@context.SaleOrderName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
-                    <MudTd DataLabel="Delivery Date">@context.DeliveryDate</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
+                    <MudTd DataLabel="Delivery Date">@context.DeliveryDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />

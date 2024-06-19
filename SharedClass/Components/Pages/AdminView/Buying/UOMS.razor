@@ -54,10 +54,12 @@
                 <HeaderContent>
                     <MudTh>UOM Name</MudTh>
                     <MudTh>Status</MudTh>
+                    <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="UOM Name">@context.UOMName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -93,6 +95,7 @@
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.UOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
