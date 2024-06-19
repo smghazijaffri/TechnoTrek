@@ -193,12 +193,12 @@
             TotalProfit = salesInvoiceData.Sum(invoice => (double)invoice.TotalAmount)
                          - purchaseInvoicedata.Sum(invoice => (double)(invoice.TotalAmount));
 
-            var salesDates = salesInvoiceData.Select(invoice => invoice.DocumentDate?.Date).Where(date => date != null).Distinct();
-            var purchaseDates = purchaseInvoicedata.Select(invoice => invoice.DocumentDate?.Date).Where(date => date != null).Distinct();
+            var salesDates = salesInvoiceData.Select(invoice => invoice.DocumentDate.Date).Where(date => date != null).Distinct();
+            var purchaseDates = purchaseInvoicedata.Select(invoice => invoice.DocumentDate.Date).Where(date => date != null).Distinct();
 
             // Combine all distinct dates and group them by month
             var allDates = salesDates.Concat(purchaseDates).Distinct().OrderBy(date => date);
-            var groupedDates = allDates.GroupBy(date => new { date?.Year, date?.Month });
+            var groupedDates = allDates.GroupBy(date => new { date.Year, date.Month });
 
             // Initialize lists to store aggregated revenue and spendings data
             var revenueData = new List<double>();
@@ -211,11 +211,11 @@
                 var year = group.Key.Year;
 
                 // Filter Sales invoices for the current month and year
-                var salesDataForMonth = salesInvoiceData.Where(invoice => invoice.DocumentDate?.Year == year && invoice.DocumentDate?.Month == month);
+                var salesDataForMonth = salesInvoiceData.Where(invoice => invoice.DocumentDate.Year == year && invoice.DocumentDate.Month == month);
                 var totalRevenueForMonth = salesDataForMonth.Sum(invoice => invoice.TotalAmount);
 
                 // Filter Purchase invoices for the current month and year
-                var purchaseDataForMonth = purchaseInvoicedata.Where(invoice => invoice.DocumentDate?.Year == year && invoice.DocumentDate?.Month == month);
+                var purchaseDataForMonth = purchaseInvoicedata.Where(invoice => invoice.DocumentDate.Year == year && invoice.DocumentDate.Month == month);
                 var totalSpendingForMonth = purchaseDataForMonth.Sum(invoice => invoice.TotalAmount);
 
                 // Add aggregated revenue and spending data for the current month
@@ -223,7 +223,7 @@
                 spendingData.Add(totalSpendingForMonth);
 
                 // Create X-axis label for the current month
-                RevenueXAxisLabels.Add(new DateOnly(year ?? 1, month ?? 1, 1));
+                RevenueXAxisLabels.Add(new DateOnly(year, month, 1));
             }
 
             // Convert List<DateOnly> to string array

@@ -3,6 +3,8 @@ using Microsoft.Data.SqlClient;
 using System.Text.Json;
 using System.Data;
 using Dapper;
+using System.Reflection;
+using SharedClass.Components.Pages.AdminView.Buying;
 
 namespace SharedClass.Components.Data
 {
@@ -42,6 +44,18 @@ namespace SharedClass.Components.Data
 
             return table;
         }
+        public static DataTable ConvertIntToDataTable(List<int> list)
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("RowID", typeof(int));
+
+            foreach (int s in list)
+            {
+                table.Rows.Add(s);
+            }
+
+            return table;
+        }
 
         public async Task<IEnumerable<Stock>> GetStockDataAsync(string ItemID = null)
         {
@@ -74,6 +88,45 @@ namespace SharedClass.Components.Data
                 }
             }
             return false;
+        }
+        public static DataTable ConvertToDataTable<T>(List<T> list)
+        {
+            DataTable table = new DataTable();
+
+            // Get the properties of the type
+            PropertyInfo[] properties = typeof(T).GetProperties();
+
+            // Create the columns in the DataTable based on the properties
+            foreach (PropertyInfo property in properties)
+            {
+                table.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+            }
+
+            // Populate the DataTable with data from the list
+            foreach (T item in list)
+            {
+                DataRow row = table.NewRow();
+                foreach (PropertyInfo property in properties)
+                {
+                    row[property.Name] = property.GetValue(item) ?? DBNull.Value;
+                }
+                table.Rows.Add(row);
+            }
+
+            return table;
+        }
+        public static DataTable ItemTable()
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("RowID", typeof(int));
+            table.Columns.Add("Item", typeof(string));
+            table.Columns.Add("Quantity", typeof(int));
+            table.Columns.Add("UOM", typeof(string));
+            table.Columns.Add("Rate", typeof(string));
+            table.Columns.Add("Amount", typeof(int));
+            table.Columns.Add("RequiredBy", typeof(DateTime));
+            return table;
+
         }
     }
 }

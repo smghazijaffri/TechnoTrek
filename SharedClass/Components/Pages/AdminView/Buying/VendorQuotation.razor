@@ -46,17 +46,17 @@
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Quotation Number</MudTh>
+                    <MudTh>Quotation ID</MudTh>
                     <MudTh>Title</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Date</MudTh>
                     @* <MudTh>Valid Till</MudTh> *@
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Quotation Number">@context.QuotationID</MudTd>
+                    <MudTd DataLabel="Quotation ID">@context.QuotationID</MudTd>
                     <MudTd DataLabel="Title">@context.QuotationName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                     @* <MudTd DataLabel="Valid Till">@context.</MudTd> *@
                 </RowTemplate>
                 <PagerContent>
@@ -118,7 +118,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateQuotation", IsDelete: true, errorMessage: true, outputMessage: true);
+                output = crud.CRD2(item, "CreateQuotation", IsDelete: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);

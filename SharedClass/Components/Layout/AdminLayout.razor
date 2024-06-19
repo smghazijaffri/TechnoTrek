@@ -111,7 +111,7 @@
                     else
                     {
                         isLoading = false;
-                        navigationManager.NavigateTo("/adminlogin");
+                        navigationManager.NavigateTo("/adminlogin", forceLoad: true);
                         Snackbar.Clear();
                         Snackbar.Add("Not Authorized", Severity.Error);
                     }
@@ -120,7 +120,7 @@
             else
             {
                 isLoading = false;
-                navigationManager.NavigateTo("/adminlogin");
+                navigationManager.NavigateTo("/adminlogin", forceLoad: true);
                 Snackbar.Clear();
                 Snackbar.Add("Not Authorized", Severity.Error);
             }

@@ -46,18 +46,18 @@
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Order Number</MudTh>
+                    <MudTh>Order ID</MudTh>
                     <MudTh>Title</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Grand Total</MudTh>
                     <MudTh>Document Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Purchase Order Number">@context.PurchaseOrderID</MudTd>
+                    <MudTd DataLabel="Purchase Order ID">@context.PurchaseOrderID</MudTd>
                     <MudTd DataLabel="Title">@context.PurchaseOrderName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate</MudTd>
+                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -118,7 +118,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreatePurchaseOrder", IsDelete: true, errorMessage: true, outputMessage: true);
+                output = crud.CRD2(item, "CreatePurchaseOrder", IsDelete: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);

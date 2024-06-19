@@ -41,7 +41,7 @@
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>ID</MudTh>
+                    <MudTh>Production ID</MudTh>
                     <MudTh>Title</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Start Date</MudTh>
@@ -51,8 +51,8 @@
                     <MudTd DataLabel="ID">@context.ProductionOrderID</MudTd>
                     <MudTd DataLabel="Title">@context.ProductionOrderName</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Start Date">@context.StartDate</MudTd>
-                    <MudTd DataLabel="End Date">@context.EndDate</MudTd>
+                    <MudTd DataLabel="Start Date">@context.StartDate.ToString("MM/dd/yyyy")</MudTd>
+                    <MudTd DataLabel="End Date">@context.EndDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -88,8 +88,7 @@
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.ProductionOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.ProductionOrderID}".Contains(searchString)) return true;
-        if ($"{element.StartDate} {element.EndDate}".Contains(searchString)) return true;
+        if ($"{element.ProductionOrderID} {element.StartDate} {element.EndDate}".Contains(searchString)) return true;
 
         return false;
     }

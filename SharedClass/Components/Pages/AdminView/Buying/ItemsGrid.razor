@@ -56,7 +56,7 @@
                     <MudTd DataLabel="Title">@context.ItemName</MudTd>
                     <MudTd DataLabel="Type">@context.ItemType</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Created">@context.CreationDate</MudTd>
+                    <MudTd DataLabel="Created">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
