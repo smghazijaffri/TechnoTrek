@@ -6,7 +6,7 @@ namespace SharedClass.Components.Data
     public class DropDown
     {
         private int? openDropdownIndex = null;
-        public List<option> Options { get; set; } = new List<option>();
+        public List<Option> Options { get; set; } = new List<Option>();
         public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown>();
         public void CloseDropdown(KeyboardEventArgs e, int rowIndex)
         {
@@ -27,7 +27,6 @@ namespace SharedClass.Components.Data
             if (UOM == true)
             {
                 openDropdownIndex = rowIndex;
-
             }
             else
             {
@@ -61,13 +60,12 @@ namespace SharedClass.Components.Data
 
         public void HandleDropdownFocusOut(int rowIndex)
         {
-            // Set IsDropdownOpen to false when the dropdown loses focus
             ListItems[rowIndex].IsDropdownOpen = false;
         }
 
-        private List<option> FilterList(List<option> Options, string searchTerm)
+        private List<Option> FilterList(List<Option> Options, string searchTerm)
         {
-            List<option> filteredItems = new List<option>();
+            List<Option> filteredItems = new List<Option>();
 
             foreach (var item in Options)
             {
@@ -80,11 +78,10 @@ namespace SharedClass.Components.Data
             return filteredItems;
         }
 
-        public bool SelectOption(option option, int rowIndex)
+        public bool SelectOption(Option option, int rowIndex)
         {
             if (ListItems[rowIndex].FilteredOptions.Contains(option))
             {
-                //ListItems[rowIndex].Item = option;
                 ListItems[rowIndex].IsDropdownOpen = false;
             }
             return ListItems[rowIndex].IsDropdownOpen;
@@ -94,18 +91,19 @@ namespace SharedClass.Components.Data
     public class BindDropdown
     {
         public bool IsDropdownOpen { get; set; }
-        public List<option> FilteredOptions { get; set; } = new List<option>();
+        public List<Option> FilteredOptions { get; set; } = new List<Option>();
     }
 
-    public class option
+    public class Option
     {
-        public string Value { get; set; }
-        public string Text { get; set; }
+        public string? Value { get; set; }
+        public string? Text { get; set; }
+        public string? Type { get; set; }
     }
 
     public class SingleDropDown
     {
-        public List<option> Options { get; set; } = new List<option>();
+        public List<Option> Options { get; set; } = new List<Option>();
         public List<BindDropdown> ListItems { get; set; } = new List<BindDropdown> { new BindDropdown { IsDropdownOpen = false } };
         public void CloseDropdown(KeyboardEventArgs e)
         {
@@ -141,9 +139,9 @@ namespace SharedClass.Components.Data
             }
         }
 
-        private List<option> FilterList(List<option> Options, string searchTerm)
+        private List<Option> FilterList(List<Option> Options, string searchTerm)
         {
-            List<option> filteredItems = new List<option>();
+            List<Option> filteredItems = new List<Option>();
 
             foreach (var item in Options)
             {
@@ -156,7 +154,7 @@ namespace SharedClass.Components.Data
             return filteredItems;
         }
 
-        public bool SelectOption(option option)
+        public bool SelectOption(Option option)
         {
             if (ListItems[0].FilteredOptions.Contains(option))
             {

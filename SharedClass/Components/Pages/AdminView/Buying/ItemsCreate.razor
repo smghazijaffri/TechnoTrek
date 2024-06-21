@@ -1,15 +1,6 @@
 ﻿@page "/item/new-item"
 @page "/item/{ItemID?}"
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Reflection
-@using System.Text
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
@@ -122,14 +113,13 @@
                 @for (int index = 0; index < ItemUOM.Count; index++)
                 {
                     var item = ItemUOM[index];
-                   var rowindex = index;
+                    var rowindex = index;
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" />
                                 @(index + 1)
-                                <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")">Delete</button>
                             </div>
                         </td>
                         <td hidden>
@@ -163,8 +153,9 @@
             </tbody>
         </table>
     </form>
-    <div class="col-12">
-        <button class="btn btn-primary rounded-pill" @onclick="AddRow">Add Row</button>
+    <div class="col-12 d-flex justify-content-start p-0">
+        <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow">Add Row</button>
+        <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow">Delete</button>
     </div>
 </div>
 
@@ -251,27 +242,30 @@
 @code {
     [Parameter]
     public string? ItemID { get; set; }
-    private string header = "New Item";
+    string? header = "New Item";
 
-    private bool IsSaving = true;
-    private bool Disabled = false;
-    private bool IsEnabled = false;
-    private bool IsDisabled = false;
+    bool IsSaving = true;
+    bool Disabled = false;
+    bool IsEnabled = false;
+    bool IsDisabled = false;
+    bool IsAnyItemSelected => ItemUOM.Any(item => item.Selected);
+
+    DropDown DropDownUOM = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    public DropDown DropDownUOM = new DropDown();
+    List<int> ItemDelete = new List<int>();
+    List<string> UOMName = new List<string>();
+    List<ItemUOM> ItemUOM = new List<ItemUOM>();
     List<string> AlternateID = new List<string>();
-    public List<string> UOMName = new List<string>();
-    public List<int> ItemDelete = new List<int>();
-    private List<ItemUOM> ItemUOM = new List<ItemUOM>();
-    private IEnumerable<ItemClass> itemsFromDatabase = new List<ItemClass>();
+
+    IEnumerable<ItemClass> itemsFromDatabase = new List<ItemClass>();
 
     protected override async void OnInitialized()
     {
-        itemsFromDatabase = await select.GetItemsAsync();
-        try
+        using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            using (SqlConnection db = new SqlConnection(con.connectionString))
+            itemsFromDatabase = await db.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' ORDER BY ItemCode");
+            try
             {
                 if (ItemID != null)
                 {
@@ -299,7 +293,7 @@
                                                    it.Brand,
                                                    it.Sellingrate", new { ItemID = ItemID });
                     if (items == null)
-                        NavigationManager.NavigateTo("/vendors/");
+                        NavigationManager.NavigateTo("/item/");
                     header = items.ItemName;
                     if (items.Status == PurchaseStatuses.Enabled)
                     {
@@ -317,19 +311,20 @@
                 {
                     AddRow();
                 }
-                DropDownUOM.Options = db.Query<option>("select UOMName as Text , UOMID as Value from UOM").ToList();
+                DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM").ToList();
+                StateHasChanged();
             }
-            StateHasChanged();
-        }
-        catch (Exception)
-        {
-            throw;
+            catch (Exception ex)
+            {
+                Snackbar.Clear();
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
         }
 
         base.OnInitialized();
     }
 
-    public string createUOM()
+    public string createItem()
     {
         try
         {
@@ -357,7 +352,7 @@
 
                 var compatibleItems = itemsFromDatabase.Where(item => item.Compatible).Select(item => item.ItemCode).ToList();
                 var AlternateItems = itemsFromDatabase.Where(item => item.Alternate).Select(item => item.ItemCode).ToList();
-              
+
                 DataTable dataTable = new DataTable("UOMItem");
 
                 dataTable.Columns.Add("ItemID", typeof(string));
@@ -382,7 +377,7 @@
                 }
                 DataTable CompTable = Select.ConvertListToDataTable(compatibleItems);
                 DataTable AltTable = Select.ConvertListToDataTable(AlternateItems);
-               
+
                 var parameters = new DynamicParameters(items);
                 parameters.Add("@ItemUOM", dataTable.AsTableValuedParameter("UOMItem"));
                 parameters.Add("@ItemUOMDelete", DeleteTable.AsTableValuedParameter("UOMDelete"));
@@ -395,38 +390,8 @@
                 if (!string.IsNullOrWhiteSpace(ErrorMessage))
                 {
                     return ErrorMessage;
-                }   
+                }
 
-                // if (compatibleItems.Count == 0)
-                // {
-                //     compatibility.ItemID = items.ItemCode;
-                //     crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
-                // }
-                // else
-                // {
-                //     compatibility.ItemID = items.ItemCode;
-                //     crud.CRD(compatibility, "CreateCompabilityItem", IsDelete: true);
-                //     foreach (var item in compatibleItems)
-                //     {
-                //         compatibility.CompatibilityID = item.ItemCode;
-                //         crud.CRD(compatibility, "CreateCompabilityItem");
-                //     }
-                // }
-                // if (AlternateItems.Count == 0)
-                // {
-                //     alternateitem.ItemID = items.ItemCode;
-                //     crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
-                // }
-                // else
-                // {
-                //     alternateitem.ItemID = items.ItemCode;
-                //     crud.CRD(alternateitem, "CreateAlternateItem", IsDelete: true);
-                //     foreach (var item in AlternateItems)
-                //     {
-                //         alternateitem.AlternateID = item.ItemCode;
-                //         crud.CRD(alternateitem, "CreateAlternateItem");
-                //     }
-                // }
                 ItemDelete.Clear();
 
                 if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
@@ -461,7 +426,7 @@
 
     public void SaveUOM()
     {
-        string notification = createUOM();
+        string notification = createItem();
         if (notification.Contains("Successfully"))
         {
             Snackbar.Clear();
@@ -491,10 +456,17 @@
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }
             int count = 0;
-            foreach (var IT in ItemUOM)
+            if (ItemUOM.Count > 0)
             {
-                count++;
-                if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row:" + count;
+                foreach (var IT in ItemUOM)
+                {
+                    count++;
+                    if (string.IsNullOrWhiteSpace(IT.UOMID)) return $"Please Enter UOM on Row:" + count;
+                }
+            }
+            else
+            {
+                return $"There are no UOMs";
             }
 
             return null;
@@ -523,7 +495,7 @@
         UOMName.Add("");
     }
 
-    private void DeleteRow(int index)
+    private void DeleteRow()
     {
         for (int i = ItemUOM.Count - 1; i >= 0; i--)
         {
@@ -531,12 +503,11 @@
             {
                 if (ItemUOM[i].RowID != 0)
                 {
-                    ItemDelete.Add(ItemUOM[i].RowID);
+                    IsDelete.Add(ItemUOM[i].RowID);
                 }
                 ItemUOM.RemoveAt(i);
                 DropDownUOM.ListItems.RemoveAt(i);
                 UOMName.RemoveAt(i);
-                
             }
         }
     }
@@ -554,13 +525,14 @@
         StateHasChanged();
     }
 
-    public void SelectUOMOption(option options, int rowIndex)
+    public void SelectUOMOption(Option options, int rowIndex)
     {
         bool result = DropDownUOM.SelectOption(options, rowIndex);
         if (result == false)
         {
             UOMName[rowIndex] = options.Text;
             ItemUOM[rowIndex].UOMID = options.Value;
+            HandleFormInput();
         }
     }
 

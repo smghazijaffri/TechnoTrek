@@ -1,15 +1,6 @@
 ﻿@page "/vendors/new-vendor"
 @page "/vendors/{VendorID?}"
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Reflection
-@using System.Text
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Vendor vendor;
@@ -92,13 +83,14 @@
 @code {
     [Parameter]
     public string? VendorID { get; set; }
-    private string header = "New Vendor";
 
-    private bool IsSaving = true;
-    private bool Disabled = false;
-    private bool IsEnabled = false;
-    private bool IsDisabled = false;
-    public bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
+    string header = "New Vendor";
+
+    bool IsSaving = true;
+    bool Disabled = false;
+    bool IsEnabled = false;
+    bool IsDisabled = false;
+    bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
 
     protected override void OnInitialized()
     {
