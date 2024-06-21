@@ -434,7 +434,7 @@
 
                     if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {count}";
 
-                    if (PR.RequiredBy < purchase.DocumentDate) return $"Required By date cannot be before the Document Date on Row: {count}";
+                    if (PR.RequiredBy < purchase.DocumentDate) return $"Required By date cannot be same or before the Document Date on Row: {count}";
 
                     if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }
