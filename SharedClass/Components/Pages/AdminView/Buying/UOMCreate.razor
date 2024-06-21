@@ -1,15 +1,6 @@
 ﻿@page "/uom/new-uom"
 @page "/uom/{UOMID?}"
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Reflection
-@using System.Text
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Connection con;
@@ -89,13 +80,14 @@
 @code {
     [Parameter]
     public string? UOMID { get; set; }
-    private string header = "New UOM";
 
-    private bool IsSaving = true;
-    private bool Disabled = false;
-    private bool IsEnabled = false;
-    private bool IsDisabled = false;
-    public bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
+    string header = "New UOM";
+
+    bool IsSaving = true;
+    bool Disabled = false;
+    bool IsEnabled = false;
+    bool IsDisabled = false;
+    bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
 
     protected override void OnInitialized()
     {
@@ -133,7 +125,7 @@
         base.OnInitialized();
     }
 
-    public string createVendor()
+    public string createUOM()
     {
         try
         {
@@ -190,7 +182,7 @@
 
     public void SaveVendor()
     {
-        string notification = createVendor();
+        string notification = createUOM();
         if (notification.Contains("Successfully"))
         {
             Snackbar.Clear();
