@@ -1,16 +1,10 @@
 @page "/purchaserequisition"
-
-@using static MudBlazor.CategoryTypes
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using System.Globalization
-@using System.Net.Http.Json
+@page "/purchaserequisitions/{SearchString?}"
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
 @inject Delete delete;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject PurchaseRequisition purchaserequisition;
@@ -63,6 +57,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public string? SearchString { get; set; }
+
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
     private MudTable<PurchaseRequisition> _table;
@@ -71,7 +68,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetPR1DataAsync();
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (!string.IsNullOrWhiteSpace(SearchString))
+        {
+            Elements = await db.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest WHERE Status = 'Pending'");
+        }
+        else
+        {
+            Elements = await db.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest");
+        }
     }
 
     void OnRowClick(TableRowClickEventArgs<PurchaseRequisition> args)

@@ -7,33 +7,6 @@
 @inject IDialogService DialogService;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@* <MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
-    <MudTabPanel Text="Motherboards"">
-        <Motherboard isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="Processors">
-        <Processor isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="Graphics Cards">
-        <GPU isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="PC Cases">
-        <Case isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="Memory Sticks">
-        <Memory isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="Storage Devices">
-        <Storage isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="Power Supplies">
-        <PSU isBulk="true" />
-    </MudTabPanel>
-    <MudTabPanel Text="Coolers & Fans">
-        <Cooler isBulk="true" />
-    </MudTabPanel>
-</MudTabs> *@
-
 <MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
     @foreach (var itemType in GetItemTypes())
     {

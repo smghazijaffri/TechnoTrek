@@ -203,20 +203,6 @@
         {
             if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
             if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
-            // if (vendor.VendorID == null)
-            // {
-            // string GetStatus = db.QueryFirstOrDefault<string>("Select Status from Vendor where VendorID = @VendorID", new { VendorID = vendor.VendorID });
-            // if (GetStatus != null)
-            // {
-            //     if (GetStatus == PurchaseStatuses.Enabled && !IsEnabled) { return "Vendor has already been Enabled changes cannot be done"; }
-
-            //     if (GetStatus == PurchaseStatuses.Disabled && !IsDisabled) { return "Vendor has already been Disabled changes cannot be done"; }
-            // }
-            // else
-            // {
-            // return "Vendor does not exist";
-            // }
-            // }
 
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return $"Please enter Vendor Name"; }
             if (string.IsNullOrWhiteSpace(vendor.VendorGroup)) { return $"Please enter Vendor Group"; }
