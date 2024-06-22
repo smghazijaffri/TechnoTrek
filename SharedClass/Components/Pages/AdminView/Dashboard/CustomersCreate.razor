@@ -1,15 +1,6 @@
 ﻿@page "/customers/new-customer"
 @page "/customers/{CustomerID?}"
 
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Reflection
-@using System.Text
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Connection con;
@@ -62,7 +53,6 @@
 
     protected override void OnInitialized()
     {
-
         try
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))

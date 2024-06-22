@@ -126,6 +126,24 @@ namespace SharedClass.Components.Data
             table.Columns.Add("Amount", typeof(int));
             table.Columns.Add("RequiredBy", typeof(DateTime));
             return table;
+        }
+        public static DataTable PRItemTable()
+        {
+            DataTable ItemTable = new DataTable();
+            ItemTable.Columns.Add("RowID", typeof(int));
+            ItemTable.Columns.Add("Item", typeof(string));
+            ItemTable.Columns.Add("Quantity", typeof(int));
+            ItemTable.Columns.Add("UOM", typeof(string));
+            ItemTable.Columns.Add("RequiredBy", typeof(DateTime));
+            return ItemTable;
+        }
+        public static DataTable VendorTable()
+        { 
+            DataTable table = new DataTable();
+            table.Columns.Add("VendorID", typeof(string));
+            table.Columns.Add("RowID", typeof(string));
+            table.Columns.Add("SendEmail", typeof(bool));
+            return table;
 
         }
     }
