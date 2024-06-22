@@ -17,11 +17,6 @@ namespace SharedClass.Components.Data
             con = GetSqlConnection();
         }
 
-        public async Task<IEnumerable<PurchaseRequisition>> GetPR1DataAsync()
-        {
-            return await con.QueryAsync<PurchaseRequisition>("SELECT * FROM PurchaseRequest");
-        }
-
         public async Task<IEnumerable<ItemClass>> GetItemsAsync()
         {
             return await con.QueryAsync<ItemClass>("SELECT * FROM Items ORDER BY ItemCode");
