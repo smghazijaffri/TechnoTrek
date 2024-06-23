@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using SharedClass.Components.Model;
+using Microsoft.Data.SqlClient;
 using Microsoft.JSInterop;
 using MudBlazor;
 using Dapper;
@@ -8,40 +9,40 @@ namespace SharedClass.Components.Data
     public class Login : Connection
     {
         private readonly SqlConnection con;
-        
+
         public Login()
         {
             con = GetSqlConnection();
         }
 
-        public async Task<bool> Access(string username, string password, IJSRuntime jsRuntime, ISnackbar Snackbar)
+        public async Task<(bool IsAuthorized, string Role)> Access(string username, string password, IJSRuntime jsRuntime, ISnackbar Snackbar)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                return false;
+                return (false, null);
             }
 
             try
             {
-                var query = "SELECT * FROM Users WHERE Username = @Username AND Password = @Password";
+                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND UserPassword = @Password";
                 var parameters = new { Username = username, Password = password };
-                var Authorized = await con.QueryFirstOrDefaultAsync<bool>(query, parameters);
+                var userAuth = await con.QueryFirstOrDefaultAsync<UserAuth>(query, parameters);
 
-                if (Authorized)
+                if (userAuth != null)
                 {
                     await UpdateAuthorizationStatus(username, true);
-                    return true;
+                    return (true, userAuth.Role);
                 }
                 else
                 {
-                    return false;
+                    return (false, null);
                 }
             }
             catch (SqlException ex)
             {
                 Snackbar.Clear();
                 Snackbar.Add($"An error occurred while verifying the credentials: {ex.Message}", Severity.Error);
-                return false;
+                return (false, null);
             }
         }
 

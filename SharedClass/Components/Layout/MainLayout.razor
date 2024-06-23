@@ -31,10 +31,11 @@
         {
             if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Authorized") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
             {
-                await _protectedLocalStore.SetLocalAsync("Authorized", false);
                 string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
                 await login.LogOut(User);
+                await _protectedLocalStore.SetLocalAsync("Authorized", false);
                 await _protectedLocalStore.SetLocalAsync("Username", "");
+                await _protectedLocalStore.SetLocalAsync("Role", "");
             }
 
             if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerID") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName")

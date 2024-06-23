@@ -20,41 +20,41 @@
                                Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
                 <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
             </MudAppBar>
-            <MudDrawer @bind-Open="@open" Breakpoint="Breakpoint.Lg" Elevation="1" Variant="@DrawerVariant.Responsive"
-                       PreserveOpenState="@preserveOpenState"
+            <MudDrawer @bind-Open="@open" Breakpoint="@Breakpoint.Lg" Elevation="1" Variant="@DrawerVariant.Responsive"
+                       PreserveOpenState="false"
                        Style="border-top-right-radius: 15px; border-bottom-right-radius:15px; backdrop-filter: blur(8px);">
                 <MudNavMenu Class="mb-5">
-                    <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.SpaceDashboard"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("dashboard")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.SpaceDashboard" OnClick='() => Navigate("dashboard")'
                                    Style="background-color:transparent;" Color="Color.Info">Dashboard</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/home">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Home"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("home")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Home" OnClick='() => Navigate("home")'
                                    Style="background-color:transparent;" Color="Color.Info">Home</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/buying">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Inventory2"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("buying")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Inventory2" OnClick='() => Navigate("buying")'
                                    Style="background-color:transparent;" Color="Color.Info">Inventory</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/selling">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Sell"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("selling")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Sell" OnClick='() => Navigate("selling")'
                                    Style="background-color:transparent;" Color="Color.Info">Selling</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/production">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Create"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("production")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Create" OnClick='() => Navigate("production")'
                                    Style="background-color:transparent;" Color="Color.Info">Production</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/returns">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.KeyboardReturn"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("returns")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.KeyboardReturn" OnClick='() => Navigate("returns")'
                                    Style="background-color:transparent;" Color="Color.Info">Returns</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/pos">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.PointOfSale"
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("pos")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.PointOfSale" OnClick='() => Navigate("pos")'
                                    Style="background-color:transparent;" Color="Color.Info">Point of Sale</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" Href="/users/createuser">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.VerifiedUser"
-                                   Style="background-color:transparent;" Color="Color.Info">Create User</MudButton>
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("users")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.VerifiedUser" OnClick='() => Navigate("users")'
+                                   Style="background-color:transparent;" Color="Color.Info">Employees</MudButton>
                     </MudNavLink>
                     @if (!isMobile)
                     {
@@ -82,17 +82,21 @@
 
 @code {
     bool open = false;
-    bool preserveOpenState = false;
-    Breakpoint breakpoint = Breakpoint.Lg;
-
     bool isMobile = false;
+    bool isLoading = false;
+    bool Authorized { get; set; }
+    bool isAuthorized { get; set; }
+
     string? DeviceType { get; set; }
 
-    protected bool isLoading = false;
-    protected bool Authorized { get; set; }
-    protected bool isAuthorized { get; set; }
-
     protected override async void OnInitialized()
+    {
+        await Authorization();
+        StateHasChanged();
+        base.OnInitialized();
+    }
+
+    private async Task Authorization()
     {
         try
         {
@@ -101,10 +105,11 @@
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
+                    string Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
 
                     Authorized = db.QuerySingleOrDefault<bool>("SELECT Authorized FROM Users WHERE Username = @Username", new { Username = User });
                     isAuthorized = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-                    if (isAuthorized && Authorized)
+                    if (isAuthorized && Authorized && !string.IsNullOrWhiteSpace(Role))
                     {
                         isLoading = true;
                     }
@@ -124,8 +129,6 @@
                 Snackbar.Clear();
                 Snackbar.Add("Not Authorized", Severity.Error);
             }
-            StateHasChanged();
-            base.OnInitialized();
         }
         catch (Exception ex)
         {
@@ -147,12 +150,22 @@
 
     private async void Logout()
     {
-        await _protectedLocalStore.SetLocalAsync("Authorized", false);
         string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
         await login.LogOut(User);
+        await _protectedLocalStore.SetLocalAsync("Authorized", false);
         await _protectedLocalStore.SetLocalAsync("Username", "");
+        await _protectedLocalStore.SetLocalAsync("Role", "");
         Snackbar.Clear();
         Snackbar.Add("Logged Out", Severity.Error);
         navigationManager.NavigateTo("/");
+    }
+
+    private async void Navigate(string Page)
+    {
+        await Authorization();
+        if (!string.IsNullOrWhiteSpace(Page))
+        {
+            navigationManager.NavigateTo($"/{Page}");
+        }
     }
 }

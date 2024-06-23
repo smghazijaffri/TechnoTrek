@@ -1,15 +1,10 @@
 ﻿@page "/billofmaterial"
 @page "/billofmaterials/{SearchString?}"
 
-@using static MudBlazor.CategoryTypes
-@using System.Globalization
-@using System.Net.Http.Json
-
 @inject BOM bom;
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
-@inject Delete delete;
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
