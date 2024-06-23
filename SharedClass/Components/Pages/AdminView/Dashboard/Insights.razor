@@ -1,5 +1,4 @@
 ﻿@layout AdminLayout;
-@inject Select Select;
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
@@ -45,6 +44,16 @@
                     <MudCardContent>
                         <MudText Typo="Typo.h5">UOM <i class="bi bi-arrow-up-right"></i></MudText>
                         <MudText Typo="Typo.h5">@TotalUOM</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="18" md="12" lg="2" @onclick="NavigateEmployees" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Employees <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@TotalEmployees</MudText>
                         <MudProgressLinear Color="Color.Info" Value="100" />
                     </MudCardContent>
                 </MudCard>
@@ -148,7 +157,7 @@
             <MudItem xs="12" md="16" lg="3" @onclick="NavigateSI" Style="cursor: pointer;">
                 <MudCard>
                     <MudCardContent>
-                        <MudText Typo="Typo.h5">Sales Invoices <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">Sale Invoices <i class="bi bi-arrow-up-right"></i></MudText>
                         <MudText Typo="Typo.h5">@PartiallyPaidandOverdueSaleInvoice</MudText>
                         <MudProgressLinear Color="Color.Info" Value="100" />
                     </MudCardContent>
@@ -255,9 +264,13 @@
 </MudTabs>
 
 @code {
+    DateTime FiscalYearEnd;
+    DateTime FiscalYearStart;
+
     int TotalUOM { get; set; }
     int TotalVendors { get; set; }
     int TotalProducts { get; set; }
+    int TotalEmployees { get; set; }
     int TotalInventory { get; set; }
     int TotalCustomers { get; set; }
     int NewCustomerBom { get; set; }
@@ -284,9 +297,6 @@
     List<string> RealTimeXAxisLabels { get; set; } = new List<string> { };
     List<ChartSeries> RealTimeSeries { get; set; } = new List<ChartSeries>();
 
-    DateTime FiscalYearStart;
-    DateTime FiscalYearEnd;
-
     protected override async void OnInitialized()
     {
         SetCurrentFiscalYear();
@@ -305,25 +315,13 @@
             TotalUOM = db.Query<int>("SELECT COUNT(*) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
             TotalProducts = db.Query<int>("SELECT COUNT(*) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
             TotalVendors = db.Query<int>("SELECT COUNT(*) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();
-
-            TotalIncome = db.Query<double>(@"
-            SELECT SUM(TotalAmount)
-            FROM SaleInvoice
-            WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+            TotalEmployees = db.Query<int>("SELECT COUNT(*) FROM Users WHERE Status = 'Enabled'").FirstOrDefault();
+            TotalIncome = db.Query<double>(@" SELECT SUM(TotalAmount) FROM SaleInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
             new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
-
-            TotalSpendings = db.Query<double>(@"
-            SELECT SUM(TotalAmount)
-            FROM PurchaseInvoice
-            WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+            TotalSpendings = db.Query<double>(@" SELECT SUM(TotalAmount) FROM PurchaseInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
                 new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
-
-            UnpaidPurchaseInvoice = db.Query<int>(@"
-            SELECT COUNT(*)
-            FROM PurchaseInvoice
-            WHERE Status = 'Unpaid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+            UnpaidPurchaseInvoice = db.Query<int>(@" SELECT COUNT(*) FROM PurchaseInvoice WHERE Status = 'Unpaid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
                 new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
-
             PendingPurchaseRequest = db.Query<int>("SELECT COUNT(*) FROM PurchaseRequest WHERE Status = 'Pending'").FirstOrDefault();
             NewCustomerBom = db.Query<int>("SELECT COUNT(*) FROM BOM WHERE IsActive = 'true' AND TYPE = 'Customer'").FirstOrDefault();
             PartiallyPaidandOverdueSaleInvoice = db.Query<int>("SELECT COUNT(*) FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'").FirstOrDefault();
@@ -451,6 +449,11 @@
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/", forceLoad: true);
+    }
+
+    public void NavigateEmployees()
+    {
+        NavigationManager.NavigateTo("/users/", forceLoad: true);
     }
 
     public void NavigateBOM()

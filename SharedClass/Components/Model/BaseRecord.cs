@@ -22,11 +22,18 @@
         public required string? UserPassword { get; set; }
         public required string? UserEmail { get; set; }
         public required string? UserPhone { get; set; }
-        public required string? UserRole { get; set; }
-        public required string? UserAddress { get; set; }
+        public required string? Role { get; set; }
+        public required string? Address { get; set; }
         public required string? UserIdentity { get; set; }
-        public required string? UserGender { get; set; }
-        public required DateTime UserBirthday { get; set; }
+        public required string? Gender { get; set; }
+        public required DateTime Birthday { get; set; }
         public string? Status { get; set; }
+    }
+
+    public class UserAuth
+    {
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+        public string? Role { get; set; }
     }
 }
