@@ -60,7 +60,7 @@
             <input type="text" @bind="users.UserPassword" class="form-control">
         </div>
         <div class="col-md-6 mt-1">
-            <MudSelect T="string" Label="Role" @bind-Value="users.UserRole" AnchorOrigin="Origin.BottomCenter">
+            <MudSelect T="string" Label="Role" @bind-Value="users.Role" AnchorOrigin="Origin.BottomCenter" ReadOnly="notAdmin">
                 <MudSelectItem Value="@("Administrator")" />
                 <MudSelectItem Value="@("Purchase")" />
                 <MudSelectItem Value="@("Sale")" />
@@ -87,18 +87,18 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Birthday</label>
-            <input type="date" class="form-control" @bind="users.UserBirthday">
+            <input type="date" class="form-control" @bind="users.Birthday">
         </div>
         <div class="col-md-6">
             <label class="form-label">Address</label>
-            <input type="text" class="form-control" @bind="users.UserAddress">
+            <input type="text" class="form-control" @bind="users.Address">
         </div>
         <div class="col-md-6">
             <label class="form-label">Identity #</label>
             <input type="text" placeholder="42310-1234567-8" class="form-control" @oninput="@(e => FormatIdentityNumber(e))" maxlength="15" @bind="users.UserIdentity">
         </div>
         <div class="col-md-6">
-            <MudSelect T="string" Label="Gender" @bind-Value="users.UserGender" AnchorOrigin="Origin.BottomCenter">
+            <MudSelect T="string" Label="Gender" @bind-Value="users.Gender" AnchorOrigin="Origin.BottomCenter">
                 <MudSelectItem Value="@("Male")" />
                 <MudSelectItem Value="@("Female")" />
                 <MudSelectItem Value="@("Other")" />
@@ -118,6 +118,7 @@
 
     bool IsSaving = true;
     bool Disabled = false;
+    bool notAdmin = false;
     bool IsEnabled = false;
     bool IsDisabled = false;
 
@@ -125,7 +126,7 @@
     {
         try
         {
-            users.UserBirthday = DateTime.Today;
+            users.Birthday = DateTime.Today;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 if (UserID != null)
@@ -133,6 +134,7 @@
                     users = db.QueryFirstOrDefault<Users>("Select * from Users where UserID = @UserID", new { UserID = UserID });
                     if (users == null) NavigationManager.NavigateTo("/users/");
 
+                    if (users.Role != "Administrator") notAdmin = true;
                     header = users.UserName;
 
                     if (users.Status == PurchaseStatuses.Enabled)
@@ -245,16 +247,16 @@
             if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
             if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
             if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
-            if (string.IsNullOrWhiteSpace(users.UserRole)) { return $"Please enter User Role"; }
-            if (string.IsNullOrWhiteSpace(users.UserAddress)) { return $"Please enter User Address"; }
+            if (string.IsNullOrWhiteSpace(users.Role)) { return $"Please enter User Role"; }
+            if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
             if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
-            if (string.IsNullOrWhiteSpace((users.UserBirthday).ToString())) { return $"Please enter User Birthday"; }
-            if (string.IsNullOrWhiteSpace(users.UserGender)) { return $"Please enter User Gender"; }
+            if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
+            if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
             if (!Regex.IsMatch(users.UserPassword, passwordPattern))
             { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
             if (!Regex.IsMatch(users.UserIdentity, pattern))
             { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
-            if (!IsAtLeast18YearsOld(users.UserBirthday)) { return "User must be at least 18 years old."; }
+            if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
 
             return null;
         }
