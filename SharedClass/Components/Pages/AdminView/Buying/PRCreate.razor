@@ -1,16 +1,6 @@
 ﻿@page "/purchaserequisition/new-purchase-request"
 @page "/purchaserequisition/{PRNumber?}"
 
-@using SharedClass.Components.Pages.Modals
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Reflection
-@using System.Text
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
@@ -137,14 +127,13 @@
                     var item = Items[index];
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-
                     var rowIndex = index;
+
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                 <b>@(index + 1)</b>
-                                <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
                             </div>
                         </td>
                         <td hidden>
@@ -161,7 +150,7 @@
                                         {
                                             @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
                                                 <hr class="m-1 border-primary" />
                                             }
                                         }
@@ -173,7 +162,7 @@
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
                         <td>
                             <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex] "
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex]"
                                        placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
                                 <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
                                     style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
@@ -195,18 +184,19 @@
                             </div>
                         </td>
                         <td>
-                            <input type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
+                            <input type="date" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
-
     </form>
-    <div class="col-12">
-        <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+    <div class="col-12 d-flex justify-content-start p-0">
+        <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+        <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow" hidden="@ReadonlyHidden">Delete</button>
     </div>
 </div>
+
 <script>
     function toggleDropdown() {
         var dropdownMenu = document.getElementById("dropdownMenu");
@@ -235,31 +225,28 @@
 @code {
     [Parameter]
     public string? PRNumber { get; set; }
-    private string header = "Create Purchase Request";
 
-    bool isMobile = false;
     string? DeviceType { get; set; }
+    string header = "Create Purchase Request";
 
+    bool IsDraft = false;
+    bool IsSaving = true;
+    bool isMobile = false;
+    bool DisplayPR = true;
+    bool IsOrdered = false;
+    bool IsApproved = false;
+    bool IsReceived = false;
+    bool IsCancelled = false;
+    bool IsAnyItemSelected => Items.Any(item => item.Selected);
+    bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsOrdered || IsReceived; } }
 
-    private bool IsDraft = false;
-    private bool IsSaving = true;
-    private bool DisplayPR = true;
-    private bool IsOrdered = false;
-    private bool IsApproved = false;
-    private bool IsReceived = false;
-    private bool IsCancelled = false;
-
-    public bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsOrdered || IsReceived; } }
-
-    public DropDown DropDownUOM = new DropDown();
-    public DropDown DropDownItem = new DropDown();
+    DropDown DropDownUOM = new DropDown();
+    DropDown DropDownItem = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    private List<string> UOMList { get; set; }
-    public List<string> UOMName = new List<string>();
-    public List<string> ItemName = new List<string>();
-    private List<PR_Items> Items = new List<PR_Items>();
-
+    List<string> UOMName = new List<string>();
+    List<string> ItemName = new List<string>();
+    List<PR_Items> Items = new List<PR_Items>();
 
     protected override async void OnInitialized()
     {
@@ -313,7 +300,7 @@
                 AddRow();
             }
 
-            DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+            DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
         }
         StateHasChanged();
 
@@ -379,24 +366,6 @@
                 }
                 purchase.PRNumber = output.Output;
 
-                // foreach (var PR in Items)
-                // {
-                //     if (IsDelete.Any(Del => Del == PR.RowID))
-                //     {
-                //         IsDelete.Remove(PR.RowID);
-                //     }k
-                //     }k
-                //     PR.PRNumber = purchase.PRNumber;
-                //     DisplayPR = false;
-                //     crud.CRD(PR, "PurhcaseRequestItems");
-                // }
-
-                // foreach (var del in IsDelete)
-                // {
-                //     pritem.RowID = del;
-                //     pritem.PRNumber = purchase.PRNumber;
-                //     crud.CRD(pritem, "PurhcaseRequestItems", System.Data.CommandType.StoredProcedure, true);
-                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (PRNumber == null)
@@ -452,18 +421,27 @@
 
             if (purchase.DocumentDate == null) return "Please Enter Document Date";
             int count = 0;
-            foreach (var PR in Items)
+            if (Items.Count > 0)
             {
-                count++;
-                if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
+                foreach (var PR in Items)
+                {
+                    count++;
+                    if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                if (string.IsNullOrWhiteSpace(PR.UOM)) return $"Please Enter UOM on Row: {count}";
+                    if (string.IsNullOrWhiteSpace(PR.UOM)) return $"Please Enter UOM on Row: {count}";
 
-                if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
+                    if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {count}";
+                    if (PR.RequiredBy == null) return $"Please Enter Required By date on Row: {count}";
 
-                if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
+                    if (PR.RequiredBy < purchase.DocumentDate) return $"Required By date cannot be same or before the Document Date on Row: {count}";
+
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
+                }
+            }
+            else
+            {
+                return $"There are no Items";
             }
 
             return null;
@@ -532,7 +510,7 @@
         UOMName.Add("");
     }
 
-    private void DeleteRow(int index)
+    private void DeleteRow()
     {
         for (int i = Items.Count - 1; i >= 0; i--)
         {
@@ -544,7 +522,9 @@
                 }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
+                UOMName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
+                DropDownUOM.ListItems.RemoveAt(i);
             }
         }
     }
@@ -573,7 +553,7 @@
         StateHasChanged();
     }
 
-    private void SelectItemOption(option options, int rowIndex)
+    private void SelectItemOption(Option options, int rowIndex)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
@@ -586,7 +566,8 @@
                 }
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
-                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+                HandleFormInput();
             }
         }
     }
@@ -604,7 +585,7 @@
         StateHasChanged();
     }
 
-    public void SelectUOMOption(option options, int rowIndex)
+    public void SelectUOMOption(Option options, int rowIndex)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
@@ -613,6 +594,7 @@
             {
                 UOMName[rowIndex] = options.Text;
                 Items[rowIndex].UOM = options.Value;
+                HandleFormInput();
             }
         }
     }
@@ -656,6 +638,7 @@
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+
     public void CreatePO()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -679,6 +662,7 @@
             NavigationManager.NavigateTo("/purchaseorder/new-purchase-order");
         }
     }
+
     public void CreateRFQ()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))

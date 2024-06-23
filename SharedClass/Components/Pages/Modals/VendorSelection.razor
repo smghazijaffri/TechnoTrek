@@ -23,7 +23,7 @@
                                 {
                                     @foreach (var option in DropDownVendor.ListItems[0].FilteredOptions)
                                     {
-                                        <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text</a>
+                                        <a class="dropdown-item" @onclick="() => SelectVendorOption(option)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
                                         <hr class="m-1 border-primary" />
                                     }
                                 }
@@ -52,10 +52,15 @@
 
     public string VendorName = "";
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
+    {
+        await LoadVendors();
+    }
+
+    public async Task LoadVendors()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
-        { DropDownVendor.Options = db.Query<option>("Select v.VendorID as Value, VendorName as Text from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList(); }
+        { DropDownVendor.Options = db.Query<Option>("Select v.VendorID as Value, VendorName as Text, VendorType as Type from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList(); }
     }
 
     private void CloseModal()
@@ -72,14 +77,13 @@
         StateHasChanged();
     }
 
-    private void SelectVendorOption(option options)
+    private void SelectVendorOption(Option options)
     {
         bool result = DropDownVendor.SelectOption(options);
         if (result == false)
         {
             VendorName = options.Text;
             _protectedLocalStore.SetLocalAsync("VendorID", options.Value);
-
         }
     }
 

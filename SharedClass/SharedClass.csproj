@@ -108,7 +108,6 @@
     <Content Remove="Components\Pages\AdminView\Buying.razor" />
   </ItemGroup>
 
-
   <ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>
@@ -126,7 +125,6 @@
     <PackageReference Include="MudBlazor" Version="6.20.0" />
     <PackageReference Include="MudBlazor.ThemeManager" Version="1.1.0" />
     <PackageReference Include="ProtectedBrowserStorage.NETStandard" Version="1.1.2" />
-    <PackageReference Include="Select2.js" Version="4.0.13" />
   </ItemGroup>
 
   <ItemGroup>

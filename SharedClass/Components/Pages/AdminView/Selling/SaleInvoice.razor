@@ -1,18 +1,9 @@
 ﻿@page "/saleinvoice"
-
-@using static MudBlazor.CategoryTypes
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Net.Http.Json
-@using Dapper
+@page "/saleinvoices/{SearchString?}"
 
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
-@inject Delete delete;
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject SalesInvoice invoice;
@@ -68,6 +59,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public string? SearchString { get; set; }
+
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
     private MudTable<SalesInvoice> _table;
@@ -77,7 +71,15 @@
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice");
+
+        if (!string.IsNullOrWhiteSpace(SearchString))
+        {
+            Elements = await db.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'");
+        }
+        else
+        {
+            Elements = await db.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice");
+        }
     }
 
     void OnRowClick(TableRowClickEventArgs<SalesInvoice> args)

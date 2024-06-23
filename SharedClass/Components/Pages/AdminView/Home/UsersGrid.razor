@@ -1,20 +1,9 @@
-﻿@page "/uom"
-
-@using static MudBlazor.CategoryTypes
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Net.Http.Json
-@using Dapper
+﻿@page "/users"
 
 @inject CRUD crud;
+@inject Users users;
 @layout AdminLayout;
-@inject Select select;
-@inject Delete delete;
 @inject Connection con;
-@inject UnitofMeasure uom;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
@@ -24,7 +13,7 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                           Style="text-transform:none; margin-bottom: 20px;" Href="/uom/new-uom" Size="Size.Large">
+                           Style="text-transform:none; margin-bottom: 20px;" Href="/users/createuser" Size="Size.Large">
                     Create
                 </MudButton>
                 @if (selectedItems.Any())
@@ -39,27 +28,29 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="UnitofMeasure" Items="@Elements" MultiSelection="true"
+            <MudTable @ref="_table" T="Users" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<UnitofMeasure,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick"
+                      Filter="new Func<Users,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick"
                       Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Unit of Measures</MudText>
+                    <MudText Typo="Typo.h6">Employees</MudText>
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>UOM ID</MudTh>
-                    <MudTh>UOM Name</MudTh>
+                    <MudTh>Username</MudTh>
+                    <MudTh>Phone</MudTh>
+                    <MudTh>Role</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="UOM ID">@context.UOMID</MudTd>
-                    <MudTd DataLabel="UOM Name">@context.UOMName</MudTd>
+                    <MudTd DataLabel="Username">@context.UserName</MudTd>
+                    <MudTd DataLabel="Phone">@context.UserPhone</MudTd>
+                    <MudTd DataLabel="Role">@context.Role</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
@@ -74,30 +65,32 @@
 @code {
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
-    private MudTable<UnitofMeasure> _table;
-    private IEnumerable<UnitofMeasure> Elements = new List<UnitofMeasure>();
-    private HashSet<UnitofMeasure> selectedItems = new HashSet<UnitofMeasure>();
+    private MudTable<Users> _table;
+    private IEnumerable<Users> Elements = new List<Users>();
+    private HashSet<Users> selectedItems = new HashSet<Users>();
 
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<UnitofMeasure>("SELECT * FROM UOM");
+        Elements = await db.QueryAsync<Users>("SELECT UserID, UserName, UserPhone, Role, Status, CreationDate FROM Users");
     }
 
-    void OnRowClick(TableRowClickEventArgs<UnitofMeasure> args)
+    void OnRowClick(TableRowClickEventArgs<Users> args)
     {
-        uom.UOMID = args.Item.UOMID;
-        NavigationManager.NavigateTo($"/uom/{uom.UOMID}");
+        users.UserID = args.Item.UserID;
+        NavigationManager.NavigateTo($"/users/{users.UserID}");
     }
 
-    private bool FilterFunc1(UnitofMeasure element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(Users element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(UnitofMeasure element, string searchString)
+    private bool FilterFunc(Users element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.UOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.UserPhone.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Role.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.CreationDate} {element.UOMID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
@@ -106,14 +99,14 @@
     {
         if (selectedItems == null || !selectedItems.Any())
         {
-            Snackbar.Add("No items selected to delete", Severity.Info);
+            Snackbar.Add("No users selected to delete", Severity.Info);
             return;
         }
 
         var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No uom with status 'Disabled' to delete", Severity.Info);
+            Snackbar.Add("No users with status 'Disabled' to delete", Severity.Info);
             return;
         }
 
@@ -130,12 +123,12 @@
                 }
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.UOMID == e.UOMID)).ToList();
-            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.UserID == e.UserID)).ToList();
+            Snackbar.Add($"{itemsToDelete.Count} users deleted", Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+            Snackbar.Add("Error deleting users: " + ex.Message, Severity.Error);
         }
 
         selectedItems.Clear();
