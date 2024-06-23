@@ -433,6 +433,14 @@
                     return output.ErrorMessage;
                 }
                 rfq.RFQNumber = output.Output;
+                if (rfq.Status == PurchaseStatuses.Submitted)
+                {
+                    Email email = new Email();
+                    email.getemail(rfq.RFQNumber);
+                }
+                
+                // rfq.RFQNumber = crud.CRD(rfq, "CreateRFQ");
+
 
                 IsDelete.Clear();
                 IsDeleteVendor.Clear();
@@ -448,6 +456,7 @@
 
                 else if (IsApproved)
                 {
+                    
                     return "Request for Quotation Submitted Successfully";
                 }
 
@@ -800,4 +809,5 @@
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
     }
+    
 }

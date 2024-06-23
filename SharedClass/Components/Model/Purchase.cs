@@ -218,4 +218,13 @@
         public bool Selected { get; set; }
         public string? Status { get; set; }
     }
+    public class SendModel
+    {
+        public string To { get; set; }
+        public string Subject { get; set; }
+        public string Body { get; set; }
+        public string RFQNumber { get; set; }
+    }
+
+
 }

@@ -84,7 +84,9 @@ builder.Services.AddProtectedLocalStore(new EncryptionService(
                 new KeyInfo("45BLO2yoJkvBwz99kBEMlNkxvL40vUSGaqr/WBu3+Vg=", "Ou3fn+I9SVicGWMLkFEgZQ==")));
 
 var app = builder.Build();
-
+var provider = builder.Services.BuildServiceProvider();
+var config = builder.Configuration;
+var configuration = provider.GetService<IConfiguration>();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
