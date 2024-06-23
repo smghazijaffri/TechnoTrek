@@ -32,18 +32,18 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
-            Save
-        </button>
         @if (Createbutton)
         {
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Sales Invoice</li>
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Production Order</li>
                 </ul>
             </div>
         }
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
+            Save
+        </button>
     </div>
 </div>
 
@@ -54,7 +54,7 @@
             <input type="text" class="form-control" @bind="bom.BOMID" readonly>
         </div>
         <div class="col-md-6">
-            <label class="form-label">Item Name</label>
+            <label class="form-label">BOM Name</label>
             <input type="text" class="form-control" @bind="bom.ItemName">
         </div>
         <div class="col-md-6">
@@ -63,7 +63,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Type</label>
-            <input type="text" class="form-control" @bind="bom.Type" readonly="@ReadonlyHidden">
+            <input type="text" class="form-control" @bind="bom.Type" readonly>
         </div>
         <div class="col-md-6">
             <MudCheckBox @bind-Value="@bom.IsActive" Size="Size.Small" Dense="true" Label="Is Active"></MudCheckBox>
@@ -221,7 +221,7 @@
     string? DeviceType { get; set; }
     string header = "New Bill of Material";
 
-    bool Active = false;
+    bool Active = true;
     bool IsSaving = true;
     bool DisplayPO = true;
     bool isMobile = false;
@@ -244,6 +244,7 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
+        bom.IsActive = true;
         try
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -258,7 +259,7 @@
                     UOMName = db.Query<string>("select UOMName from BOM_Item inner join UOM on UOMID = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join BOM_Item  on uom = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     DisplayPO = false;
-                    header = bom.BOMID;
+                    header = bom.ItemName;
                     IsSaving = true;
 
                     if (bom.IsActive)
@@ -306,24 +307,11 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("BOM for ");
-
-                foreach (string data in ItemName)
-                {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
-                    titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
-                }
 
                 if (bom.Type != "Customer")
                 {
-                    bom.BOMName = titleBuilder.ToString();
-                    header = titleBuilder.ToString();
+                    bom.BOMName = bom.ItemName;
+                    header = bom.ItemName;
                 }
 
                 bom.BOMID = crud.CRD(bom, "CreateBOM");

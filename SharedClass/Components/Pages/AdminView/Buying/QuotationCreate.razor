@@ -240,7 +240,7 @@
     </div>
 </div>
 
-<VendorSelection @bind-IsVisible="IsVisible" RFQNumber="@rfq.RFQNumber" />
+<VendorSelection @ref="vendorSelectionComponent" @bind-IsVisible="IsVisible" RFQNumber="@rfq.RFQNumber" />
 
 <script>
     function toggleDropdown() {
@@ -270,6 +270,8 @@
 @code {
     [Parameter]
     public string? RFQNumber { get; set; }
+
+    VendorSelection vendorSelectionComponent;
 
     string? DeviceType { get; set; }
     string header = "New Request for Quotation";
@@ -350,7 +352,8 @@
                 else if (!string.IsNullOrWhiteSpace(PRNumber))
                 {
                     Items = db.Query<RFQ_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                    ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join PR_Items on UOM = UOMID  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     rfq.RefrenceDocument = PRNumber;
                     AddRowVendor();
                     await _protectedLocalStore.SetLocalAsync("PRNumber", "");
@@ -781,8 +784,9 @@
         }
     }
 
-    private void CreateQuotation()
+    private async void CreateQuotation()
     {
+        await vendorSelectionComponent.LoadVendors();
         IsVisible = true;
     }
 

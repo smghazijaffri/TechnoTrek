@@ -290,8 +290,7 @@
                                                    it.LeadTime,
                                                    it.Status,
                                                    it.CreationDate,
-                                                   it.Brand,
-                                                   it.Sellingrate", new { ItemID = ItemID });
+                                                   it.Brand", new { ItemID = ItemID });
                     if (items == null)
                         NavigationManager.NavigateTo("/item/");
                     header = items.ItemName;

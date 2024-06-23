@@ -52,7 +52,12 @@
 
     public string VendorName = "";
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
+    {
+        await LoadVendors();
+    }
+
+    public async Task LoadVendors()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         { DropDownVendor.Options = db.Query<Option>("Select v.VendorID as Value, VendorName as Text, VendorType as Type from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList(); }
@@ -79,7 +84,6 @@
         {
             VendorName = options.Text;
             _protectedLocalStore.SetLocalAsync("VendorID", options.Value);
-
         }
     }
 
