@@ -1,19 +1,9 @@
 ﻿@page "/vendorquotation"
 
-@using static MudBlazor.CategoryTypes
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Net.Http.Json
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Quotation vq;
 @inject Select select;
-@inject Delete delete;
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
@@ -23,12 +13,14 @@
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-end">
-                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                           Href="/vendorquotation/new-vendor-quotation" Size="Size.Large">Create</MudButton>
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
+                    Style="text-transform:none; margin-bottom: 20px;" Href="/vendorquotation/new-vendor-quotation"
+                    Size="Size.Large">Create</MudButton>
                 @if (selectedItems.Any())
                 {
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
-                               Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
+                        Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
+                        Size="Size.Large">Delete</MudButton>
                 }
             </div>
         </div>
@@ -36,13 +28,17 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="Quotation" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<Quotation,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+            <MudTable @ref="_table" T="Quotation" Items="@Elements" MultiSelection="true"
+                @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
+                Virtualize="true" Filter="new Func<Quotation,bool>(FilterFunc1)"
+                @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Vendor Quotations</MudText>
                     <MudSpacer />
-                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
+                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
+                    </MudTextField>
                 </ToolBarContent>
 
                 <HeaderContent>

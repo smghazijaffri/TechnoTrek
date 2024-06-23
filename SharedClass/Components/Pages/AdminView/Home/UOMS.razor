@@ -1,11 +1,10 @@
-﻿@page "/requestforquotation"
+﻿@page "/uom"
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
 @inject Connection con;
+@inject UnitofMeasure uom;
 @inject ISnackbar Snackbar;
-@inject RequestForQuotation rfq;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
@@ -14,8 +13,9 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                           Style="text-transform:none; margin-bottom: 20px;"
-                           Href="/requestforquotation/new-request-for-quotation" Size="Size.Large">Create</MudButton>
+                           Style="text-transform:none; margin-bottom: 20px;" Href="/uom/new-uom" Size="Size.Large">
+                    Create
+                </MudButton>
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
@@ -28,30 +28,29 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="RequestForQuotation" Items="@Elements" MultiSelection="true"
+            <MudTable @ref="_table" T="UnitofMeasure" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<RequestForQuotation,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick"
+                      Filter="new Func<UnitofMeasure,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick"
                       Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Requests for Quotation</MudText>
+                    <MudText Typo="Typo.h6">Unit of Measures</MudText>
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
-                    </MudTextField>
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Quotation Number</MudTh>
-                    <MudTh>Title</MudTh>
+                    <MudTh>UOM ID</MudTh>
+                    <MudTh>UOM Name</MudTh>
                     <MudTh>Status</MudTh>
-                    <MudTh>Document Date</MudTh>
+                    <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Quotation Number">@context.RFQNumber</MudTd>
-                    <MudTd DataLabel="Title">@context.RFQName</MudTd>
-                    <MudTd DataLabel="Document Date">@context.Status</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
+                    <MudTd DataLabel="UOM ID">@context.UOMID</MudTd>
+                    <MudTd DataLabel="UOM Name">@context.UOMName</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -64,30 +63,30 @@
 @code {
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
-    private MudTable<RequestForQuotation> _table;
-    private IEnumerable<RequestForQuotation> Elements = new List<RequestForQuotation>();
-    private HashSet<RequestForQuotation> selectedItems = new HashSet<RequestForQuotation>();
+    private MudTable<UnitofMeasure> _table;
+    private IEnumerable<UnitofMeasure> Elements = new List<UnitofMeasure>();
+    private HashSet<UnitofMeasure> selectedItems = new HashSet<UnitofMeasure>();
 
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<RequestForQuotation>("SELECT * FROM RequestForQuotation");
+        Elements = await db.QueryAsync<UnitofMeasure>("SELECT * FROM UOM");
     }
 
-    void OnRowClick(TableRowClickEventArgs<RequestForQuotation> args)
+    void OnRowClick(TableRowClickEventArgs<UnitofMeasure> args)
     {
-        rfq.RFQNumber = args.Item.RFQNumber;
-        NavigationManager.NavigateTo($"/requestforquotation/{rfq.RFQNumber}");
+        uom.UOMID = args.Item.UOMID;
+        NavigationManager.NavigateTo($"/uom/{uom.UOMID}");
     }
 
-    private bool FilterFunc1(RequestForQuotation element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(UnitofMeasure element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(RequestForQuotation element, string searchString)
+    private bool FilterFunc(UnitofMeasure element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.RFQName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.UOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.RFQNumber} {element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.CreationDate} {element.UOMID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
@@ -100,10 +99,10 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Draft" || item.Status == "Cancelled").ToList();
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No items with status 'Draft' or 'Cancelled' to delete", Severity.Info);
+            Snackbar.Add("No uom with status 'Disabled' to delete", Severity.Info);
             return;
         }
 
@@ -112,7 +111,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateRFQ", IsDelete: true, outputMessage: true);
+                output = crud.CRD2(item, "CreateUOM", IsDelete: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);
@@ -120,7 +119,7 @@
                 }
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.RFQNumber == e.RFQNumber)).ToList();
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.UOMID == e.UOMID)).ToList();
             Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)

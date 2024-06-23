@@ -1,18 +1,8 @@
 ﻿@page "/purchaseorder"
 
-@using static MudBlazor.CategoryTypes
-@using SharedClass.Components.Layout
-@using SharedClass.Components.Model
-@using SharedClass.Components.Data
-@using Microsoft.Data.SqlClient
-@using System.Globalization
-@using System.Net.Http.Json
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
-@inject Delete delete;
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject PurchaseOrders purchaseorder;

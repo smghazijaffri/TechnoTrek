@@ -23,17 +23,18 @@
 </div>
 
 @code {
-    private string Username = string.Empty;
-    private string Password = string.Empty;
-    private bool IsLoginSuccessful = false;
+    string Username = string.Empty;
+    string Password = string.Empty;
+    bool IsLoginSuccessful = false;
 
     private async void Pagelogin()
     {
-        IsLoginSuccessful = await login.Access(Username, Password, JSRuntime, Snackbar);
+        var (IsLoginSuccessful, Role) = await login.Access(Username, Password, JSRuntime, Snackbar);
         if (IsLoginSuccessful)
         {
             await _protectedLocalStore.SetLocalAsync("Authorized", true);
             await _protectedLocalStore.SetLocalAsync("Username", Username);
+            await _protectedLocalStore.SetLocalAsync("Role", Role);
 
             NavigationManager.NavigateTo("/dashboard");
             Snackbar.Clear();

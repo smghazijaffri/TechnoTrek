@@ -1,11 +1,6 @@
 ﻿@page "/stock-entry/new-stock-entry"
 @page "/stock-entry/{EntryID?}"
 
-@using System.Globalization
-@using System.Reflection
-@using System.Text
-@using Dapper
-
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Stock stock;
@@ -106,7 +101,6 @@
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                 <b>@(index + 1)</b>
-                                <button class="ms-2 btn btn-sm btn-danger" @onclick:preventDefault @onclick="() => DeleteRow(index)" style="display: @(item.Selected ? "block" : "none")" hidden="@ReadonlyHidden">Delete</button>
                             </div>
                         </td>
                         <td>
@@ -120,7 +114,7 @@
                                         {
                                             @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                <a class="dropdown-item" bind="@item.ItemID" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text</a>
+                                                <a class="dropdown-item" bind="@item.ItemID" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
                                                 <hr class="m-1 border-primary" />
                                             }
                                         }
@@ -137,8 +131,9 @@
         </table>
 
     </form>
-    <div class="col-12">
-        <button class="btn btn-primary rounded-pill" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+    <div class="col-12 d-flex justify-content-start p-0">
+        <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
+        <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow" hidden="@ReadonlyHidden">Delete</button>
     </div>
 </div>
 
@@ -170,25 +165,24 @@
 @code {
     [Parameter]
     public string? EntryID { get; set; }
-    private string header = "Create Stock Entry";
 
-    bool isMobile = false;
     string? DeviceType { get; set; }
+    string header = "Create Stock Entry";
 
-    private bool IsDraft = false;
-    private bool IsSaving = true;
-    private bool DisplayPR = true;
-    private bool IsSubmitted = false;
-    private bool IsCancelled = false;
+    bool IsDraft = false;
+    bool IsSaving = true;
+    bool DisplayPR = true;
+    bool isMobile = false;
+    bool IsSubmitted = false;
+    bool IsCancelled = false;
+    bool IsAnyItemSelected => Items.Any(item => item.Selected);
+    bool ReadonlyHidden { get { return IsCancelled || IsSubmitted; } }
 
-    public bool ReadonlyHidden { get { return IsCancelled || IsSubmitted; } }
-
-    public DropDown DropDownUOM = new DropDown();
-    public DropDown DropDownItem = new DropDown();
+    DropDown DropDownItem = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    public List<string> ItemName = new List<string>();
-    private List<Stock> Items = new List<Stock>();
+    List<Stock> Items = new List<Stock>();
+    List<string> ItemName = new List<string>();
 
     protected override async void OnInitialized()
     {
@@ -227,7 +221,7 @@
                 AddRow();
             }
 
-            DropDownItem.Options = db.Query<option>("select ItemCode as Value, ItemName as Text from Items").ToList();
+            DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
         }
         StateHasChanged();
 
@@ -392,13 +386,16 @@
         ItemName.Add("");
     }
 
-    private void DeleteRow(int index)
+    private void DeleteRow()
     {
         for (int i = Items.Count - 1; i >= 0; i--)
         {
             if (Items[i].Selected)
             {
-                IsDelete.Add(Items[i].RowID);
+                if (Items[i].RowID != 0)
+                {
+                    IsDelete.Add(Items[i].RowID);
+                }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
@@ -430,7 +427,7 @@
         StateHasChanged();
     }
 
-    private void SelectItemOption(option options, int rowIndex)
+    private void SelectItemOption(Option options, int rowIndex)
     {
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)

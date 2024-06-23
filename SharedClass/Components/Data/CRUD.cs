@@ -1,8 +1,7 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using SharedClass.Components.Model;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using Dapper;
-using SharedClass.Components.Model;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace SharedClass.Components.Data
 {
@@ -37,7 +36,7 @@ namespace SharedClass.Components.Data
             return outputValue;
         }
 
-        public OutputClass CRD2(dynamic Model,string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
+        public OutputClass CRD2(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
         {
             OutputClass output = new OutputClass();
 
@@ -78,6 +77,7 @@ namespace SharedClass.Components.Data
 
             return output;
         }
+
         public OutputClass CRD3(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
         {
             OutputClass output = new OutputClass();
@@ -120,6 +120,5 @@ namespace SharedClass.Components.Data
 
             return output;
         }
-
     }
 }

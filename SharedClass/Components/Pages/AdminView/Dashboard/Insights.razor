@@ -1,0 +1,510 @@
+﻿@layout AdminLayout;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto">
+    <MudTabPanel Text="General" Class="d-flex justify-content-center">
+        <h5 class="m-3 mt-3">Quick View</h5>
+        <MudGrid>
+            <MudItem xs="18" md="12" lg="2" @onclick="NavigateItem" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Items <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@TotalProducts</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="18" md="12" lg="2" @onclick="NavigateCustomer" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Customers <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@TotalCustomers</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="18" md="12" lg="2" @onclick="NavigateVendor" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Vendors <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@TotalVendors</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="18" md="12" lg="2" @onclick="NavigateUOM" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">UOM <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@TotalUOM</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="18" md="12" lg="2" @onclick="NavigateEmployees" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Employees <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@TotalEmployees</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <h5 class="m-3">Analytics</h5>
+        <MudGrid>
+            <MudItem xs="12" lg="8">
+                <MudCard>
+                    <MudCardHeader Class="d-flex justify-content-center">
+                        <MudText Typo="Typo.h6">Inventory</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (RealTimeSeries != null && RealTimeXAxisLabels.ToArray() != null)
+                        {
+                            <MudChart ChartType="ChartType.Bar" ChartSeries="@RealTimeSeries" XAxisLabels="@RealTimeXAxisLabels.ToArray()" Height="auto" />
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.subtitle1">No data...</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+    </MudTabPanel>
+
+    <MudTabPanel Text="Purchase">
+        <h5 class="m-3 mt-3">Quick View</h5>
+        <MudGrid>
+            <MudItem xs="12" md="16" lg="3" @onclick="NavigatePR" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Purchase Requests <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@PendingPurchaseRequest</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="16" lg="3" @onclick="NavigatePI" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Purchase Invoices <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@UnpaidPurchaseInvoice</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <h5 class="m-3">Analytics</h5>
+        <MudGrid>
+            <MudItem xs="12" md="6" lg="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Spendings</MudText>
+                        <MudText Typo="Typo.h5">Rs. @TotalSpendings</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="@TotalIncome" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6" lg="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Profit</MudText>
+                        <MudText Typo="Typo.h5">Rs. @TotalProfit</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="@TotalIncome" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudGrid>
+            <MudItem xs="12" lg="8">
+                <MudCard>
+                    <MudCardHeader Class="d-flex justify-content-center">
+                        <MudText Typo="Typo.h6">Monthly Purchases</MudText>
+                    </MudCardHeader>
+                    <MudCardContent Class="text-center">
+                        @if (PurchaseSeries != null && PurchaseXAxisLabels != null && PurchaseXAxisLabels.Length > 0)
+                        {
+                            <MudChart ChartType="ChartType.Bar" ChartSeries="@PurchaseSeries.ToList()" XAxisLabels="@PurchaseXAxisLabels" Height="auto" />
+                            <MudText Typo="Typo.subtitle1">Max Purchase Amount: Rs. @PurchaseYAxisMax@PurchaseYAxisUnit</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.subtitle1">No data...</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Sales">
+        <h5 class="m-3 mt-3">Quick View</h5>
+        <MudGrid>
+            <MudItem xs="12" md="16" lg="3" @onclick="NavigateSI" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Sale Invoices <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@PartiallyPaidandOverdueSaleInvoice</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <h5 class="m-3">Analytics</h5>
+        <MudGrid>
+            <MudItem xs="12" md="6" lg="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Income</MudText>
+                        <MudText Typo="Typo.h5">Rs. @TotalIncome</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="@TotalSpendings" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6" lg="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Profit</MudText>
+                        <MudText Typo="Typo.h5">Rs. @TotalProfit</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="@TotalIncome" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudGrid>
+            <MudItem xs="12" lg="4">
+                <MudCard>
+                    <MudCardHeader Class="d-flex justify-content-center">
+                        <MudText Typo="Typo.h6">Sales Comparison</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudChart ChartType="ChartType.Donut" InputData="@SalesComparisonData" InputLabels="@SalesComparisonLabels" Height="350px"></MudChart>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" lg="4">
+                <MudCard Class="text-center">
+                    <h6 class="m-2">Top 10 Selling Items</h6>
+                    <MudSimpleTable Style="overflow-x: auto;">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Name</th>
+                                <th>Sold</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var (index, item) in TopSellingItems.Select((value, i) => (i + 1, value)))
+                            {
+                                <tr>
+                                    <td>@index</td>
+                                    <td>@item.ItemName</td>
+                                    <td>@item.TotalQuantitySold</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudGrid>
+            <MudItem xs="12" lg="8">
+                <MudCard>
+                    <MudCardHeader Class="d-flex justify-content-center">
+                        <MudText Typo="Typo.h6">Monthly Sales</MudText>
+                    </MudCardHeader>
+                    <MudCardContent Class="text-center">
+                        @if (SalesSeries != null && SalesXAxisLabels != null && SalesXAxisLabels.Length > 0)
+                        {
+                            <MudChart ChartType="ChartType.Bar" ChartSeries="@SalesSeries.ToList()" XAxisLabels="@SalesXAxisLabels" Height="auto" />
+                            <MudText Typo="Typo.subtitle1">Max Sale Amount: Rs. @YAxisMax@YAxisUnit</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.subtitle1">No data...</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Production">
+        <h5 class="m-3 mt-3">Quick View</h5>
+        <MudGrid>
+            <MudItem xs="12" md="16" lg="3" @onclick="NavigateBOM" Style="cursor: pointer;">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">Custom Configurations <i class="bi bi-arrow-up-right"></i></MudText>
+                        <MudText Typo="Typo.h5">@NewCustomerBom</MudText>
+                        <MudProgressLinear Color="Color.Info" Value="100" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    DateTime FiscalYearEnd;
+    DateTime FiscalYearStart;
+
+    int TotalUOM { get; set; }
+    int TotalVendors { get; set; }
+    int TotalProducts { get; set; }
+    int TotalEmployees { get; set; }
+    int TotalInventory { get; set; }
+    int TotalCustomers { get; set; }
+    int NewCustomerBom { get; set; }
+    int UnpaidPurchaseInvoice { get; set; }
+    int PendingPurchaseRequest { get; set; }
+    int PartiallyPaidandOverdueSaleInvoice { get; set; }
+
+    double YAxisMax;
+    double PurchaseYAxisMax;
+    double TotalIncome { get; set; }
+    double TotalProfit { get; set; }
+    double TotalSpendings { get; set; }
+    double[]? SalesComparisonData { get; set; }
+
+    string YAxisUnit = "";
+    string[]? SalesXAxisLabels;
+    string[]? PurchaseXAxisLabels;
+    string PurchaseYAxisUnit = "";
+    string[]? SalesComparisonLabels { get; set; }
+
+    List<ChartSeries>? SalesSeries;
+    List<ChartSeries>? PurchaseSeries;
+    List<dynamic> TopSellingItems = new List<dynamic>();
+    List<string> RealTimeXAxisLabels { get; set; } = new List<string> { };
+    List<ChartSeries> RealTimeSeries { get; set; } = new List<ChartSeries>();
+
+    protected override async void OnInitialized()
+    {
+        SetCurrentFiscalYear();
+        await LoadData();
+
+        StateHasChanged();
+        base.OnInitialized();
+    }
+
+    private async Task LoadData()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            TotalCustomers = db.Query<int>("SELECT COUNT(*) FROM Customer").FirstOrDefault();
+            var stockData = await db.QueryAsync<dynamic>("SELECT * FROM Stock ORDER BY 'ItemID'");
+            TotalUOM = db.Query<int>("SELECT COUNT(*) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
+            TotalProducts = db.Query<int>("SELECT COUNT(*) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
+            TotalVendors = db.Query<int>("SELECT COUNT(*) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();
+            TotalEmployees = db.Query<int>("SELECT COUNT(*) FROM Users WHERE Status = 'Enabled'").FirstOrDefault();
+            TotalIncome = db.Query<double>(@" SELECT SUM(TotalAmount) FROM SaleInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+            new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
+            TotalSpendings = db.Query<double>(@" SELECT SUM(TotalAmount) FROM PurchaseInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+                new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
+            UnpaidPurchaseInvoice = db.Query<int>(@" SELECT COUNT(*) FROM PurchaseInvoice WHERE Status = 'Unpaid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+                new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
+            PendingPurchaseRequest = db.Query<int>("SELECT COUNT(*) FROM PurchaseRequest WHERE Status = 'Pending'").FirstOrDefault();
+            NewCustomerBom = db.Query<int>("SELECT COUNT(*) FROM BOM WHERE IsActive = 'true' AND TYPE = 'Customer'").FirstOrDefault();
+            PartiallyPaidandOverdueSaleInvoice = db.Query<int>("SELECT COUNT(*) FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'").FirstOrDefault();
+            var saleOrderData = await db.QueryAsync<dynamic>("SELECT Item, SUM(Quantity) AS TotalQuantitySold FROM SO_Item GROUP BY Item ORDER BY TotalQuantitySold DESC");
+            var queryResult = await db.QueryAsync<dynamic>("SELECT TOP 10 so.Item, SUM(so.Quantity) AS TotalQuantitySold, it.ItemName FROM SO_Item so inner join Items it on it.ItemCode = so.Item GROUP BY so.Item, it.ItemName ORDER BY TotalQuantitySold DESC");
+            var monthlySalesData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(si.CreationDate, 'yyyy-MM') AS Month, SUM(Amount) AS TotalSales FROM SI_Item si
+            inner join SaleInvoice s on s.SalesInvoiceID = si.SalesInvoiceID WHERE IsPaid = 1 AND si.CreationDate >= @FiscalYearStart AND si.CreationDate < @FiscalYearEnd GROUP BY FORMAT(si.CreationDate, 'yyyy-MM') ORDER BY Month",
+            new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
+            var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, SUM(Amount) AS TotalSales FROM PI_Items pi
+            inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
+            new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
+
+            TopSellingItems = queryResult.ToList();
+
+            TotalProfit = TotalIncome - TotalSpendings;
+
+            foreach (var data in stockData)
+            {
+                if (!RealTimeXAxisLabels.Contains(data.ItemID))
+                {
+                    RealTimeXAxisLabels.Add(data.ItemID);
+                }
+            }
+
+            RealTimeSeries = new List<ChartSeries>
+            {
+                new ChartSeries
+                {
+                    Name = "Items",
+                    Data = stockData.OrderBy(stock => stock.ItemID)
+                                    .Select(stock => (double)stock.Quantity)
+                                    .ToArray()
+                }
+            };
+
+            SalesComparisonData = saleOrderData.Select(order => (double)order.TotalQuantitySold).ToArray();
+            SalesComparisonLabels = saleOrderData.Select(order => (string)order.Item).ToArray();
+
+            SalesXAxisLabels = monthlySalesData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
+            var salesAmounts = monthlySalesData.Select(data => (double)data.TotalSales).ToArray();
+
+            YAxisMax = salesAmounts.Max();
+            if (YAxisMax >= 1_000_000)
+            {
+                YAxisUnit = "M";
+                YAxisMax /= 1_000_000;
+                salesAmounts = salesAmounts.Select(s => s / 1_000_000).ToArray();
+            }
+            else if (YAxisMax >= 1_000)
+            {
+                YAxisUnit = "K";
+                YAxisMax /= 1_000;
+                salesAmounts = salesAmounts.Select(s => s / 1_000).ToArray();
+            }
+
+            SalesSeries = new List<ChartSeries>
+            {
+                new ChartSeries
+                {
+                    Name = "Sales Amount",
+                    Data = salesAmounts
+                }
+            };
+
+            PurchaseXAxisLabels = monthlyPurchaseData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
+            var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
+
+            PurchaseYAxisMax = purchaseAmounts.Max();
+            if (PurchaseYAxisMax >= 1_000_000)
+            {
+                PurchaseYAxisUnit = "M";
+                PurchaseYAxisMax /= 1_000_000;
+                purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
+            }
+            else if (PurchaseYAxisMax >= 1_000)
+            {
+                PurchaseYAxisUnit = "K";
+                PurchaseYAxisMax /= 1_000;
+                purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
+            }
+
+            PurchaseSeries = new List<ChartSeries>
+            {
+                new ChartSeries
+                {
+                    Name = "Purchase Amount",
+                    Data = purchaseAmounts
+                }
+            };
+        }
+    }
+
+    private void SetCurrentFiscalYear()
+    {
+        var currentYear = DateTime.Now.Year;
+        var currentMonth = DateTime.Now.Month;
+
+        if (currentMonth >= 6)
+        {
+            FiscalYearStart = new DateTime(currentYear, 6, 1);
+            FiscalYearEnd = new DateTime(currentYear + 1, 6, 1);
+        }
+        else
+        {
+            FiscalYearStart = new DateTime(currentYear - 1, 6, 1);
+            FiscalYearEnd = new DateTime(currentYear, 6, 1);
+        }
+    }
+
+    public void NavigateItem()
+    {
+        NavigationManager.NavigateTo("/item/", forceLoad: true);
+    }
+
+    public void NavigateCustomer()
+    {
+        NavigationManager.NavigateTo("/customers/", forceLoad: true);
+    }
+
+    public void NavigateVendor()
+    {
+        NavigationManager.NavigateTo("/vendors/", forceLoad: true);
+    }
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/", forceLoad: true);
+    }
+
+    public void NavigateEmployees()
+    {
+        NavigationManager.NavigateTo("/users/", forceLoad: true);
+    }
+
+    public void NavigateBOM()
+    {
+        if (NewCustomerBom > 0)
+        {
+            NavigationManager.NavigateTo($"/billofmaterials/{"custom-configurations"}", forceLoad: true);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add("No New Custom Configurations", Severity.Info);
+        }
+    }
+
+    public void NavigatePR()
+    {
+        if (PendingPurchaseRequest > 0)
+        {
+            NavigationManager.NavigateTo($"/purchaserequisitions/{"pending"}", forceLoad: true);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add("No Pending Purchase Requests", Severity.Info);
+        }
+    }
+
+    public void NavigatePI()
+    {
+        if (UnpaidPurchaseInvoice > 0)
+        {
+            NavigationManager.NavigateTo($"/purchaseinvoices/{"unpaid"}", forceLoad: true);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add("No Unpaid Purchase Invoices", Severity.Info);
+        }
+    }
+
+    public void NavigateSI()
+    {
+        if (PartiallyPaidandOverdueSaleInvoice > 0)
+        {
+            NavigationManager.NavigateTo($"/saleinvoices/{"unpaid|overdue"}", forceLoad: true);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add("No Partially Paid or Overdue Sale Invoices", Severity.Info);
+        }
+    }
+}
