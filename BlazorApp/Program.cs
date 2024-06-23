@@ -52,6 +52,7 @@ builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodsIssue>();
 builder.Services.AddScoped<GoodReceipt>();
 builder.Services.AddSingleton<AppState>();
+builder.Services.AddScoped<ReportUpload>();
 builder.Services.AddScoped<SalesInvoice>();
 builder.Services.AddScoped<BindDropdown>();
 builder.Services.AddScoped<Compatibility>();

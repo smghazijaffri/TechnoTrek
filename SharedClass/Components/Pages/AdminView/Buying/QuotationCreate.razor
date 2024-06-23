@@ -130,7 +130,7 @@
                         <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Email" readonly/></td>
                         <td hidden="@isMobile">
                             <div style="display: flex; align-items: center;">
-                                <input type="checkbox" class="me-1" @bind="vendor.SendEmail" readonly="@ReadonlyHidden" />
+                                <input type="checkbox" class="me-1" @bind="vendor.SendEmail" readonly="@IsApproved" />
                             </div>
                         </td>
                     </tr>
@@ -435,16 +435,15 @@
                 {
                     return output.ErrorMessage;
                 }
+
                 rfq.RFQNumber = output.Output;
+
                 if (rfq.Status == PurchaseStatuses.Submitted)
                 {
                     Email email = new Email();
                     email.GetEmailAsync(rfq.RFQNumber);
                 }
                 
-                // rfq.RFQNumber = crud.CRD(rfq, "CreateRFQ");
-
-
                 IsDelete.Clear();
                 IsDeleteVendor.Clear();
                 ToggleApproval();
