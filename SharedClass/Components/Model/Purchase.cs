@@ -225,6 +225,14 @@
         public string Body { get; set; }
         public string RFQNumber { get; set; }
     }
+    public class RFQItemReport
+    {
+        public string RFQNumber { get; set; }
+        public string Item { get; set; }
+        public int Quantity { get; set; }
+        public string UOM { get; set; }
+        public string RequiredBy { get; set; }
+    }
 
 
 }

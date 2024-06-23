@@ -126,8 +126,8 @@
                                 </ul>
                             </div>
                         </td>
-                        <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Contact" readonly="@ReadonlyHidden" /></td>
-                        <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Email" readonly="@ReadonlyHidden" /></td>
+                        <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Contact" readonly /></td>
+                        <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Email" readonly/></td>
                         <td hidden="@isMobile">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" class="me-1" @bind="vendor.SendEmail" readonly="@ReadonlyHidden" />
@@ -318,7 +318,7 @@
                     rfq = db.QueryFirstOrDefault<RequestForQuotation>("Select * from RequestForQuotation where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber });
                     Items = db.Query<RFQ_Items>("select * from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from RFQ_Items inner join Items on Item = ItemCode  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
-                    VendorInfo = db.Query<Vendor>("Select VendorName,Contact from Vendor v inner join RFQVendor rv on v.VendorID = rv.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                    VendorInfo = db.Query<Vendor>("Select VendorName,Contact,Email from Vendor v inner join RFQVendor rv on v.VendorID = rv.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     RFQVendor = db.Query<RFQVendor>("select * from RFQVendor where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     UOMName = db.Query<string>("select UOMName from RFQ_Items pr inner join UOM u on pr.UOM = u.UOMID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join RFQ_Items on UOM = UOMID  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
@@ -436,7 +436,7 @@
                 if (rfq.Status == PurchaseStatuses.Submitted)
                 {
                     Email email = new Email();
-                    email.getemail(rfq.RFQNumber);
+                    email.GetEmailAsync(rfq.RFQNumber);
                 }
                 
                 // rfq.RFQNumber = crud.CRD(rfq, "CreateRFQ");
@@ -684,7 +684,7 @@
                 RFQVendor[rowIndex].VendorID = options.Value;
                 using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
-                    VendorInfo[rowIndex].Contact = db.QueryFirstOrDefault<string>("Select Contact from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
+                    VendorInfo[rowIndex] = db.QueryFirstOrDefault<Vendor>("Select * from Vendor where VendorID = @VendorID", new { VendorID = options.Value });
                 }
                 HandleFormInput();
             }
