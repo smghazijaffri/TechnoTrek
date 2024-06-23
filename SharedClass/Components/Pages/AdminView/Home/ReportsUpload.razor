@@ -1,0 +1,220 @@
+﻿@page "/report/new-report"
+@page "/report/{ReportID?}"
+
+@using BoldReports.Writer
+@using BoldReports.Web
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject ReportUpload report;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+            @if (IsEnabled)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
+            }
+            @if (IsDisabled)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveFile">
+            Save
+        </button>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6" hidden>
+            <label class="form-label">Report ID</label>
+            <input type="text" class="form-control" @bind="report.ReportID" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Report Name</label>
+            <input type="text" @bind="report.ReportName" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Upload</label>
+            <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                <ButtonTemplate>
+                    <MudButton HtmlTag="label"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                               for="@context.Id">
+                        Upload Files
+                    </MudButton>
+                </ButtonTemplate>
+                <SelectedTemplate>
+                    @if (context != null)
+                    {
+                        <MudText>@context.Name</MudText>
+                    }
+                    else
+                    {
+                        <MudText>No File</MudText>
+                    }
+                </SelectedTemplate>
+            </MudFileUpload>
+        </div>
+        <div class="col-md-6">
+            <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+        </div>
+    </form>
+</div>
+
+@code {
+    [Parameter]
+    public string? ReportID { get; set; }
+
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+
+    string header = "New Report";
+
+    bool IsSaving = true;
+    bool Disabled = false;
+    bool IsEnabled = false;
+    bool IsDisabled = false;
+
+    public string createReport()
+    {
+        try
+        {
+            if (files.Count == 0)
+            {
+                return "No file uploaded";
+            }
+
+            // IBrowserFile uploadedFile = files.First();
+            // using (MemoryStream rdlStream = new MemoryStream())
+            // {
+            //     await uploadedFile.OpenReadStream().CopyToAsync(rdlStream);
+            //     rdlStream.Seek(0, SeekOrigin.Begin);
+            //     byte[] rdlData = rdlStream.ToArray();
+
+            //     using (SqlConnection db = new SqlConnection(con.connectionString))
+            //     {
+            //         string sql = "INSERT INTO Reports (ReportID, ReportName, RDLData, Status) VALUES (@ReportID, @ReportName, @RDLData, @Status) " +
+            //                      "ON DUPLICATE KEY UPDATE ReportName = @ReportName, RDLData = @RDLData, Status = @Status";
+            //         db.Execute(sql, new
+            //         {
+            //             ReportID = report.ReportID,
+            //             ReportName = report.ReportName,
+            //             RDLData = rdlData,
+            //             Status = report.Status
+            //         });
+            //     }
+            // }
+
+            return "Report saved successfully";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    // public async void SaveReport()
+    // {
+    //     await SaveFile();
+    //     // string notification = createReport();
+    //     // if (notification.Contains("Successfully"))
+    //     // {
+    //     //     Snackbar.Clear();
+    //     //     Snackbar.Add(notification, Severity.Success);
+    //     // }
+    //     // else
+    //     // {
+    //     //     Snackbar.Clear();
+    //     //     Snackbar.Add(notification, Severity.Error);
+    //     // }
+    // }
+
+    public string ValidateReport()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
+            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
+
+            if (string.IsNullOrWhiteSpace(report.ReportName)) { return $"Please enter Report Name"; }
+            if (files.Count == 0) { return "Please upload a report"; }
+
+            return null;
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (IsEnabled || (IsDisabled && Disabled))
+        {
+            IsSaving = true;
+            Disabled = false;
+            IsDisabled = false;
+            IsEnabled = false;
+            StateHasChanged();
+        }
+    }
+
+    private void UploadFiles(IBrowserFile file)
+    {
+        files.Add(file);
+    }
+
+    private async Task SaveFile()
+    {
+        report.Status = "Enabled";
+        try
+        {
+            IBrowserFile uploadedFile = files.FirstOrDefault();
+            using (MemoryStream rdlStream = new MemoryStream())
+            {
+                await uploadedFile.OpenReadStream().CopyToAsync(rdlStream);
+                rdlStream.Seek(0, SeekOrigin.Begin);
+                byte[] rdlData = rdlStream.ToArray();
+
+                using (SqlConnection db = new SqlConnection(con.connectionString))
+                {
+                    db.Open();
+
+                    // Check if the report already exists
+                    string checkSql = "SELECT COUNT(*) FROM Reports WHERE ReportID = @ReportID";
+                    int count = db.ExecuteScalar<int>(checkSql, new { ReportID = report.ReportID });
+
+                    if (count > 0)
+                    {
+                        // Update the existing report
+                        string updateSql = "UPDATE Reports SET ReportName = @ReportName, RDLData = @RDLData, Status = @Status WHERE ReportID = @ReportID";
+                        db.Execute(updateSql, new { ReportID = report.ReportID, ReportName = report.ReportName, RDLData = rdlData, Status = report.Status });
+                    }
+                    else
+                    {
+                        // Insert a new report
+                        string insertSql = "INSERT INTO Reports (ReportName, RDLData, Status) VALUES ( @ReportName, @RDLData, @Status)";
+                        db.Execute(insertSql, new { ReportName = report.ReportName, RDLData = rdlData, Status = report.Status });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}
