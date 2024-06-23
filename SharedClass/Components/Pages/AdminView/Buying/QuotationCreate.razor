@@ -88,6 +88,9 @@
                     <th class="col col-auto">
                         Email
                     </th>
+                    <th class="col col-auto" hidden="@isMobile">
+                        Send Email
+                    </th>
                 </tr>
             </thead>
             <tbody id="table-body">
@@ -123,9 +126,9 @@
                                 </ul>
                             </div>
                         </td>
-
                         <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Contact" readonly="@ReadonlyHidden" /></td>
-                        <td>
+                        <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Email" readonly="@ReadonlyHidden" /></td>
+                        <td hidden="@isMobile">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" class="me-1" @bind="vendor.SendEmail" readonly="@ReadonlyHidden" />
                             </div>
@@ -530,7 +533,7 @@
                 return $"There are no Vendors";
             }
 
-                return null;
+            return null;
         }
     }
 
