@@ -310,107 +310,130 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            TotalCustomers = db.Query<int>("SELECT COUNT(*) FROM Customer").FirstOrDefault();
-            var stockData = await db.QueryAsync<dynamic>("SELECT * FROM Stock ORDER BY 'ItemID'");
-            TotalUOM = db.Query<int>("SELECT COUNT(*) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
-            TotalProducts = db.Query<int>("SELECT COUNT(*) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
-            TotalVendors = db.Query<int>("SELECT COUNT(*) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();
-            TotalEmployees = db.Query<int>("SELECT COUNT(*) FROM Users WHERE Status = 'Enabled'").FirstOrDefault();
-            TotalIncome = db.Query<double>(@" SELECT SUM(TotalAmount) FROM SaleInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
-            new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
-            TotalSpendings = db.Query<double>(@" SELECT SUM(TotalAmount) FROM PurchaseInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
-                new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
-            UnpaidPurchaseInvoice = db.Query<int>(@" SELECT COUNT(*) FROM PurchaseInvoice WHERE Status = 'Unpaid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
-                new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
-            PendingPurchaseRequest = db.Query<int>("SELECT COUNT(*) FROM PurchaseRequest WHERE Status = 'Pending'").FirstOrDefault();
-            NewCustomerBom = db.Query<int>("SELECT COUNT(*) FROM BOM WHERE IsActive = 'true' AND TYPE = 'Customer'").FirstOrDefault();
-            PartiallyPaidandOverdueSaleInvoice = db.Query<int>("SELECT COUNT(*) FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'").FirstOrDefault();
-            var saleOrderData = await db.QueryAsync<dynamic>("SELECT Item, SUM(Quantity) AS TotalQuantitySold FROM SO_Item GROUP BY Item ORDER BY TotalQuantitySold DESC");
-            var queryResult = await db.QueryAsync<dynamic>("SELECT TOP 10 so.Item, SUM(so.Quantity) AS TotalQuantitySold, it.ItemName FROM SO_Item so inner join Items it on it.ItemCode = so.Item GROUP BY so.Item, it.ItemName ORDER BY TotalQuantitySold DESC");
-            var monthlySalesData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(si.CreationDate, 'yyyy-MM') AS Month, SUM(Amount) AS TotalSales FROM SI_Item si
-            inner join SaleInvoice s on s.SalesInvoiceID = si.SalesInvoiceID WHERE IsPaid = 1 AND si.CreationDate >= @FiscalYearStart AND si.CreationDate < @FiscalYearEnd GROUP BY FORMAT(si.CreationDate, 'yyyy-MM') ORDER BY Month",
-            new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
-            var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, SUM(Amount) AS TotalSales FROM PI_Items pi
-            inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
-            new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
-
-            TopSellingItems = queryResult.ToList();
-
-            TotalProfit = TotalIncome - TotalSpendings;
-
-            foreach (var data in stockData)
+            try
             {
-                if (!RealTimeXAxisLabels.Contains(data.ItemID))
+                TotalCustomers = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Customer").FirstOrDefault();
+                var stockData = await db.QueryAsync<dynamic>("SELECT * FROM Stock ORDER BY 'ItemID'");
+                TotalUOM = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
+                TotalProducts = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
+                TotalVendors = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();
+                TotalEmployees = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Users WHERE Status = 'Enabled'").FirstOrDefault();
+                TotalIncome = db.Query<double>(@"SELECT COALESCE(SUM(TotalAmount), 0) FROM SaleInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
+                TotalSpendings = db.Query<double>(@"SELECT COALESCE(SUM(TotalAmount), 0) FROM PurchaseInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
+                UnpaidPurchaseInvoice = db.Query<int>(@"SELECT COALESCE(COUNT(*), 0) FROM PurchaseInvoice WHERE Status = 'Unpaid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
+                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
+                PendingPurchaseRequest = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM PurchaseRequest WHERE Status = 'Pending'").FirstOrDefault();
+                NewCustomerBom = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM BOM WHERE IsActive = 'true' AND TYPE = 'Customer'").FirstOrDefault();
+                PartiallyPaidandOverdueSaleInvoice = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'").FirstOrDefault();
+                var saleOrderData = await db.QueryAsync<dynamic>("SELECT Item, COALESCE(SUM(Quantity), 0) AS TotalQuantitySold FROM SO_Item GROUP BY Item ORDER BY TotalQuantitySold DESC");
+                var queryResult = await db.QueryAsync<dynamic>("SELECT TOP 10 so.Item, COALESCE(SUM(so.Quantity), 0) AS TotalQuantitySold, it.ItemName FROM SO_Item so inner join Items it on it.ItemCode = so.Item GROUP BY so.Item, it.ItemName ORDER BY TotalQuantitySold DESC");
+                var monthlySalesData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(si.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM SI_Item si
+                inner join SaleInvoice s on s.SalesInvoiceID = si.SalesInvoiceID WHERE IsPaid = 1 AND si.CreationDate >= @FiscalYearStart AND si.CreationDate < @FiscalYearEnd GROUP BY FORMAT(si.CreationDate, 'yyyy-MM') ORDER BY Month",
+                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
+                var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM PI_Items pi
+                inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
+                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
+
+                TopSellingItems = queryResult.ToList();
+
+                TotalProfit = TotalIncome - TotalSpendings;
+
+                foreach (var data in stockData)
                 {
-                    RealTimeXAxisLabels.Add(data.ItemID);
+                    if (!RealTimeXAxisLabels.Contains(data.ItemID))
+                    {
+                        RealTimeXAxisLabels.Add(data.ItemID);
+                    }
                 }
-            }
 
-            RealTimeSeries = new List<ChartSeries>
-            {
-                new ChartSeries
+                RealTimeSeries = new List<ChartSeries>
                 {
-                    Name = "Items",
-                    Data = stockData.OrderBy(stock => stock.ItemID)
-                                    .Select(stock => (double)stock.Quantity)
-                                    .ToArray()
-                }
-            };
+                    new ChartSeries
+                    {
+                        Name = "Items",
+                        Data = stockData.OrderBy(stock => stock.ItemID)
+                                        .Select(stock => (double)stock.Quantity)
+                                        .ToArray()
+                    }
+                };
 
-            SalesComparisonData = saleOrderData.Select(order => (double)order.TotalQuantitySold).ToArray();
-            SalesComparisonLabels = saleOrderData.Select(order => (string)order.Item).ToArray();
+                SalesComparisonData = saleOrderData.Select(order => (double)order.TotalQuantitySold).ToArray();
+                SalesComparisonLabels = saleOrderData.Select(order => (string)order.Item).ToArray();
 
-            SalesXAxisLabels = monthlySalesData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
-            var salesAmounts = monthlySalesData.Select(data => (double)data.TotalSales).ToArray();
+                SalesXAxisLabels = monthlySalesData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
+                var salesAmounts = monthlySalesData.Select(data => (double)data.TotalSales).ToArray();
 
-            YAxisMax = salesAmounts.Max();
-            if (YAxisMax >= 1_000_000)
-            {
-                YAxisUnit = "M";
-                YAxisMax /= 1_000_000;
-                salesAmounts = salesAmounts.Select(s => s / 1_000_000).ToArray();
-            }
-            else if (YAxisMax >= 1_000)
-            {
-                YAxisUnit = "K";
-                YAxisMax /= 1_000;
-                salesAmounts = salesAmounts.Select(s => s / 1_000).ToArray();
-            }
-
-            SalesSeries = new List<ChartSeries>
-            {
-                new ChartSeries
+                if (salesAmounts.Any())
                 {
-                    Name = "Sales Amount",
-                    Data = salesAmounts
+                    YAxisMax = salesAmounts.Max();
+                    if (YAxisMax >= 1_000_000)
+                    {
+                        YAxisUnit = "M";
+                        YAxisMax /= 1_000_000;
+                        salesAmounts = salesAmounts.Select(s => s / 1_000_000).ToArray();
+                    }
+                    else if (YAxisMax >= 1_000)
+                    {
+                        YAxisUnit = "K";
+                        YAxisMax /= 1_000;
+                        salesAmounts = salesAmounts.Select(s => s / 1_000).ToArray();
+                    }
                 }
-            };
-
-            PurchaseXAxisLabels = monthlyPurchaseData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
-            var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
-
-            PurchaseYAxisMax = purchaseAmounts.Max();
-            if (PurchaseYAxisMax >= 1_000_000)
-            {
-                PurchaseYAxisUnit = "M";
-                PurchaseYAxisMax /= 1_000_000;
-                purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
-            }
-            else if (PurchaseYAxisMax >= 1_000)
-            {
-                PurchaseYAxisUnit = "K";
-                PurchaseYAxisMax /= 1_000;
-                purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
-            }
-
-            PurchaseSeries = new List<ChartSeries>
-            {
-                new ChartSeries
+                else
                 {
-                    Name = "Purchase Amount",
-                    Data = purchaseAmounts
+                    YAxisMax = 0;
+                    YAxisUnit = string.Empty;
                 }
-            };
+
+                SalesSeries = new List<ChartSeries>
+                {
+                    new ChartSeries
+                    {
+                        Name = "Sales Amount",
+                        Data = salesAmounts
+                    }
+                };
+
+                PurchaseXAxisLabels = monthlyPurchaseData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
+                var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
+
+                if (purchaseAmounts.Any())
+                {
+                    PurchaseYAxisMax = purchaseAmounts.Max();
+                    if (PurchaseYAxisMax >= 1_000_000)
+                    {
+                        PurchaseYAxisUnit = "M";
+                        PurchaseYAxisMax /= 1_000_000;
+                        purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
+                    }
+                    else if (PurchaseYAxisMax >= 1_000)
+                    {
+                        PurchaseYAxisUnit = "K";
+                        PurchaseYAxisMax /= 1_000;
+                        purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
+                    }
+                }
+                else
+                {
+                    PurchaseYAxisMax = 0;
+                    PurchaseYAxisUnit = string.Empty;
+                }
+
+                PurchaseSeries = new List<ChartSeries>
+                {
+                    new ChartSeries
+                    {
+                        Name = "Purchase Amount",
+                        Data = purchaseAmounts
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
         }
     }
 
