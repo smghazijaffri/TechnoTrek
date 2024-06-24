@@ -15,7 +15,7 @@
             <div class="d-flex justify-content-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
                            Style="text-transform:none; margin-bottom: 20px;"
-                           OnClick="newRFQ" Size="Size.Large">Create</MudButton>
+                           OnClick="Create" Size="Size.Large">Create</MudButton>
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
@@ -61,7 +61,7 @@
     </div>
 </div>
 
-    @code {
+@code {
     private string searchString1 = "";
     private bool _selectOnRowClick = true;
     private MudTable<RequestForQuotation> _table;
@@ -80,10 +80,12 @@
         NavigationManager.NavigateTo($"/requestforquotation/{rfq.RFQNumber}");
 
     }
-    private void newRFQ()
+
+    private void Create()
     {
-        NavigationManager.NavigateTo($"/requestforquotation/new-request-for-quotation",forceLoad:true);
+        NavigationManager.NavigateTo($"/requestforquotation/new-request-for-quotation", forceLoad: true);
     }
+
     private bool FilterFunc1(RequestForQuotation element) => FilterFunc(element, searchString1);
 
     private bool FilterFunc(RequestForQuotation element, string searchString)
