@@ -1,0 +1,35 @@
+﻿@page "/reports"
+
+@inject SharedClass.Components.Data.Email EmailService
+
+@layout AdminLayout;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager Navigation
+
+@if (string.IsNullOrEmpty(PdfDataUrl))
+{
+    <p>Loading PDF...</p>
+}
+else
+{
+    <iframe src="@PdfDataUrl" class="m-2" style="max-width:100vw; height:100vh;"></iframe>
+}
+
+@code {
+    string? PdfDataUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var pdfBytes = await EmailService.GetPdfAsync("RFQ-029");
+            PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

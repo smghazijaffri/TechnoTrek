@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Email = SharedClass.Components.Data.Email;
+using Microsoft.Extensions.Logging;
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
@@ -27,6 +28,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Login>();
             builder.Services.AddScoped<Users>();
             builder.Services.AddScoped<Stock>();
+            builder.Services.AddScoped<Email>();
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Vendor>();
             builder.Services.AddScoped<SO_Item>();
