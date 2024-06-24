@@ -1,17 +1,26 @@
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
+using SharedClass.Components.Api;
 using SharedClass.Components;
 using ProtectedLocalStore;
 using MudBlazor.Services;
+using BlazorApp.Api;
 using SharedClass;
 using MudBlazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ReportController>();
+builder.Services.AddScoped<IReportControllerWrapper, ReportControllerWrapper>();
+
+Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
+
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Stock>();
@@ -43,6 +52,7 @@ builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodsIssue>();
 builder.Services.AddScoped<GoodReceipt>();
 builder.Services.AddSingleton<AppState>();
+builder.Services.AddScoped<ReportUpload>();
 builder.Services.AddScoped<SalesInvoice>();
 builder.Services.AddScoped<BindDropdown>();
 builder.Services.AddScoped<Compatibility>();
@@ -75,7 +85,9 @@ builder.Services.AddProtectedLocalStore(new EncryptionService(
                 new KeyInfo("45BLO2yoJkvBwz99kBEMlNkxvL40vUSGaqr/WBu3+Vg=", "Ou3fn+I9SVicGWMLkFEgZQ==")));
 
 var app = builder.Build();
-
+var provider = builder.Services.BuildServiceProvider();
+var config = builder.Configuration;
+var configuration = provider.GetService<IConfiguration>();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -87,5 +99,7 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapControllers();
 
 app.Run();

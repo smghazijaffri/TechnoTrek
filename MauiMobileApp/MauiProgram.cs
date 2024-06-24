@@ -54,6 +54,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddSingleton<AppState>();
             builder.Services.AddScoped<GoodReceipt>();
+            builder.Services.AddScoped<ReportUpload>();
             builder.Services.AddScoped<SalesInvoice>();
             builder.Services.AddScoped<BindDropdown>();
             builder.Services.AddScoped<UnitofMeasure>();

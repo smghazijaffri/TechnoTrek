@@ -56,6 +56,13 @@
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.VerifiedUser" OnClick='() => Navigate("users")'
                                    Style="background-color:transparent;" Color="Color.Info">Employees</MudButton>
                     </MudNavLink>
+                    @if (!isMobile)
+                    {
+                        <MudNavLink Match="NavLinkMatch.All" Href="/reportviewer">
+                            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Assessment"
+                                       Style="background-color:transparent;" Color="Color.Info">Reports</MudButton>
+                        </MudNavLink>
+                    }
                     <MudNavLink Match="NavLinkMatch.All" OnClick="Logout">
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Logout" OnClick="Logout"
                                    Style="background-color:transparent;" Color="Color.Error">Sign Out</MudButton>
@@ -75,9 +82,12 @@
 
 @code {
     bool open = false;
+    bool isMobile = false;
     bool isLoading = false;
     bool Authorized { get; set; }
     bool isAuthorized { get; set; }
+
+    string? DeviceType { get; set; }
 
     protected override async void OnInitialized()
     {
@@ -124,6 +134,13 @@
         {
             Console.WriteLine(ex.Message);
         }
+    }
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+        StateHasChanged();
     }
 
     private void ToggleDrawer()

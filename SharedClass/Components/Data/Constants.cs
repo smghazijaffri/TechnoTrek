@@ -61,4 +61,12 @@
         public const string Completed = "Completed";
         public const string NotStarted = "Not Started";
     }
+    public class EmailCredentials
+    {
+        public const string UserName = "m.sufiyanyousuf@outlook.com";
+        public const string Password = "huda@123";
+        public const string Emailhost = "smtp.office365.com";
+        public const int EmailPort = 587;
+        public const string SSLVALUE = "true";
+    }
 }

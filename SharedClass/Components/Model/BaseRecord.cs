@@ -36,4 +36,12 @@
         public string? Password { get; set; }
         public string? Role { get; set; }
     }
+
+    public class ReportUpload
+    {
+        public int ReportID { get; set; }
+        public string? ReportName { get; set; }
+        public byte[]? RDLData { get; set; }
+        public string? Status { get; set; }
+    }
 }
