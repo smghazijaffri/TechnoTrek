@@ -80,6 +80,32 @@ namespace SharedClass.Components.Data
             return memoryStream.ToArray();
         }
 
+        public async Task<byte[]> GetPdfAsync(string RFQNumber)
+        {
+            using SqlConnection db = new(con.connectionString);
+
+            byte[] rdlData = await db.QuerySingleOrDefaultAsync<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName = "RFQ" });
+
+            if (rdlData == null)
+            {
+                throw new Exception("Report not found in the database.");
+            }
+
+            using MemoryStream inputStream = new(rdlData);
+            ReportWriter writer = new(inputStream);
+
+            var rfqItems = (await db.QueryAsync<RFQItemReport>(
+                "SELECT RFQNumber, ItemName AS Item, Quantity, UOMName AS UOM, FORMAT(RequiredBy, 'yyyy-MM-dd') AS RequiredBy " +
+                "FROM RFQ_Items r INNER JOIN Items i ON r.Item = i.ItemCode INNER JOIN UOM u ON r.UOM = u.UOMID " +
+                "WHERE RFQNumber = @RFQNumber", new { RFQNumber })).ToList();
+            writer.DataSources.Add(new ReportDataSource("DataSet1", rfqItems));
+
+            using MemoryStream memoryStream = new();
+            writer.Save(memoryStream, WriterFormat.PDF);
+
+            return memoryStream.ToArray();
+        }
+
         private static string GetEmailBody(string name)
         {
             string body = "Dear " + name + "<br/><br/>Please find the attached Request For Quotation Document.<br/><br/>TechnoTrek";

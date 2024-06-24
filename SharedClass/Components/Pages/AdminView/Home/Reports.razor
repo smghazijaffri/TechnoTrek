@@ -1,0 +1,67 @@
+﻿@page "/reports"
+
+@inject SharedClass.Components.Data.Email EmailService
+
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager Navigation
+
+@if (string.IsNullOrEmpty(PdfDataUrl))
+{
+    <p>Loading PDF...</p>
+}
+else @if (isMobile)
+{
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="DownloadPdf" Color="Color.Info" >Download Report</MudButton>
+}
+else
+{
+    <iframe src="@PdfDataUrl" class="m-2" style="width:100vw; height:100vh;"></iframe>
+}
+
+<script>
+    function downloadPdf(url) {
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'RFQ.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+@code {
+    string PdfDataUrl { get; set; }
+    string? DeviceType { get; set; }
+
+    bool isMobile = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var pdfBytes = await EmailService.GetPdfAsync("RFQ-029");
+            PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        await JSRuntime.InvokeVoidAsync("downloadPdf", PdfDataUrl);
+        Snackbar.Add("Downloading", Severity.Error);
+    }
+}
