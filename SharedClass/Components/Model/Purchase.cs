@@ -218,4 +218,21 @@
         public bool Selected { get; set; }
         public string? Status { get; set; }
     }
+
+    public class SendModel
+    {
+        public string To { get; set; }
+        public string Subject { get; set; }
+        public string Body { get; set; }
+        public string RFQNumber { get; set; }
+    }
+
+    public class RFQItemReport
+    {
+        public string RFQNumber { get; set; }
+        public string Item { get; set; }
+        public int Quantity { get; set; }
+        public string UOM { get; set; }
+        public string RequiredBy { get; set; }
+    }
 }
