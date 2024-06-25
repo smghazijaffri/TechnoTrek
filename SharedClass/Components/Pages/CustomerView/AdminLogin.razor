@@ -23,15 +23,29 @@
 </div>
 
 @code {
+    bool isMobile = false;
+
+    string? DeviceType { get; set; }
     string Username = string.Empty;
     string Password = string.Empty;
     bool IsLoginSuccessful = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
+    }
 
     private async void Pagelogin()
     {
         var (IsLoginSuccessful, Role) = await login.Access(Username, Password, JSRuntime, Snackbar);
         if (IsLoginSuccessful)
         {
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.Click);
             await _protectedLocalStore.SetLocalAsync("Authorized", true);
             await _protectedLocalStore.SetLocalAsync("Username", Username);
             await _protectedLocalStore.SetLocalAsync("Role", Role);
@@ -44,6 +58,7 @@
         {
             Snackbar.Clear();
             Snackbar.Add("Login failed. Please check your credentials.", Severity.Error);
+            if (isMobile) Vibration.Default.Vibrate(7); ;
         }
     }
 }
