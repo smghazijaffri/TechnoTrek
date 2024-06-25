@@ -3,6 +3,7 @@
 @inject Login login;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
 @inject NavigationManager NavigationManager;
 
 <MudCarousel Class="mud-width-full mt-0" Style="height:50vw" ShowArrows="false" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="true" TData="object">
@@ -51,7 +52,7 @@
     </MudCarouselItem> *@
 </MudCarousel>
 
-<MudGrid Class="content h-100 mt-1" Style="margin: auto; width:98vw; background-image: url('https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/page/alienware/alien-site-assets/aw-gaming-home-video-rollup-desktop.jpg'); background-size: cover; background-position: center;">
+<MudGrid Class="content h-100 mt-1" Style="margin: auto; width:98vw; background-image: url('_content/SharedClass/Images/homegaming.jpg'); background-size: cover; background-position: center;">
     <MudItem xs="12">
         <MudGrid Justify="@Justify.Center" Style="height: 100vh; align-items: center;">
             <MudItem xs="12" sm="6">
@@ -79,3 +80,51 @@
         </MudGrid>
     </MudItem>
 </MudGrid>
+
+<script>
+    window.disableBackGestureMobile = (dotNetHelper) => {
+        window.history.pushState(null, document.title, location.href);
+        window.addEventListener('popstate', function (event) {
+            window.history.pushState(null, document.title, location.href);
+            return dotNetHelper.invokeMethodAsync('HandleBackGesture');
+        });
+    };
+</script>
+
+@code {
+    string? result;
+    string? DeviceType { get; set; }
+
+    private DotNetObjectReference<Home>? objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+
+            if (DeviceType == "Mobile")
+            {
+                objRef = DotNetObjectReference.Create(this);
+                await TriggerDotNetInstanceMethod();
+            }
+        }
+    }
+
+    public async Task TriggerDotNetInstanceMethod()
+    {
+        result = await JSRuntime.InvokeAsync<string>("disableBackGestureMobile", objRef);
+    }
+
+    [JSInvokable]
+    public void HandleBackGesture()
+    {
+        Snackbar.Add("Quitting");
+        Application.Current.Quit();
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
+    }
+}

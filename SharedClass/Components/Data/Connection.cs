@@ -1,7 +1,7 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 
 namespace SharedClass.Components.Data
 {
@@ -14,7 +14,7 @@ namespace SharedClass.Components.Data
             //string ipAddress = GetIPv4Addresses(); //Auto IPv4
             //connectionString = $"Data Source={ipAddress},1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;"; //Auto IPv4
             //connectionString = $"Data Source=192.168.43.24,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;"; //ye mera samsoong ka number hai
-            connectionString = $"Data Source=192.168.100.35,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;"; //ye mera samsoong ka number hai
+            connectionString = $"Data Source=192.168.100.36,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;"; //ye mera samsoong ka number hai
             //connectionString = $"Data Source=192.168.0.104,1433;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;"; //Manual IPv4
             //connectionString = $"Data Source=DESKTOP-M62686B\\SQLEXPRESS;Initial Catalog=Computer;User Id=Admin;Password=12345;Encrypt=False;"; //Sufiyan Local
         }
