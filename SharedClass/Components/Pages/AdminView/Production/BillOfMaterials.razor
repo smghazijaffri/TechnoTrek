@@ -76,11 +76,11 @@
 
         if (!string.IsNullOrWhiteSpace(SearchString))
         {
-            Elements = await db.QueryAsync<BOM>("SELECT * FROM BOM WHERE TYPE = 'Customer' AND IsActive = 'true' ORDER BY CAST(SUBSTRING(BOMID, 5, LEN(BOMID) - 5) AS INT)");
+            Elements = await db.QueryAsync<BOM>("SELECT * FROM BOM WHERE TYPE = 'Customer' AND IsActive = 'true' ORDER BY DocumentDate");
         }
         else
         {
-            Elements = await db.QueryAsync<BOM>("SELECT * FROM BOM ORDER BY CAST(SUBSTRING(BOMID, 5, LEN(BOMID) - 5) AS INT)");
+            Elements = await db.QueryAsync<BOM>("SELECT * FROM BOM ORDER BY DocumentDate");
         }
     }
 
