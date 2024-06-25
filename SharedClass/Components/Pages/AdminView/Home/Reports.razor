@@ -1,5 +1,6 @@
 ﻿@page "/reports"
 
+@using Microsoft.Maui.ApplicationModel;
 @inject SharedClass.Components.Data.Email EmailService
 
 @layout AdminLayout;
@@ -7,29 +8,58 @@
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager Navigation
 
-@if (string.IsNullOrEmpty(PdfDataUrl))
+<MudButton Variant="Variant.Outlined" OnClick="GenerateReport" StartIcon="@Icons.Material.Filled.FilePresent" Color="Color.Primary">Generate Report</MudButton>
+
+@if (!string.IsNullOrEmpty(PdfDataUrl))
 {
-    <p>Loading PDF...</p>
-}
-else
-{
-    <iframe src="@PdfDataUrl" class="m-2" style="max-width:100vw; height:100vh;"></iframe>
+    <iframe src="@PdfDataUrl" class="m-2" style="max-width:95vw; height:100vh;"></iframe>
 }
 
 @code {
+    bool isMobile = false;
+
+    string? DeviceType { get; set; }
     string? PdfDataUrl { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
+    }
+
+    public async void GenerateReport()
     {
         try
         {
             var pdfBytes = await EmailService.GetPdfAsync("RFQ-029");
-            PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+
+            if (isMobile)
+            {
+                await OpenPdfAsync(pdfBytes, "RFQ-029.pdf");
+            }
+            else
+            {
+                PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+            }
         }
         catch (Exception ex)
         {
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    private async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
+    {
+        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+        await File.WriteAllBytesAsync(filePath, pdfBytes);
+        await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
     }
 }
