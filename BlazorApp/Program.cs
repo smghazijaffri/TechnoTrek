@@ -14,7 +14,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();
-builder.Services.AddScoped<Email>();
 builder.Services.AddScoped<Stock>();
 builder.Services.AddScoped<Login>();
 builder.Services.AddScoped<Users>();
@@ -57,6 +56,7 @@ builder.Services.AddScoped<ExampleJsInterop>();
 builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
+builder.Services.AddScoped<SharedClass.Components.Data.Email>();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddMudServices();
 builder.Services.AddMudServices(config =>
