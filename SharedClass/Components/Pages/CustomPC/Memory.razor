@@ -75,13 +75,13 @@
 
     string? DeviceType { get; set; }
 
-    public int Ramquantity { get; set; } = 1;
+    int Ramquantity { get; set; } = 1;
 
-    private IEnumerable<ItemClass>? Memories;
+    IEnumerable<ItemClass>? Memories;
 
-    private Dictionary<string, int> quantities = new Dictionary<string, int>();
+    Dictionary<string, int> quantities = new Dictionary<string, int>();
 
-    private Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
+    Dictionary<string, decimal?> ItemRates = new Dictionary<string, decimal?>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -172,6 +172,7 @@
                                         await _protectedLocalStore.SetLocalAsync("Graphics Card", "");
 
                                         await _protectedLocalStore.SetLocalAsync("Memory", selectedMemory.ItemCode);
+                                        await _protectedLocalStore.SetLocalAsync("RamQuantity", Ramquantity);
 
                                         Snackbar.Clear();
                                         Snackbar.Add("Please reselect other components", Severity.Info);
