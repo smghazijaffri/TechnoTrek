@@ -52,12 +52,12 @@
 
     public string VendorName = "";
 
-    protected override async void OnInitialized()
+    protected override void OnInitialized()
     {
-        await LoadVendors();
+        LoadVendors();
     }
 
-    public async Task LoadVendors()
+    public void LoadVendors()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         { DropDownVendor.Options = db.Query<Option>("Select v.VendorID as Value, VendorName as Text, VendorType as Type from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList(); }

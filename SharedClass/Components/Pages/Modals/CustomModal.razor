@@ -6,7 +6,7 @@
 
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
-    style="display: @(IsVisible ? "block" : "none");">
+     style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
         <div class="modal-content" style="border-radius:20px;">
             <div class="modal-header">
@@ -49,7 +49,9 @@
             </div>
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel"
-                    aria-label="Close">Cancel</button>
+                        aria-label="Close">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -96,9 +98,23 @@
     [Parameter]
     public EventCallback OnClose { get; set; }
 
+    bool isMobile = false;
+
+    string? DeviceType { get; set; }
+
     protected override void OnInitialized()
     {
         _instance = this;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
     }
 
     private void ShowQuickView()
@@ -114,19 +130,28 @@
 
     private async void Cancel()
     {
-        CloseQuickView();
-        await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
-        if (Model.selectedComponentName == "Storage")
+        try
         {
-            await _protectedLocalStore.SetLocalAsync("StorageQuantity", 0);
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            CloseQuickView();
+            await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
+            if (Model.selectedComponentName == "Storage")
+            {
+                await _protectedLocalStore.SetLocalAsync("StorageQuantity", 0);
 
+            }
+            if (Model.selectedComponentName == "Memory")
+            {
+                await _protectedLocalStore.SetLocalAsync("RamQuantity", 0);
+            }
+            Snackbar.Clear();
+            Snackbar.Add("Cancelled", Severity.Error);
         }
-        if (Model.selectedComponentName == "Memory")
+        catch (Exception ex)
         {
-            await _protectedLocalStore.SetLocalAsync("RamQuantity", 0);
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
         }
-        Snackbar.Clear();
-        Snackbar.Add("Cancelled", Severity.Error);
     }
 
     private static CustomModal? _instance;

@@ -36,4 +36,11 @@
         public string? Password { get; set; }
         public string? Role { get; set; }
     }
+
+    public class Report
+    {
+        public int ReportID { get; set; }
+        public string? ReportName { get; set; }
+        public byte[]? ReportData { get; set; }
+    }
 }

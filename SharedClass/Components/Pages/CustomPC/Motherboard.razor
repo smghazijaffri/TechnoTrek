@@ -90,32 +90,51 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
+    }
+
     private async Task Select(ItemClass selectedMotherboard)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+        try
         {
-            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
             {
-                var components = new[] { "Memory", "Cooler", "Storage", "Processor", "Gaming Case", "Power Supply", "Graphics Card" };
-
-                foreach (var component in components)
+                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
                 {
-                    await _protectedLocalStore.SetLocalAsync(component, "");
+                    var components = new[] { "Memory", "Cooler", "Storage", "Processor", "Gaming Case", "Power Supply", "Graphics Card" };
+
+                    foreach (var component in components)
+                    {
+                        await _protectedLocalStore.SetLocalAsync(component, "");
+                    }
+
+                    Snackbar.Clear();
+                    Snackbar.Add("Please reselect other components", Severity.Info);
                 }
-
-                Snackbar.Clear();
-                Snackbar.Add("Please reselect other components", Severity.Info);
             }
-        }
 
-        await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
-        Snackbar.Add("Selection Saved", Severity.Success);
+            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+            Snackbar.Add("Selection Saved", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add($"Error selecting item: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task Order(ItemClass selected, int quantity)
     {
         try
         {
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
             bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
             List<Bulk> orderedItems = new List<Bulk>();
 
@@ -154,6 +173,7 @@
         }
         catch (Exception ex)
         {
+            if (isMobile) Vibration.Default.Vibrate();
             Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
         }
     }
@@ -168,16 +188,23 @@
     {
         try
         {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-            if (DeviceType == "Mobile") isMobile = true;
             if (!isMobile)
             {
                 await JSRuntime.InvokeVoidAsync("openInNewTab", link);
             }
             else
             {
-                bool? result = await DialogService.ShowMessageBox("Product Link", link);
-                StateHasChanged();
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                bool supportsUri = await Launcher.Default.CanOpenAsync(new Uri(link));
+
+                if (supportsUri)
+                {
+                    await Launcher.Default.OpenAsync(new Uri(link));
+                }
+                else
+                {
+                    Snackbar.Add("Can't Open Link", Severity.Error);
+                }
             }
 
         }

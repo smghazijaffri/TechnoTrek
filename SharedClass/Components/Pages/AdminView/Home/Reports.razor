@@ -1,18 +1,65 @@
 ﻿@page "/reports"
 
-@using Microsoft.Maui.ApplicationModel;
 @inject SharedClass.Components.Data.Email EmailService
 
 @layout AdminLayout;
+@inject Report reports;
+@inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager Navigation
 
-<MudButton Variant="Variant.Outlined" OnClick="GenerateReport" StartIcon="@Icons.Material.Filled.FilePresent" Color="Color.Primary">Generate Report</MudButton>
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>Reports</h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <MudButton Variant="Variant.Outlined" OnClick="GenerateReport" StartIcon="@Icons.Material.Filled.FilePresent" Color="Color.Primary">Generate Report</MudButton>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Report</label>
+            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownReports.CloseDropdown(e)">
+                <input type="text" id="Item" @onclick="() => DropDownReports.ToggleDropdown()" @bind="reports.ReportName"
+                       placeholder="Select a Report" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterReportOptions(e)" />
+                <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownReports.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                    aria-labelledby="dropdownMenuButton">
+                    <li>
+                        @if (DropDownReports.ListItems[0].FilteredOptions != null)
+                        {
+                            @foreach (var option in DropDownReports.ListItems[0].FilteredOptions)
+                            {
+                                <hr class="m-1 border-primary" />
+                                <a class="dropdown-item" @onclick="() => SelectReportOption(option)">@option.Text</a>
+                                <hr class="m-1 border-primary" />
+                            }
+                        }
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">From</label>
+            <input type="date" @bind="@From" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">To</label>
+            <input type="date" @bind="@To" class="form-control">
+        </div>
+    </form>
+</div>
+
 
 @if (!string.IsNullOrEmpty(PdfDataUrl))
 {
-    <iframe src="@PdfDataUrl" class="m-2" style="max-width:95vw; height:100vh;"></iframe>
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <div class="g-3">
+            <iframe src="@PdfDataUrl" class="m-2" style="max-width:100vw; height:100vh;"></iframe>
+        </div>
+    </div>
 }
 
 @code {
@@ -20,6 +67,19 @@
 
     string? DeviceType { get; set; }
     string? PdfDataUrl { get; set; }
+
+    DateTime From { get; set; }
+    DateTime To { get; set; }
+
+    SingleDropDown DropDownReports = new SingleDropDown();
+
+    protected override void OnInitialized()
+    {
+        From = DateTime.Today;
+        To = DateTime.Today;
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        DropDownReports.Options = db.Query<Option>("Select ReportID as Value, ReportName as Text from Reports").ToList();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -31,6 +91,26 @@
         StateHasChanged();
     }
 
+    public void FilterReportOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownReports.FilterOptions(e);
+        StateHasChanged();
+    }
+
+    private void SelectReportOption(Option options)
+    {
+        bool result = DropDownReports.SelectOption(options);
+        if (result == false)
+        {
+            reports.ReportName = options.Text;
+            reports.ReportID = int.Parse(options.Value);
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                reports = db.QueryFirstOrDefault<Report>("Select * from Reports where ReportID = @ReportID", new { ReportID = options.Value });
+            }
+        }
+    }
+
     public async void GenerateReport()
     {
         try
@@ -39,6 +119,7 @@
 
             if (isMobile)
             {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
                 await OpenPdfAsync(pdfBytes, "RFQ-029.pdf");
             }
             else

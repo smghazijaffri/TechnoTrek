@@ -141,10 +141,18 @@
             }
             else
             {
-                bool? result = await DialogService.ShowMessageBox("Product Link", link);
-                StateHasChanged();
-            }
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                bool supportsUri = await Launcher.Default.CanOpenAsync(new Uri(link));
 
+                if (supportsUri)
+                {
+                    await Launcher.Default.OpenAsync(new Uri(link));
+                }
+                else
+                {
+                    Snackbar.Add("Can't Open Link", Severity.Error);
+                }
+            }
         }
         catch (Exception ex)
         {

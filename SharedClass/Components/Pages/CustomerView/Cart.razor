@@ -136,19 +136,32 @@
         public int Quantity { get; set; }
     }
 
-    public string? Name { get; set; }
-    public string? Contact { get; set; }
-    public string? Address { get; set; }
+    bool isMobile = false;
 
-    private int totalAmount { get; set; } = 0;
+    string? Name { get; set; }
+    string? Contact { get; set; }
+    string? Address { get; set; }
+    string? DeviceType { get; set; }
 
-    private List<BulkItem> items = new List<BulkItem>();
+    int totalAmount { get; set; } = 0;
+
+    List<BulkItem> items = new List<BulkItem>();
 
     string[] itemNames = new[] { "Cart" };
 
     protected async override void OnInitialized()
     {
         await LoadItems();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
     }
 
     private async Task LoadItems()
@@ -240,12 +253,14 @@
         {
             try
             {
+                if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
                 items.RemoveAll(item => item.Code == ItemCode);
                 var serializedItems = JsonSerializer.Serialize(items);
                 await _protectedLocalStore.SetLocalAsync(Key, serializedItems);
             }
             catch (Exception ex)
             {
+                if (isMobile) Vibration.Default.Vibrate();
                 Snackbar.Add(ex.Message, Severity.Error);
             }
 
@@ -257,6 +272,7 @@
     {
         try
         {
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
             if (AppState.CartItemCount > 0)
             {
                 foreach (var itemName in itemNames)
@@ -283,6 +299,7 @@
         }
         catch (Exception ex)
         {
+            if (isMobile) Vibration.Default.Vibrate();
             Snackbar.Add($"Error during checkout: {ex.Message}", Severity.Error);
         }
     }

@@ -60,43 +60,66 @@
     [Parameter]
     public EventCallback<BuildPcViewModel> OnSaveChanges { get; set; }
 
+    bool isMobile = false;
+
+    string? DeviceType { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
+    }
+
     private async Task SubmitForm()
     {
-        bool check = IsVisible;
-        if (string.IsNullOrWhiteSpace(model.Name))
+        try
         {
-            Snackbar.Clear();
-            Snackbar.Add("Name not valid", Severity.Error);
-            return;
-        }
-        else if (string.IsNullOrWhiteSpace(model.Contact) || (model.Contact).Length != 11)
-        {
-            Snackbar.Clear();
-            Snackbar.Add("Contact not valid", Severity.Error);
-            return;
-        }
-        else
-        {
-            Customer customer = new Customer();
-            customer.Name = model.Name;
-            customer.Contact = model.Contact;
-            var customerData = crud.CRD(customer, "CreateCustomer");
-            if (customerData.Contains("Failed"))
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            bool check = IsVisible;
+            if (string.IsNullOrWhiteSpace(model.Name))
             {
                 Snackbar.Clear();
-                Snackbar.Add(customerData, Severity.Error);
+                Snackbar.Add("Name not valid", Severity.Error);
+                return;
+            }
+            else if (string.IsNullOrWhiteSpace(model.Contact) || (model.Contact).Length != 11)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Contact not valid", Severity.Error);
+                return;
             }
             else
             {
-                await OnSaveChanges.InvokeAsync(model);
-                customer.CustomerID = customerData;
-                await _protectedLocalStore.SetLocalAsync("customerID", customer.CustomerID);
-                await _protectedLocalStore.SetLocalAsync("customerName", customer.Name);
-                await _protectedLocalStore.SetLocalAsync("customerContact", customer.Contact);
-                Snackbar.Clear();
-                Snackbar.Add("Weclome " + customer.Name, Severity.Success);
-                CloseModal();
+                Customer customer = new Customer();
+                customer.Name = model.Name;
+                customer.Contact = model.Contact;
+                var customerData = crud.CRD(customer, "CreateCustomer");
+                if (customerData.Contains("Failed"))
+                {
+                    Snackbar.Clear();
+                    Snackbar.Add(customerData, Severity.Error);
+                }
+                else
+                {
+                    await OnSaveChanges.InvokeAsync(model);
+                    customer.CustomerID = customerData;
+                    await _protectedLocalStore.SetLocalAsync("customerID", customer.CustomerID);
+                    await _protectedLocalStore.SetLocalAsync("customerName", customer.Name);
+                    await _protectedLocalStore.SetLocalAsync("customerContact", customer.Contact);
+                    Snackbar.Clear();
+                    Snackbar.Add("Weclome " + customer.Name, Severity.Success);
+                    CloseModal();
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
         }
     }
 

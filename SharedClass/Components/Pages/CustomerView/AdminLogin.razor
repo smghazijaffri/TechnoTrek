@@ -45,7 +45,7 @@
         var (IsLoginSuccessful, Role) = await login.Access(Username, Password, JSRuntime, Snackbar);
         if (IsLoginSuccessful)
         {
-            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
             await _protectedLocalStore.SetLocalAsync("Authorized", true);
             await _protectedLocalStore.SetLocalAsync("Username", Username);
             await _protectedLocalStore.SetLocalAsync("Role", Role);
@@ -58,7 +58,7 @@
         {
             Snackbar.Clear();
             Snackbar.Add("Login failed. Please check your credentials.", Severity.Error);
-            if (isMobile) Vibration.Default.Vibrate(7); ;
+            if (isMobile) Vibration.Default.Vibrate();
         }
     }
 }

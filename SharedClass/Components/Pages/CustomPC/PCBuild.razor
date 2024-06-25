@@ -310,6 +310,10 @@
 
     BuildPcViewModel model = new BuildPcViewModel();
 
+    bool isMobile = false;
+
+    string? DeviceType { get; set; }
+
     bool isModalOpen = false;
     private bool IsVisible { get; set; }
     private bool isQuickViewVisible = false;
@@ -402,6 +406,16 @@
         totalPrice = 0;
         totalPrice = MotherboardPrice + ProcessorPrice + MemoryPrice + StoragePrice + GraphicsPrice + SupplyPrice + CasePrice + CoolerPrice;
 
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
         StateHasChanged();
     }
 
@@ -525,6 +539,7 @@
     {
         try
         {
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 BOM bom = new BOM();
