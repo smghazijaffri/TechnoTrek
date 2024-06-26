@@ -818,7 +818,7 @@
                 Snackbar.Add("Downloading Report", Severity.Info);
                 var base64Pdf = Convert.ToBase64String(pdfBytes);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
-                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, "RFQ-029.pdf");
+                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{rfq.RFQNumber}.pdf");
                 Snackbar.Add("Report Downloaded", Severity.Success);
             }
         }
