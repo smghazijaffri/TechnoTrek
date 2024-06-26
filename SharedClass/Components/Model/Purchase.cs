@@ -229,6 +229,7 @@
 
     public class RFQItemReport
     {
+        public string No { get; set; }
         public string RFQNumber { get; set; }
         public string Item { get; set; }
         public int Quantity { get; set; }

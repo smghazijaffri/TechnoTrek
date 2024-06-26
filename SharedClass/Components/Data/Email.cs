@@ -63,7 +63,7 @@ namespace SharedClass.Components.Data
             ReportWriter writer = new(inputStream);
 
             var rfqItems = (db.Query<RFQItemReport>(
-                "SELECT r.RFQNumber, ItemName AS Item, Quantity, UOMName AS UOM, FORMAT(RequiredBy, 'yyyy-MM-dd') AS RequiredBy, FORMAT(rq.DocumentDate, 'yyyy-MM-dd') AS DocumentDate " +
+                "SELECT ROW_NUMBER() OVER (ORDER BY i.ItemName) AS Row, r.RFQNumber, ItemName AS Item, Quantity, UOMName AS UOM, FORMAT(RequiredBy, 'yyyy-MM-dd') AS RequiredBy, FORMAT(rq.DocumentDate, 'yyyy-MM-dd') AS DocumentDate " +
                 "FROM RFQ_Items r INNER JOIN Items i ON r.Item = i.ItemCode INNER JOIN UOM u ON r.UOM = u.UOMID INNER JOIN RequestForQuotation rq ON r.RFQNumber = rq.RFQNumber " +
                 "WHERE r.RFQNumber = @RFQNumber", new { RFQNumber })).ToList();
             writer.DataSources.Add(new ReportDataSource("DataSet1", rfqItems));
