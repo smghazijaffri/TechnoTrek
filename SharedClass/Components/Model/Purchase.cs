@@ -248,6 +248,8 @@
         public string? Item { get; set; }
         public string? Vendor { get; set; }
         public string? VendorAddress { get; set; }
+        public string? VendorContact { get; set; }
+        public string? VendorEmail { get; set; }
         public string? UOM { get; set; }
         public string? DueDate { get; set; }
         public string? TotalQuantity { get; set; }

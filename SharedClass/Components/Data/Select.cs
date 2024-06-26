@@ -227,7 +227,7 @@ namespace SharedClass.Components.Data
                     ORDER BY 
                         id.Row;", new { PurchaseInvoiceID = ID }).ToList();
 
-                writer.DataSources.Add(new ReportDataSource("PurchaseInvoiceReport", prItems));
+                writer.DataSources.Add(new ReportDataSource("DataSet1", prItems));
             }
 
             using MemoryStream memoryStream = new();
