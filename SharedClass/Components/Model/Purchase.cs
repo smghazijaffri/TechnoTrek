@@ -234,5 +234,6 @@
         public int Quantity { get; set; }
         public string UOM { get; set; }
         public string RequiredBy { get; set; }
+        public string DocumentDate { get; set; }
     }
 }
