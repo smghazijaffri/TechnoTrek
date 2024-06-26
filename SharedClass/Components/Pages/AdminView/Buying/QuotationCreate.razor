@@ -7,6 +7,7 @@
 @inject Connection con;
 @inject RFQ_Items RFQItem;
 @inject ISnackbar Snackbar;
+@inject Email EmailService;
 @inject IJSRuntime JSRuntime;
 @inject RequestForQuotation rfq;
 @inject IDialogService DialogService;
@@ -44,6 +45,9 @@
         }
         @if (IsApproved && !IsCancelled)
         {
+            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
+                <i class="bi bi-file-earmark-arrow-down"></i>
+            </button>
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
@@ -100,8 +104,8 @@
                     var rowIndex = index;
                     DropDownVendor.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
                                 <input type="checkbox" class="me-1" @bind="vendor.Selected" hidden="@IsApproved" />
                                 @(index + 1)
                             </div>
@@ -130,7 +134,7 @@
                         <td><input type="text" class="form-control" @bind="VendorInfo[rowIndex].Email" readonly /></td>
                         <td hidden="@isMobile" style="vertical-align: middle;">
                             <div style="display: flex; align-items: center;">
-                                <input type="checkbox" class="me-1" @bind="vendor.SendEmail" readonly="@IsApproved" />
+                                <input type="checkbox" class="me-1" @bind="vendor.SendEmail" hidden="@ReadonlyHidden" />
                             </div>
                         </td>
                     </tr>
@@ -175,8 +179,8 @@
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
                                 @(index + 1)
                             </div>
@@ -796,6 +800,43 @@
     {
         vendorSelectionComponent.LoadVendors();
         IsVisible = true;
+    }
+
+    public async void DownloadReport()
+    {
+        try
+        {
+            var pdfBytes = EmailService.GetPdfAsync(rfq.RFQNumber);
+
+            if (isMobile)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                await OpenPdfAsync(pdfBytes, $"{rfq.RFQNumber}.pdf");
+            }
+            else
+            {
+                Snackbar.Add("Downloading Report", Severity.Info);
+                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
+                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, "RFQ-029.pdf");
+                Snackbar.Add("Report Downloaded", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
+    {
+        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+        await File.WriteAllBytesAsync(filePath, pdfBytes);
+        await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
     }
 
     public void NavigateUOM()

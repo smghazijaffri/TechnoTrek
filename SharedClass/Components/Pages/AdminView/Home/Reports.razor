@@ -1,10 +1,10 @@
 ﻿@page "/reports"
 
-@inject SharedClass.Components.Data.Email EmailService
 
 @layout AdminLayout;
 @inject Report reports;
 @inject Connection con;
+@inject Email EmailService;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager Navigation

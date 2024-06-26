@@ -29,6 +29,16 @@
         <a class="dismiss">🗙</a>
     </div>
     <script>
+        function downloadFile(dataUrl, fileName) {
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+    <script>
         window.detectDeviceType = () => {
             const userAgent = navigator.userAgent;
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
