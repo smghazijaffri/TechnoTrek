@@ -229,6 +229,41 @@ namespace SharedClass.Components.Data
 
                 writer.DataSources.Add(new ReportDataSource("DataSet1", prItems));
             }
+            else if (ReportName == "SalesInvoice")
+            {
+                var siItems = con.Query<SalesInvoiceReport>(@"SELECT
+                    ROW_NUMBER() OVER (ORDER BY i.ItemName) AS Row,
+                        SI.SalesInvoiceID,
+                        C.Name AS CustomerName,
+                        C.Address,
+                        C.Contact,
+                        I.ItemName,
+	                    SII.Rate,
+	                    SII.UOM,
+	                    SII.Amount,
+	                    SII.Quantity,
+                        SI.TotalAmount,
+                        SI.TotalQuantity,
+                        CASE 
+                            WHEN SI.IsPartiallyPaid = 'true' THEN SI.TotalAmount / 2 
+                            ELSE 0 
+                        END AS OutstandingAmount,
+                        SI.IsPartiallyPaid,
+                        FORMAT(SI.DueDate, 'yyyy-MM-dd') AS DueDate,
+	                    FORMAT(SI.DocumentDate, 'yyyy-MM-dd') AS DocumentDate
+                    FROM 
+                        SaleInvoice SI
+                    JOIN 
+                        SI_Item SII ON SI.SalesInvoiceID = SII.SalesInvoiceID
+                    JOIN 
+                        Customer C ON SI.CustomerID = C.CustomerID
+                    JOIN 
+                        Items I ON SII.Item = I.ItemCode
+                    WHERE
+	                    SI.SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = ID }).ToList();
+
+                writer.DataSources.Add(new ReportDataSource("DataSet1", siItems));
+            }
 
             using MemoryStream memoryStream = new();
             writer.Save(memoryStream, WriterFormat.PDF);

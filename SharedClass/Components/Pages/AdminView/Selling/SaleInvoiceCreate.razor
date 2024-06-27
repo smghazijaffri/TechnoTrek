@@ -3,6 +3,7 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
+@inject Select select;
 @inject Connection con;
 @inject Customer customer;
 @inject ISnackbar Snackbar;
@@ -61,6 +62,9 @@
         }
         @if (Paid || Overdue && !IsCancelled)
         {
+            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
+                <i class="bi bi-file-earmark-arrow-down"></i>
+            </button>
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
             </button>
@@ -684,6 +688,43 @@
                 HandleFormInput();
             }
         }
+    }
+
+    public async void DownloadReport()
+    {
+        Snackbar.Add("Generating Report", Severity.Info);
+        try
+        {
+            var pdfBytes = select.GetPdfAsync("SalesInvoice", salesinvoice.SalesInvoiceID);
+
+            if (isMobile)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                await OpenPdfAsync(pdfBytes, $"{salesinvoice.SalesInvoiceID}.pdf");
+            }
+            else
+            {
+                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
+                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{salesinvoice.SalesInvoiceID}.pdf");
+                Snackbar.Add("Report Downloaded", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
+    {
+        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+        await File.WriteAllBytesAsync(filePath, pdfBytes);
+        await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
     }
 
     private async Task OpenDialog()

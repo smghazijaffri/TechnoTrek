@@ -808,6 +808,7 @@
 
     public async void DownloadReport()
     {
+        Snackbar.Add("Generating Report", Severity.Info);
         try
         {
             var pdfBytes = select.GetPdfAsync("PurchaseInvoice", purchase.PurchaseInvoiceID);
@@ -819,7 +820,6 @@
             }
             else
             {
-                Snackbar.Add("Downloading Report", Severity.Info);
                 var base64Pdf = Convert.ToBase64String(pdfBytes);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
                 await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{purchase.PurchaseInvoiceID}.pdf");

@@ -82,4 +82,25 @@
         public int Rate { get; set; }
         public int Amount { get; set; }
     }
+
+    public class SalesInvoiceReport
+    {
+        public string? Row { get; set; }
+        public string? SalesInvoiceID { get; set; }
+        public string? CustomerName { get; set; }
+        public string? Address { get; set; }
+        public string? Contact { get; set; }
+        public string? ItemName { get; set; }
+        public string? Rate { get; set; }
+        public string? UOM { get; set; }
+        public string? Amount { get; set; }
+        public string? Quantity { get; set; }
+        public string? TotalAmount { get; set; }
+        public string? TotalQuantity { get; set; }
+        public string? OutstandingAmount { get; set; }
+        public string? IsPartiallyPaid { get; set; }
+        public string? IsReturn { get; set; }
+        public string? DueDate { get; set; }
+        public string? DocumentDate { get; set; }
+    }
 }
