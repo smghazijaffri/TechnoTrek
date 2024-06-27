@@ -145,13 +145,13 @@ namespace SharedClass.Components.Data
 
         }
 
-        public byte[] GetPdfAsync(string ReportName, string ID)
+        public byte[] GetPdfAsync(string ReportName, string? ID = null)
         {
             byte[] rdlData = con.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName }) ?? throw new Exception("Report not found in the database.");
             using MemoryStream inputStream = new(rdlData);
             ReportWriter writer = new(inputStream);
 
-            if (ReportName == "PurchaseInvoice")
+            if (ReportName == "Purchase Invoice")
             {
                 var prItems = con.Query<PurchaseInvoiceReport>(@"
                     WITH RejectedQuantities AS (
@@ -227,7 +227,7 @@ namespace SharedClass.Components.Data
 
                 writer.DataSources.Add(new ReportDataSource("DataSet1", prItems));
             }
-            else if (ReportName == "SalesInvoice")
+            else if (ReportName == "Sales Invoice")
             {
                 var siItems = con.Query<SalesInvoiceReport>(@"SELECT
                     ROW_NUMBER() OVER (ORDER BY i.ItemName) AS Row,
@@ -261,6 +261,26 @@ namespace SharedClass.Components.Data
 	                    SI.SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = ID }).ToList();
 
                 writer.DataSources.Add(new ReportDataSource("DataSet1", siItems));
+            }
+            else if (ReportName == "Inventory Report")
+            {
+                var inventory = con.Query<InventoryReport>(@"SELECT 
+                        I.ItemCode,
+                        I.ItemName,
+                        I.ItemType,
+                        S.Quantity,
+                        S.Rate,
+                        FORMAT(S.CreationDate, 'yyyy-MM-dd') AS StockUpdated,
+                        S.Quantity * S.Rate AS TotalValue,
+                        FORMAT(GETDATE(), 'yyyy-MM-dd') AS ReportGenerated
+                    FROM 
+                        Items I
+                    LEFT JOIN 
+                        Stock S ON I.ItemCode = S.ItemID
+                    ORDER BY 
+                        I.ItemCode;").ToList();
+
+                writer.DataSources.Add(new ReportDataSource("DataSet1", inventory));
             }
 
             using MemoryStream memoryStream = new();

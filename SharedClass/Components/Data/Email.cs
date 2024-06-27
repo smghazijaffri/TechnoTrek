@@ -58,7 +58,7 @@ namespace SharedClass.Components.Data
         {
             using SqlConnection db = new(con.connectionString);
 
-            byte[] rdlData = db.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName = "RFQ" }) ?? throw new Exception("Report not found in the database.");
+            byte[] rdlData = db.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName = "Request for Quotation" }) ?? throw new Exception("Report not found in the database.");
             using MemoryStream inputStream = new(rdlData);
             ReportWriter writer = new(inputStream);
 

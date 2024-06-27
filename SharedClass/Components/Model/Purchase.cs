@@ -257,4 +257,17 @@
         public string? DocumentDate { get; set; }
         public string? RejectedQuantity { get; set; }
     }
+
+    public class InventoryReport
+    {
+        public string? ItemCode { get; set; }
+        public string? ItemName { get; set; }
+        public string? ItemType { get; set; }
+        public string? Quantity { get; set; }
+        public string? Rate { get; set; }
+        public string? StockUpdated { get; set; }
+        public string? TotalValue { get; set; }
+        public string? ReportGenerated { get; set; }
+    }
+
 }

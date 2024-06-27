@@ -1,13 +1,15 @@
 ﻿@page "/reports"
 
-
 @layout AdminLayout;
+@inject Select select;
 @inject Report reports;
 @inject Connection con;
 @inject Email EmailService;
 @inject ISnackbar Snackbar;
+@inject Email EmailService;
 @inject IJSRuntime JSRuntime;
-@inject NavigationManager Navigation
+@inject NavigationManager Navigation;
+@inject ReportParameters reportparameters;
 
 <div class="row p-3 align-items-center">
     <div class="col-6">
@@ -21,34 +23,39 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <form class="row g-3" autocomplete="off">
         <div class="col-md-6">
-            <label class="form-label">Report</label>
-            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownReports.CloseDropdown(e)">
-                <input type="text" id="Item" @onclick="() => DropDownReports.ToggleDropdown()" @bind="reports.ReportName"
-                       placeholder="Select a Report" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterReportOptions(e)" />
-                <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownReports.ListItems[0].IsDropdownOpen ? "block" : "none");"
-                    aria-labelledby="dropdownMenuButton">
-                    <li>
-                        @if (DropDownReports.ListItems[0].FilteredOptions != null)
-                        {
-                            @foreach (var option in DropDownReports.ListItems[0].FilteredOptions)
-                            {
-                                <hr class="m-1 border-primary" />
-                                <a class="dropdown-item" @onclick="() => SelectReportOption(option)">@option.Text</a>
-                                <hr class="m-1 border-primary" />
-                            }
-                        }
-                    </li>
-                </ul>
+            <label class="form-label">Select Reports</label>
+            <select class="form-select" @onchange="OnReportChange">
+                <option selected>Select a Report</option>
+                @foreach (var reports in Elements)
+                {
+                    <option value="@reports.ReportName">@reports.ReportName</option>
+                }
+            </select>
+        </div>
+        @if (dateFilter)
+        {
+            <div class="col-md-6">
+                <label class="form-label">From</label>
+                <input type="date" @bind="@From" class="form-control">
             </div>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">From</label>
-            <input type="date" @bind="@From" class="form-control">
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">To</label>
-            <input type="date" @bind="@To" class="form-control">
-        </div>
+            <div class="col-md-6">
+                <label class="form-label">To</label>
+                <input type="date" @bind="@To" class="form-control">
+            </div>
+        }
+        @if (invoice)
+        {
+            <div class="col-md-6">
+                <label class="form-label">ID</label>
+                <select class="form-select" @bind="@reportparameters.InvoiceID">
+                    <option selected>Select an ID</option>
+                    @foreach (var reports in Parameters)
+                    {
+                        <option value="@reports.InvoiceID">@reports.InvoiceID</option>
+                    }
+                </select>
+            </div>
+        }
     </form>
 </div>
 
@@ -63,7 +70,10 @@
 }
 
 @code {
+    bool invoice = false;
     bool isMobile = false;
+    bool noFilter = false;
+    bool dateFilter = false;
 
     string? DeviceType { get; set; }
     string? PdfDataUrl { get; set; }
@@ -71,14 +81,15 @@
     DateTime From { get; set; }
     DateTime To { get; set; }
 
-    SingleDropDown DropDownReports = new SingleDropDown();
+    private IEnumerable<Report> Elements = new List<Report>();
+    private IEnumerable<ReportParameters> Parameters = new List<ReportParameters>();
 
     protected override void OnInitialized()
     {
         From = DateTime.Today;
         To = DateTime.Today;
         using SqlConnection db = new SqlConnection(con.connectionString);
-        DropDownReports.Options = db.Query<Option>("Select ReportID as Value, ReportName as Text from Reports").ToList();
+        Elements = db.Query<Report>("Select * from Reports").ToList();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -91,40 +102,87 @@
         StateHasChanged();
     }
 
-    public void FilterReportOptions(ChangeEventArgs e)
+    private void OnReportChange(ChangeEventArgs e)
     {
-        bool result = DropDownReports.FilterOptions(e);
-        StateHasChanged();
-    }
+        reports.ReportName = e.Value?.ToString();
 
-    private void SelectReportOption(Option options)
-    {
-        bool result = DropDownReports.SelectOption(options);
-        if (result == false)
+        PdfDataUrl = "";
+
+        reportparameters.InvoiceID = "Select an ID";
+
+        if (reports.ReportName == "Purchase Invoice" || reports.ReportName == "Sales Invoice" || reports.ReportName == "Request for Quotation")
         {
-            reports.ReportName = options.Text;
-            reports.ReportID = int.Parse(options.Value);
-            using (SqlConnection db = new SqlConnection(con.connectionString))
-            {
-                reports = db.QueryFirstOrDefault<Report>("Select * from Reports where ReportID = @ReportID", new { ReportID = options.Value });
-            }
+            invoice = true;
+            noFilter = false;
         }
+        else if (reports.ReportName == "Inventory Report")
+        {
+            noFilter = true;
+            invoice = false;
+        }
+
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (reports.ReportName == "Purchase Invoice") Parameters = db.Query<ReportParameters>("Select PurchaseInvoiceID AS InvoiceID from PurchaseInvoice").ToList();
+        else if (reports.ReportName == "Sales Invoice") Parameters = db.Query<ReportParameters>("Select SalesInvoiceID AS InvoiceID from SaleInvoice").ToList();
+        else if (reports.ReportName == "Request for Quotation") Parameters = db.Query<ReportParameters>("Select RFQNumber AS InvoiceID from RequestForQuotation").ToList();
+
+        StateHasChanged();
     }
 
     public async void GenerateReport()
     {
         try
         {
-            var pdfBytes = EmailService.GetPdfAsync("RFQ-029");
+            Snackbar.Clear();
+            if (string.IsNullOrEmpty(reports.ReportName))
+            {
+                if (isMobile) Vibration.Default.Vibrate();
+                Snackbar.Add("Please Select a Report", Severity.Error);
+                return;
+            }
+
+            if (invoice)
+            {
+                if (string.IsNullOrEmpty(reportparameters.InvoiceID) || reportparameters.InvoiceID == "Select an ID")
+                {
+                    if (isMobile) Vibration.Default.Vibrate();
+                    Snackbar.Add("Please Select an ID", Severity.Error);
+                    return;
+                }
+            }
+
+            Snackbar.Add("Generating Report", Severity.Info);
+
+            byte[] pdfBytes;
+
+            if (!string.IsNullOrEmpty(reportparameters.InvoiceID))
+            {
+                if (reports.ReportName == "Request for Quotation")
+                {
+                    pdfBytes = EmailService.GetPdfAsync(reportparameters.InvoiceID);
+                }
+                else
+                {
+                    pdfBytes = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
+                }
+            }
+            else
+            {
+                pdfBytes = select.GetPdfAsync(reports.ReportName);
+            }
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await OpenPdfAsync(pdfBytes, "RFQ-029.pdf");
+                await OpenPdfAsync(pdfBytes, $"{reports.ReportName}.pdf");
             }
             else
             {
+                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
                 PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+                Snackbar.Add("Report Created", Severity.Success);
             }
         }
         catch (Exception ex)

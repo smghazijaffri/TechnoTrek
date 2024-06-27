@@ -695,7 +695,7 @@
         Snackbar.Add("Generating Report", Severity.Info);
         try
         {
-            var pdfBytes = select.GetPdfAsync("SalesInvoice", salesinvoice.SalesInvoiceID);
+            var pdfBytes = select.GetPdfAsync("Sales Invoice", salesinvoice.SalesInvoiceID);
 
             if (isMobile)
             {

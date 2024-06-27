@@ -43,4 +43,9 @@
         public string? ReportName { get; set; }
         public byte[]? ReportData { get; set; }
     }
+
+    public class ReportParameters
+    {
+        public string? InvoiceID { get; set; }
+    }
 }

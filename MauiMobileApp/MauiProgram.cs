@@ -66,6 +66,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<ProductionOrder>();
             builder.Services.AddScoped<PurchaseInvoice>();
             builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddScoped<ReportParameters>();
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseRequisition>();
