@@ -239,9 +239,9 @@
 
             if (cartExists)
             {
-                var result = await _protectedLocalStoreData.SelectcalAsync<string>("Cart");
+                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
 
-                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
+                if (!string.IsNullOrEmpty(result) && Data.Select.IsValidJson(result))
                 {
                     orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
                 }
