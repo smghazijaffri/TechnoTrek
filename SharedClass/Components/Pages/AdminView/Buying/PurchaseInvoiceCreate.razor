@@ -811,7 +811,9 @@
         Snackbar.Add("Generating Report", Severity.Info);
         try
         {
-            var pdfBytes = select.GetPdfAsync("Purchase Invoice", purchase.PurchaseInvoiceID);
+            var PdfByte = select.GetPdfAsync("Purchase Invoice", purchase.PurchaseInvoiceID);
+
+            var pdfBytes = Select.ExtractOddPages(PdfByte);
 
             if (isMobile)
             {

@@ -5,6 +5,7 @@ using BoldReports.Web;
 using BoldReports.Writer;
 using System.Data.SqlClient;
 using SharedClass.Components.Model;
+using PdfSharpCore.Pdf;
 
 namespace SharedClass.Components.Data
 {
@@ -39,7 +40,10 @@ namespace SharedClass.Components.Data
                 message.Subject = sendModel.Subject;
                 message.Body = sendModel.Body;
                 message.IsBodyHtml = true;
-                byte[] attachmentBytes = GetPdfAsync(sendModel.RFQNumber);
+                byte[] pdfBytes = GetPdfAsync(sendModel.RFQNumber);
+
+                var attachmentBytes = Select.ExtractOddPages(pdfBytes);
+
                 var attachment = new Attachment(new MemoryStream(attachmentBytes), "Request for Quotation.pdf");
                 message.Attachments.Add(attachment);
 

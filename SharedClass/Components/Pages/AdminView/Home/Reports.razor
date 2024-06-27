@@ -155,21 +155,28 @@
             Snackbar.Add("Generating Report", Severity.Info);
 
             byte[] pdfBytes;
+            byte[] PdfByte;
 
             if (!string.IsNullOrEmpty(reportparameters.InvoiceID))
             {
                 if (reports.ReportName == "Request for Quotation")
                 {
-                    pdfBytes = EmailService.GetPdfAsync(reportparameters.InvoiceID);
+                    PdfByte = EmailService.GetPdfAsync(reportparameters.InvoiceID);
+
+                    pdfBytes = Select.ExtractOddPages(PdfByte);
                 }
                 else
                 {
-                    pdfBytes = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
+                    PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
+
+                    pdfBytes = Select.ExtractOddPages(PdfByte);
                 }
             }
             else
             {
-                pdfBytes = select.GetPdfAsync(reports.ReportName);
+                PdfByte = select.GetPdfAsync(reports.ReportName);
+
+                pdfBytes = Select.ExtractOddPages(PdfByte);
             }
 
             if (isMobile)

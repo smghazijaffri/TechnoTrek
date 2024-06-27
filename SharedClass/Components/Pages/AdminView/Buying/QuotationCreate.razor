@@ -806,7 +806,9 @@
     {
         try
         {
-            var pdfBytes = EmailService.GetPdfAsync(rfq.RFQNumber);
+            var PdfByte = EmailService.GetPdfAsync(rfq.RFQNumber);
+
+            var pdfBytes = Select.ExtractOddPages(PdfByte);
 
             if (isMobile)
             {

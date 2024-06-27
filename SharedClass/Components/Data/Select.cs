@@ -1,11 +1,13 @@
 ﻿using SharedClass.Components.Model;
 using Microsoft.Data.SqlClient;
+using PdfSharpCore.Pdf.IO;
+using BoldReports.Writer;
+using System.Reflection;
+using PdfSharpCore.Pdf;
 using System.Text.Json;
+using BoldReports.Web;
 using System.Data;
 using Dapper;
-using System.Reflection;
-using BoldReports.Writer;
-using BoldReports.Web;
 
 namespace SharedClass.Components.Data
 {
@@ -287,6 +289,25 @@ namespace SharedClass.Components.Data
             writer.Save(memoryStream, WriterFormat.PDF);
 
             return memoryStream.ToArray();
+        }
+
+        public static byte[] ExtractOddPages(byte[] pdfBytes)
+        {
+            using var inputDocument = PdfReader.Open(new MemoryStream(pdfBytes), PdfDocumentOpenMode.Import);
+            using var outputDocument = new PdfDocument();
+
+            for (int i = 0; i < inputDocument.PageCount; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    outputDocument.AddPage(inputDocument.Pages[i]);
+                }
+            }
+
+            using var outputStream = new MemoryStream();
+
+            outputDocument.Save(outputStream);
+            return outputStream.ToArray();
         }
     }
 }
