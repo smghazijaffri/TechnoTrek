@@ -68,7 +68,7 @@ namespace SharedClass.Components.Data
             return await con.QueryAsync<Stock>(query, new { ItemID });
         }
 
-        public bool IsValidJson(string input)
+        public static bool IsValidJson(string input)
         {
             input = input.Trim();
             if ((input.StartsWith("{") && input.EndsWith("}")) ||
@@ -86,20 +86,18 @@ namespace SharedClass.Components.Data
             }
             return false;
         }
+
         public static DataTable ConvertToDataTable<T>(List<T> list)
         {
             DataTable table = new DataTable();
 
-            // Get the properties of the type
             PropertyInfo[] properties = typeof(T).GetProperties();
 
-            // Create the columns in the DataTable based on the properties
             foreach (PropertyInfo property in properties)
             {
                 table.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
             }
 
-            // Populate the DataTable with data from the list
             foreach (T item in list)
             {
                 DataRow row = table.NewRow();

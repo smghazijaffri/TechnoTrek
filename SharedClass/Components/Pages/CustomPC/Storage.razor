@@ -239,7 +239,7 @@
 
             if (cartExists)
             {
-                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
+                var result = await _protectedLocalStoreData.SelectcalAsync<string>("Cart");
 
                 if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
                 {
