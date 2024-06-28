@@ -5,13 +5,13 @@ using BoldReports.Web;
 using BoldReports.Writer;
 using System.Data.SqlClient;
 using SharedClass.Components.Model;
-using PdfSharpCore.Pdf;
 
 namespace SharedClass.Components.Data
 {
     public class Email : EmailCredentials
     {
         private readonly Connection con = new();
+        public Select select;
 
         public async Task GetEmailAsync(string RfqNumber)
         {
@@ -40,7 +40,7 @@ namespace SharedClass.Components.Data
                 message.Subject = sendModel.Subject;
                 message.Body = sendModel.Body;
                 message.IsBodyHtml = true;
-                byte[] pdfBytes = GetPdfAsync(sendModel.RFQNumber);
+                byte[] pdfBytes = select.GetPdfAsync("Request for Quotation", sendModel.RFQNumber);
 
                 var attachmentBytes = Select.ExtractOddPages(pdfBytes);
 
@@ -54,28 +54,8 @@ namespace SharedClass.Components.Data
             }
             catch (Exception ex)
             {
-                throw;
+                Console.WriteLine(ex.ToString());
             }
-        }
-
-        public byte[] GetPdfAsync(string RFQNumber)
-        {
-            using SqlConnection db = new(con.connectionString);
-
-            byte[] rdlData = db.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName = "Request for Quotation" }) ?? throw new Exception("Report not found in the database.");
-            using MemoryStream inputStream = new(rdlData);
-            ReportWriter writer = new(inputStream);
-
-            var rfqItems = (db.Query<RFQItemReport>(
-                "SELECT ROW_NUMBER() OVER (ORDER BY i.ItemName) AS No, r.RFQNumber, ItemName AS Item, Quantity, UOMName AS UOM, FORMAT(RequiredBy, 'yyyy-MM-dd') AS RequiredBy, FORMAT(rq.DocumentDate, 'yyyy-MM-dd') AS DocumentDate " +
-                "FROM RFQ_Items r INNER JOIN Items i ON r.Item = i.ItemCode INNER JOIN UOM u ON r.UOM = u.UOMID INNER JOIN RequestForQuotation rq ON r.RFQNumber = rq.RFQNumber " +
-                "WHERE r.RFQNumber = @RFQNumber", new { RFQNumber })).ToList();
-            writer.DataSources.Add(new ReportDataSource("DataSet1", rfqItems));
-
-            using MemoryStream memoryStream = new();
-            writer.Save(memoryStream, WriterFormat.PDF);
-
-            return memoryStream.ToArray();
         }
 
         private static string GetEmailBody(string name)

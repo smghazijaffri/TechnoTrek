@@ -818,7 +818,7 @@
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await OpenPdfAsync(pdfBytes, $"{purchase.PurchaseInvoiceID}.pdf");
+                await Select.OpenPdfAsync(pdfBytes, $"{purchase.PurchaseInvoiceID}.pdf");
             }
             else
             {
@@ -833,16 +833,6 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    private async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
-    {
-        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
-        await File.WriteAllBytesAsync(filePath, pdfBytes);
-        await Launcher.Default.OpenAsync(new OpenFileRequest
-            {
-                File = new ReadOnlyFile(filePath)
-            });
     }
 
     public void NavigateVendor()

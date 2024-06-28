@@ -55,11 +55,11 @@
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplayPR">
             <label class="form-label">Stock Entry ID</label>
-            <input type="text" class="form-control" @bind="stock.EntryID" hidden>
+            <input type="text" class="form-control" @bind="stock.EntryID" readonly="@IsSubmitted">
         </div>
         <div class="col-md-6">
             <label class="form-label">Stock Entry Type</label>
-            <select class="form-select" aria-label="Stock Entry Type" @bind="stock.Type">
+            <select class="form-select" aria-label="Stock Entry Type" @bind="stock.Type" readonly="@IsSubmitted">
                 <option value=""></option>
                 <option value="Goods Receipt">Goods Receipt</option>
                 <option value="Goods Issue">Goods Issue</option>
@@ -97,8 +97,8 @@
 
                     var rowIndex = item.RowID - 1;
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                 <b>@(index + 1)</b>
                             </div>
@@ -188,6 +188,11 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
+        var ItemCode = string.Empty;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "ItemCode"))
+        {
+            ItemCode = await _protectedLocalStore.GetLocalAsync<string>("ItemCode");
+        }
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             if (EntryID != null)
@@ -215,6 +220,13 @@
                     IsCancelled = true;
                     IsSaving = false;
                 }
+            }
+            else if (!string.IsNullOrWhiteSpace(ItemCode))
+            {
+                Items = db.Query<Stock>("Select * from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
+                ItemName = db.Query<string>("Select ItemName from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
+                stock.Type = "Goods Receipt";
+                await _protectedLocalStore.SetLocalAsync("ItemCode", "");
             }
             else
             {
@@ -432,7 +444,6 @@
         bool result = DropDownItem.SelectOption(options, rowIndex);
         if (result == false)
         {
-
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].ItemID = options.Value;
         }

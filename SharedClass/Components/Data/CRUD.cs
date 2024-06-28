@@ -11,7 +11,7 @@ namespace SharedClass.Components.Data
         {
             string outputValue = string.Empty;
 
-            using (SqlConnection db = new SqlConnection(connectionString))
+            using (SqlConnection db = new(connectionString))
             {
                 if (IsDelete)
                 {
@@ -25,11 +25,10 @@ namespace SharedClass.Components.Data
                 Model.CreationDate = DateTime.Now;
 
                 var parameters = new DynamicParameters(Model);
-                parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50); // Assuming output parameter size is 50
+                parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
 
                 db.Execute(SP, parameters, commandType: commandType);
 
-                // Retrieve the output parameter value
                 outputValue = parameters.Get<string>("@Output");
             }
 
@@ -38,9 +37,9 @@ namespace SharedClass.Components.Data
 
         public OutputClass CRD2(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
         {
-            OutputClass output = new OutputClass();
+            OutputClass output = new();
 
-            using (SqlConnection db = new SqlConnection(connectionString))
+            using (SqlConnection db = new(connectionString))
             {
                 if (IsDelete)
                 {
@@ -55,16 +54,15 @@ namespace SharedClass.Components.Data
                 var parameters = new DynamicParameters(Model);
                 if (outputMessage == true)
                 {
-                    parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000); // Assuming output parameter size is 50
+                    parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
                 }
                 if (errorMessage == true)
                 {
-                    parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000); // Assuming output parameter size is 50
+                    parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
                 }
 
                 db.Execute(SP, parameters, commandType: CommandType.StoredProcedure);
 
-                // Retrieve the output parameter value
                 if (outputMessage == true)
                 {
                     output.Output = parameters.Get<string>("@Output");
@@ -80,38 +78,60 @@ namespace SharedClass.Components.Data
 
         public OutputClass CRD3(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
         {
-            OutputClass output = new OutputClass();
+            OutputClass output = new();
 
-            using (SqlConnection db = new SqlConnection(connectionString))
+            using (SqlConnection db = new(connectionString))
             {
                 if (IsDelete)
                 {
                     parameters.Add("@ForInsert", 0);
-
                 }
                 else
                 {
                     parameters.Add("@ForInsert", 1);
-
                 }
                 parameters.Add("@CreationDate", DateTime.Now);
 
                 if (outputMessage == true)
                 {
-                    parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000); // Assuming output parameter size is 50
+                    parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
                 }
                 if (errorMessage == true)
                 {
-                    parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000); // Assuming output parameter size is 50
+                    parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
                 }
 
                 db.Execute(SP, parameters, commandType: CommandType.StoredProcedure);
 
-                // Retrieve the output parameter value
                 if (outputMessage == true)
                 {
                     output.Output = parameters.Get<string>("@Output");
                 }
+                if (errorMessage == true)
+                {
+                    output.ErrorMessage = parameters.Get<string>("@ErrorMessage");
+                }
+            }
+
+            return output;
+        }
+
+        public OutputClass CRD4(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool errorMessage = false)
+        {
+            OutputClass output = new();
+
+            using (SqlConnection db = new(connectionString))
+            {
+                parameters.Add("@CreationDate", DateTime.Now);
+
+                if (errorMessage == true)
+                {
+                    parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
+                }
+
+                var result = db.Query(SP, parameters, commandType: commandType).ToList();
+                output.Data = result;
+
                 if (errorMessage == true)
                 {
                     output.ErrorMessage = parameters.Get<string>("@ErrorMessage");

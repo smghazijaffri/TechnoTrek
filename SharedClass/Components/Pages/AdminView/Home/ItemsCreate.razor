@@ -34,6 +34,15 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
+        @if (IsEnabled)
+        {
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateSE">Stock Entry</li>
+                </ul>
+            </div>
+        }
         <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUOM">
             Save
         </button>
@@ -116,8 +125,8 @@
                     var rowindex = index;
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" />
                                 @(index + 1)
                             </div>
@@ -242,7 +251,9 @@
 @code {
     [Parameter]
     public string? ItemID { get; set; }
+
     string? header = "New Item";
+    string pattern = @"^(http|https):\/\/[^ ""]+$";
 
     bool IsSaving = true;
     bool Disabled = false;
@@ -329,7 +340,7 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string validate = ValidateUOM();
+                string validate = ValidateItem();
                 if (validate != null)
                 {
                     return validate;
@@ -438,7 +449,7 @@
         }
     }
 
-    public string ValidateUOM()
+    public string ValidateItem()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
@@ -454,6 +465,7 @@
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }
+            if (Regex.IsMatch(items.Description, pattern)) { return $"Please enter a valid Product Link"; }
             int count = 0;
             if (ItemUOM.Count > 0)
             {
@@ -538,5 +550,28 @@
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
+
+    private void CreateSE(MouseEventArgs e)
+    {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Items where ItemCode = @ItemCode", new { ItemCode = items.ItemCode });
+
+        if (GetStatus == PurchaseStatuses.Disabled)
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Cannot create Stock Entry, Item is " + GetStatus, Severity.Error);
+            return;
+        }
+        else if (GetStatus == null)
+        {
+            Snackbar.Clear();
+            Snackbar.Add("ItemCode does not exist", Severity.Error);
+            return;
+        }
+
+        _protectedLocalStore.SetLocalAsync("ItemCode", items.ItemCode);
+        NavigationManager.NavigateTo("/stock-entry/new-stock-entry");
     }
 }

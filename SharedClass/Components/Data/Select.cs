@@ -32,7 +32,7 @@ namespace SharedClass.Components.Data
 
         public static DataTable ConvertListToDataTable(List<string> list)
         {
-            DataTable table = new DataTable();
+            DataTable table = new();
             table.Columns.Add("Value", typeof(string));
 
             foreach (string s in list)
@@ -45,7 +45,7 @@ namespace SharedClass.Components.Data
 
         public static DataTable ConvertIntToDataTable(List<int> list)
         {
-            DataTable table = new DataTable();
+            DataTable table = new();
             table.Columns.Add("RowID", typeof(int));
 
             foreach (int s in list)
@@ -73,8 +73,7 @@ namespace SharedClass.Components.Data
         public static bool IsValidJson(string input)
         {
             input = input.Trim();
-            if ((input.StartsWith("{") && input.EndsWith("}")) ||
-                (input.StartsWith("[") && input.EndsWith("]")))
+            if ((input.StartsWith("{") && input.EndsWith("}")) || (input.StartsWith("[") && input.EndsWith("]")))
             {
                 try
                 {
@@ -91,7 +90,7 @@ namespace SharedClass.Components.Data
 
         public static DataTable ConvertToDataTable<T>(List<T> list)
         {
-            DataTable table = new DataTable();
+            DataTable table = new();
 
             PropertyInfo[] properties = typeof(T).GetProperties();
 
@@ -115,7 +114,7 @@ namespace SharedClass.Components.Data
 
         public static DataTable ItemTable()
         {
-            DataTable table = new DataTable();
+            DataTable table = new();
             table.Columns.Add("RowID", typeof(int));
             table.Columns.Add("Item", typeof(string));
             table.Columns.Add("Quantity", typeof(int));
@@ -128,7 +127,7 @@ namespace SharedClass.Components.Data
 
         public static DataTable PRItemTable()
         {
-            DataTable ItemTable = new DataTable();
+            DataTable ItemTable = new();
             ItemTable.Columns.Add("RowID", typeof(int));
             ItemTable.Columns.Add("Item", typeof(string));
             ItemTable.Columns.Add("Quantity", typeof(int));
@@ -139,7 +138,7 @@ namespace SharedClass.Components.Data
 
         public static DataTable VendorTable()
         {
-            DataTable table = new DataTable();
+            DataTable table = new();
             table.Columns.Add("VendorID", typeof(string));
             table.Columns.Add("RowID", typeof(string));
             table.Columns.Add("SendEmail", typeof(bool));
@@ -149,141 +148,22 @@ namespace SharedClass.Components.Data
 
         public byte[] GetPdfAsync(string ReportName, string? ID = null)
         {
-            byte[] rdlData = con.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName }) ?? throw new Exception("Report not found in the database.");
-            using MemoryStream inputStream = new(rdlData);
+            DynamicParameters parameters = new();
+            parameters.Add("@ReportName", ReportName);
+            parameters.Add("@ID", ID);
+
+            var output = CRD4(parameters, "GetReportData", CommandType.StoredProcedure, errorMessage: true);
+            List<dynamic> reportData = output.Data;
+
+            if (reportData == null || reportData.Count == 0)
+            {
+                throw new Exception("No data found for the specified report.");
+            }
+
+            using MemoryStream inputStream = new(con.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName }) ?? throw new Exception("Report not found in the database."));
             ReportWriter writer = new(inputStream);
 
-            if (ReportName == "Purchase Invoice")
-            {
-                var prItems = con.Query<PurchaseInvoiceReport>(@"
-                    WITH RejectedQuantities AS (
-                        SELECT 
-                            po.PurchaseOrderID,
-                            po.Item,
-                            (po.Quantity - gr.AcceptedQuantity) AS RejectedQuantity
-                        FROM 
-                            [Computer].[dbo].[GoodReceipt] grh
-                        INNER JOIN 
-                            [Computer].[dbo].[GR_Items] gr ON grh.GoodReceiptID = gr.GoodReceiptID
-                        INNER JOIN 
-                            [Computer].[dbo].[PO_Items] po ON grh.RefrenceDocument = po.PurchaseOrderID AND gr.Item = po.Item
-                        WHERE 
-                            grh.RefrenceDocument IS NOT NULL
-                    ),
-                    InvoiceDetails AS (
-                        SELECT 
-                            ROW_NUMBER() OVER (ORDER BY i.ItemName) AS Row,
-                            pi.PurchaseInvoiceID,
-                            pi.AcceptedQuantity,
-                            pi.Rate AS Rate,
-                            pi.Amount AS Amount,
-                            i.ItemName AS Item,
-                            v.VendorName AS Vendor,
-                            v.Address AS VendorAddress,
-		                    v.Contact AS VendorContact,
-		                    v.Email AS VendorEmail,
-                            u.UOMName AS UOM,
-                            FORMAT(p.DueDate, 'yyyy-MM-dd') AS DueDate,
-                            p.TotalQuantity AS TotalQuantity,
-                            p.TotalAmount AS TotalAmount,
-                            FORMAT(p.DocumentDate, 'yyyy-MM-dd') AS DocumentDate,
-                            p.RefrenceDocument
-                        FROM 
-                            PI_Items pi
-                        INNER JOIN 
-                            PurchaseInvoice p ON pi.PurchaseInvoiceID = p.PurchaseInvoiceID
-                        INNER JOIN 
-                            Vendor v ON p.VendorID = v.VendorID
-                        INNER JOIN 
-                            Items i ON pi.Item = i.ItemCode
-                        INNER JOIN 
-                            UOM u ON pi.UOM = u.UOMID
-	                    WHERE
-		                    pi.PurchaseInvoiceID = @PurchaseInvoiceID
-                    )
-                    SELECT 
-                        id.Row,
-                        id.PurchaseInvoiceID,
-                        id.AcceptedQuantity,
-	                    COALESCE(rq.RejectedQuantity, 0) AS RejectedQuantity,
-                        id.Rate,
-                        id.Amount,
-                        id.Item,
-                        id.Vendor,
-                        id.VendorAddress,
-	                    id.VendorContact,
-	                    id.VendorEmail,
-                        id.UOM,
-                        id.DueDate,
-                        id.TotalQuantity,
-                        id.TotalAmount,
-                        id.DocumentDate
-                    FROM 
-                        InvoiceDetails id
-                    LEFT JOIN 
-                        [Computer].[dbo].[GoodReceipt] grh ON id.RefrenceDocument = grh.GoodReceiptID
-                    LEFT JOIN 
-                        RejectedQuantities rq ON grh.RefrenceDocument = rq.PurchaseOrderID AND id.Item = rq.Item
-                    ORDER BY 
-                        id.Row;", new { PurchaseInvoiceID = ID }).ToList();
-
-                writer.DataSources.Add(new ReportDataSource("DataSet1", prItems));
-            }
-            else if (ReportName == "Sales Invoice")
-            {
-                var siItems = con.Query<SalesInvoiceReport>(@"SELECT
-                    ROW_NUMBER() OVER (ORDER BY i.ItemName) AS Row,
-                        SI.SalesInvoiceID,
-                        C.Name AS CustomerName,
-                        C.Address,
-                        C.Contact,
-                        I.ItemName,
-	                    SII.Rate,
-	                    SII.UOM,
-	                    SII.Amount,
-	                    SII.Quantity,
-                        SI.TotalAmount,
-                        SI.TotalQuantity,
-                        CASE 
-                            WHEN SI.IsPartiallyPaid = 'true' THEN SI.TotalAmount / 2 
-                            ELSE 0 
-                        END AS OutstandingAmount,
-                        SI.IsPartiallyPaid,
-                        FORMAT(SI.DueDate, 'yyyy-MM-dd') AS DueDate,
-	                    FORMAT(SI.DocumentDate, 'yyyy-MM-dd') AS DocumentDate
-                    FROM 
-                        SaleInvoice SI
-                    JOIN 
-                        SI_Item SII ON SI.SalesInvoiceID = SII.SalesInvoiceID
-                    JOIN 
-                        Customer C ON SI.CustomerID = C.CustomerID
-                    JOIN 
-                        Items I ON SII.Item = I.ItemCode
-                    WHERE
-	                    SI.SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = ID }).ToList();
-
-                writer.DataSources.Add(new ReportDataSource("DataSet1", siItems));
-            }
-            else if (ReportName == "Inventory Report")
-            {
-                var inventory = con.Query<InventoryReport>(@"SELECT 
-                        I.ItemCode,
-                        I.ItemName,
-                        I.ItemType,
-                        S.Quantity,
-                        S.Rate,
-                        FORMAT(S.CreationDate, 'yyyy-MM-dd') AS StockUpdated,
-                        S.Quantity * S.Rate AS TotalValue,
-                        FORMAT(GETDATE(), 'yyyy-MM-dd') AS ReportGenerated
-                    FROM 
-                        Items I
-                    LEFT JOIN 
-                        Stock S ON I.ItemCode = S.ItemID
-                    ORDER BY 
-                        I.ItemCode;").ToList();
-
-                writer.DataSources.Add(new ReportDataSource("DataSet1", inventory));
-            }
+            writer.DataSources.Add(new ReportDataSource("DataSet1", reportData));
 
             using MemoryStream memoryStream = new();
             writer.Save(memoryStream, WriterFormat.PDF);
@@ -308,6 +188,16 @@ namespace SharedClass.Components.Data
 
             outputDocument.Save(outputStream);
             return outputStream.ToArray();
+        }
+
+        public static async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
+        {
+            string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+            await File.WriteAllBytesAsync(filePath, pdfBytes);
+            await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
         }
     }
 }

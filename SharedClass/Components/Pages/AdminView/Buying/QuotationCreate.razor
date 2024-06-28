@@ -751,7 +751,7 @@
             {
                 UOMName[rowIndex] = options.Text;
                 Items[rowIndex].UOM = options.Value;
-                quantity[rowIndex] = db.QueryFirstOrDefault<int>("select StockQuantity from UOM where UOMID = @UOMID", new { UOMID = options.Value });
+                quantity[rowIndex] = db.QueryFirstOrDefault<int>("Select StockQuantity from UOM where UOMID = @UOMID", new { UOMID = options.Value });
                 HandleFormInput();
             }
         }
@@ -806,14 +806,14 @@
     {
         try
         {
-            var PdfByte = EmailService.GetPdfAsync(rfq.RFQNumber);
+            var PdfByte = select.GetPdfAsync("Request for Quotation", rfq.RFQNumber);
 
             var pdfBytes = Select.ExtractOddPages(PdfByte);
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await OpenPdfAsync(pdfBytes, $"{rfq.RFQNumber}.pdf");
+                await Select.OpenPdfAsync(pdfBytes, $"{rfq.RFQNumber}.pdf");
             }
             else
             {
@@ -829,16 +829,6 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    private async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
-    {
-        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
-        await File.WriteAllBytesAsync(filePath, pdfBytes);
-        await Launcher.Default.OpenAsync(new OpenFileRequest
-            {
-                File = new ReadOnlyFile(filePath)
-            });
     }
 
     public void NavigateUOM()

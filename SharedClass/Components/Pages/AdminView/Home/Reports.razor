@@ -159,18 +159,9 @@
 
             if (!string.IsNullOrEmpty(reportparameters.InvoiceID))
             {
-                if (reports.ReportName == "Request for Quotation")
-                {
-                    PdfByte = EmailService.GetPdfAsync(reportparameters.InvoiceID);
+                PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
 
-                    pdfBytes = Select.ExtractOddPages(PdfByte);
-                }
-                else
-                {
-                    PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
-
-                    pdfBytes = Select.ExtractOddPages(PdfByte);
-                }
+                pdfBytes = Select.ExtractOddPages(PdfByte);
             }
             else
             {
@@ -182,7 +173,7 @@
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await OpenPdfAsync(pdfBytes, $"{reports.ReportName}.pdf");
+                await Select.OpenPdfAsync(pdfBytes, $"{reports.ReportName}.pdf");
             }
             else
             {
@@ -197,15 +188,5 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    private async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
-    {
-        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
-        await File.WriteAllBytesAsync(filePath, pdfBytes);
-        await Launcher.Default.OpenAsync(new OpenFileRequest
-            {
-                File = new ReadOnlyFile(filePath)
-            });
     }
 }
