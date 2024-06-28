@@ -175,7 +175,7 @@
             byte[] pdfBytes;
             byte[] PdfByte;
 
-            if (!string.IsNullOrEmpty(reportparameters.InvoiceID))
+            if (!string.IsNullOrEmpty(reportparameters.InvoiceID) && reportparameters.InvoiceID != "Select an ID")
             {
                 PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
 
@@ -183,7 +183,7 @@
             }
             else if (!string.IsNullOrEmpty(From.ToString()) && !string.IsNullOrEmpty(To.ToString()))
             {
-                PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
+                PdfByte = select.GetPdfAsync(reports.ReportName, null, From, To);
 
                 pdfBytes = Select.ExtractOddPages(PdfByte);
             }

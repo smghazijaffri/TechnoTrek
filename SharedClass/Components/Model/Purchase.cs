@@ -10,10 +10,10 @@
 
     public class PR_Items : BaseRecord
     {
-        public string RowID { get; set; }
+        public int RowID { get; set; }
         public string? UOM { get; set; }
         public string? Item { get; set; }
-        public string Quantity { get; set; }
+        public int Quantity { get; set; }
         public bool Selected { get; set; }
         public string? PRNumber { get; set; }
         public DateTime RequiredBy { get; set; }
@@ -24,8 +24,8 @@
         public string? PurchaseOrderID { get; set; }
         public string? PurchaseOrderName { get; set; }
         public string? VendorID { get; set; }
-        public string TotalAmount { get; set; }
-        public string TotalQuantity { get; set; }
+        public int TotalAmount { get; set; }
+        public int TotalQuantity { get; set; }
         public string? Status { get; set; }
         public string? RefrenceDocument { get; set; }
         public DateTime DocumentDate { get; set; }
@@ -36,11 +36,11 @@
         public bool Selected { get; set; }
         public string? PurchaseOrderID { get; set; }
         public string? Item { get; set; }
-        public string RowID { get; set; }
-        public string Quantity { get; set; }
+        public int RowID { get; set; }
+        public int Quantity { get; set; }
         public string? UOM { get; set; }
-        public string Rate { get; set; }
-        public string Amount { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
         public DateTime RequiredBy { get; set; }
     }
 
@@ -70,7 +70,7 @@
         public bool Selected { get; set; }
         public string? RFQNumber { get; set; }
         public string? VendorID { get; set; }
-        public string RowID { get; set; }
+        public int RowID { get; set; }
         public bool SendEmail { get; set; }
     }
 
@@ -79,8 +79,8 @@
         public bool Selected { get; set; }
         public string? RFQNumber { get; set; }
         public string? Item { get; set; }
-        public string RowID { get; set; }
-        public string Quantity { get; set; }
+        public int RowID { get; set; }
+        public int Quantity { get; set; }
         public string? UOM { get; set; }
         public DateTime RequiredBy { get; set; }
     }
@@ -92,8 +92,8 @@
         public string? Status { get; set; }
         public string? VendorID { get; set; }
         public string? RefrenceDocument { get; set; }
-        public string TotalAmount { get; set; }
-        public string TotalQuantity { get; set; }
+        public int TotalAmount { get; set; }
+        public int TotalQuantity { get; set; }
         public DateTime DocumentDate { get; set; }
     }
 
@@ -102,10 +102,10 @@
         public bool Selected { get; set; }
         public string? GoodReceiptID { get; set; }
         public string? Item { get; set; }
-        public string RowID { get; set; }
-        public string AcceptedQuantity { get; set; }
-        public string Rate { get; set; }
-        public string Amount { get; set; }
+        public int RowID { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
     }
 
     public class Quotation : BaseRecord
@@ -115,8 +115,8 @@
         public string? Status { get; set; }
         public string? VendorID { get; set; }
         public string? RefrenceDocument { get; set; }
-        public string TotalAmount { get; set; }
-        public string TotalQuantity { get; set; }
+        public int TotalAmount { get; set; }
+        public int TotalQuantity { get; set; }
         public DateTime DocumentDate { get; set; }
     }
 
@@ -125,11 +125,11 @@
         public bool Selected { get; set; }
         public string? QuotationID { get; set; }
         public string? Item { get; set; }
-        public string RowID { get; set; }
-        public string Quantity { get; set; }
+        public int RowID { get; set; }
+        public int Quantity { get; set; }
         public string? UOM { get; set; }
-        public string Rate { get; set; }
-        public string Amount { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
     }
 
     public class CancelAll : BaseRecord
@@ -145,8 +145,8 @@
         public string? Status { get; set; }
         public string? VendorID { get; set; }
         public string? RefrenceDocument { get; set; }
-        public string TotalAmount { get; set; }
-        public string TotalQuantity { get; set; }
+        public int TotalAmount { get; set; }
+        public int TotalQuantity { get; set; }
         public DateTime DocumentDate { get; set; }
         public DateTime DueDate { get; set; }
         public bool IsPaid { get; set; }
@@ -160,17 +160,17 @@
         public bool Selected { get; set; }
         public string? PurchaseInvoiceID { get; set; }
         public string? Item { get; set; }
-        public string RowID { get; set; }
-        public string AcceptedQuantity { get; set; }
-        public string Rate { get; set; }
-        public string Amount { get; set; }
+        public int RowID { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
     }
 
     public class UnitofMeasure : BaseRecord
     {
         public string? UOMID { get; set; }
         public string? UOMName { get; set; }
-        public string StockQuantity { get; set; }
+        public int StockQuantity { get; set; }
         public string? Status { get; set; }
     }
 
@@ -181,7 +181,7 @@
         public string? ItemType { get; set; }
         public string? Brand { get; set; }
         public string? Description { get; set; }
-        public string LeadTime { get; set; }
+        public int LeadTime { get; set; }
         public string? Status { get; set; }
         public bool Compatible { get; set; }
         public bool Alternate { get; set; }
@@ -191,7 +191,7 @@
     {
         public string? ItemID { get; set; }
         public string? UOMID { get; set; }
-        public string RowID { get; set; }
+        public int RowID { get; set; }
         public bool Selected { get; set; }
     }
 
@@ -212,9 +212,9 @@
         public string? EntryID { get; set; }
         public string? ItemID { get; set; }
         public string? Type { get; set; }
-        public string Quantity { get; set; }
-        public string Rate { get; set; }
-        public string RowID { get; set; }
+        public int Quantity { get; set; }
+        public int Rate { get; set; }
+        public int RowID { get; set; }
         public bool Selected { get; set; }
         public string? Status { get; set; }
     }
@@ -232,7 +232,7 @@
         public string? No { get; set; }
         public string? RFQNumber { get; set; }
         public string? Item { get; set; }
-        public string Quantity { get; set; }
+        public int Quantity { get; set; }
         public string? UOM { get; set; }
         public string? RequiredBy { get; set; }
         public string? DocumentDate { get; set; }
@@ -256,18 +256,6 @@
         public string? TotalAmount { get; set; }
         public string? DocumentDate { get; set; }
         public string? RejectedQuantity { get; set; }
-    }
-
-    public class InventoryReport
-    {
-        public string? ItemCode { get; set; }
-        public string? ItemName { get; set; }
-        public string? ItemType { get; set; }
-        public string? Quantity { get; set; }
-        public string? Rate { get; set; }
-        public string? StockUpdated { get; set; }
-        public string? TotalValue { get; set; }
-        public string? ReportGenerated { get; set; }
     }
 
     public class PurchaseOrderAnalysis
