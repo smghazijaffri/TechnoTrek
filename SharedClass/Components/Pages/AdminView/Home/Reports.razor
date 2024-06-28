@@ -114,11 +114,19 @@
         {
             invoice = true;
             noFilter = false;
+            dateFilter = false;
         }
         else if (reports.ReportName == "Inventory Report")
         {
             noFilter = true;
             invoice = false;
+            dateFilter = false;
+        }
+        else if (reports.ReportName == "Purchase Order Analysis")
+        {
+            noFilter = false;
+            invoice = false;
+            dateFilter = true;
         }
 
         using SqlConnection db = new SqlConnection(con.connectionString);
@@ -152,12 +160,28 @@
                 }
             }
 
+            if (dateFilter)
+            {
+                if (string.IsNullOrEmpty(From.ToString()) || string.IsNullOrEmpty(To.ToString()))
+                {
+                    if (isMobile) Vibration.Default.Vibrate();
+                    Snackbar.Add("Please Select Dates", Severity.Error);
+                    return;
+                }
+            }
+
             Snackbar.Add("Generating Report", Severity.Info);
 
             byte[] pdfBytes;
             byte[] PdfByte;
 
             if (!string.IsNullOrEmpty(reportparameters.InvoiceID))
+            {
+                PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
+
+                pdfBytes = Select.ExtractOddPages(PdfByte);
+            }
+            else if (!string.IsNullOrEmpty(From.ToString()) && !string.IsNullOrEmpty(To.ToString()))
             {
                 PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
 

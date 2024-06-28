@@ -146,11 +146,13 @@ namespace SharedClass.Components.Data
 
         }
 
-        public byte[] GetPdfAsync(string ReportName, string? ID = null)
+        public byte[] GetPdfAsync(string ReportName, string? ID = null, DateTime? from = null, DateTime? to = null)
         {
             DynamicParameters parameters = new();
             parameters.Add("@ReportName", ReportName);
-            parameters.Add("@ID", ID);
+            if (!string.IsNullOrEmpty(ID)) parameters.Add("@ID", ID);
+            if (!string.IsNullOrEmpty(from.ToString())) parameters.Add("@StartDate", from);
+            if (!string.IsNullOrEmpty(to.ToString())) parameters.Add("@EndDate", to);
 
             var output = CRD4(parameters, "GetReportData", CommandType.StoredProcedure, errorMessage: true);
             List<dynamic> reportData = output.Data;

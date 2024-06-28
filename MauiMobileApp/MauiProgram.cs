@@ -70,7 +70,7 @@ namespace MauiMobileApp
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseRequisition>();
-
+            builder.Services.AddScoped<PurchaseOrderAnalysis>();
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;
