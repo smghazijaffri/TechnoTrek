@@ -1,0 +1,255 @@
+﻿@page "/signup/"
+@page "/user/{Username?}"
+
+@inject CRUD crud;
+@inject Users users;
+@inject Connection con;
+@inject Login login;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        @if (loggedIn)
+        {
+            <button type="submit" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="Logout">
+                Log Out
+            </button>
+        }
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUser">
+            Save
+        </button>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Basic Information</h5>
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6" hidden>
+            <label class="form-label">User ID</label>
+            <input type="text" @bind="users.UserID" class="form-control" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Username</label>
+            <input type="text" @bind="users.UserName" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">First Name</label>
+            <input type="text" @bind="users.FirstName" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Last Name</label>
+            <input type="text" @bind="users.LastName" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Password</label>
+            <input type="text" @bind="users.UserPassword" class="form-control">
+        </div>
+    </form>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>More Information</h5>
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" @bind="users.UserEmail">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Contact</label>
+            <input type="text" class="form-control" @bind="users.UserPhone">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Birthday</label>
+            <input type="date" class="form-control" @bind="users.Birthday">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control" @bind="users.Address">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Identity #</label>
+            <input type="text" placeholder="42310-1234567-8" class="form-control" @oninput="@(e => FormatIdentityNumber(e))" maxlength="15" @bind="users.UserIdentity">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Gender</label>
+            <select class="form-select" aria-label="Gender" @bind="users.Gender">
+                <option value=""></option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+@code {
+    [Parameter]
+    public string? Username { get; set; }
+
+    bool loggedIn = false;
+
+    string header = "SignUp";
+    string? ValidationMessage { get; set; }
+    string pattern = @"^\d{5}-\d{7}-\d{1}$";
+    string passwordPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                if (Username != null)
+                {
+                    users = db.QueryFirstOrDefault<Users>("Select * from Users where UserName = @Username", new { Username = Username });
+                    if (users == null || users.Role != "Customer")
+                    {
+                        loggedIn = false;
+                        await login.LogOut(Username);
+                        NavigationManager.NavigateTo("/login/", forceLoad: true);
+                        return;
+                    }
+                    else
+                    {
+                        header = users.UserName;
+                        loggedIn = true;
+                    }
+                }
+                else
+                {
+                    users.Birthday = DateTime.Today;
+                }
+            }
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+
+        base.OnInitialized();
+    }
+
+    public string createUser()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidateUser();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                header = users.UserName;
+                users.Status = PurchaseStatuses.Enabled;
+                users.Role = "Customer";
+
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(users, "CreateUpdateDeleteUser", outputMessage: true, errorMessage: true);
+
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                else
+                {
+                    users.UserID = output.Output;
+                }
+
+                if (users.UserName == null)
+                {
+                    NavigationManager.NavigateTo($"/user/{users.UserName}", forceLoad: true);
+                }
+                return "SignUp Successful";
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public void SaveUser()
+    {
+        string notification = createUser();
+        if (notification.Contains("Successful"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    public string ValidateUser()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            if (string.IsNullOrWhiteSpace(users.UserName)) { return $"Please enter Username"; }
+            if (string.IsNullOrWhiteSpace(users.FirstName)) { return $"Please enter First Name"; }
+            if (string.IsNullOrWhiteSpace(users.LastName)) { return $"Please enter Last Name"; }
+            if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
+            if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
+            if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
+            if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
+            if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
+            if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
+            if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
+            if (!Regex.IsMatch(users.UserPassword, passwordPattern))
+            { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
+            if (!Regex.IsMatch(users.UserIdentity, pattern))
+            { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
+            if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
+
+            return null;
+        }
+    }
+
+    private void FormatIdentityNumber(ChangeEventArgs e)
+    {
+        var input = new string(e.Value.ToString().Where(char.IsDigit).ToArray());
+        if (input.Length > 5)
+        {
+            input = input.Insert(5, "-");
+        }
+        if (input.Length > 13)
+        {
+            input = input.Insert(13, "-");
+        }
+        users.UserIdentity = input;
+    }
+
+    private bool IsAtLeast18YearsOld(DateTime birthday)
+    {
+        DateTime today = DateTime.Today;
+        int age = today.Year - birthday.Year;
+
+        if (birthday.Date > today.AddYears(-age)) age--;
+
+        return age >= 18;
+    }
+
+    private async void Logout()
+    {
+        string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
+        await login.LogOut(User);
+        await _protectedLocalStore.SetLocalAsync("Authorized", false);
+        await _protectedLocalStore.SetLocalAsync("Username", "");
+        await _protectedLocalStore.SetLocalAsync("Role", "");
+        Snackbar.Clear();
+        Snackbar.Add("Logged Out", Severity.Error);
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}

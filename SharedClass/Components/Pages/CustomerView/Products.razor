@@ -5,61 +5,111 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-<MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
-    @foreach (var itemType in GetItemTypes())
+@if (loggedIn)
+{
+    <MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
+        @foreach (var itemType in GetItemTypes())
+        {
+            <MudTabPanel Text="@itemType">
+                @if (itemType == "Motherboard")
+                {
+                    <Motherboard isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Processor")
+                {
+                    <Processor isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Graphics Card")
+                {
+                    <GPU isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Gaming Case")
+                {
+                    <Case isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Memory")
+                {
+                    <Memory isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Storage")
+                {
+                    <Storage isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Power Supply")
+                {
+                    <PSU isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Cooler")
+                {
+                    <Cooler isBulk="true" userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Laptop")
+                {
+                    <Laptop userid="@userid" Username="@Username" />
+                }
+                else if (itemType == "Accessories")
+                {
+                    <Accessory userid="@userid" Username="@Username" />
+                }
+                else
+                {
+                    <h1>Inventory is empty</h1>
+                }
+            </MudTabPanel>
+        }
+    </MudTabs>
+}
+
+@code {
+    bool loggedIn = false;
+
+    string? Role { get; set; }
+    string? userid { get; set; }
+    string? Username { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        <MudTabPanel Text="@itemType">
-            @if (itemType == "Motherboard")
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        if (firstRender)
+        {
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Role"))
             {
-                <Motherboard isBulk="true" />
-            }
-            else if (itemType == "Processor")
-            {
-                <Processor isBulk="true" />
-            }
-            else if (itemType == "Graphics Card")
-            {
-                <GPU isBulk="true" />
-            }
-            else if (itemType == "Gaming Case")
-            {
-                <Case isBulk="true" />
-            }
-            else if (itemType == "Memory")
-            {
-                <Memory isBulk="true" />
-            }
-            else if (itemType == "Storage")
-            {
-                <Storage isBulk="true" />
-            }
-            else if (itemType == "Power Supply")
-            {
-                <PSU isBulk="true" />
-            }
-            else if (itemType == "Cooler")
-            {
-                <Cooler isBulk="true" />
-            }
-            else if (itemType == "Laptop")
-            {
-                <Laptop />
-            }
-            else if (itemType == "Accessories")
-            {
-                <Accessory />
+                Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
+                Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
+                if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
+                {
+                    userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+                    if (Role != "Customer")
+                    {
+                        Snackbar.Add("Please login as a Customer", Severity.Error);
+                        loggedIn = false;
+                        NavigationManager.NavigateTo("/login", forceLoad: true);
+                    }
+                    else
+                    {
+                        loggedIn = true;
+                    }
+                }
+                else
+                {
+                    Snackbar.Add("Please login as a Customer", Severity.Error);
+                    loggedIn = false;
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                }
             }
             else
             {
-                <h1>Inventory is empty</h1>
+                Snackbar.Add("Please login as a Customer", Severity.Error);
+                loggedIn = false;
+                NavigationManager.NavigateTo("/login", forceLoad: true);
             }
-        </MudTabPanel>
+        }
+        StateHasChanged();
     }
-</MudTabs>
 
-@code {
     private List<string> GetItemTypes()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))

@@ -1,5 +1,6 @@
 ﻿@using static SharedClass.Components.Pages.CustomPC.Motherboard
 
+@inject CRUD crud;
 @inject Select select;
 @inject Connection con;
 @inject AppState AppState;
@@ -70,6 +71,12 @@
 @code {
     [Parameter]
     public bool isBulk { get; set; }
+
+    [Parameter]
+    public string? userid { get; set; }
+
+    [Parameter]
+    public string? Username { get; set; }
 
     bool isMobile = false;
 
@@ -234,27 +241,16 @@
     {
         try
         {
-            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
-            List<Bulk> orderedItems = new List<Bulk>();
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
 
-            if (cartExists)
-            {
-                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
-
-                if (!string.IsNullOrEmpty(result) && Data.Select.IsValidJson(result))
-                {
-                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
-                }
-            }
+            var cartItems = await Data.Select.RetrieveCartItems(userid);
 
             bool itemFound = false;
-
-            for (int i = 0; i < orderedItems.Count; i++)
+            for (int i = 0; i < cartItems.Count; i++)
             {
-                if (orderedItems[i].Code == selected.ItemCode)
+                if (cartItems[i].Code == selected.ItemCode)
                 {
-                    orderedItems[i].Quantity = quantity;
-                    Snackbar.Add("Quantity Updated.", Severity.Success);
+                    cartItems[i].Quantity = quantity;
                     itemFound = true;
                     break;
                 }
@@ -262,16 +258,37 @@
 
             if (!itemFound)
             {
-                orderedItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
                 AppState.CartItemCount++;
-                Snackbar.Add("Added to cart.", Severity.Success);
+                cartItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
             }
 
-            var serializedItems = JsonSerializer.Serialize(orderedItems);
-            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
+            var serializedItems = JsonSerializer.Serialize(cartItems);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserID", userid);
+            parameters.Add("@CartItemsJson", serializedItems);
+            parameters.Add("@Action", "Save");
+
+            var result = crud.CRD3(parameters, "ManageCartItems", CommandType.StoredProcedure, false, outputMessage: true, errorMessage: true);
+
+            if (!string.IsNullOrEmpty(result.Output))
+            {
+                Snackbar.Add(result.Output, Severity.Success);
+            }
+            else if (result.ErrorMessage != null)
+            {
+                AppState.CartItemCount--;
+                Snackbar.Add(result.ErrorMessage, Severity.Error);
+            }
+            else
+            {
+                AppState.CartItemCount--;
+                Snackbar.Add("Failed to add to cart.", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
+            if (isMobile) Vibration.Default.Vibrate();
             Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
         }
     }

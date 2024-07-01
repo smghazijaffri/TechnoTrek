@@ -1,4 +1,5 @@
-﻿using SharedClass.Components.Model;
+﻿using static SharedClass.Components.Pages.CustomPC.Motherboard;
+using SharedClass.Components.Model;
 using Microsoft.Data.SqlClient;
 using PdfSharpCore.Pdf.IO;
 using BoldReports.Writer;
@@ -7,6 +8,7 @@ using PdfSharpCore.Pdf;
 using System.Text.Json;
 using BoldReports.Web;
 using System.Data;
+using MudBlazor;
 using Dapper;
 
 namespace SharedClass.Components.Data
@@ -200,6 +202,35 @@ namespace SharedClass.Components.Data
             {
                 File = new ReadOnlyFile(filePath)
             });
+        }
+
+        public static async Task<List<Bulk>> RetrieveCartItems(string userid)
+        {
+            List<Bulk> cartItems = [];
+            CRUD crud = new();
+            try
+            {
+                var parameters = new DynamicParameters();
+                parameters.Add("@UserID", userid);
+                parameters.Add("@Action", "Retrieve");
+                parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: -1);
+
+                var result = await Task.Run(() => crud.CRD3(parameters, "ManageCartItems", CommandType.StoredProcedure, false, outputMessage: true, errorMessage: true));
+
+                if (!string.IsNullOrEmpty(result.Output))
+                {
+                    if (IsValidJson(result.Output))
+                    {
+                        cartItems = JsonSerializer.Deserialize<List<Bulk>>(result.Output);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            return cartItems;
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿@inject AppState AppState;
+﻿@inject Connection con;
+@inject AppState AppState;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;">
     <div class="container-fluid">
@@ -32,8 +36,16 @@
                     </NavLink>
                 </li>
                 <li class="nav-item" style="padding-top: 7px;">
-                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" href="adminlogin" style="color: #5535F0; font-size:16px; cursor: pointer; text-decoration: auto;">
-                        <MudIcon Icon="@Icons.Material.Outlined.Dashboard" Style="font-size: 21px;padding-bottom: 4px;" />Portal
+                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" title="@(loggedIn? Username : Portal)" @onclick="Navigate" style="color: #5535F0; font-size:16px; cursor: pointer; text-decoration: auto;">
+                        <MudIcon Icon="@(loggedIn? Icons.Material.Filled.Person : Icons.Material.Outlined.Dashboard)" Style="font-size: 21px;padding-bottom: 4px;" />
+                        @if (loggedIn)
+                        {
+                            @Username
+                        }
+                        else
+                        {
+                            @Portal
+                        }
                     </NavLink>
                 </li>
             </ul>
@@ -42,13 +54,54 @@
 </nav>
 
 @code {
-    private bool collapseNavMenu = true;
-    private string? NavBarCssClass => collapseNavMenu ? null : "show";
-    private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
+    bool loggedIn = false;
+    bool collapseNavMenu = true;
+
+    string Portal = "Portal";
+    string? Username { get; set; }
+    string? NavBarCssClass => collapseNavMenu ? null : "show";
+    string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
 
     protected override void OnInitialized()
     {
         AppState.OnChange += async () => await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
+            {
+                Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
+                if (!string.IsNullOrEmpty(Username))
+                {
+                    loggedIn = true;
+                }
+            }
+        }
+        StateHasChanged();
+    }
+
+    public async void Navigate()
+    {
+        if (loggedIn)
+        {
+            using SqlConnection db = new SqlConnection(con.connectionString);
+            var role = db.QueryFirstOrDefault<string>("Select Role from Users where UserName = @Username", new { Username = Username });
+            if (role == "Customer") { NavigationManager.NavigateTo($"/user/{Username}"); }
+            else
+            {
+                var Authorized = db.QuerySingleOrDefault<bool>("SELECT Authorized FROM Users WHERE Username = @Username", new { Username = Username });
+                var isAuthorized = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
+                if (isAuthorized && Authorized && !string.IsNullOrWhiteSpace(role))
+                {
+                    NavigationManager.NavigateTo("/dashboard");
+                }
+                else NavigationManager.NavigateTo("/login");
+            }
+        }
+        else NavigationManager.NavigateTo("/login");
     }
 
     public void Dispose()

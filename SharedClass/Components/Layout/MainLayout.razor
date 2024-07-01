@@ -1,8 +1,12 @@
 ﻿@using SharedClass.Components.Layout
 
 @inject Login login;
+@inject Select select;
+@inject Connection con;
+@inject AppState AppState;
 @inject IJSRuntime JSRuntime;
 @inherits LayoutComponentBase;
+@inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
 <head>
@@ -27,26 +31,24 @@
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
         if (firstRender)
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Authorized") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Role") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
             {
-                string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
-                await login.LogOut(User);
-                await _protectedLocalStore.SetLocalAsync("Authorized", false);
-                await _protectedLocalStore.SetLocalAsync("Username", "");
-                await _protectedLocalStore.SetLocalAsync("Role", "");
+                string Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
+                string Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
+                if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
+                {
+                    string? userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+                    if (Role == "Customer")
+                    {
+                        var result = await Select.RetrieveCartItems(userid);
+                        AppState.CartItemCount = result.Distinct().Count();
+                    }
+                }
             }
-
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerID") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerName")
-            && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "customerContact"))
-            {
-                await _protectedLocalStore.SetLocalAsync("customerID", "");
-                await _protectedLocalStore.SetLocalAsync("customerName", "");
-                await _protectedLocalStore.SetLocalAsync("customerContact", "");
-            }
-
-            await _protectedLocalStore.SetLocalAsync("Cart", "");
         }
         StateHasChanged();
     }

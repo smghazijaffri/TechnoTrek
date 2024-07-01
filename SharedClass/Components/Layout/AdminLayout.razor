@@ -2,7 +2,7 @@
 @inject Connection con;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject NavigationManager navigationManager;
+@inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
 @inherits LayoutComponentBase;
@@ -83,11 +83,13 @@
     bool Authorized { get; set; }
     bool isAuthorized { get; set; }
 
-    protected override async void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await Authorization();
+        if (firstRender)
+        {
+            await Authorization();
+        }
         StateHasChanged();
-        base.OnInitialized();
     }
 
     private async Task Authorization()
@@ -103,14 +105,19 @@
 
                     Authorized = db.QuerySingleOrDefault<bool>("SELECT Authorized FROM Users WHERE Username = @Username", new { Username = User });
                     isAuthorized = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-                    if (isAuthorized && Authorized && !string.IsNullOrWhiteSpace(Role))
+                    if (isAuthorized && Authorized && (!string.IsNullOrWhiteSpace(Role)) && Role != "Customer")
                     {
                         isLoading = true;
+                    }
+                    else if (isAuthorized && Authorized && (!string.IsNullOrWhiteSpace(Role)) && Role == "Customer")
+                    {
+                        isLoading = false;
+                        NavigationManager.NavigateTo($"/user/{User}", forceLoad: true);
                     }
                     else
                     {
                         isLoading = false;
-                        navigationManager.NavigateTo("/adminlogin", forceLoad: true);
+                        NavigationManager.NavigateTo("/login", forceLoad: true);
                         Snackbar.Clear();
                         Snackbar.Add("Not Authorized", Severity.Error);
                     }
@@ -119,7 +126,7 @@
             else
             {
                 isLoading = false;
-                navigationManager.NavigateTo("/adminlogin", forceLoad: true);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
                 Snackbar.Clear();
                 Snackbar.Add("Not Authorized", Severity.Error);
             }
@@ -144,7 +151,7 @@
         await _protectedLocalStore.SetLocalAsync("Role", "");
         Snackbar.Clear();
         Snackbar.Add("Logged Out", Severity.Error);
-        navigationManager.NavigateTo("/");
+        NavigationManager.NavigateTo("/");
     }
 
     private async void Navigate(string Page)
@@ -152,7 +159,7 @@
         await Authorization();
         if (!string.IsNullOrWhiteSpace(Page))
         {
-            navigationManager.NavigateTo($"/{Page}");
+            NavigationManager.NavigateTo($"/{Page}");
         }
     }
 }
