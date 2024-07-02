@@ -36,11 +36,11 @@
                     </NavLink>
                 </li>
                 <li class="nav-item" style="padding-top: 7px;">
-                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" title="@(loggedIn? Username : Portal)" @onclick="Navigate" style="color: #5535F0; font-size:16px; cursor: pointer; text-decoration: auto;">
-                        <MudIcon Icon="@(loggedIn? Icons.Material.Filled.Person : Icons.Material.Outlined.Dashboard)" Style="font-size: 21px;padding-bottom: 4px;" />
-                        @if (loggedIn)
+                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" title="@(!string.IsNullOrWhiteSpace(AppState.Username)? AppState.Username : Portal)" @onclick="Navigate" style="color: #5535F0; font-size:16px; cursor: pointer; text-decoration: auto;">
+                        <MudIcon Icon="@(AppState.CustomerAuthorized? Icons.Material.Filled.Person : Icons.Material.Outlined.Dashboard)" Style="font-size: 21px;padding-bottom: 4px;" />
+                        @if (AppState.Authorized || AppState.CustomerAuthorized)
                         {
-                            @Username
+                            @AppState.Username
                         }
                         else
                         {
@@ -54,11 +54,9 @@
 </nav>
 
 @code {
-    bool loggedIn = false;
     bool collapseNavMenu = true;
 
     string Portal = "Portal";
-    string? Username { get; set; }
     string? NavBarCssClass => collapseNavMenu ? null : "show";
     string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
 
@@ -67,34 +65,17 @@
         AppState.OnChange += async () => await InvokeAsync(StateHasChanged);
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    public void Navigate()
     {
-        if (firstRender)
+        if (AppState.Authorized || AppState.CustomerAuthorized)
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
+            if (AppState.CustomerAuthorized)
             {
-                Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
-                if (!string.IsNullOrEmpty(Username))
-                {
-                    loggedIn = true;
-                }
+                NavigationManager.NavigateTo($"/user/{AppState.Username}");
             }
-        }
-        StateHasChanged();
-    }
-
-    public async void Navigate()
-    {
-        if (loggedIn)
-        {
-            using SqlConnection db = new SqlConnection(con.connectionString);
-            var role = db.QueryFirstOrDefault<string>("Select Role from Users where UserName = @Username", new { Username = Username });
-            if (role == "Customer") { NavigationManager.NavigateTo($"/user/{Username}"); }
             else
             {
-                var Authorized = db.QuerySingleOrDefault<bool>("SELECT Authorized FROM Users WHERE Username = @Username", new { Username = Username });
-                var isAuthorized = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-                if (isAuthorized && Authorized && !string.IsNullOrWhiteSpace(role))
+                if (AppState.Authorized)
                 {
                     NavigationManager.NavigateTo("/dashboard");
                 }
@@ -102,11 +83,6 @@
             }
         }
         else NavigationManager.NavigateTo("/login");
-    }
-
-    public void Dispose()
-    {
-        AppState.OnChange -= async () => await InvokeAsync(StateHasChanged);
     }
 
     private void ToggleNavMenu()

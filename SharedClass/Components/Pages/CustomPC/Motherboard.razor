@@ -101,7 +101,6 @@
     {
         if (firstRender)
         {
-            using SqlConnection db = new SqlConnection(con.connectionString);
             DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
             if (DeviceType == "Mobile") isMobile = true;
         }

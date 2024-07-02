@@ -72,7 +72,7 @@
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<Users>("SELECT UserID, UserName, UserPhone, Role, Status, CreationDate FROM Users");
+        Elements = await db.QueryAsync<Users>("SELECT UserID, UserName, UserPhone, Role, Status, CreationDate FROM Users WHERE Role != 'Customer'");
     }
 
     void OnRowClick(TableRowClickEventArgs<Users> args)

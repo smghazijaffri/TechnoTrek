@@ -1,9 +1,10 @@
 ﻿@page "/login"
 
 @inject Login login;
+@inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject ExampleJsInterop Example;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
@@ -43,16 +44,34 @@
 
     private async void Pagelogin()
     {
-        var (IsLoginSuccessful, Role) = await login.Access(Username, Password, JSRuntime, Snackbar);
+        var (IsLoginSuccessful, Role) = await login.Access(Username, Password, Snackbar);
         if (IsLoginSuccessful)
         {
             if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-            await _protectedLocalStore.SetLocalAsync("Authorized", true);
-            await _protectedLocalStore.SetLocalAsync("Username", Username);
-            await _protectedLocalStore.SetLocalAsync("Role", Role);
+            AppState.Username = Username;
+            AppState.Role = Role;
 
-            if (Role != "Customer") NavigationManager.NavigateTo("/dashboard");
-            else NavigationManager.NavigateTo("/", forceLoad: true);
+            if (Role != "Customer")
+            {
+                AppState.Authorized = true;
+                AppState.CustomerAuthorized = false;
+                NavigationManager.NavigateTo("/dashboard");
+            }
+            else
+            {
+                using SqlConnection db = new SqlConnection(con.connectionString);
+                string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+                var result = await Select.RetrieveCartItems(userid);
+
+                foreach (var item in result)
+                {
+                    AppState.CartItemCount++;
+                }
+
+                AppState.CustomerAuthorized = true;
+                AppState.Authorized = false;
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
             Snackbar.Clear();
             Snackbar.Add("Welcome " + Username, Severity.Success);
         }

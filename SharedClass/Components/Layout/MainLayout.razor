@@ -5,9 +5,10 @@
 @inject Connection con;
 @inject AppState AppState;
 @inject IJSRuntime JSRuntime;
-@inherits LayoutComponentBase;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
+
+@inherits LayoutComponentBase;
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,25 +30,18 @@
 </main>
 
 @code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-
-        if (firstRender)
+        string Username = AppState.Username;
+        string Role = AppState.Role;
+        if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Role") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
+            string? userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+            if (Role == "Customer")
             {
-                string Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
-                string Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
-                if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
-                {
-                    string? userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-                    if (Role == "Customer")
-                    {
-                        var result = await Select.RetrieveCartItems(userid);
-                        AppState.CartItemCount = result.Distinct().Count();
-                    }
-                }
+                var result = await Select.RetrieveCartItems(userid);
+                AppState.CartItemCount = result.Distinct().Count();
             }
         }
         StateHasChanged();

@@ -7,12 +7,13 @@
 @inject Login login;
 @inject Connection con;
 @inject BOM_Item BOMItem;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (loggedIn)
+@if (AppState.CustomerAuthorized)
 {
     <div class="container" style="max-width: 100vw; overflow-x: hidden; padding-bottom: 20px;">
         <div class="row justify-content-center">
@@ -317,7 +318,6 @@
     string? DeviceType { get; set; }
 
     bool isMobile = false;
-    bool loggedIn = false;
     bool isModalOpen = false;
     bool IsVisible { get; set; }
     bool isQuickViewVisible = false;
@@ -361,49 +361,68 @@
 
     protected async override void OnInitialized()
     {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        Username = AppState.Username;
+        Role = AppState.Role;
+        if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
         {
-            var itemNames = new[] { "Memory", "Cooler", "Storage", "Gaming Case", "Processor", "Power Supply", "Motherboard", "Graphics Card" };
-            var itemTasks = itemNames.Select(itemName => LoadItemDataAsync(itemName)).ToList();
-
-            var itemResults = await Task.WhenAll(itemTasks);
-
-            Memory = itemResults[0].Name;
-            MemoryCode = itemResults[0].Code;
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "RamQuantity"))
-            { MemoryQuantity = await _protectedLocalStore.GetLocalAsync<int>("RamQuantity"); }
-            MemoryPrice = itemResults[0].Price * MemoryQuantity;
-
-            Cooler = itemResults[1].Name;
-            CoolerCode = itemResults[1].Code;
-            CoolerPrice = itemResults[1].Price;
-
-            Storage = itemResults[2].Name;
-            StorageCode = itemResults[2].Code;
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "StorageQuantity"))
-            { StorageQuantity = await _protectedLocalStore.GetLocalAsync<int>("StorageQuantity"); }
-            StoragePrice = itemResults[2].Price * StorageQuantity;
-
-            Case = itemResults[3].Name;
-            CaseCode = itemResults[3].Code;
-            CasePrice = itemResults[3].Price;
-
-            Processor = itemResults[4].Name;
-            ProcessorCode = itemResults[4].Code;
-            ProcessorPrice = itemResults[4].Price;
-
-            Supply = itemResults[5].Name;
-            SupplyCode = itemResults[5].Code;
-            SupplyPrice = itemResults[5].Price;
-
-            Motherboard = itemResults[6].Name;
-            MotherboardCode = itemResults[6].Code;
-            MotherboardPrice = itemResults[6].Price;
-
-            Graphics = itemResults[7].Name;
-            GraphicsCode = itemResults[7].Code;
-            GraphicsPrice = itemResults[7].Price;
+            userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+            if (Role != "Customer")
+            {
+                Snackbar.Add("Please login as a Customer", Severity.Error);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
+            }
         }
+        else
+        {
+            Snackbar.Add("Please login as a Customer", Severity.Error);
+            AppState.Authorized = false;
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        var itemNames = new[] { "Memory", "Cooler", "Storage", "Gaming Case", "Processor", "Power Supply", "Motherboard", "Graphics Card" };
+        var itemTasks = itemNames.Select(itemName => LoadItemDataAsync(itemName)).ToList();
+
+        var itemResults = await Task.WhenAll(itemTasks);
+
+        Memory = itemResults[0].Name;
+        MemoryCode = itemResults[0].Code;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "RamQuantity"))
+        { MemoryQuantity = await _protectedLocalStore.GetLocalAsync<int>("RamQuantity"); }
+        MemoryPrice = itemResults[0].Price * MemoryQuantity;
+
+        Cooler = itemResults[1].Name;
+        CoolerCode = itemResults[1].Code;
+        CoolerPrice = itemResults[1].Price;
+
+        Storage = itemResults[2].Name;
+        StorageCode = itemResults[2].Code;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "StorageQuantity"))
+        { StorageQuantity = await _protectedLocalStore.GetLocalAsync<int>("StorageQuantity"); }
+        StoragePrice = itemResults[2].Price * StorageQuantity;
+
+        Case = itemResults[3].Name;
+        CaseCode = itemResults[3].Code;
+        CasePrice = itemResults[3].Price;
+
+        Processor = itemResults[4].Name;
+        ProcessorCode = itemResults[4].Code;
+        ProcessorPrice = itemResults[4].Price;
+
+        Supply = itemResults[5].Name;
+        SupplyCode = itemResults[5].Code;
+        SupplyPrice = itemResults[5].Price;
+
+        Motherboard = itemResults[6].Name;
+        MotherboardCode = itemResults[6].Code;
+        MotherboardPrice = itemResults[6].Price;
+
+        Graphics = itemResults[7].Name;
+        GraphicsCode = itemResults[7].Code;
+        GraphicsPrice = itemResults[7].Price;
 
         totalPrice = 0;
         totalPrice = MotherboardPrice + ProcessorPrice + MemoryPrice + StoragePrice + GraphicsPrice + SupplyPrice + CasePrice + CoolerPrice;
@@ -411,46 +430,14 @@
         StateHasChanged();
     }
 
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
             if (DeviceType == "Mobile") isMobile = true;
-
-            using SqlConnection db = new SqlConnection(con.connectionString);
-
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Role"))
-            {
-                Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
-                Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
-                if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
-                {
-                    userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-                    if (Role != "Customer")
-                    {
-                        Snackbar.Add("Please login as a Customer", Severity.Error);
-                        loggedIn = false;
-                        NavigationManager.NavigateTo("/login", forceLoad: true);
-                    }
-                    else
-                    {
-                        loggedIn = true;
-                    }
-                }
-                else
-                {
-                    Snackbar.Add("Please login as a Customer", Severity.Error);
-                    loggedIn = false;
-                    NavigationManager.NavigateTo("/login", forceLoad: true);
-                }
-            }
-            else
-            {
-                Snackbar.Add("Please login as a Customer", Severity.Error);
-                loggedIn = false;
-                NavigationManager.NavigateTo("/login", forceLoad: true);
-            }
         }
         StateHasChanged();
     }

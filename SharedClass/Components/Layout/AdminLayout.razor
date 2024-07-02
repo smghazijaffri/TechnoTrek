@@ -1,5 +1,6 @@
 ﻿@inject Login login;
 @inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
@@ -80,55 +81,42 @@
 @code {
     bool open = false;
     bool isLoading = false;
-    bool Authorized { get; set; }
     bool isAuthorized { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            await Authorization();
-        }
+        Authorization();
         StateHasChanged();
     }
 
-    private async Task Authorization()
+    private void Authorization()
     {
         try
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Authorized") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                using (SqlConnection db = new SqlConnection(con.connectionString))
-                {
-                    string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
-                    string Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
+                string User = AppState.Username;
+                string Role = AppState.Role;
 
-                    Authorized = db.QuerySingleOrDefault<bool>("SELECT Authorized FROM Users WHERE Username = @Username", new { Username = User });
-                    isAuthorized = await _protectedLocalStore.GetLocalAsync<bool>("Authorized");
-                    if (isAuthorized && Authorized && (!string.IsNullOrWhiteSpace(Role)) && Role != "Customer")
-                    {
-                        isLoading = true;
-                    }
-                    else if (isAuthorized && Authorized && (!string.IsNullOrWhiteSpace(Role)) && Role == "Customer")
-                    {
-                        isLoading = false;
-                        NavigationManager.NavigateTo($"/user/{User}", forceLoad: true);
-                    }
-                    else
-                    {
-                        isLoading = false;
-                        NavigationManager.NavigateTo("/login", forceLoad: true);
-                        Snackbar.Clear();
-                        Snackbar.Add("Not Authorized", Severity.Error);
-                    }
+                isAuthorized = AppState.Authorized;
+                if (AppState.Authorized)
+                {
+                    isLoading = true;
                 }
-            }
-            else
-            {
-                isLoading = false;
-                NavigationManager.NavigateTo("/login", forceLoad: true);
-                Snackbar.Clear();
-                Snackbar.Add("Not Authorized", Severity.Error);
+                else if (AppState.CustomerAuthorized)
+                {
+                    isLoading = false;
+                    Snackbar.Clear();
+                    Snackbar.Add("Not Authorized", Severity.Error);
+                    NavigationManager.NavigateTo($"/user/{User}", forceLoad: true);
+                }
+                else
+                {
+                    isLoading = false;
+                    Snackbar.Clear();
+                    Snackbar.Add("Not Authorized", Severity.Error);
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                }
             }
         }
         catch (Exception ex)
@@ -142,21 +130,19 @@
         open = !open;
     }
 
-    private async void Logout()
+    private void Logout()
     {
-        string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
-        await login.LogOut(User);
-        await _protectedLocalStore.SetLocalAsync("Authorized", false);
-        await _protectedLocalStore.SetLocalAsync("Username", "");
-        await _protectedLocalStore.SetLocalAsync("Role", "");
+        AppState.Authorized = false;
+        AppState.Username = string.Empty;
+        AppState.Role = string.Empty;
         Snackbar.Clear();
         Snackbar.Add("Logged Out", Severity.Error);
         NavigationManager.NavigateTo("/");
     }
 
-    private async void Navigate(string Page)
+    private void Navigate(string Page)
     {
-        await Authorization();
+        Authorization();
         if (!string.IsNullOrWhiteSpace(Page))
         {
             NavigationManager.NavigateTo($"/{Page}");

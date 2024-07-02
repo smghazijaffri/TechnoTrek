@@ -114,7 +114,6 @@
     bool isMobile = false;
 
     string? userid { get; set; }
-    string? Username { get; set; }
     string? DeviceType { get; set; }
 
     int totalAmount { get; set; } = 0;
@@ -124,13 +123,10 @@
     protected async override void OnInitialized()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username"))
+
+        if (!string.IsNullOrEmpty(AppState.Username))
         {
-            Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
-            if (!string.IsNullOrEmpty(Username))
-            {
-                userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-            }
+            userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
         }
         await LoadItems();
     }

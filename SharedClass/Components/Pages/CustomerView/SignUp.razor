@@ -1,10 +1,11 @@
-﻿@page "/signup/"
-@page "/user/{Username?}"
+﻿@page "/signup"
+@page "/user/{Usernames?}"
 
 @inject CRUD crud;
 @inject Users users;
-@inject Connection con;
 @inject Login login;
+@inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -15,7 +16,7 @@
     <div class="col-6">
     </div>
     <div class="col-6 d-flex justify-content-end">
-        @if (loggedIn)
+        @if (AppState.CustomerAuthorized)
         {
             <button type="submit" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="Logout">
                 Log Out
@@ -90,50 +91,58 @@
 
 @code {
     [Parameter]
-    public string? Username { get; set; }
-
-    bool loggedIn = false;
+    public string? Usernames { get; set; }
 
     string header = "SignUp";
     string? ValidationMessage { get; set; }
     string pattern = @"^\d{5}-\d{7}-\d{1}$";
     string passwordPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnAfterRender(bool firstRender)
     {
-        try
+        if (firstRender)
         {
-            using (SqlConnection db = new SqlConnection(con.connectionString))
+            try
             {
-                if (Username != null)
+                if (!string.IsNullOrEmpty(Usernames) && Usernames != AppState.Username)
                 {
-                    users = db.QueryFirstOrDefault<Users>("Select * from Users where UserName = @Username", new { Username = Username });
-                    if (users == null || users.Role != "Customer")
+                    NavigationManager.NavigateTo($"/user/{AppState.Username}", forceLoad: true, replace: true);
+                    return;
+                }
+
+                using (SqlConnection db = new SqlConnection(con.connectionString))
+                {
+                    if (!string.IsNullOrEmpty(AppState.Username)) users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
+
+                    if (users == null)
                     {
-                        loggedIn = false;
-                        await login.LogOut(Username);
+                        NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
+                        return;
+                    }
+
+                    if (users.Role != "Customer" && !string.IsNullOrEmpty(users.Role))
+                    {
                         NavigationManager.NavigateTo("/login/", forceLoad: true);
+                        return;
+                    }
+
+                    if (AppState.Authorized)
+                    {
+                        NavigationManager.NavigateTo("/dashboard/", forceLoad: true, replace: true);
                         return;
                     }
                     else
                     {
-                        header = users.UserName;
-                        loggedIn = true;
+                        users.Birthday = DateTime.Today;
                     }
                 }
-                else
-                {
-                    users.Birthday = DateTime.Today;
-                }
             }
-            StateHasChanged();
+            catch (Exception)
+            {
+                throw;
+            }
         }
-        catch (Exception)
-        {
-            throw;
-        }
-
-        base.OnInitialized();
+        StateHasChanged();
     }
 
     public string createUser()
@@ -241,13 +250,12 @@
         return age >= 18;
     }
 
-    private async void Logout()
+    private void Logout()
     {
-        string User = await _protectedLocalStore.GetLocalAsync<string>("Username");
-        await login.LogOut(User);
-        await _protectedLocalStore.SetLocalAsync("Authorized", false);
-        await _protectedLocalStore.SetLocalAsync("Username", "");
-        await _protectedLocalStore.SetLocalAsync("Role", "");
+        AppState.CartItemCount = 0;
+        AppState.CustomerAuthorized = false;
+        AppState.Username = string.Empty;
+        AppState.Role = string.Empty;
         Snackbar.Clear();
         Snackbar.Add("Logged Out", Severity.Error);
         NavigationManager.NavigateTo("/", forceLoad: true);

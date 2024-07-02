@@ -2,13 +2,14 @@
 
 @inject Select select;
 @inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@if (loggedIn)
+@if (AppState.CustomerAuthorized)
 {
     <MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto" Style="width:99vw">
         @foreach (var itemType in GetItemTypes())
@@ -64,48 +65,32 @@
 }
 
 @code {
-    bool loggedIn = false;
-
     string? Role { get; set; }
     string? userid { get; set; }
     string? Username { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        if (firstRender)
+
+        Username = AppState.Username;
+        Role = AppState.Role;
+        if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Username") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Role"))
-            {
-                Username = await _protectedLocalStore.GetLocalAsync<string>("Username");
-                Role = await _protectedLocalStore.GetLocalAsync<string>("Role");
-                if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
-                {
-                    userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-                    if (Role != "Customer")
-                    {
-                        Snackbar.Add("Please login as a Customer", Severity.Error);
-                        loggedIn = false;
-                        NavigationManager.NavigateTo("/login", forceLoad: true);
-                    }
-                    else
-                    {
-                        loggedIn = true;
-                    }
-                }
-                else
-                {
-                    Snackbar.Add("Please login as a Customer", Severity.Error);
-                    loggedIn = false;
-                    NavigationManager.NavigateTo("/login", forceLoad: true);
-                }
-            }
-            else
+            userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+            if (Role != "Customer")
             {
                 Snackbar.Add("Please login as a Customer", Severity.Error);
-                loggedIn = false;
                 NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
             }
+        }
+        else
+        {
+            Snackbar.Add("Please login as a Customer", Severity.Error);
+            AppState.Authorized = false;
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+            return;
         }
         StateHasChanged();
     }

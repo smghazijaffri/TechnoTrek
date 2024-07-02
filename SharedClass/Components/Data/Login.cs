@@ -15,7 +15,7 @@ namespace SharedClass.Components.Data
             con = GetSqlConnection();
         }
 
-        public async Task<(bool IsAuthorized, string Role)> Access(string username, string password, IJSRuntime jsRuntime, ISnackbar Snackbar)
+        public async Task<(bool IsAuthorized, string Role)> Access(string username, string password, ISnackbar Snackbar)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
@@ -24,13 +24,12 @@ namespace SharedClass.Components.Data
 
             try
             {
-                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND UserPassword = @Password";
+                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND UserPassword = @Password AND Status != 'Disabled'";
                 var parameters = new { Username = username, Password = password };
                 var userAuth = await con.QueryFirstOrDefaultAsync<UserAuth>(query, parameters);
 
                 if (userAuth != null)
                 {
-                    await UpdateAuthorizationStatus(username, true);
                     return (true, userAuth.Role);
                 }
                 else
@@ -44,18 +43,6 @@ namespace SharedClass.Components.Data
                 Snackbar.Add($"An error occurred while verifying the credentials: {ex.Message}", Severity.Error);
                 return (false, null);
             }
-        }
-
-        private async Task UpdateAuthorizationStatus(string username, bool isAuthorized)
-        {
-            var updateQuery = "UPDATE Users SET Authorized = @Authorized WHERE Username = @Username";
-            var updateParameters = new { Authorized = isAuthorized, Username = username };
-            await con.ExecuteAsync(updateQuery, updateParameters);
-        }
-
-        public async Task LogOut(string authUser)
-        {
-            await UpdateAuthorizationStatus(authUser, false);
         }
     }
 }
