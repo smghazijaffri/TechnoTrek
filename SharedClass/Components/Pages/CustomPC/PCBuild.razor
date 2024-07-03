@@ -11,7 +11,6 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 @if (AppState.CustomerAuthorized)
 {
@@ -141,7 +140,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Motherboard</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Motherboard == "" || Motherboard == null)
+                            @if (string.IsNullOrEmpty(AppState.Motherboard))
                             {
                                 <p class="card-text">Choose your desired Motherboard</p>
                             }
@@ -162,7 +161,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Processor</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Processor == "" || Processor == null)
+                            @if (string.IsNullOrEmpty(AppState.Processor))
                             {
                                 <p class="card-text">Choose your desired Processor</p>
                             }
@@ -183,7 +182,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Memory</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Memory == "" || Memory == null)
+                            @if (string.IsNullOrEmpty(AppState.Memory))
                             {
                                 <p class="card-text">Choose your desired Memory</p>
                             }
@@ -204,7 +203,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Storage</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Storage == "" || Storage == null)
+                            @if (string.IsNullOrEmpty(AppState.Storage))
                             {
                                 <p class="card-text">Choose your desired Storage</p>
                             }
@@ -225,7 +224,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Graphics Card</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Graphics == "" || Graphics == null)
+                            @if (string.IsNullOrEmpty(AppState.GPU))
                             {
                                 <p class="card-text">Choose your desired Graphics Card</p>
                             }
@@ -246,7 +245,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Power Supply</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Supply == "" || Supply == null)
+                            @if (string.IsNullOrEmpty(AppState.PSU))
                             {
                                 <p class="card-text">Choose your desired Power PSU</p>
                             }
@@ -267,7 +266,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Gaming Case</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Case == "" || Case == null)
+                            @if (string.IsNullOrEmpty(AppState.Case))
                             {
                                 <p class="card-text">Choose your desired Gaming Case</p>
                             }
@@ -288,7 +287,7 @@
                     <div class="card-body p-3 m-auto">
                         <h5 class="card-title text-truncate">Cooler</h5>
                         <div class="m-auto" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if (Cooler == "" || Cooler == null)
+                            @if (string.IsNullOrEmpty(AppState.Cooler))
                             {
                                 <p class="card-text">Choose your desired Fans</p>
                             }
@@ -377,7 +376,7 @@
         }
         else
         {
-            Snackbar.Add("Please login as a Customer", Severity.Error);
+            Snackbar.Add("Please login to continue", Severity.Error);
             AppState.Authorized = false;
             NavigationManager.NavigateTo("/login", forceLoad: true);
             return;
@@ -390,8 +389,7 @@
 
         Memory = itemResults[0].Name;
         MemoryCode = itemResults[0].Code;
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "RamQuantity"))
-        { MemoryQuantity = await _protectedLocalStore.GetLocalAsync<int>("RamQuantity"); }
+        MemoryQuantity = AppState.MemoryQuantity;
         MemoryPrice = itemResults[0].Price * MemoryQuantity;
 
         Cooler = itemResults[1].Name;
@@ -400,8 +398,7 @@
 
         Storage = itemResults[2].Name;
         StorageCode = itemResults[2].Code;
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "StorageQuantity"))
-        { StorageQuantity = await _protectedLocalStore.GetLocalAsync<int>("StorageQuantity"); }
+        StorageQuantity = AppState.StorageQuantity;
         StoragePrice = itemResults[2].Price * StorageQuantity;
 
         Case = itemResults[3].Name;
@@ -430,8 +427,6 @@
         StateHasChanged();
     }
 
-
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -444,18 +439,46 @@
 
     private async Task<(string? Name, string Code, int Price)> LoadItemDataAsync(string itemName)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName))
+        string itemCode = GetItemCode(itemName);
+        if (!string.IsNullOrEmpty(itemCode))
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string itemCode = await _protectedLocalStore.GetLocalAsync<string>(itemName);
-                string? itemNameResult = await db.QuerySingleOrDefaultAsync<string?>("SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { itemCode });
-                int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = itemCode });
-
-                return (itemNameResult, itemCode, itemPrice);
+                var itemData = await GetItemDataAsync(db, itemCode);
+                return itemData;
             }
         }
-        return (string.Empty, string.Empty, 0);
+
+        return (null, string.Empty, 0);
+    }
+
+    private string GetItemCode(string itemName)
+    {
+        return itemName switch
+        {
+            "Memory" => AppState.Memory,
+            "Cooler" => AppState.Cooler,
+            "Storage" => AppState.Storage,
+            "Gaming Case" => AppState.Case,
+            "Processor" => AppState.Processor,
+            "Power Supply" => AppState.PSU,
+            "Motherboard" => AppState.Motherboard,
+            "Graphics Card" => AppState.GPU,
+            _ => string.Empty
+        };
+    }
+
+    private async Task<(string? Name, string Code, int Price)> GetItemDataAsync(SqlConnection db, string itemCode)
+    {
+        string? itemName = await db.QuerySingleOrDefaultAsync<string?>(
+            "SELECT ItemName FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode",
+            new { ItemCode = itemCode });
+
+        int itemPrice = await db.QueryFirstOrDefaultAsync<int>(
+            "SELECT TOP(1) Rate FROM Stock WHERE ItemID = @ItemCode",
+            new { ItemCode = itemCode });
+
+        return (itemName, itemCode, itemPrice);
     }
 
     private void ShowQuickView(string componentName)
@@ -494,40 +517,43 @@
     {
         return componentName switch
         {
-            "Motherboard" => Motherboard,
-            "Processor" => Processor,
-            "Memory" => Memory,
-            "Storage" => Storage,
-            "Graphics Card" => Graphics,
-            "Power Supply" => Supply,
-            "Gaming Case" => Case,
-            "Cooler" => Cooler,
+            "Motherboard" => AppState.Motherboard,
+            "Processor" => AppState.Processor,
+            "Memory" => AppState.Memory,
+            "Storage" => AppState.Storage,
+            "Graphics Card" => AppState.GPU,
+            "Power Supply" => AppState.PSU,
+            "Gaming Case" => AppState.Case,
+            "Cooler" => AppState.Cooler,
             _ => string.Empty
         };
     }
 
-    private async Task ClearComponentSelectionsAsync()
+    private Task ClearComponentSelectionsAsync()
     {
-        var componentKeys = new[] { "Memory", "Cooler", "Storage", "Processor", "Motherboard", "Gaming Case", "Power Supply", "Graphics Card" };
-
-        foreach (var key in componentKeys)
-        {
-            await _protectedLocalStore.SetLocalAsync(key, "");
-        }
-
-        await _protectedLocalStore.SetLocalAsync("RamQuantity", 0);
-        await _protectedLocalStore.SetLocalAsync("StorageQuantity", 0);
+        AppState.Motherboard = string.Empty;
+        AppState.Processor = string.Empty;
+        AppState.Memory = string.Empty;
+        AppState.MemoryQuantity = 0;
+        AppState.Storage = string.Empty;
+        AppState.StorageQuantity = 0;
+        AppState.GPU = string.Empty;
+        AppState.PSU = string.Empty;
+        AppState.Case = string.Empty;
+        AppState.Cooler = string.Empty;
+        return Task.CompletedTask;
     }
 
-    private async void HandleCloseModal()
+    private void HandleCloseModal()
     {
-        await InvokeAsync(OnInitialized);
+        OnInitialized();
         IsVisible = false;
         isModalOpen = false;
         isQuickViewVisible = false;
+        StateHasChanged();
     }
 
-    public async void SaveBOM()
+    public void SaveBOM()
     {
         try
         {
@@ -535,10 +561,10 @@
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 BOM bom = new BOM();
-                var customerID = db.Query<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-                var customerName = db.Query<string>("Select Name from Customer where UserName = @Username", new { Username = customerID });
-                var customerConatct = db.Query<string>("Select Contact from Customer where UserName = @Username", new { Username = customerID });
-                string BOMName = "BOM for " + customerName + "-" + customerConatct + "-" + DateTime.Now.Date;
+                var customerID = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+                var customerName = db.QueryFirstOrDefault<string>("Select Name from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
+                var customerContact = db.QueryFirstOrDefault<string>("Select Contact from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
+                string BOMName = $"BOM for {customerName}-{customerContact}-{DateTime.Today}";
                 bom.BOMName = BOMName;
                 bom.ItemName = customerID + " PC";
                 bom.DocumentDate = DateTime.Now.Date;
@@ -552,9 +578,9 @@
                 customItems.Add(new CustomPC_Items { ItemID = CaseCode, Quantity = 1 });
                 customItems.Add(new CustomPC_Items { ItemID = CoolerCode, Quantity = 1 });
                 customItems.Add(new CustomPC_Items { ItemID = ProcessorCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = MemoryCode, Quantity = await _protectedLocalStore.GetLocalAsync<int>("RamQuantity") });
+                customItems.Add(new CustomPC_Items { ItemID = MemoryCode, Quantity = AppState.MemoryQuantity });
                 customItems.Add(new CustomPC_Items { ItemID = GraphicsCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = StorageCode, Quantity = await _protectedLocalStore.GetLocalAsync<int>("StorageQuantity") });
+                customItems.Add(new CustomPC_Items { ItemID = StorageCode, Quantity = AppState.StorageQuantity });
                 DataTable dataTable = new DataTable("CustomPC_ItemsTable");
 
                 dataTable.Columns.Add("ItemID", typeof(string));
@@ -583,10 +609,7 @@
                 {
                     Snackbar.Clear();
                     Snackbar.Add("Order Confirmed", Severity.Success);
-                    await _protectedLocalStore.SetLocalAsync("customerID", "");
-                    await _protectedLocalStore.SetLocalAsync("customerName", "");
-                    await _protectedLocalStore.SetLocalAsync("customerContact", "");
-                    await ClearComponentSelectionsAsync();
+                    ClearComponentSelectionsAsync();
                 }
             }
             StateHasChanged();
@@ -595,7 +618,6 @@
 
         catch (Exception ex)
         {
-
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }

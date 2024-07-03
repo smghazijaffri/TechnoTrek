@@ -7,7 +7,6 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <section>
     <div class="container py-5">
@@ -31,9 +30,18 @@
                                 }
                                 @if (isBulk)
                                 {
-                                    <h6>Select Quantity: @quantities[values.ItemCode]</h6>
-                                    <p><MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
+                                    <h6>Select Quantity: @(quantities.ContainsKey(values.ItemCode) ? quantities[values.ItemCode].ToString() : "0")</h6>
+                                    <p>
+                                        @if (quantities.ContainsKey(values.ItemCode))
+                                        {
+                                            <MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
+                                        }
+                                        else
+                                        {
+                                            <MudSlider Value="20" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" Disabled="true" />
+                                        }
+                                    </p>
+                                    <h6>Total: @(ItemRates.ContainsKey(values.ItemCode) && quantities.ContainsKey(values.ItemCode) ? (ItemRates[values.ItemCode] * quantities[values.ItemCode]).ToString() : "0")</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
                                                 @onclick="() => Order(values, quantities[values.ItemCode])">
@@ -97,18 +105,9 @@
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor"))
-                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage"))
-                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Power Supply")))
+                    if (!string.IsNullOrEmpty(AppState.Motherboard) && !string.IsNullOrEmpty(AppState.Processor) && !string.IsNullOrEmpty(AppState.Memory) && !string.IsNullOrEmpty(AppState.Storage) && !string.IsNullOrEmpty(AppState.GPU) && !string.IsNullOrEmpty(AppState.PSU))
                     {
-                        string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
-                        string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
-                        string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
-                        string Storage = await _protectedLocalStore.GetLocalAsync<string>("Storage");
-                        string GPU = await _protectedLocalStore.GetLocalAsync<string>("Graphics Card");
-                        string PowerSupply = await _protectedLocalStore.GetLocalAsync<string>("Power Supply");
-
-                        Cases = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "','" + Processor + "','" + Memory + "','" + Storage + "','" + GPU + "','" + PowerSupply + "') and ItemType = 'Gaming Case' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Gaming Case' and Status = 'Enabled'").ToList();
+                        Cases = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + AppState.Motherboard + "','" + AppState.Processor + "','" + AppState.Memory + "','" + AppState.Storage + AppState.GPU + AppState.PSU + "') and ItemType = 'Gaming Case' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Gaming Case' and Status = 'Enabled'").ToList();
                     }
                     else
                     {
@@ -140,83 +139,42 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor")
-                && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage") &&
-                await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Graphics Card") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Power Supply"))
+                if (AllComponentsSelected(AppState))
                 {
-                    if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor"))
-                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage"))
-                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Power Supply")))
+                    List<string> selectedComponents = GetSelectedComponents(AppState);
+                    bool isCompatible = await Data.Select.CheckCompatibilityAsync(db, selectedCase.ItemCode, selectedComponents);
+
+                    if (!isCompatible)
                     {
-                        List<string> CompatItem = new List<string>();
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Motherboard"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Processor"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Memory"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Storage"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Graphics Card"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Power Supply"));
-                        DataTable CompiItem = Data.Select.ConvertListToDataTable(CompatItem);
-                        var parameters = new DynamicParameters();
-                        parameters.Add("@ItemCode", selectedCase.ItemCode);
-                        parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
-                        parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
-                        db.Execute("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
-                        string outputValue = parameters.Get<string>("@Output");
-                        if (outputValue != "Allow")
+                        Snackbar.Clear();
+                        Snackbar.Add("Selected Case is not compatible with other components.", Severity.Error);
+                        return;
+                    }
+
+                    if (AppState.Case != selectedCase.ItemCode)
+                    {
+                        if (!string.IsNullOrEmpty(AppState.Cooler))
                         {
+                            AppState.Cooler = string.Empty;
                             Snackbar.Clear();
-                            Snackbar.Add(outputValue, Severity.Error);
+                            Snackbar.Add("Please reselect the cooler.", Severity.Info);
                         }
-                        else if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Gaming Case"))
-                        {
-                            string Case = await _protectedLocalStore.GetLocalAsync<string>("Gaming Case");
-                            if (Case != selectedCase.ItemCode)
-                            {
-                                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cooler"))
-                                {
-                                    string Cooler = await _protectedLocalStore.GetLocalAsync<string>("Cooler");
 
-                                    if (!string.IsNullOrEmpty(Cooler))
-                                    {
-                                        await _protectedLocalStore.SetLocalAsync("Cooler", "");
-
-                                        await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
-
-                                        Snackbar.Clear();
-                                        Snackbar.Add("Please reselect other components", Severity.Info);
-                                    }
-                                    else
-                                    {
-                                        Snackbar.Clear();
-                                        Snackbar.Add("Selection Saved", Severity.Success);
-                                        await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
-                                    }
-                                }
-                                else
-                                {
-                                    Snackbar.Clear();
-                                    Snackbar.Add("Selection Saved", Severity.Success);
-                                    await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Snackbar.Clear();
-                            Snackbar.Add("Selection Saved", Severity.Success);
-                            await _protectedLocalStore.SetLocalAsync("Gaming Case", selectedCase.ItemCode);
-                        }
+                        AppState.Case = selectedCase.ItemCode;
+                        Snackbar.Clear();
+                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                     else
                     {
+                        AppState.Case = selectedCase.ItemCode;
                         Snackbar.Clear();
-                        Snackbar.Add("Please reselect other components", Severity.Info);
+                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                 }
                 else
                 {
                     Snackbar.Clear();
-                    Snackbar.Add("Please Select Previous Component", Severity.Info);
+                    Snackbar.Add("Please select all previous components.", Severity.Info);
                 }
             }
         }
@@ -225,6 +183,29 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    public static bool AllComponentsSelected(AppState appState)
+    {
+        return !string.IsNullOrEmpty(appState.Motherboard) &&
+               !string.IsNullOrEmpty(appState.Processor) &&
+               !string.IsNullOrEmpty(appState.Memory) &&
+               !string.IsNullOrEmpty(appState.Storage) &&
+               !string.IsNullOrEmpty(appState.GPU) &&
+               !string.IsNullOrEmpty(appState.PSU);
+    }
+
+    public static List<string> GetSelectedComponents(AppState appState)
+    {
+        return new List<string>
+        {
+            appState.Motherboard,
+            appState.Processor,
+            appState.Memory,
+            appState.Storage,
+            appState.GPU,
+            appState.PSU,
+        };
     }
 
     private async Task Order(ItemClass selected, int quantity)

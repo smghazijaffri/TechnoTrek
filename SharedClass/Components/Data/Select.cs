@@ -8,7 +8,6 @@ using PdfSharpCore.Pdf;
 using System.Text.Json;
 using BoldReports.Web;
 using System.Data;
-using MudBlazor;
 using Dapper;
 
 namespace SharedClass.Components.Data
@@ -231,6 +230,18 @@ namespace SharedClass.Components.Data
             }
 
             return cartItems;
+        }
+
+        public static async Task<bool> CheckCompatibilityAsync(SqlConnection db, string itemCode, List<string> compatItems)
+        {
+            DataTable compiItem = ConvertListToDataTable(compatItems);
+            var parameters = new DynamicParameters();
+            parameters.Add("@ItemCode", itemCode);
+            parameters.Add("@CompatibilityID", compiItem.AsTableValuedParameter("dbo.CompatibleItems"));
+            parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
+            await db.ExecuteAsync("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
+            string outputValue = parameters.Get<string>("@Output");
+            return outputValue == "Allow";
         }
     }
 }

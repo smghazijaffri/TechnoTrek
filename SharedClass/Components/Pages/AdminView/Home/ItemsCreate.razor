@@ -253,7 +253,7 @@
     public string? ItemID { get; set; }
 
     string? header = "New Item";
-    string pattern = @"^(http|https):\/\/[^ ""]+$";
+    string pattern = @"^(http|https):\/\/[^\s""]+$";
 
     bool IsSaving = true;
     bool Disabled = false;
@@ -465,7 +465,7 @@
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }
             if (string.IsNullOrWhiteSpace(items.Description)) { return $"Please enter Product Link"; }
-            if (Regex.IsMatch(items.Description, pattern)) { return $"Please enter a valid Product Link"; }
+            // if (Regex.IsMatch(items.Description, pattern)) { return $"Please enter a valid Product Link"; }
             int count = 0;
             if (ItemUOM.Count > 0)
             {

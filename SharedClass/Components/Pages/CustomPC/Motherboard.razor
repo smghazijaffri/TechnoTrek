@@ -5,7 +5,6 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <section>
     <div class="container py-5">
@@ -29,9 +28,18 @@
                                 }
                                 @if (isBulk)
                                 {
-                                    <h6>Select Quantity: @quantities[values.ItemCode]</h6>
-                                    <p><MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
+                                    <h6>Select Quantity: @(quantities.ContainsKey(values.ItemCode) ? quantities[values.ItemCode].ToString() : "0")</h6>
+                                    <p>
+                                        @if (quantities.ContainsKey(values.ItemCode))
+                                        {
+                                            <MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
+                                        }
+                                        else
+                                        {
+                                            <MudSlider Value="20" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" Disabled="true" />
+                                        }
+                                    </p>
+                                    <h6>Total: @(ItemRates.ContainsKey(values.ItemCode) && quantities.ContainsKey(values.ItemCode) ? (ItemRates[values.ItemCode] * quantities[values.ItemCode]).ToString() : "0")</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
                                                 @onclick="() => Order(values, quantities[values.ItemCode])">
@@ -107,27 +115,29 @@
         StateHasChanged();
     }
 
-    private async Task Select(ItemClass selectedMotherboard)
+    private void Select(ItemClass selectedMotherboard)
     {
         try
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+            if (!string.IsNullOrEmpty(AppState.Processor))
             {
-                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
-                {
-                    var components = new[] { "Memory", "Cooler", "Storage", "Processor", "Gaming Case", "Power Supply", "Graphics Card" };
+                AppState.Processor = string.Empty;
+                AppState.Memory = string.Empty;
+                AppState.MemoryQuantity = 0;
+                AppState.Storage = string.Empty;
+                AppState.StorageQuantity = 0;
+                AppState.GPU = string.Empty;
+                AppState.PSU = string.Empty;
+                AppState.Case = string.Empty;
+                AppState.Cooler = string.Empty;
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect the processor, memory, storage, cooler, case, power supply, and graphics card.", Severity.Info);
 
-                    foreach (var component in components)
-                    {
-                        await _protectedLocalStore.SetLocalAsync(component, "");
-                    }
-
-                    Snackbar.Clear();
-                    Snackbar.Add("Please reselect other components", Severity.Info);
-                }
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect other components", Severity.Info);
             }
 
-            await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
+            AppState.Motherboard = selectedMotherboard.ItemCode;
             Snackbar.Add("Selection Saved", Severity.Success);
         }
         catch (Exception ex)
