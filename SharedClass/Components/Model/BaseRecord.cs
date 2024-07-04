@@ -11,6 +11,7 @@
     {
         public string? Output { get; set; }
         public string? ErrorMessage { get; set; }
+        public List<dynamic>? Data { get; set; }
     }
 
     public class Users : BaseRecord
@@ -37,11 +38,17 @@
         public string? Role { get; set; }
     }
 
-    public class ReportUpload
+    public class Report
     {
         public int ReportID { get; set; }
         public string? ReportName { get; set; }
-        public byte[]? RDLData { get; set; }
-        public string? Status { get; set; }
+        public byte[]? ReportData { get; set; }
+    }
+
+    public class ReportParameters
+    {
+        public string? InvoiceID { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 }

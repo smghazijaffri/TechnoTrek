@@ -1,79 +1,79 @@
 ﻿@using System.ComponentModel.DataAnnotations;
 
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
-@inject ProtectedLocalStorage _protectedLocalStore;
+@inject NavigationManager NavigationManager;
 
 <!-- Modal -->
-<div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
-    style="display: @(IsVisible ? "block" : "none");">
-    <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
-        <div class="modal-content" style="border-radius:20px;">
-            <div class="modal-header">
-                <h6 class="modal-title heading" style="font-size: 40px;">@ComponentName </h6>
-                <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                @if (ComponentName == "Motherboard")
-                {
-                    <Motherboard />
-                }
-                @if (ComponentName == "Processor")
-                {
-                    <Processor />
-                }
-                @if (ComponentName == "Graphics Card")
-                {
-                    <GPU />
-                }
-                @if (ComponentName == "Gaming Case")
-                {
-                    <Case />
-                }
-                @if (ComponentName == "Memory")
-                {
-                    <Memory />
-                }
-                @if (ComponentName == "Storage")
-                {
-                    <Storage />
-                }
-                @if (ComponentName == "Power Supply")
-                {
-                    <PSU />
-                }
-                @if (ComponentName == "Cooler")
-                {
-                    <Cooler />
-                }
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel"
-                    aria-label="Close">Cancel</button>
+@if (IsVisible)
+{
+    <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
+          style="display: @(IsVisible ? "block" : "none");" @onkeydown="HandleKeyDown">
+        <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
+            <div class="modal-content" style="border-radius:20px;">
+                <div class="modal-header">
+                    <h6 class="modal-title heading" style="font-size: 40px;">@ComponentName </h6>
+                    <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (ComponentName == "Motherboard")
+                    {
+                        <Motherboard />
+                    }
+                    @if (ComponentName == "Processor")
+                    {
+                        <Processor />
+                    }
+                    @if (ComponentName == "Graphics Card")
+                    {
+                        <GPU />
+                    }
+                    @if (ComponentName == "Gaming Case")
+                    {
+                        <Case />
+                    }
+                    @if (ComponentName == "Memory")
+                    {
+                        <Memory />
+                    }
+                    @if (ComponentName == "Storage")
+                    {
+                        <Storage />
+                    }
+                    @if (ComponentName == "Power Supply")
+                    {
+                        <PSU />
+                    }
+                    @if (ComponentName == "Cooler")
+                    {
+                        <Cooler />
+                    }
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel"
+                            aria-label="Close">
+                        Cancel
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
 <!-- Modal -->
-
-<script>
+@* <script>
     window.addEventListener('keydown', function (event) {
         if (event.key === "Escape") {
             DotNet.invokeMethodAsync('SharedClass', 'CloseModal');
         }
     });
-</script>
+</script> *@
 
 @code {
     public class BuildPcViewModel
     {
-        public string Id { get; set; }
         public bool IsModalOpen { get; set; }
         public string selectedComponentName { get; set; }
-        [Required]
-        public string Contact { get; set; }
-        [Required]
-        public string Name { get; set; }
     }
 
     [Parameter]
@@ -96,9 +96,25 @@
     [Parameter]
     public EventCallback OnClose { get; set; }
 
+    private static CustomModal? _instance;
+
+    bool isMobile = false;
+
+    string? DeviceType { get; set; }
+
     protected override void OnInitialized()
     {
         _instance = this;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
     }
 
     private void ShowQuickView()
@@ -106,38 +122,95 @@
         Model.IsModalOpen = true;
     }
 
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            CloseQuickView();
+        }
+    }
+
     private async void CloseQuickView()
     {
-        Model.IsModalOpen = false;
-        await OnClose.InvokeAsync(null);
+        if (AppState.Authorized && !AppState.CustomerAuthorized)
+        {
+            IsVisible = false;
+            Model.IsModalOpen = false;
+            await OnClose.InvokeAsync(null);
+            Snackbar.Add("Please login as a Customer", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard", forceLoad: true);
+        }
+        else if (!AppState.Authorized && !AppState.CustomerAuthorized)
+        {
+            IsVisible = false;
+            Model.IsModalOpen = false;
+            await OnClose.InvokeAsync(null);
+            Snackbar.Add("Please login to continue", Severity.Error);
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
+        else
+        {
+            IsVisible = false;
+            Model.IsModalOpen = false;
+            await OnClose.InvokeAsync(null);
+        }
     }
 
-    private async void Cancel()
+    private void Cancel()
     {
-        CloseQuickView();
-        await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
-        if (Model.selectedComponentName == "Storage")
+        try
         {
-            await _protectedLocalStore.SetLocalAsync("StorageQuantity", 0);
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            CloseQuickView();
 
+            switch (Model.selectedComponentName)
+            {
+                case "Memory":
+                    AppState.Memory = string.Empty;
+                    AppState.MemoryQuantity = 0;
+                    break;
+                case "Cooler":
+                    AppState.Cooler = string.Empty;
+                    break;
+                case "Storage":
+                    AppState.Storage = string.Empty;
+                    AppState.StorageQuantity = 0;
+                    break;
+                case "Gaming Case":
+                    AppState.Case = string.Empty;
+                    break;
+                case "Processor":
+                    AppState.Processor = string.Empty;
+                    break;
+                case "Power Supply":
+                    AppState.PSU = string.Empty;
+                    break;
+                case "Motherboard":
+                    AppState.Motherboard = string.Empty;
+                    break;
+                case "Graphics Card":
+                    AppState.GPU = string.Empty;
+                    break;
+            }
+
+            Snackbar.Clear();
+            Snackbar.Add("Cancelled", Severity.Error);
+            StateHasChanged();
         }
-        if (Model.selectedComponentName == "Memory")
+        catch (Exception ex)
         {
-            await _protectedLocalStore.SetLocalAsync("RamQuantity", 0);
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add($"Error cancelling: {ex.Message}", Severity.Error);
         }
-        Snackbar.Clear();
-        Snackbar.Add("Cancelled", Severity.Error);
     }
 
-    private static CustomModal? _instance;
-
-    [JSInvokable]
-    public static Task CloseModal()
-    {
-        if (_instance != null)
-        {
-            _instance.CloseQuickView();
-        }
-        return Task.CompletedTask;
-    }
+    // [JSInvokable]
+    // public static Task CloseModal()
+    // {
+    //     if (_instance != null)
+    //     {
+    //         _instance.CloseQuickView();
+    //     }
+    //     return Task.CompletedTask;
+    // }
 }

@@ -1,5 +1,7 @@
 ﻿@page "/dashboard";
 
+@using Microsoft.Maui.Controls;
+
 @layout AdminLayout;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
@@ -16,6 +18,14 @@
         });
     };
 
+    window.disableBackGestureMobile = (dotNetHelper) => {
+        window.history.pushState(null, document.title, location.href);
+        window.addEventListener('popstate', function (event) {
+            window.history.pushState(null, document.title, location.href);
+            return dotNetHelper.invokeMethodAsync('HandleBackGesture');
+        });
+    };
+
     window.enableBackGesture = function () {
         window.removeEventListener('popstate', function (event) {
             window.history.pushState(null, document.title, location.href);
@@ -24,22 +34,42 @@
 </script>
 
 @code {
-    protected override void OnInitialized()
-    {
-        StateHasChanged();
-        base.OnInitialized();
-    }
+    string? DeviceType { get; set; }
+
+    private DotNetObjectReference<Dashboard>? objRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeVoidAsync("disableBackGesture");
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+
+            if (DeviceType == "Mobile")
+            {
+                objRef = DotNetObjectReference.Create(this);
+                await TriggerDotNetInstanceMethod();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("disableBackGesture");
+            }
         }
+    }
+
+    public async Task TriggerDotNetInstanceMethod()
+    {
+        string result = await JSRuntime.InvokeAsync<string>("disableBackGestureMobile", objRef);
+    }
+
+    [JSInvokable]
+    public void HandleBackGesture()
+    {
+        Application.Current.Quit();
     }
 
     public void Dispose()
     {
+        objRef?.Dispose();
         JSRuntime.InvokeVoidAsync("enableBackGesture");
     }
 }

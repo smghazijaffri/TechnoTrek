@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@inject AppState AppState;
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -22,6 +24,16 @@
 <body>
     <Routes @rendermode="@InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
+    <script>
+        function downloadFile(dataUrl, fileName) {
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
     <script>
         window.detectDeviceType = () => {
             const userAgent = navigator.userAgent;
@@ -52,3 +64,10 @@
 </body>
 
 </html>
+
+@code {
+    public void Dispose()
+    {
+        AppState.OnChange -= async () => await InvokeAsync(StateHasChanged);
+    }
+}

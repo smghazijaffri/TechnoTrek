@@ -61,6 +61,7 @@
         public const string Completed = "Completed";
         public const string NotStarted = "Not Started";
     }
+
     public class EmailCredentials
     {
         public const string UserName = "m.sufiyanyousuf@outlook.com";

@@ -145,8 +145,8 @@
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsApproved" />
                                 @(index + 1)
                             </div>

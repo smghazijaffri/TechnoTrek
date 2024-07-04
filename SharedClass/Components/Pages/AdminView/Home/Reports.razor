@@ -1,0 +1,216 @@
+﻿@page "/reports"
+
+@layout AdminLayout;
+@inject Select select;
+@inject Report reports;
+@inject Connection con;
+@inject Email EmailService;
+@inject ISnackbar Snackbar;
+@inject Email EmailService;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager Navigation;
+@inject ReportParameters reportparameters;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>Reports</h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <MudButton Variant="Variant.Outlined" OnClick="GenerateReport" StartIcon="@Icons.Material.Filled.FilePresent" Color="Color.Primary">Generate Report</MudButton>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Select Reports</label>
+            <select class="form-select" @onchange="OnReportChange">
+                <option selected>Select a Report</option>
+                @foreach (var reports in Elements)
+                {
+                    <option value="@reports.ReportName">@reports.ReportName</option>
+                }
+            </select>
+        </div>
+        @if (dateFilter)
+        {
+            <div class="col-md-6">
+                <label class="form-label">From</label>
+                <input type="date" @bind="@From" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">To</label>
+                <input type="date" @bind="@To" class="form-control">
+            </div>
+        }
+        @if (invoice)
+        {
+            <div class="col-md-6">
+                <label class="form-label">ID</label>
+                <select class="form-select" @bind="@reportparameters.InvoiceID">
+                    <option selected>Select an ID</option>
+                    @foreach (var reports in Parameters)
+                    {
+                        <option value="@reports.InvoiceID">@reports.InvoiceID</option>
+                    }
+                </select>
+            </div>
+        }
+    </form>
+</div>
+
+
+@if (!string.IsNullOrEmpty(PdfDataUrl))
+{
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <div class="g-3">
+            <iframe src="@PdfDataUrl" class="m-2" style="max-width:100vw; height:100vh;"></iframe>
+        </div>
+    </div>
+}
+
+@code {
+    bool invoice = false;
+    bool isMobile = false;
+    bool noFilter = false;
+    bool dateFilter = false;
+
+    string? DeviceType { get; set; }
+    string? PdfDataUrl { get; set; }
+
+    DateTime From { get; set; }
+    DateTime To { get; set; }
+
+    private IEnumerable<Report> Elements = new List<Report>();
+    private IEnumerable<ReportParameters> Parameters = new List<ReportParameters>();
+
+    protected override void OnInitialized()
+    {
+        From = DateTime.Today;
+        To = DateTime.Today;
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        Elements = db.Query<Report>("Select * from Reports").ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
+    }
+
+    private void OnReportChange(ChangeEventArgs e)
+    {
+        reports.ReportName = e.Value?.ToString();
+
+        PdfDataUrl = "";
+
+        reportparameters.InvoiceID = "Select an ID";
+
+        if (reports.ReportName == "Purchase Invoice" || reports.ReportName == "Sales Invoice" || reports.ReportName == "Request for Quotation")
+        {
+            invoice = true;
+            noFilter = false;
+            dateFilter = false;
+        }
+        else if (reports.ReportName == "Inventory Report")
+        {
+            noFilter = true;
+            invoice = false;
+            dateFilter = false;
+        }
+        else if (reports.ReportName == "Purchase Order Analysis")
+        {
+            noFilter = false;
+            invoice = false;
+            dateFilter = true;
+        }
+
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (reports.ReportName == "Purchase Invoice") Parameters = db.Query<ReportParameters>("Select PurchaseInvoiceID AS InvoiceID from PurchaseInvoice").ToList();
+        else if (reports.ReportName == "Sales Invoice") Parameters = db.Query<ReportParameters>("Select SalesInvoiceID AS InvoiceID from SaleInvoice").ToList();
+        else if (reports.ReportName == "Request for Quotation") Parameters = db.Query<ReportParameters>("Select RFQNumber AS InvoiceID from RequestForQuotation").ToList();
+
+        StateHasChanged();
+    }
+
+    public async void GenerateReport()
+    {
+        try
+        {
+            Snackbar.Clear();
+            if (string.IsNullOrEmpty(reports.ReportName))
+            {
+                if (isMobile) Vibration.Default.Vibrate();
+                Snackbar.Add("Please Select a Report", Severity.Error);
+                return;
+            }
+
+            if (invoice)
+            {
+                if (string.IsNullOrEmpty(reportparameters.InvoiceID) || reportparameters.InvoiceID == "Select an ID")
+                {
+                    if (isMobile) Vibration.Default.Vibrate();
+                    Snackbar.Add("Please Select an ID", Severity.Error);
+                    return;
+                }
+            }
+
+            if (dateFilter)
+            {
+                if (string.IsNullOrEmpty(From.ToString()) || string.IsNullOrEmpty(To.ToString()))
+                {
+                    if (isMobile) Vibration.Default.Vibrate();
+                    Snackbar.Add("Please Select Dates", Severity.Error);
+                    return;
+                }
+            }
+
+            Snackbar.Add("Generating Report", Severity.Info);
+
+            byte[] pdfBytes;
+            byte[] PdfByte;
+
+            if (!string.IsNullOrEmpty(reportparameters.InvoiceID) && reportparameters.InvoiceID != "Select an ID")
+            {
+                PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
+
+                pdfBytes = Select.ExtractOddPages(PdfByte);
+            }
+            else if (!string.IsNullOrEmpty(From.ToString()) && !string.IsNullOrEmpty(To.ToString()))
+            {
+                PdfByte = select.GetPdfAsync(reports.ReportName, null, From, To);
+
+                pdfBytes = Select.ExtractOddPages(PdfByte);
+            }
+            else
+            {
+                PdfByte = select.GetPdfAsync(reports.ReportName);
+
+                pdfBytes = Select.ExtractOddPages(PdfByte);
+            }
+
+            if (isMobile)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                await Select.OpenPdfAsync(pdfBytes, $"{reports.ReportName}.pdf");
+            }
+            else
+            {
+                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
+                PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+                Snackbar.Add("Report Created", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

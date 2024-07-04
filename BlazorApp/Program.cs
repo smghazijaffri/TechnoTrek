@@ -1,7 +1,6 @@
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
-using SharedClass.Components.Api;
 using SharedClass.Components;
 using ProtectedLocalStore;
 using MudBlazor.Services;
@@ -10,14 +9,9 @@ using MudBlazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-builder.Services.AddControllers().AddNewtonsoftJson();
-builder.Services.AddMemoryCache();
-
-Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
-
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Stock>();
@@ -25,6 +19,7 @@ builder.Services.AddScoped<Login>();
 builder.Services.AddScoped<Users>();
 builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Vendor>();
+builder.Services.AddScoped<Report>();
 builder.Services.AddScoped<SO_Item>();
 builder.Services.AddScoped<SI_Item>();
 builder.Services.AddScoped<ItemUOM>();
@@ -49,7 +44,6 @@ builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodsIssue>();
 builder.Services.AddScoped<GoodReceipt>();
 builder.Services.AddSingleton<AppState>();
-builder.Services.AddScoped<ReportUpload>();
 builder.Services.AddScoped<SalesInvoice>();
 builder.Services.AddScoped<BindDropdown>();
 builder.Services.AddScoped<Compatibility>();
@@ -60,9 +54,12 @@ builder.Services.AddScoped<PurchaseOrders>();
 builder.Services.AddScoped<ProductionOrder>();
 builder.Services.AddScoped<PurchaseInvoice>();
 builder.Services.AddScoped<ExampleJsInterop>();
+builder.Services.AddScoped<ReportParameters>();
 builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
+builder.Services.AddScoped<PurchaseOrderAnalysis>();
+builder.Services.AddScoped<SharedClass.Components.Data.Email>();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddMudServices();
 builder.Services.AddMudServices(config =>
@@ -81,10 +78,10 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddProtectedLocalStore(new EncryptionService(
                 new KeyInfo("45BLO2yoJkvBwz99kBEMlNkxvL40vUSGaqr/WBu3+Vg=", "Ou3fn+I9SVicGWMLkFEgZQ==")));
 
+Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
+
 var app = builder.Build();
-var provider = builder.Services.BuildServiceProvider();
-var config = builder.Configuration;
-var configuration = provider.GetService<IConfiguration>();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -96,7 +93,5 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-app.MapControllers();
 
 app.Run();

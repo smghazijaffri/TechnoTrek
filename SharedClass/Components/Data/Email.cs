@@ -11,15 +11,16 @@ namespace SharedClass.Components.Data
     public class Email : EmailCredentials
     {
         private readonly Connection con = new();
+        public Select select;
 
         public async Task GetEmailAsync(string RfqNumber)
         {
-            using SqlConnection db = new SqlConnection(con.connectionString);
+            using SqlConnection db = new(con.connectionString);
             var emails = db.Query<Vendor>("SELECT Email, VendorName FROM RFQVendor r INNER JOIN Vendor v ON r.VendorID = v.VendorID WHERE SendEmail = 1 AND RFQNumber = @RFQNumber", new { RFQNumber = RfqNumber }).ToList();
 
             foreach (var email in emails)
             {
-                SendModel sendModel = new SendModel
+                SendModel sendModel = new()
                 {
                     Body = GetEmailBody(email.VendorName),
                     To = email.Email,
@@ -39,8 +40,11 @@ namespace SharedClass.Components.Data
                 message.Subject = sendModel.Subject;
                 message.Body = sendModel.Body;
                 message.IsBodyHtml = true;
-                byte[] attachmentBytes = ExportToPDF(sendModel.RFQNumber);
-                var attachment = new Attachment(new MemoryStream(attachmentBytes), "RFQ.pdf");
+                byte[] pdfBytes = select.GetPdfAsync("Request for Quotation", sendModel.RFQNumber);
+
+                var attachmentBytes = Select.ExtractOddPages(pdfBytes);
+
+                var attachment = new Attachment(new MemoryStream(attachmentBytes), "Request for Quotation.pdf");
                 message.Attachments.Add(attachment);
 
                 using var client = new SmtpClient(Emailhost, EmailPort);
@@ -50,34 +54,8 @@ namespace SharedClass.Components.Data
             }
             catch (Exception ex)
             {
-                throw;
+                Console.WriteLine(ex.ToString());
             }
-        }
-
-        public byte[] ExportToPDF(string RFQNumber)
-        {
-            using SqlConnection db = new(con.connectionString);
-
-            byte[] rdlData = db.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName = "RFQ" });
-
-            if (rdlData == null)
-            {
-                throw new Exception("Report not found in the database.");
-            }
-
-            using MemoryStream inputStream = new MemoryStream(rdlData);
-            ReportWriter writer = new ReportWriter(inputStream);
-
-            var rfqItems = db.Query<RFQItemReport>(
-                "SELECT RFQNumber, ItemName AS Item, Quantity, UOMName AS UOM, FORMAT(RequiredBy, 'yyyy-MM-dd') AS RequiredBy " +
-                "FROM RFQ_Items r INNER JOIN Items i ON r.Item = i.ItemCode INNER JOIN UOM u ON r.UOM = u.UOMID " +
-                "WHERE RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
-            writer.DataSources.Add(new ReportDataSource("DataSet1", rfqItems));
-
-            using MemoryStream memoryStream = new MemoryStream();
-            writer.Save(memoryStream, WriterFormat.PDF);
-
-            return memoryStream.ToArray();
         }
 
         private static string GetEmailBody(string name)

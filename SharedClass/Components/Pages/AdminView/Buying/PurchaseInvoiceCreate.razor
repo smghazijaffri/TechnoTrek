@@ -66,6 +66,9 @@
         }
         @if (Unpaid || IsPaid || Overdue && !IsCancelled)
         {
+            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
+                <i class="bi bi-file-earmark-arrow-down"></i>
+            </button>
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
             </button>
@@ -181,8 +184,8 @@
 
                     item.Amount = (item.Rate * item.AcceptedQuantity);
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
                                 <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
                                 @(index + 1)
                             </div>
@@ -884,6 +887,35 @@
             cancelall.type = "Purchase Invoice";
             crud.CRD(cancelall, "CancelAll");
             ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    public async void DownloadReport()
+    {
+        Snackbar.Add("Generating Report", Severity.Info);
+        try
+        {
+            var PdfByte = select.GetPdfAsync("Purchase Invoice", purchase.PurchaseInvoiceID);
+
+            var pdfBytes = Select.ExtractOddPages(PdfByte);
+
+            if (isMobile)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                await Select.OpenPdfAsync(pdfBytes, $"{purchase.PurchaseInvoiceID}.pdf");
+            }
+            else
+            {
+                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
+                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{purchase.PurchaseInvoiceID}.pdf");
+                Snackbar.Add("Report Downloaded", Severity.Success);
+            }
         }
         catch (Exception ex)
         {

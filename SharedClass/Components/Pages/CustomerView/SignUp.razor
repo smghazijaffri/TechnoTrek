@@ -1,10 +1,11 @@
-﻿@page "/users/createuser";
-@page "/users/{UserID?}"
+﻿@page "/signup"
+@page "/user/{Usernames?}"
 
 @inject CRUD crud;
-@layout AdminLayout;
 @inject Users users;
+@inject Login login;
 @inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -13,23 +14,22 @@
 
 <div class="row p-3 align-items-center">
     <div class="col-6">
-        <h3>
-            @header
-            @if (IsSaving)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
-            }
-            @if (IsEnabled)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Enabled</MudChip>
-            }
-            @if (IsDisabled)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Error">Disabled</MudChip>
-            }
-        </h3>
+        @if (!string.IsNullOrEmpty(AppState.Username))
+        {
+            <h4>@users.FirstName @users.LastName</h4>
+        }
+        else
+        {
+            <h4>SignUp</h4>
+        }
     </div>
     <div class="col-6 d-flex justify-content-end">
+        @if (AppState.CustomerAuthorized)
+        {
+            <button type="submit" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="Logout">
+                Log Out
+            </button>
+        }
         <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUser">
             Save
         </button>
@@ -38,8 +38,8 @@
 
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Basic Information</h5>
-    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-        <div class="col-md-6" hidden="!@IsSaving">
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6" hidden>
             <label class="form-label">User ID</label>
             <input type="text" @bind="users.UserID" class="form-control" readonly>
         </div>
@@ -59,26 +59,12 @@
             <label class="form-label">Password</label>
             <input type="password" @bind="users.UserPassword" class="form-control">
         </div>
-        <div class="col-md-6">
-            <label class="form-label">Role</label>
-            <select class="form-select" aria-label="Role" @bind="users.Role">
-                <option value=""></option>
-                <option value="Administrator">Administrator</option>
-                <option value="Purchase">Purchase</option>
-                <option value="Sale">Sale</option>
-                <option value="Production">Production</option>
-            </select>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label"></label>
-            <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
-        </div>
     </form>
 </div>
 
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>More Information</h5>
-    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+    <form class="row g-3" autocomplete="off">
         <div class="col-md-6">
             <label class="form-label">Email</label>
             <input type="email" class="form-control" @bind="users.UserEmail">
@@ -113,55 +99,57 @@
 
 @code {
     [Parameter]
-    public string? UserID { get; set; }
+    public string? Usernames { get; set; }
 
-    string header = "New User";
-    string? ValidationMessage { get; set; }
+    string header = "SignUp";
     string pattern = @"^\d{5}-\d{7}-\d{1}$";
     string passwordPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
-
-    bool IsSaving = true;
-    bool Disabled = false;
-    bool notAdmin = false;
-    bool IsEnabled = false;
-    bool IsDisabled = false;
 
     protected override void OnInitialized()
     {
         try
         {
-            users.Birthday = DateTime.Today;
+            if (!string.IsNullOrEmpty(Usernames) && Usernames != AppState.Username)
+            {
+                NavigationManager.NavigateTo($"/user/{AppState.Username}", forceLoad: true, replace: true);
+                return;
+            }
+
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (UserID != null)
+                if (!string.IsNullOrEmpty(AppState.Username))
                 {
-                    users = db.QueryFirstOrDefault<Users>("Select * from Users where UserID = @UserID", new { UserID = UserID });
-                    if (users == null) NavigationManager.NavigateTo("/users/");
+                    users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
 
-                    if (users.Role != "Administrator") notAdmin = true;
-                    header = users.FirstName + ' ' + users.LastName;
-
-                    if (users.Status == PurchaseStatuses.Enabled)
+                    if (users == null || string.IsNullOrEmpty(AppState.Username))
                     {
-                        IsEnabled = true;
-                        IsSaving = false;
-                    }
-                    else if (users.Status == PurchaseStatuses.Disabled)
-                    {
-                        Disabled = true;
-                        IsDisabled = true;
-                        IsSaving = false;
+                        NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
+                        return;
                     }
                 }
+
+                else if (!AppState.CustomerAuthorized && !string.IsNullOrEmpty(users.UserID))
+                {
+                    NavigationManager.NavigateTo("/login/", forceLoad: true);
+                    return;
+                }
+
+                else if (AppState.Authorized)
+                {
+                    NavigationManager.NavigateTo("/dashboard/", forceLoad: true, replace: true);
+                    return;
+                }
+                else
+                {
+                    users.Birthday = DateTime.Today;
+                }
             }
-            StateHasChanged();
         }
         catch (Exception)
         {
             throw;
         }
-
-        base.OnInitialized();
+        StateHasChanged();
     }
 
     public string createUser()
@@ -177,17 +165,8 @@
                 }
 
                 header = users.UserName;
-
-                // users.UserPassword = Select.HashPassword(users.UserPassword);
-
-                if (!Disabled)
-                {
-                    users.Status = PurchaseStatuses.Enabled;
-                }
-                else if (Disabled)
-                {
-                    users.Status = PurchaseStatuses.Disabled;
-                }
+                users.Status = PurchaseStatuses.Enabled;
+                users.Role = "Customer";
 
                 OutputClass output = new OutputClass();
                 output = crud.CRD2(users, "CreateUpdateDeleteUser", outputMessage: true, errorMessage: true);
@@ -201,36 +180,11 @@
                     users.UserID = output.Output;
                 }
 
-                if (UserID == null)
-                {
-                    NavigationManager.NavigateTo($"/users/{users.UserID}", forceLoad: true);
-                }
-                if (IsSaving)
-                {
-                    return "User Created Successfully";
-                }
-                else if (!Disabled)
-                {
-                    return "User Enabled Successfully";
-                }
-                else if (Disabled)
-                {
-                    return "User Disabled Successfully";
-                }
-                else
-                {
-                    return "Error in saving request";
-                }
-                StateHasChanged();
                 return "SignUp Successful";
             }
         }
         catch (Exception ex)
         {
-            IsSaving = true;
-            IsEnabled = false;
-            IsDisabled = false;
-            Disabled = false;
             return ex.Message;
         }
     }
@@ -242,13 +196,13 @@
         {
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Success);
+            NavigationManager.NavigateTo("/login/", forceLoad: true);
         }
         else
         {
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Error);
         }
-        StateHasChanged();
     }
 
     public string ValidateUser()
@@ -294,18 +248,6 @@
         return null;
     }
 
-    private void HandleFormInput()
-    {
-        if (IsEnabled || (IsDisabled && Disabled))
-        {
-            IsSaving = true;
-            Disabled = false;
-            IsDisabled = false;
-            IsEnabled = false;
-            StateHasChanged();
-        }
-    }
-
     private void FormatIdentityNumber(ChangeEventArgs e)
     {
         var input = new string(e.Value.ToString().Where(char.IsDigit).ToArray());
@@ -328,5 +270,16 @@
         if (birthday.Date > today.AddYears(-age)) age--;
 
         return age >= 18;
+    }
+
+    private void Logout()
+    {
+        AppState.CartItemCount = 0;
+        AppState.CustomerAuthorized = false;
+        AppState.Username = string.Empty;
+        AppState.Role = string.Empty;
+        Snackbar.Clear();
+        Snackbar.Add("Logged Out", Severity.Error);
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 }

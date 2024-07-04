@@ -3,6 +3,7 @@
 @using static SharedClass.Components.Pages.CustomPC.Motherboard
 
 @inject CRUD crud;
+@inject Select select;
 @inject Connection con;
 @inject AppState AppState;
 @inject ISnackbar Snackbar;
@@ -12,7 +13,7 @@
 
 <div class="video-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
     <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;">
-        <source src="https://assets.corsair.com/video/upload/f_auto,ac_none/q_75/v1675883779/akamai/pdp/k65-rgb-mini/assets/videos/scene-rainbow.mp4" type="video/mp4">
+        <source src="_content/SharedClass/Images/scene-rainbow.webm" type="video/webm">
         Your browser does not support the video tag.
     </video>
 </div>
@@ -62,7 +63,7 @@
                                                                     <label>Rs.</label>
                                                                     <h6 class="mb-0">@item.Price</h6>
                                                                 </div>
-                                                                <a @onclick="() => DeleteItem(item.Key, item.Code)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
+                                                                <a @onclick="() => DeleteItem(item.Code)" style="color: red; cursor:pointer;"><i class="bi bi-trash"></i></a>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -74,31 +75,6 @@
                                 <div class="col-lg-5">
                                     <div class="card text-white rounded-3" style="background-color: transparent; backdrop-filter: blur(2px); border-radius: 10px;">
                                         <div class="card-body">
-
-                                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                                <h4 class="mb-0">Please Enter Your Details</h4>
-                                            </div>
-
-                                            <form class="mt-4" autocomplete="off">
-                                                <div data-mdb-input-init class="form-outline form-white mb-4">
-                                                    <label>Name</label>
-                                                    <input type="text" id="typeName" class="form-control form-control-lg" size="17"
-                                                           @bind="Name" style="background-color: transparent; color: white; font-style: italic;" />
-                                                </div>
-
-                                                <div data-mdb-input-init class="form-outline form-white mb-4">
-                                                    <label>Contact No.</label>
-                                                    <input type="text" id="typeText" class="form-control form-control-lg" size="17"
-                                                           @bind="Contact" minlength="11" maxlength="11"
-                                                           style="background-color: transparent; color: white; font-style: italic;" />
-                                                </div>
-
-                                                <div data-mdb-input-init class="form-outline form-white mb-4">
-                                                    <label>Address</label>
-                                                    <input type="text" id="typeName" class="form-control form-control-lg" size="17"
-                                                           @bind="Address" style="background-color: transparent; color: white; font-style: italic;" />
-                                                </div>
-                                            </form>
 
                                             <hr class="my-4">
 
@@ -128,7 +104,6 @@
 @code {
     private class BulkItem
     {
-        public string? Key { get; set; }
         public string? Name { get; set; }
         public string? Brand { get; set; }
         public string? Code { get; set; }
@@ -136,19 +111,34 @@
         public int Quantity { get; set; }
     }
 
-    public string? Name { get; set; }
-    public string? Contact { get; set; }
-    public string? Address { get; set; }
+    bool isMobile = false;
 
-    private int totalAmount { get; set; } = 0;
+    string? userid { get; set; }
+    string? DeviceType { get; set; }
 
-    private List<BulkItem> items = new List<BulkItem>();
+    int totalAmount { get; set; } = 0;
 
-    string[] itemNames = new[] { "Cart" };
+    List<BulkItem> items = new List<BulkItem>();
 
     protected async override void OnInitialized()
     {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (!string.IsNullOrEmpty(AppState.Username))
+        {
+            userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+        }
         await LoadItems();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
     }
 
     private async Task LoadItems()
@@ -157,7 +147,7 @@
         {
             items.Clear();
 
-            var itemTasks = itemNames.Select(name => LoadItemDataAsync(name)).ToList();
+            var itemTasks = LoadItemDataAsync();
 
             var itemResults = await Task.WhenAll(itemTasks);
 
@@ -169,7 +159,6 @@
                     {
                         items.Add(new BulkItem
                             {
-                                Key = result.Key,
                                 Name = result.Name,
                                 Brand = result.Brand,
                                 Code = result.Code,
@@ -192,38 +181,31 @@
         }
     }
 
-    private async Task<List<(string Key, string Name, string Brand, string Code, int Price, int Quantity)>> LoadItemDataAsync(string itemName)
+    private async Task<List<(string Name, string Brand, string Code, int Price, int Quantity)>> LoadItemDataAsync()
     {
-        var resultList = new List<(string Key, string Name, string Brand, string Code, int Price, int Quantity)>();
+        var resultList = new List<(string Name, string Brand, string Code, int Price, int Quantity)>();
 
         try
         {
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", itemName))
+            var result = await Select.RetrieveCartItems(userid);
+
+            foreach (var item in result)
             {
-                if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>(itemName)))
+                var Code = item.Code;
+                var Quantity = item.Quantity;
+                string Details1, Details2;
+                int Price;
+
+                using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
-                    var result = await _protectedLocalStore.GetLocalAsync<string>(itemName);
-                    var orderedItems = string.IsNullOrEmpty(result) ? new List<Bulk>() : JsonSerializer.Deserialize<List<Bulk>>(result);
-
-                    foreach (var item in orderedItems)
-                    {
-                        var Code = item.Code;
-                        var Quantity = item.Quantity;
-                        string Details1, Details2;
-                        int Price;
-
-                        using (SqlConnection db = new SqlConnection(con.connectionString))
-                        {
-                            var itemDetails = await db.QuerySingleOrDefaultAsync<(string?, string)>("SELECT ItemName, Brand FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode = Code });
-                            int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = Code });
-                            Details1 = itemDetails.Item1;
-                            Details2 = itemDetails.Item2;
-                            Price = itemPrice;
-                        }
-
-                        resultList.Add((itemName, Details1, Details2, Code, Price, Quantity));
-                    }
+                    var itemDetails = await db.QuerySingleOrDefaultAsync<(string?, string)>("SELECT ItemName, Brand FROM Items WHERE ItemCode = @ItemCode ORDER BY ItemCode", new { ItemCode = Code });
+                    int itemPrice = db.QueryFirstOrDefault<int>("SELECT Top(1)Rate FROM Stock WHERE ItemID = @ItemCode", new { ItemCode = Code });
+                    Details1 = itemDetails.Item1;
+                    Details2 = itemDetails.Item2;
+                    Price = itemPrice;
                 }
+
+                resultList.Add((Details1, Details2, Code, Price, Quantity));
             }
         }
         catch (Exception ex)
@@ -234,46 +216,75 @@
         return resultList;
     }
 
-    private async Task DeleteItem(string? Key, string? ItemCode)
-    {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", Key))
-        {
-            try
-            {
-                items.RemoveAll(item => item.Code == ItemCode);
-                var serializedItems = JsonSerializer.Serialize(items);
-                await _protectedLocalStore.SetLocalAsync(Key, serializedItems);
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
-
-            await LoadItems();
-        }
-    }
-
-    private async void Checkout()
+    private async Task DeleteItem(string? ItemCode)
     {
         try
         {
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            items.RemoveAll(item => item.Code == ItemCode);
+            var serializedItems = JsonSerializer.Serialize(items);
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserID", userid);
+            parameters.Add("@CartItemsJson", serializedItems);
+            parameters.Add("@Action", "Save");
+
+            var result = crud.CRD3(parameters, "ManageCartItems", CommandType.StoredProcedure, false, outputMessage: true, errorMessage: true);
+
+            if (!string.IsNullOrEmpty(result.Output))
+            {
+                Snackbar.Add(result.Output, Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to remove from cart.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        await LoadItems();
+    }
+
+    private async Task Checkout()
+    {
+        try
+        {
+            if (isMobile)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            }
+
             if (AppState.CartItemCount > 0)
             {
-                foreach (var itemName in itemNames)
+                await using SqlConnection db = new SqlConnection(con.connectionString);
+                var customerID = await db.QueryFirstOrDefaultAsync<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+
+                if (!string.IsNullOrEmpty(customerID))
                 {
-                    await _protectedLocalStore.SetLocalAsync(itemName, "");
+                    await db.ExecuteAsync("Delete from Cart where UserID = @UserID", new { UserID = customerID });
+
+                    items.Clear();
+
+                    AppState.CartItemCount = 0;
+                    totalAmount = 0;
+
+                    StateHasChanged();
+
+                    Snackbar.Add("Checkout completed successfully.", Severity.Success);
+
+                    NavigationManager.NavigateTo("/", forceLoad: true);
                 }
-
-                items.Clear();
-
-                AppState.CartItemCount = 0;
-                totalAmount = 0;
-
-                StateHasChanged();
-
-                Snackbar.Add("Checkout completed successfully.", Severity.Success);
-
-                NavigationManager.NavigateTo("/", forceLoad: true);
+                else
+                {
+                    AppState.CartItemCount = 0;
+                    AppState.Username = string.Empty;
+                    AppState.CustomerAuthorized = false;
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                    Snackbar.Add("User not found.", Severity.Error);
+                }
             }
             else
             {
@@ -283,7 +294,28 @@
         }
         catch (Exception ex)
         {
+            if (isMobile)
+            {
+                Vibration.Default.Vibrate();
+            }
+
             Snackbar.Add($"Error during checkout: {ex.Message}", Severity.Error);
         }
+    }
+
+    private string GetComponentValue(string componentName)
+    {
+        return componentName switch
+        {
+            "Motherboard" => AppState.Motherboard,
+            "Processor" => AppState.Processor,
+            "Memory" => AppState.Memory,
+            "Storage" => AppState.Storage,
+            "Graphics Card" => AppState.GPU,
+            "Power Supply" => AppState.PSU,
+            "Gaming Case" => AppState.Case,
+            "Cooler" => AppState.Cooler,
+            _ => string.Empty
+        };
     }
 }
