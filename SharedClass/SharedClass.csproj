@@ -17,6 +17,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Backup\**" />
+    <Content Remove="Backup\**" />
+    <EmbeddedResource Remove="Backup\**" />
+    <MauiCss Remove="Backup\**" />
+    <MauiXaml Remove="Backup\**" />
+    <None Remove="Backup\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="C:\Users\Dell\.nuget\packages\bootstrap\5.3.2\contentFiles\any\any\wwwroot\css\bootstrap-grid.css" />
     <Content Remove="C:\Users\Dell\.nuget\packages\bootstrap\5.3.2\contentFiles\any\any\wwwroot\css\bootstrap-grid.css.map" />
     <Content Remove="C:\Users\Dell\.nuget\packages\bootstrap\5.3.2\contentFiles\any\any\wwwroot\css\bootstrap-grid.min.css" />
@@ -113,7 +122,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BoldReports.Net.Core" Version="6.1.40" />
+    <PackageReference Include="BoldReports.Net.Core" Version="6.1.46" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
@@ -124,9 +133,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.ReportViewer.WebForms" Version="10.0.40219.1" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.61" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.61" />
     <PackageReference Include="MudBlazor" Version="6.20.0" />
     <PackageReference Include="MudBlazor.ThemeManager" Version="1.1.0" />
+    <PackageReference Include="PdfSharpCore" Version="1.3.63" />
     <PackageReference Include="ProtectedBrowserStorage.NETStandard" Version="1.1.2" />
   </ItemGroup>
 
@@ -140,6 +151,10 @@
 
   <ItemGroup>
     <None Include="Components\Pages\AdminView\Buying\Buying.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Scripts\" />
   </ItemGroup>
 
 </Project>

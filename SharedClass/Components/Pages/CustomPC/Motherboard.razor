@@ -1,10 +1,10 @@
-﻿@inject Select select;
+﻿@inject CRUD crud;
+@inject Select select;
 @inject Connection con;
 @inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <section>
     <div class="container py-5">
@@ -28,9 +28,18 @@
                                 }
                                 @if (isBulk)
                                 {
-                                    <h6>Select Quantity: @quantities[values.ItemCode]</h6>
-                                    <p><MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
+                                    <h6>Select Quantity: @(quantities.ContainsKey(values.ItemCode) ? quantities[values.ItemCode].ToString() : "0")</h6>
+                                    <p>
+                                        @if (quantities.ContainsKey(values.ItemCode))
+                                        {
+                                            <MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
+                                        }
+                                        else
+                                        {
+                                            <MudSlider Value="20" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" Disabled="true" />
+                                        }
+                                    </p>
+                                    <h6>Total: @(ItemRates.ContainsKey(values.ItemCode) && quantities.ContainsKey(values.ItemCode) ? (ItemRates[values.ItemCode] * quantities[values.ItemCode]).ToString() : "0")</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
                                                 @onclick="() => Order(values, quantities[values.ItemCode])">
@@ -66,6 +75,12 @@
     [Parameter]
     public bool isBulk { get; set; }
 
+    [Parameter]
+    public string? userid { get; set; }
+
+    [Parameter]
+    public string? Username { get; set; }
+
     bool isMobile = false;
 
     string? DeviceType { get; set; }
@@ -90,53 +105,62 @@
         }
     }
 
-    private async Task Select(ItemClass selectedMotherboard)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor"))
+        if (firstRender)
         {
-            if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor")))
-            {
-                var components = new[] { "Memory", "Cooler", "Storage", "Processor", "Gaming Case", "Power Supply", "Graphics Card" };
+            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+            if (DeviceType == "Mobile") isMobile = true;
+        }
+        StateHasChanged();
+    }
 
-                foreach (var component in components)
-                {
-                    await _protectedLocalStore.SetLocalAsync(component, "");
-                }
+    private void Select(ItemClass selectedMotherboard)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(AppState.Processor))
+            {
+                AppState.Processor = string.Empty;
+                AppState.Memory = string.Empty;
+                AppState.MemoryQuantity = 0;
+                AppState.Storage = string.Empty;
+                AppState.StorageQuantity = 0;
+                AppState.GPU = string.Empty;
+                AppState.PSU = string.Empty;
+                AppState.Case = string.Empty;
+                AppState.Cooler = string.Empty;
+                Snackbar.Clear();
+                Snackbar.Add("Please reselect the processor, memory, storage, cooler, case, power supply, and graphics card.", Severity.Info);
 
                 Snackbar.Clear();
                 Snackbar.Add("Please reselect other components", Severity.Info);
             }
-        }
 
-        await _protectedLocalStore.SetLocalAsync("Motherboard", selectedMotherboard.ItemCode);
-        Snackbar.Add("Selection Saved", Severity.Success);
+            AppState.Motherboard = selectedMotherboard.ItemCode;
+            Snackbar.Add("Selection Saved", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add($"Error selecting item: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task Order(ItemClass selected, int quantity)
     {
         try
         {
-            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
-            List<Bulk> orderedItems = new List<Bulk>();
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
 
-            if (cartExists)
-            {
-                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
-
-                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
-                {
-                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
-                }
-            }
+            var cartItems = await Data.Select.RetrieveCartItems(userid);
 
             bool itemFound = false;
-
-            for (int i = 0; i < orderedItems.Count; i++)
+            for (int i = 0; i < cartItems.Count; i++)
             {
-                if (orderedItems[i].Code == selected.ItemCode)
+                if (cartItems[i].Code == selected.ItemCode)
                 {
-                    orderedItems[i].Quantity = quantity;
-                    Snackbar.Add("Quantity Updated.", Severity.Success);
+                    cartItems[i].Quantity = quantity;
                     itemFound = true;
                     break;
                 }
@@ -144,16 +168,37 @@
 
             if (!itemFound)
             {
-                orderedItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
                 AppState.CartItemCount++;
-                Snackbar.Add("Added to cart.", Severity.Success);
+                cartItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
             }
 
-            var serializedItems = JsonSerializer.Serialize(orderedItems);
-            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
+            var serializedItems = JsonSerializer.Serialize(cartItems);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserID", userid);
+            parameters.Add("@CartItemsJson", serializedItems);
+            parameters.Add("@Action", "Save");
+
+            var result = crud.CRD3(parameters, "ManageCartItems", CommandType.StoredProcedure, false, outputMessage: true, errorMessage: true);
+
+            if (!string.IsNullOrEmpty(result.Output))
+            {
+                Snackbar.Add(result.Output, Severity.Success);
+            }
+            else if (result.ErrorMessage != null)
+            {
+                AppState.CartItemCount--;
+                Snackbar.Add(result.ErrorMessage, Severity.Error);
+            }
+            else
+            {
+                AppState.CartItemCount--;
+                Snackbar.Add("Failed to add to cart.", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
+            if (isMobile) Vibration.Default.Vibrate();
             Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
         }
     }
@@ -168,18 +213,24 @@
     {
         try
         {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-            if (DeviceType == "Mobile") isMobile = true;
             if (!isMobile)
             {
                 await JSRuntime.InvokeVoidAsync("openInNewTab", link);
             }
             else
             {
-                bool? result = await DialogService.ShowMessageBox("Product Link", link);
-                StateHasChanged();
-            }
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                bool supportsUri = await Launcher.Default.CanOpenAsync(new Uri(link));
 
+                if (supportsUri)
+                {
+                    await Launcher.Default.OpenAsync(new Uri(link));
+                }
+                else
+                {
+                    Snackbar.Add("Can't Open Link", Severity.Error);
+                }
+            }
         }
         catch (Exception ex)
         {

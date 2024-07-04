@@ -1,4 +1,8 @@
-﻿@inject AppState AppState;
+﻿@inject Connection con;
+@inject AppState AppState;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
 
 <nav class="navbar navbar-expand-lg navbar-light nav shadow-sm px-3 py-3 sticky-top" style="border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;">
     <div class="container-fluid">
@@ -32,8 +36,16 @@
                     </NavLink>
                 </li>
                 <li class="nav-item" style="padding-top: 7px;">
-                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" href="adminlogin" style="color: #5535F0; font-size:16px; cursor: pointer; text-decoration: auto;">
-                        <MudIcon Icon="@Icons.Material.Outlined.Dashboard" Style="font-size: 21px;padding-bottom: 4px;" />Portal
+                    <NavLink class="nav-item nav-linktext-decoration-none py-2 px-4 ms-4 shadow-sm rounded-pill bg-gradient" title="@(!string.IsNullOrWhiteSpace(AppState.Username)? AppState.Username : Portal)" @onclick="Navigate" style="color: #5535F0; font-size:16px; cursor: pointer; text-decoration: auto;">
+                        <MudIcon Icon="@(AppState.CustomerAuthorized? Icons.Material.Filled.Person : Icons.Material.Outlined.Dashboard)" Style="font-size: 21px;padding-bottom: 4px;" />
+                        @if (AppState.Authorized || AppState.CustomerAuthorized)
+                        {
+                            @AppState.Username
+                        }
+                        else
+                        {
+                            @Portal
+                        }
                     </NavLink>
                 </li>
             </ul>
@@ -42,18 +54,35 @@
 </nav>
 
 @code {
-    private bool collapseNavMenu = true;
-    private string? NavBarCssClass => collapseNavMenu ? null : "show";
-    private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
+    bool collapseNavMenu = true;
+
+    string Portal = "Portal";
+    string? NavBarCssClass => collapseNavMenu ? null : "show";
+    string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
 
     protected override void OnInitialized()
     {
         AppState.OnChange += async () => await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
+    public void Navigate()
     {
-        AppState.OnChange -= async () => await InvokeAsync(StateHasChanged);
+        if (AppState.Authorized || AppState.CustomerAuthorized)
+        {
+            if (AppState.CustomerAuthorized)
+            {
+                NavigationManager.NavigateTo($"/user/{AppState.Username}");
+            }
+            else
+            {
+                if (AppState.Authorized)
+                {
+                    NavigationManager.NavigateTo("/dashboard");
+                }
+                else NavigationManager.NavigateTo("/login");
+            }
+        }
+        else NavigationManager.NavigateTo("/login");
     }
 
     private void ToggleNavMenu()

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Email = SharedClass.Components.Data.Email;
+using Microsoft.Extensions.Logging;
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
@@ -27,11 +28,12 @@ namespace MauiMobileApp
             builder.Services.AddScoped<Login>();
             builder.Services.AddScoped<Users>();
             builder.Services.AddScoped<Stock>();
+            builder.Services.AddScoped<Email>();
             builder.Services.AddScoped<Select>();
             builder.Services.AddScoped<Vendor>();
+            builder.Services.AddScoped<Report>();
             builder.Services.AddScoped<SO_Item>();
             builder.Services.AddScoped<ItemUOM>();
-            builder.Services.AddScoped<SI_Item>();
             builder.Services.AddScoped<SI_Item>();
             builder.Services.AddScoped<UserAuth>();
             builder.Services.AddScoped<GI_Items>();
@@ -54,7 +56,6 @@ namespace MauiMobileApp
             builder.Services.AddScoped<GoodReceipt>();
             builder.Services.AddSingleton<AppState>();
             builder.Services.AddScoped<GoodReceipt>();
-            builder.Services.AddScoped<ReportUpload>();
             builder.Services.AddScoped<SalesInvoice>();
             builder.Services.AddScoped<BindDropdown>();
             builder.Services.AddScoped<UnitofMeasure>();
@@ -65,10 +66,11 @@ namespace MauiMobileApp
             builder.Services.AddScoped<ProductionOrder>();
             builder.Services.AddScoped<PurchaseInvoice>();
             builder.Services.AddScoped<ExampleJsInterop>();
+            builder.Services.AddScoped<ReportParameters>();
             builder.Services.AddScoped<RequestForQuotation>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseRequisition>();
-
+            builder.Services.AddScoped<PurchaseOrderAnalysis>();
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;
@@ -84,6 +86,8 @@ namespace MauiMobileApp
 
             builder.Services.AddProtectedLocalStore(new EncryptionService(
                 new KeyInfo("45BLO2yoJkvBwz99kBEMlNkxvL40vUSGaqr/WBu3+Vg=", "Ou3fn+I9SVicGWMLkFEgZQ==")));
+
+            Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

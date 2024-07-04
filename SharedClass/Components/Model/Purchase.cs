@@ -220,20 +220,64 @@
         public bool Selected { get; set; }
         public string? Status { get; set; }
     }
+
     public class SendModel
     {
-        public string To { get; set; }
-        public string Subject { get; set; }
-        public string Body { get; set; }
-        public string RFQNumber { get; set; }
+        public string? To { get; set; }
+        public string? Subject { get; set; }
+        public string? Body { get; set; }
+        public string? RFQNumber { get; set; }
     }
 
     public class RFQItemReport
     {
-        public string RFQNumber { get; set; }
-        public string Item { get; set; }
+        public string? No { get; set; }
+        public string? RFQNumber { get; set; }
+        public string? Item { get; set; }
         public int Quantity { get; set; }
-        public string UOM { get; set; }
-        public string RequiredBy { get; set; }
+        public string? UOM { get; set; }
+        public string? RequiredBy { get; set; }
+        public string? DocumentDate { get; set; }
+    }
+
+    public class PurchaseInvoiceReport
+    {
+        public string? Row { get; set; }
+        public string? PurchaseInvoiceID { get; set; }
+        public string? AcceptedQuantity { get; set; }
+        public string? Rate { get; set; }
+        public string? Amount { get; set; }
+        public string? Item { get; set; }
+        public string? Vendor { get; set; }
+        public string? VendorAddress { get; set; }
+        public string? VendorContact { get; set; }
+        public string? VendorEmail { get; set; }
+        public string? UOM { get; set; }
+        public string? DueDate { get; set; }
+        public string? TotalQuantity { get; set; }
+        public string? TotalAmount { get; set; }
+        public string? DocumentDate { get; set; }
+        public string? RejectedQuantity { get; set; }
+    }
+
+    public class PurchaseOrderAnalysis
+    {
+        public string? PurchaseOrderID { get; set; }
+        public string? PurchaseOrderName { get; set; }
+        public string? VendorName { get; set; }
+        public string? TotalAmount { get; set; }
+        public string? TotalQuantityOrdered { get; set; }
+        public string? POStatus { get; set; }
+        public string? DocumentDate { get; set; }
+        public string? TotalBilledAmount { get; set; }
+        public string? TotalAmountToBill { get; set; }
+        public string? TotalQuantityReceived { get; set; }
+        public string? TotalQuantityToReceive { get; set; }
+        public string? ItemCode { get; set; }
+        public string? ItemName { get; set; }
+        public string? ItemQuantity { get; set; }
+        public string? UOMName { get; set; }
+        public string? Rate { get; set; }
+        public string? ItemAmount { get; set; }
     }
 }

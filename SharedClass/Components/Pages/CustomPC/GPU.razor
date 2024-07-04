@@ -1,12 +1,12 @@
 ﻿@using static SharedClass.Components.Pages.CustomPC.Motherboard
 
+@inject CRUD crud;
 @inject Select select;
 @inject Connection con;
 @inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <section>
     <div class="container py-5">
@@ -30,9 +30,18 @@
                                 }
                                 @if (isBulk)
                                 {
-                                    <h6>Select Quantity: @quantities[values.ItemCode]</h6>
-                                    <p><MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" /></p>
-                                    <h6>Total: @(ItemRates[values.ItemCode] * quantities[values.ItemCode])</h6>
+                                    <h6>Select Quantity: @(quantities.ContainsKey(values.ItemCode) ? quantities[values.ItemCode].ToString() : "0")</h6>
+                                    <p>
+                                        @if (quantities.ContainsKey(values.ItemCode))
+                                        {
+                                            <MudSlider @bind-Value="quantities[values.ItemCode]" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" />
+                                        }
+                                        else
+                                        {
+                                            <MudSlider Value="20" Min="20" Max="50" Color="Color.Dark" ValueLabel="true" Disabled="true" />
+                                        }
+                                    </p>
+                                    <h6>Total: @(ItemRates.ContainsKey(values.ItemCode) && quantities.ContainsKey(values.ItemCode) ? (ItemRates[values.ItemCode] * quantities[values.ItemCode]).ToString() : "0")</h6>
                                     <div>
                                         <button class="btn btnpc m-1" style="background-color:#A687CB; color:white"
                                                 @onclick="() => Order(values, quantities[values.ItemCode])">
@@ -68,6 +77,12 @@
     [Parameter]
     public bool isBulk { get; set; }
 
+    [Parameter]
+    public string? userid { get; set; }
+
+    [Parameter]
+    public string? Username { get; set; }
+
     bool isMobile = false;
 
     string? DeviceType { get; set; }
@@ -90,15 +105,9 @@
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor"))
-                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")))
+                    if (!string.IsNullOrEmpty(AppState.Motherboard) && !string.IsNullOrEmpty(AppState.Processor) && !string.IsNullOrEmpty(AppState.Memory) && !string.IsNullOrEmpty(AppState.Storage))
                     {
-                        string MotherBoard = await _protectedLocalStore.GetLocalAsync<string>("Motherboard");
-                        string Processor = await _protectedLocalStore.GetLocalAsync<string>("Processor");
-                        string Memory = await _protectedLocalStore.GetLocalAsync<string>("Memory");
-                        string Storage = await _protectedLocalStore.GetLocalAsync<string>("Storage");
-
-                        Graphics = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + MotherBoard + "','" + Processor + "','" + Memory + "','" + Storage + "') and ItemType = 'Graphics Card' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Graphics Card' and Status = 'Enabled'").ToList();
+                        Graphics = db.Query<ItemClass>("select distinct it.* from ItemCompability inner join Items it on ItemCode = ItemID where CompatibilityID in ('" + AppState.Motherboard + "','" + AppState.Processor + "','" + AppState.Memory + "','" + AppState.Storage + "') and ItemType = 'Graphics Card' and Status = 'Enabled' union SELECT it.* FROM Items it LEFT JOIN ItemCompability ic ON it.ItemCode = ic.ItemID WHERE ic.ItemID IS NULL and ItemType = 'Graphics Card' and Status = 'Enabled'").ToList();
                     }
                     else
                     {
@@ -130,87 +139,44 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Motherboard") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Processor")
-                && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Memory") && await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Storage"))
+                if (AllComponentsSelected(AppState))
                 {
-                    if (!string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Motherboard")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Processor"))
-                    && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Memory")) && !string.IsNullOrEmpty(await _protectedLocalStore.GetLocalAsync<string>("Storage")))
+                    List<string> selectedComponents = GetSelectedComponents(AppState);
+                    bool isCompatible = await Data.Select.CheckCompatibilityAsync(db, selectedGPU.ItemCode, selectedComponents);
+
+                    if (!isCompatible)
                     {
-                        List<string> CompatItem = new List<string>();
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Motherboard"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Processor"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Memory"));
-                        CompatItem.Add(await _protectedLocalStore.GetLocalAsync<string>("Storage"));
-                        DataTable CompiItem = Data.Select.ConvertListToDataTable(CompatItem);
-                        var parameters = new DynamicParameters();
-                        parameters.Add("@ItemCode", selectedGPU.ItemCode);
-                        parameters.Add("@CompatibilityID", CompiItem.AsTableValuedParameter("dbo.CompatibleItems"));
-                        parameters.Add("@Output", dbType: DbType.String, direction: ParameterDirection.Output, size: 50);
-                        db.Execute("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
-                        string outputValue = parameters.Get<string>("@Output");
-                        if (outputValue != "Allow")
+                        Snackbar.Clear();
+                        Snackbar.Add("Selected Graphics Card is not compatible with other components.", Severity.Error);
+                        return;
+                    }
+
+                    if (AppState.GPU != selectedGPU.ItemCode)
+                    {
+                        if (!string.IsNullOrEmpty(AppState.PSU))
                         {
+                            AppState.PSU = string.Empty;
+                            AppState.Case = string.Empty;
+                            AppState.Cooler = string.Empty;
                             Snackbar.Clear();
-                            Snackbar.Add(outputValue, Severity.Error);
+                            Snackbar.Add("Please reselect the cooler, case, and power supply.", Severity.Info);
                         }
-                        else if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Graphics Card"))
-                        {
-                            string GPU = await _protectedLocalStore.GetLocalAsync<string>("Graphics Card");
-                            if (GPU != selectedGPU.ItemCode)
-                            {
-                                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Power Supply"))
-                                {
-                                    string Power = await _protectedLocalStore.GetLocalAsync<string>("Power Supply");
 
-                                    if (!string.IsNullOrEmpty(Power))
-                                    {
-                                        await _protectedLocalStore.SetLocalAsync("Cooler", "");
-                                        await _protectedLocalStore.SetLocalAsync("Gaming Case", "");
-                                        await _protectedLocalStore.SetLocalAsync("Power Supply", "");
-
-                                        await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
-
-                                        Snackbar.Clear();
-                                        Snackbar.Add("Please reselect other components", Severity.Info);
-                                    }
-                                    else
-                                    {
-                                        await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
-                                        Snackbar.Clear();
-                                        Snackbar.Add("Selection Saved", Severity.Success);
-                                    }
-                                }
-                                else
-                                {
-                                    await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
-                                    Snackbar.Clear();
-                                    Snackbar.Add("Selection Saved", Severity.Success);
-                                }
-                            }
-                            else
-                            {
-                                await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
-                                Snackbar.Clear();
-                                Snackbar.Add("Selection Saved", Severity.Success);
-                            }
-                        }
-                        else
-                        {
-                            await _protectedLocalStore.SetLocalAsync("Graphics Card", selectedGPU.ItemCode);
-                            Snackbar.Clear();
-                            Snackbar.Add("Selection Saved", Severity.Success);
-                        }
+                        AppState.GPU = selectedGPU.ItemCode;
+                        Snackbar.Clear();
+                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                     else
                     {
+                        AppState.GPU = selectedGPU.ItemCode;
                         Snackbar.Clear();
-                        Snackbar.Add("Please reselect other components", Severity.Info);
+                        Snackbar.Add("Selection Saved", Severity.Success);
                     }
                 }
                 else
                 {
                     Snackbar.Clear();
-                    Snackbar.Add("Please Select Previous Component", Severity.Info);
+                    Snackbar.Add("Please select all previous components.", Severity.Info);
                 }
             }
         }
@@ -221,31 +187,39 @@
         }
     }
 
+    public static bool AllComponentsSelected(AppState appState)
+    {
+        return !string.IsNullOrEmpty(appState.Motherboard) &&
+               !string.IsNullOrEmpty(appState.Processor) &&
+               !string.IsNullOrEmpty(appState.Memory) &&
+               !string.IsNullOrEmpty(appState.Storage);
+    }
+
+    public static List<string> GetSelectedComponents(AppState appState)
+    {
+        return new List<string>
+        {
+            appState.Motherboard,
+            appState.Processor,
+            appState.Memory,
+            appState.Storage
+        };
+    }
+
     private async Task Order(ItemClass selected, int quantity)
     {
         try
         {
-            bool cartExists = await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "Cart");
-            List<Bulk> orderedItems = new List<Bulk>();
+            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
 
-            if (cartExists)
-            {
-                var result = await _protectedLocalStore.GetLocalAsync<string>("Cart");
-
-                if (!string.IsNullOrEmpty(result) && select.IsValidJson(result))
-                {
-                    orderedItems = JsonSerializer.Deserialize<List<Bulk>>(result);
-                }
-            }
+            var cartItems = await Data.Select.RetrieveCartItems(userid);
 
             bool itemFound = false;
-
-            for (int i = 0; i < orderedItems.Count; i++)
+            for (int i = 0; i < cartItems.Count; i++)
             {
-                if (orderedItems[i].Code == selected.ItemCode)
+                if (cartItems[i].Code == selected.ItemCode)
                 {
-                    orderedItems[i].Quantity = quantity;
-                    Snackbar.Add("Quantity Updated.", Severity.Success);
+                    cartItems[i].Quantity = quantity;
                     itemFound = true;
                     break;
                 }
@@ -253,16 +227,37 @@
 
             if (!itemFound)
             {
-                orderedItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
                 AppState.CartItemCount++;
-                Snackbar.Add("Added to cart.", Severity.Success);
+                cartItems.Add(new Bulk { Code = selected.ItemCode, Quantity = quantity });
             }
 
-            var serializedItems = JsonSerializer.Serialize(orderedItems);
-            await _protectedLocalStore.SetLocalAsync("Cart", serializedItems);
+            var serializedItems = JsonSerializer.Serialize(cartItems);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserID", userid);
+            parameters.Add("@CartItemsJson", serializedItems);
+            parameters.Add("@Action", "Save");
+
+            var result = crud.CRD3(parameters, "ManageCartItems", CommandType.StoredProcedure, false, outputMessage: true, errorMessage: true);
+
+            if (!string.IsNullOrEmpty(result.Output))
+            {
+                Snackbar.Add(result.Output, Severity.Success);
+            }
+            else if (result.ErrorMessage != null)
+            {
+                AppState.CartItemCount--;
+                Snackbar.Add(result.ErrorMessage, Severity.Error);
+            }
+            else
+            {
+                AppState.CartItemCount--;
+                Snackbar.Add("Failed to add to cart.", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
+            if (isMobile) Vibration.Default.Vibrate();
             Snackbar.Add($"Error ordering item: {ex.Message}", Severity.Error);
         }
     }
@@ -279,10 +274,18 @@
             }
             else
             {
-                bool? result = await DialogService.ShowMessageBox("Product Link", link);
-                StateHasChanged();
-            }
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                bool supportsUri = await Launcher.Default.CanOpenAsync(new Uri(link));
 
+                if (supportsUri)
+                {
+                    await Launcher.Default.OpenAsync(new Uri(link));
+                }
+                else
+                {
+                    Snackbar.Add("Can't Open Link", Severity.Error);
+                }
+            }
         }
         catch (Exception ex)
         {
