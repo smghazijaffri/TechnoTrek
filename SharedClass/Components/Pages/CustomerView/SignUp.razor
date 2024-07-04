@@ -117,12 +117,15 @@
 
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (!string.IsNullOrEmpty(AppState.Username)) users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
-
-                if (users == null || string.IsNullOrEmpty(AppState.Username))
+                if (!string.IsNullOrEmpty(AppState.Username))
                 {
-                    NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
-                    return;
+                    users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
+
+                    if (users == null)
+                    {
+                        NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
+                        return;
+                    }
                 }
 
                 else if (!AppState.CustomerAuthorized && !string.IsNullOrEmpty(users.UserID))
