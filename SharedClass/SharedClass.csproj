@@ -139,25 +139,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Scripts\CancelAll.sql" />
-    <Content Include="Scripts\CreateGoodReceipt.sql" />
-    <Content Include="Scripts\CreatePurchaseInvoice.sql" />
-    <Content Include="Scripts\CreatePurchaseOrder.sql" />
-    <Content Include="Scripts\CreatePurchaseRequest.sql" />
-    <Content Include="Scripts\CreateQuotation.sql" />
-    <Content Include="Scripts\CreateRFQ.sql" />
-    <Content Include="Scripts\CreateVendor.sql" />
-    <Content Include="Scripts\GoodReceiptItems.sql" />
-    <Content Include="Scripts\PIItems.sql" />
-    <Content Include="Scripts\PIVendorInvoice.sql" />
-    <Content Include="Scripts\PurchaseOrderItem.sql" />
-    <Content Include="Scripts\PurchaseRequestItems.sql" />
-    <Content Include="Scripts\QUItems.sql" />
-    <Content Include="Scripts\RFQItems.sql" />
-    <Content Include="Scripts\RFQVendors.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="Components\Pages\AdminView\Buying\Buying.razor" />
   </ItemGroup>
 

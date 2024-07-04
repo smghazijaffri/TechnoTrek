@@ -5,7 +5,6 @@ using SharedClass.Components.Api;
 using SharedClass.Components;
 using ProtectedLocalStore;
 using MudBlazor.Services;
-using BlazorApp.Api;
 using SharedClass;
 using MudBlazor;
 
@@ -16,8 +15,6 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<ReportController>();
-builder.Services.AddScoped<IReportControllerWrapper, ReportControllerWrapper>();
 
 Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
