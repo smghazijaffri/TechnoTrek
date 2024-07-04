@@ -1,13 +1,3 @@
-USE [Computer]
-GO
-
-/****** Object:  StoredProcedure [dbo].[CreateUpdateDeleteUser]    Script Date: 01-Jul-24 6:30:32 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 CREATE PROCEDURE [dbo].[CreateUpdateDeleteUser]
     @UserID varchar(50),
     @UserName nvarchar(max),
@@ -28,26 +18,17 @@ CREATE PROCEDURE [dbo].[CreateUpdateDeleteUser]
     @ErrorMessage nvarchar(2000) OUTPUT
 AS
 BEGIN
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        -- Ensure UserID does not exist in Customer table if not deleting
-        IF @ForInsert <> 0 AND EXISTS (SELECT 1 FROM Customer WHERE CustomerID = @UserID)
-        BEGIN
-            SET @ErrorMessage = 'UserID already exists in Customer table.';
-            ROLLBACK TRANSACTION;
-            RETURN;
-        END
-
-        -- Ensure uniqueness of UserName, UserEmail, UserPhone, and UserIdentity
-        IF EXISTS (SELECT 1 FROM Users WHERE (UserName = @UserName OR UserEmail = @UserEmail OR UserPhone = @UserPhone OR UserIdentity = @UserIdentity) AND UserID <> @UserID)
+        IF EXISTS (SELECT 1 FROM Users WHERE (UserName = @UserName OR UserEmail = @UserEmail OR UserPhone = @UserPhone OR UserIdentity = @UserIdentity))
         BEGIN
             SET @ErrorMessage = 'UserName, UserEmail, UserPhone, or UserIdentity already exists.';
             ROLLBACK TRANSACTION;
             RETURN;
         END
 
-        -- Determine prefix based on Role
         IF @Role = 'Customer'
         BEGIN
             SET @UserID = 'C';
@@ -57,7 +38,6 @@ BEGIN
             SET @UserID = 'U';
         END
 
-        -- Handle UserID generation if inserting
         IF @ForInsert = 1
         BEGIN
             DECLARE @data INT;
@@ -76,7 +56,6 @@ BEGIN
             SET @UserID = @UserID + '-' + @CountNo;
         END
 
-        -- Insert or update Users table
         IF @ForInsert = 1
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM Users WHERE UserID = @UserID)
@@ -122,7 +101,6 @@ BEGIN
             WHERE UserID = @UserID;
         END
 
-        -- Handle Customer table if Role is Customer
         IF @Role = 'Customer'
         BEGIN
             IF @ForInsert = 1
@@ -137,6 +115,12 @@ BEGIN
                     (
                         @UserID, @FirstName + ' ' + @LastName, @Address, @UserPhone, @CreationDate
                     );
+                END
+                ELSE
+                BEGIN
+                    SET @ErrorMessage = 'Customer already exists.';
+                    ROLLBACK TRANSACTION;
+                    RETURN;
                 END
             END
             ELSE
@@ -172,5 +156,3 @@ BEGIN
     END CATCH;
 END
 GO
-
-

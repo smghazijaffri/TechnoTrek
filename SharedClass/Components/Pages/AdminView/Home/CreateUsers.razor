@@ -30,7 +30,7 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveVendor">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUser">
             Save
         </button>
     </div>
@@ -59,13 +59,15 @@
             <label class="form-label">Password</label>
             <input type="text" @bind="users.UserPassword" class="form-control">
         </div>
-        <div class="col-md-6 mt-1">
-            <MudSelect T="string" Label="Role" @bind-Value="users.Role" AnchorOrigin="Origin.BottomCenter" ReadOnly="notAdmin">
-                <MudSelectItem Value="@("Administrator")" />
-                <MudSelectItem Value="@("Purchase")" />
-                <MudSelectItem Value="@("Sale")" />
-                <MudSelectItem Value="@("Production")" />
-            </MudSelect>
+        <div class="col-md-6">
+            <label class="form-label">Role</label>
+            <select class="form-select" aria-label="Role" @bind="users.Role">
+                <option value=""></option>
+                <option value="Administrator">Administrator</option>
+                <option value="Purchase">Purchase</option>
+                <option value="Sale">Sale</option>
+                <option value="Production">Production</option>
+            </select>
         </div>
         <div class="col-md-6">
             <label class="form-label"></label>
@@ -98,11 +100,13 @@
             <input type="text" placeholder="42310-1234567-8" class="form-control" @oninput="@(e => FormatIdentityNumber(e))" maxlength="15" @bind="users.UserIdentity">
         </div>
         <div class="col-md-6">
-            <MudSelect T="string" Label="Gender" @bind-Value="users.Gender" AnchorOrigin="Origin.BottomCenter">
-                <MudSelectItem Value="@("Male")" />
-                <MudSelectItem Value="@("Female")" />
-                <MudSelectItem Value="@("Other")" />
-            </MudSelect>
+            <label class="form-label">Gender</label>
+            <select class="form-select" aria-label="Gender" @bind="users.Gender">
+                <option value=""></option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
         </div>
     </form>
 </div>
@@ -135,7 +139,7 @@
                     if (users == null) NavigationManager.NavigateTo("/users/");
 
                     if (users.Role != "Administrator") notAdmin = true;
-                    header = users.UserName;
+                    header = users.FirstName + ' ' + users.LastName;
 
                     if (users.Status == PurchaseStatuses.Enabled)
                     {
@@ -166,7 +170,7 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string validate = ValidateVendor();
+                string validate = ValidateUser();
                 if (validate != null)
                 {
                     return validate;
@@ -174,18 +178,26 @@
 
                 header = users.UserName;
 
-                if (IsEnabled)
+                if (!Disabled)
                 {
                     users.Status = PurchaseStatuses.Enabled;
-                    IsSaving = false;
                 }
-                else if (IsDisabled)
+                else if (Disabled)
                 {
                     users.Status = PurchaseStatuses.Disabled;
-                    IsSaving = false;
                 }
 
-                users.UserID = crud.CRD(users, "CreateUOM");
+                OutputClass output = new OutputClass();
+                output = crud.CRD2(users, "CreateUpdateDeleteUser", outputMessage: true, errorMessage: true);
+
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                else
+                {
+                    users.UserID = output.Output;
+                }
 
                 if (UserID == null)
                 {
@@ -195,11 +207,11 @@
                 {
                     return "User Created Successfully";
                 }
-                else if (IsEnabled)
+                else if (!Disabled)
                 {
                     return "User Enabled Successfully";
                 }
-                else if (IsDisabled)
+                else if (Disabled)
                 {
                     return "User Disabled Successfully";
                 }
@@ -207,6 +219,8 @@
                 {
                     return "Error in saving request";
                 }
+
+                return "SignUp Successful";
             }
         }
         catch (Exception ex)
@@ -219,10 +233,10 @@
         }
     }
 
-    public void SaveVendor()
+    public void SaveUser()
     {
         string notification = createUser();
-        if (notification.Contains("Successfully"))
+        if (notification.Contains("Successful"))
         {
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Success);
@@ -234,32 +248,44 @@
         }
     }
 
-    public string ValidateVendor()
+    public string ValidateUser()
     {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (string.IsNullOrWhiteSpace(users.UserName)) { return $"Please enter Username"; }
+        if (string.IsNullOrWhiteSpace(users.FirstName)) { return $"Please enter First Name"; }
+        if (string.IsNullOrWhiteSpace(users.LastName)) { return $"Please enter Last Name"; }
+        if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
+        if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
+        if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
+        if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
+        if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
+        if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
+        if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
+        if (!Regex.IsMatch(users.UserPassword, passwordPattern))
+        { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
+        if (!Regex.IsMatch(users.UserIdentity, pattern))
+        { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
+        if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
+
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserName = @UserName", new { UserName = users.UserName }) > 0)
         {
-            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
-            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
-
-            if (string.IsNullOrWhiteSpace(users.UserName)) { return $"Please enter Username"; }
-            if (string.IsNullOrWhiteSpace(users.FirstName)) { return $"Please enter First Name"; }
-            if (string.IsNullOrWhiteSpace(users.LastName)) { return $"Please enter Last Name"; }
-            if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
-            if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
-            if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
-            if (string.IsNullOrWhiteSpace(users.Role)) { return $"Please enter User Role"; }
-            if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
-            if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
-            if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
-            if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
-            if (!Regex.IsMatch(users.UserPassword, passwordPattern))
-            { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
-            if (!Regex.IsMatch(users.UserIdentity, pattern))
-            { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
-            if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
-
-            return null;
+            return "Username already exists.";
         }
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserEmail = @UserEmail", new { UserEmail = users.UserEmail }) > 0)
+        {
+            return "User email already exists.";
+        }
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserPhone = @UserPhone", new { UserPhone = users.UserPhone }) > 0)
+        {
+            return "User phone already exists.";
+        }
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserIdentity = @UserIdentity", new { UserIdentity = users.UserIdentity }) > 0)
+        {
+            return "User identity already exists.";
+        }
+
+        return null;
     }
 
     private void HandleFormInput()

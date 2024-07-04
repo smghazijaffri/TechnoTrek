@@ -14,6 +14,14 @@
 
 <div class="row p-3 align-items-center">
     <div class="col-6">
+        @if (!string.IsNullOrEmpty(AppState.Username))
+        {
+            <h4>@users.FirstName @users.LastName</h4>
+        }
+        else
+        {
+            <h4>SignUp</h4>
+        }
     </div>
     <div class="col-6 d-flex justify-content-end">
         @if (AppState.CustomerAuthorized)
@@ -94,53 +102,49 @@
     public string? Usernames { get; set; }
 
     string header = "SignUp";
-    string? ValidationMessage { get; set; }
     string pattern = @"^\d{5}-\d{7}-\d{1}$";
     string passwordPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (firstRender)
+        try
         {
-            try
+            if (!string.IsNullOrEmpty(Usernames) && Usernames != AppState.Username)
             {
-                if (!string.IsNullOrEmpty(Usernames) && Usernames != AppState.Username)
+                NavigationManager.NavigateTo($"/user/{AppState.Username}", forceLoad: true, replace: true);
+                return;
+            }
+
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                if (!string.IsNullOrEmpty(AppState.Username)) users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
+
+                if (users == null || !string.IsNullOrEmpty(AppState.Username))
                 {
-                    NavigationManager.NavigateTo($"/user/{AppState.Username}", forceLoad: true, replace: true);
+                    NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
                     return;
                 }
 
-                using (SqlConnection db = new SqlConnection(con.connectionString))
+                else if (!AppState.CustomerAuthorized && !string.IsNullOrEmpty(users.UserID))
                 {
-                    if (!string.IsNullOrEmpty(AppState.Username)) users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
+                    NavigationManager.NavigateTo("/login/", forceLoad: true);
+                    return;
+                }
 
-                    if (users == null)
-                    {
-                        NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
-                        return;
-                    }
-
-                    if (users.Role != "Customer" && !string.IsNullOrEmpty(users.Role))
-                    {
-                        NavigationManager.NavigateTo("/login/", forceLoad: true);
-                        return;
-                    }
-
-                    if (AppState.Authorized)
-                    {
-                        NavigationManager.NavigateTo("/dashboard/", forceLoad: true, replace: true);
-                        return;
-                    }
-                    else
-                    {
-                        users.Birthday = DateTime.Today;
-                    }
+                else if (AppState.Authorized)
+                {
+                    NavigationManager.NavigateTo("/dashboard/", forceLoad: true, replace: true);
+                    return;
+                }
+                else
+                {
+                    users.Birthday = DateTime.Today;
                 }
             }
-            catch (Exception)
-            {
-                throw;
-            }
+        }
+        catch (Exception)
+        {
+            throw;
         }
         StateHasChanged();
     }
@@ -173,10 +177,6 @@
                     users.UserID = output.Output;
                 }
 
-                if (users.UserName == null)
-                {
-                    NavigationManager.NavigateTo($"/user/{users.UserName}", forceLoad: true);
-                }
                 return "SignUp Successful";
             }
         }
@@ -193,6 +193,7 @@
         {
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Success);
+            NavigationManager.NavigateTo("/login/", forceLoad: true);
         }
         else
         {
@@ -203,27 +204,42 @@
 
     public string ValidateUser()
     {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (string.IsNullOrWhiteSpace(users.UserName)) { return $"Please enter Username"; }
+        if (string.IsNullOrWhiteSpace(users.FirstName)) { return $"Please enter First Name"; }
+        if (string.IsNullOrWhiteSpace(users.LastName)) { return $"Please enter Last Name"; }
+        if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
+        if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
+        if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
+        if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
+        if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
+        if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
+        if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
+        if (!Regex.IsMatch(users.UserPassword, passwordPattern))
+        { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
+        if (!Regex.IsMatch(users.UserIdentity, pattern))
+        { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
+        if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
+
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserName = @UserName", new { UserName = users.UserName }) > 0)
         {
-
-            if (string.IsNullOrWhiteSpace(users.UserName)) { return $"Please enter Username"; }
-            if (string.IsNullOrWhiteSpace(users.FirstName)) { return $"Please enter First Name"; }
-            if (string.IsNullOrWhiteSpace(users.LastName)) { return $"Please enter Last Name"; }
-            if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
-            if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
-            if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
-            if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
-            if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
-            if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
-            if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
-            if (!Regex.IsMatch(users.UserPassword, passwordPattern))
-            { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
-            if (!Regex.IsMatch(users.UserIdentity, pattern))
-            { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
-            if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
-
-            return null;
+            return "Username already exists.";
         }
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserEmail = @UserEmail", new { UserEmail = users.UserEmail }) > 0)
+        {
+            return "User email already exists.";
+        }
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserPhone = @UserPhone", new { UserPhone = users.UserPhone }) > 0)
+        {
+            return "User phone already exists.";
+        }
+        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserIdentity = @UserIdentity", new { UserIdentity = users.UserIdentity }) > 0)
+        {
+            return "User identity already exists.";
+        }
+
+        return null;
     }
 
     private void FormatIdentityNumber(ChangeEventArgs e)
