@@ -6,59 +6,61 @@
 @inject NavigationManager NavigationManager;
 
 <!-- Modal -->
-<div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
-     style="display: @(IsVisible ? "block" : "none");" @onkeydown="HandleKeyDown">
-    <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
-        <div class="modal-content" style="border-radius:20px;">
-            <div class="modal-header">
-                <h6 class="modal-title heading" style="font-size: 40px;">@ComponentName </h6>
-                <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                @if (ComponentName == "Motherboard")
-                {
-                    <Motherboard />
-                }
-                @if (ComponentName == "Processor")
-                {
-                    <Processor />
-                }
-                @if (ComponentName == "Graphics Card")
-                {
-                    <GPU />
-                }
-                @if (ComponentName == "Gaming Case")
-                {
-                    <Case />
-                }
-                @if (ComponentName == "Memory")
-                {
-                    <Memory />
-                }
-                @if (ComponentName == "Storage")
-                {
-                    <Storage />
-                }
-                @if (ComponentName == "Power Supply")
-                {
-                    <PSU />
-                }
-                @if (ComponentName == "Cooler")
-                {
-                    <Cooler />
-                }
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel"
-                        aria-label="Close">
-                    Cancel
-                </button>
+@if (IsVisible)
+{
+    <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
+          style="display: @(IsVisible ? "block" : "none");" @onkeydown="HandleKeyDown">
+        <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
+            <div class="modal-content" style="border-radius:20px;">
+                <div class="modal-header">
+                    <h6 class="modal-title heading" style="font-size: 40px;">@ComponentName </h6>
+                    <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (ComponentName == "Motherboard")
+                    {
+                        <Motherboard />
+                    }
+                    @if (ComponentName == "Processor")
+                    {
+                        <Processor />
+                    }
+                    @if (ComponentName == "Graphics Card")
+                    {
+                        <GPU />
+                    }
+                    @if (ComponentName == "Gaming Case")
+                    {
+                        <Case />
+                    }
+                    @if (ComponentName == "Memory")
+                    {
+                        <Memory />
+                    }
+                    @if (ComponentName == "Storage")
+                    {
+                        <Storage />
+                    }
+                    @if (ComponentName == "Power Supply")
+                    {
+                        <PSU />
+                    }
+                    @if (ComponentName == "Cooler")
+                    {
+                        <Cooler />
+                    }
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel"
+                            aria-label="Close">
+                        Cancel
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
 <!-- Modal -->
-
 @* <script>
     window.addEventListener('keydown', function (event) {
         if (event.key === "Escape") {
@@ -132,17 +134,23 @@
     {
         if (AppState.Authorized && !AppState.CustomerAuthorized)
         {
+            IsVisible = false;
+            Model.IsModalOpen = false;
+            await OnClose.InvokeAsync(null);
             Snackbar.Add("Please login as a Customer", Severity.Error);
-            return;
+            NavigationManager.NavigateTo("/dashboard", forceLoad: true);
         }
         else if (!AppState.Authorized && !AppState.CustomerAuthorized)
         {
+            IsVisible = false;
+            Model.IsModalOpen = false;
+            await OnClose.InvokeAsync(null);
             Snackbar.Add("Please login to continue", Severity.Error);
             NavigationManager.NavigateTo("/login", forceLoad: true);
-            return;
         }
         else
         {
+            IsVisible = false;
             Model.IsModalOpen = false;
             await OnClose.InvokeAsync(null);
         }
