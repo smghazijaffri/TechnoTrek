@@ -73,7 +73,7 @@
 
                         <div class="row mb-2 m-auto">
                             <div class="col-6">
-                                <p class="card-text">Memory:</p>
+                                <p class="card-text">Memory (@MemoryQuantity):</p>
                             </div>
                             <div class="col-6 text-right">
                                 <p class="card-text">Rs. @MemoryPrice</p>
@@ -82,7 +82,7 @@
 
                         <div class="row mb-2 m-auto">
                             <div class="col-6">
-                                <p class="card-text">Storage:</p>
+                                <p class="card-text">Storage (@StorageQuantity):</p>
                             </div>
                             <div class="col-6 text-right">
                                 <p class="card-text">Rs. @StoragePrice</p>
@@ -321,6 +321,7 @@
     string Memory { get; set; }
     string MemoryCode { get; set; }
     int MemoryPrice { get; set; }
+    int MemoryQuantity { get; set; }
 
     string Cooler { get; set; }
     string CoolerCode { get; set; }
@@ -333,6 +334,7 @@
     string Storage { get; set; }
     string StorageCode { get; set; }
     int StoragePrice { get; set; }
+    int StorageQuantity { get; set; }
 
     string Graphics { get; set; }
     string GraphicsCode { get; set; }
@@ -362,7 +364,9 @@
 
             Memory = itemResults[0].Name;
             MemoryCode = itemResults[0].Code;
-            MemoryPrice = itemResults[0].Price;
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "RamQuantity"))
+            { MemoryQuantity = await _protectedLocalStore.GetLocalAsync<int>("RamQuantity"); }
+            MemoryPrice = itemResults[0].Price * MemoryQuantity;
 
             Cooler = itemResults[1].Name;
             CoolerCode = itemResults[1].Code;
@@ -370,7 +374,9 @@
 
             Storage = itemResults[2].Name;
             StorageCode = itemResults[2].Code;
-            StoragePrice = itemResults[2].Price;
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "StorageQuantity"))
+            { StorageQuantity = await _protectedLocalStore.GetLocalAsync<int>("StorageQuantity"); }
+            StoragePrice = itemResults[2].Price * StorageQuantity;
 
             Case = itemResults[3].Name;
             CaseCode = itemResults[3].Code;
@@ -502,6 +508,9 @@
         {
             await _protectedLocalStore.SetLocalAsync(key, "");
         }
+
+        await _protectedLocalStore.SetLocalAsync("RamQuantity", 0);
+        await _protectedLocalStore.SetLocalAsync("StorageQuantity", 0);
     }
 
     private async void HandleCloseModal()

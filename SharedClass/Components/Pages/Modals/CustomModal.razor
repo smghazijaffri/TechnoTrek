@@ -5,11 +5,12 @@
 @inject ProtectedLocalStorage _protectedLocalStore;
 
 <!-- Modal -->
-<div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true" style="display: @(IsVisible ? "block" : "none");">
+<div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
+    style="display: @(IsVisible ? "block" : "none");">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
         <div class="modal-content" style="border-radius:20px;">
             <div class="modal-header">
-                <h6 class="modal-title heading" style="font-size: 40px;">@ComponentName  </h6>
+                <h6 class="modal-title heading" style="font-size: 40px;">@ComponentName </h6>
                 <button type="button" class="btn-close" @onclick="CloseQuickView" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -47,7 +48,8 @@
                 }
             </div>
             <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel" aria-label="Close">Cancel</button>
+                <button type="button" class="btn btn-secondary btnpc m-1" style="width: auto" @onclick="Cancel"
+                    aria-label="Close">Cancel</button>
             </div>
         </div>
     </div>
@@ -116,12 +118,12 @@
         await _protectedLocalStore.SetLocalAsync(Model.selectedComponentName, "");
         if (Model.selectedComponentName == "Storage")
         {
-            await _protectedLocalStore.SetLocalAsync("StorageQuantity", "");
+            await _protectedLocalStore.SetLocalAsync("StorageQuantity", 0);
 
         }
         if (Model.selectedComponentName == "Memory")
         {
-            await _protectedLocalStore.SetLocalAsync("RamQuantity", "");
+            await _protectedLocalStore.SetLocalAsync("RamQuantity", 0);
         }
         Snackbar.Clear();
         Snackbar.Add("Cancelled", Severity.Error);
