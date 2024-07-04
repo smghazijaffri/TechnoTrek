@@ -119,7 +119,7 @@
             {
                 if (!string.IsNullOrEmpty(AppState.Username)) users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
 
-                if (users == null || !string.IsNullOrEmpty(AppState.Username))
+                if (users == null || string.IsNullOrEmpty(AppState.Username))
                 {
                     NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
                     return;
@@ -222,21 +222,24 @@
         { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
         if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
 
-        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserName = @UserName", new { UserName = users.UserName }) > 0)
+        if (string.IsNullOrEmpty(users.UserID))
         {
-            return "Username already exists.";
-        }
-        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserEmail = @UserEmail", new { UserEmail = users.UserEmail }) > 0)
-        {
-            return "User email already exists.";
-        }
-        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserPhone = @UserPhone", new { UserPhone = users.UserPhone }) > 0)
-        {
-            return "User phone already exists.";
-        }
-        if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserIdentity = @UserIdentity", new { UserIdentity = users.UserIdentity }) > 0)
-        {
-            return "User identity already exists.";
+            if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserName = @UserName", new { UserName = users.UserName }) > 0)
+            {
+                return "Username already exists.";
+            }
+            if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserEmail = @UserEmail", new { UserEmail = users.UserEmail }) > 0)
+            {
+                return "User email already exists.";
+            }
+            if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserPhone = @UserPhone", new { UserPhone = users.UserPhone }) > 0)
+            {
+                return "User phone already exists.";
+            }
+            if (db.ExecuteScalar<int>("SELECT COUNT(1) FROM Users WHERE UserIdentity = @UserIdentity", new { UserIdentity = users.UserIdentity }) > 0)
+            {
+                return "User identity already exists.";
+            }
         }
 
         return null;
