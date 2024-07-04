@@ -157,8 +157,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
@@ -291,7 +290,7 @@
                     if (saleorder == null) { NavigationManager.NavigateTo("/saleorder/"); }
                     Items = db.Query<SO_Item>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                    customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleOrder si on si.CustomerID = si.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                    customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleOrder si on si.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                     UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     DisplaySO = false;
@@ -326,7 +325,7 @@
                 {
                     AddRow();
                 }
-                DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer").ToList();
+                DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer where CustomerType = 'Bulk'").ToList();
                 DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
             }
             StateHasChanged();
@@ -386,28 +385,44 @@
                 {
                     saleorder.Status = SaleStatus.ToBill;
                 }
-                saleorder.SaleOrderID = crud.CRD(saleorder, "CreateSaleOrder");
-
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    foreach (int del in IsDelete)
-                    {
-                        if (PO.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
-                    }
-                    PO.SaleOrderID = saleorder.SaleOrderID;
-                    DisplaySO = false;
-                    crud.CRD(PO, "SOItem");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM,PO.Rate,PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(saleorder);
+                parameters.Add("@SOItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSOItem", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateSaleOrder", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    SOItem.RowID = del;
-                    SOItem.SaleOrderID = saleorder.SaleOrderID;
-                    crud.CRD(SOItem, "SOItem", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                saleorder.SaleOrderID = output.Output;
+
+                // saleorder.SaleOrderID = crud.CRD(saleorder, "CreateSaleOrder");
+
+                // foreach (var PO in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (PO.RowID == del)
+                //         {
+                //             IsDelete.Remove(del);
+                //         }
+                //     }
+                //     PO.SaleOrderID = saleorder.SaleOrderID;
+                //     DisplaySO = false;
+                //     crud.CRD(PO, "SOItem");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     SOItem.RowID = del;
+                //     SOItem.SaleOrderID = saleorder.SaleOrderID;
+                //     crud.CRD(SOItem, "SOItem", System.Data.CommandType.StoredProcedure, true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (SaleOrderID == null)
@@ -480,6 +495,8 @@
                     if (PO.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
                     if (PO.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
+
+                    if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {count}";
 
                     if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }

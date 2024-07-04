@@ -128,6 +128,9 @@
                         Accepted Quantity
                     </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        UOM
+                    </th> 
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         Rate
                     </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
@@ -139,9 +142,10 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+
                     item.Amount = (item.Rate * item.AcceptedQuantity);
                     <tr>
                         <td>
@@ -172,7 +176,30 @@
                         </td>
 
                         <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
-                        <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly/></td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden"/></td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
                     </tr>
                 }
@@ -264,6 +291,8 @@
     List<int> IsDelete = new List<int>();
     List<string> ItemName = new List<string>();
     List<GR_Items> Items = new List<GR_Items>();
+    DropDown DropDownUOM = new DropDown();
+    List<string> UOMName = new List<string>();
 
     protected override async void OnInitialized()
     {
@@ -286,6 +315,8 @@
                     Items = db.Query<GR_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber });
+                    UOMName = db.Query<string>("select UOMName from GR_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
+                    getUOM(Items);
                     if (purchase == null || Items.Count == 0)
                     {
                         NavigationManager.NavigateTo("/goodsreceipt/");
@@ -321,6 +352,8 @@
                     Items = db.Query<GR_Items>("select Quantity as AcceptedQuantity ,* from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                    UOMName = db.Query<string>("select UOMName from PO_Items pr inner join UOM u on pr.UOM = u.UOMID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                    getUOM(Items);
                     purchase.RefrenceDocument = PurchaseOrderID;
                     await _protectedLocalStore.SetLocalAsync("PurchaseOrderID", "");
                 }
@@ -388,29 +421,42 @@
                 {
                     purchase.Status = PurchaseStatuses.ToBill;
                 }
-
-                purchase.GoodReceiptID = crud.CRD(purchase, "CreateGoodReceipt");
-
-                foreach (var PO in Items)
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var item in Items)
                 {
-                    foreach (int del in IsDelete)
-                    {
-                        if (PO.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
-                    }
-                    PO.GoodReceiptID = purchase.GoodReceiptID;
-                    DisplayPO = false;
-                    crud.CRD(PO, "GoodReceiptItems");
+                    ItemTable.Rows.Add(item.RowID, item.Item, item.AcceptedQuantity, item.UOM, item.Rate, item.Amount);
                 }
-
-                foreach (var del in IsDelete)
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                var parameters = new DynamicParameters(purchase);
+                parameters.Add("@GRItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteGRItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass outputClass = crud.CRD3(parameters, "CreateGoodReceipt", outputMessage: true, errorMessage: true);
+                if (outputClass.ErrorMessage != null)
                 {
-                    ReItem.RowID = del;
-                    ReItem.GoodReceiptID = purchase.GoodReceiptID;
-                    crud.CRD(ReItem, "GoodReceiptItems", IsDelete: true);
+                    return outputClass.ErrorMessage;
                 }
+                purchase.GoodReceiptID = outputClass.Output;
+
+                // foreach (var PO in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (PO.RowID == del)
+                //         {
+                //             IsDelete.Remove(del);
+                //         }
+                //     }
+                //     PO.GoodReceiptID = purchase.GoodReceiptID;
+                //     DisplayPO = false;
+                //     crud.CRD(PO, "GoodReceiptItems");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     ReItem.RowID = del;
+                //     ReItem.GoodReceiptID = purchase.GoodReceiptID;
+                //     crud.CRD(ReItem, "GoodReceiptItems", IsDelete: true);
+                // }
 
                 IsDelete.Clear();
                 ToggleApproval();
@@ -447,7 +493,20 @@
             return ex.Message;
         }
     }
+    public void getUOM(List<GR_Items> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
 
+        }
+    }
     public string ValidateGR()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -470,22 +529,25 @@
             if (string.IsNullOrWhiteSpace(purchase.VendorID)) return $"Please select Vendor";
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return "Please select Vendor"; }
             if (!DropDownVendor.Options.Any(option => option.Text == vendor.VendorName)) { return "Please Enter Valid Vendor"; }
-            
+            int count = 0;
             if (Items.Count > 0)
             {
                 foreach (var PO in Items)
                 {
-                    if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {PO.RowID}";
+                    count++;
+                    if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please select Item on Row: {count}";
 
-                    if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+                    if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                    if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+                    if (PO.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
 
-                    if (PO.AcceptedQuantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+                    if (PO.AcceptedQuantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                    if (PO.Amount <= 0) return $"Row {PO.RowID}: Amount cannot be less than or equal to 0";
+                    if (PO.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
+                  
+                    if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {count}";
 
-                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[PO.RowID - 1])) return $"Item on Row: {PO.RowID} does not exist";
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }
             }
             else
@@ -557,6 +619,7 @@
                 Rate = 0,
                 Amount = 0
             });
+        UOMName.Add("");
         ItemName.Add("");
     }
 
@@ -638,7 +701,8 @@
             {
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
-                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+
                 HandleFormInput();
             }
         }
@@ -703,7 +767,37 @@
             NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
 
+    public void SelectUOMOption(Option options, int rowIndex)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                Items[rowIndex].UOM = options.Value;
+                HandleFormInput();
+            }
+        }
+    }
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
+    }
     public void NavigateVendor()
     {
         NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);

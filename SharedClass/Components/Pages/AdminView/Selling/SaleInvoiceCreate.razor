@@ -140,6 +140,9 @@
                     <th class="col col-auto" style="width: 160px;">
                         Quantity
                     </th>
+                    <th class="col col-auto" style="width: 160px;">
+                        UOM
+                    </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         Rate
                     </th>
@@ -152,10 +155,11 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                    item.Amount = (item.Rate * item.Quantity);
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    item.Amount = (item.Rate * (item.Quantity * quantity[index]));
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center;">
@@ -183,8 +187,30 @@
                                 </ul>
                             </div>
                         </td>
-
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex, true)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly /></td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
                     </tr>
@@ -234,6 +260,9 @@
     bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid; } }
 
     DropDown DropDownItem = new DropDown();
+    List<string> UOMName = new List<string>();
+    List<int> quantity = new List<int>();
+    DropDown DropDownUOM = new DropDown();
 
     List<int> IsDelete = new List<int>();
     List<SI_Item> Items = new List<SI_Item>();
@@ -267,7 +296,8 @@
                 Items = db.Query<SI_Item>("Select * from SI_Item where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                 ItemName = db.Query<string>("select ItemName from SI_Item inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleInvoice si on si.CustomerID = si.CustomerID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
-
+                UOMName = db.Query<string>("select UOMName from SI_Item pr inner join UOM u on pr.UOM = u.UOMID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                quantity = db.Query<int>("select StockQuantity from UOM Inner Join SI_Item on UOM = UOMID  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                 if (salesinvoice == null || Items.Count == 0)
                     NavigationManager.NavigateTo("/saleinvoice/");
 
@@ -331,7 +361,7 @@
             }
 
             DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
-            DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer").ToList();
+            DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer where CustomerType = 'Bulk'").ToList();
         }
         StateHasChanged();
 
@@ -409,26 +439,40 @@
                 {
                     salesinvoice.Status = PurchaseStatuses.Cancelled;
                 }
-
-                salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreateSaleInvoice");
-
-                foreach (var PR in Items)
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
                 {
-                    if (IsDelete.Any(Del => Del == PR.RowID))
-                    {
-                        IsDelete.Remove(PR.RowID);
-                    }
-                    PR.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                    DisplaySI = false;
-                    crud.CRD(PR, "SIItem");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(salesinvoice);
+                parameters.Add("@SIItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSIItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateSaleInvoice", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    invoiceitem.RowID = del;
-                    invoiceitem.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                    crud.CRD(invoiceitem, "SIItem", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                salesinvoice.SalesInvoiceID = output.Output;
+                // salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreateSaleInvoice");
+
+                // foreach (var PR in Items)
+                // {
+                //     if (IsDelete.Any(Del => Del == PR.RowID))
+                //     {
+                //         IsDelete.Remove(PR.RowID);
+                //     }
+                //     PR.SalesInvoiceID = salesinvoice.SalesInvoiceID;
+                //     DisplaySI = false;
+                //     crud.CRD(PR, "SIItem");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     invoiceitem.RowID = del;
+                //     invoiceitem.SalesInvoiceID = salesinvoice.SalesInvoiceID;
+                //     crud.CRD(invoiceitem, "SIItem", System.Data.CommandType.StoredProcedure, true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (SalesInvoiceID == null)
@@ -492,20 +536,22 @@
             if (!salesinvoice.IsPaid && !salesinvoice.IsPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
-
             if (Items.Count > 0)
             {
+                int count = 0;
+
                 foreach (var PI in Items)
                 {
-                    if (string.IsNullOrWhiteSpace(ItemName[PI.RowID - 1])) return $"Please Enter Item on Row: {PI.RowID}";
+                    count++;
+                    if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                    if (PI.Rate <= 0) return $"Row {PI.RowID}: Rate cannot be less than or equal to 0";
+                    if (PI.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
 
-                    if (PI.Quantity <= 0) return $"Row {PI.RowID}: Quantity cannot be less than or equal to 0";
+                    if (PI.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                    if (PI.Amount <= 0) return $"Row {PI.RowID}: Amount cannot be less than or equal to 0";
+                    if (PI.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
 
-                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[PI.RowID - 1])) return $"Item on Row: {PI.RowID} does not exist";
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }
             }
             else
@@ -600,6 +646,8 @@
                 Quantity = 1
             });
         ItemName.Add("");
+        UOMName.Add("");
+        quantity.Add(0);
     }
 
     private void DeleteRow()
@@ -625,6 +673,7 @@
         {
             IsSaving = true;
             IsDraft = false;
+            Paid = false;
             GetSubmitButtonText();
             StateHasChanged();
         }
@@ -678,14 +727,45 @@
             bool result = DropDownItem.SelectOption(options, rowIndex);
             if (result == false)
             {
+                if (Items[rowIndex].Item != options.Value)
+                {
+                    UOMName[rowIndex] = "";
+                }
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
                 Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+
                 HandleFormInput();
             }
         }
     }
-
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+    public void SelectUOMOption(Option options, int rowIndex)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                Items[rowIndex].UOM = options.Value;
+                quantity[rowIndex] = db.QueryFirstOrDefault<int>("select StockQuantity from UOM where UOMID = @UOMID", new { UOMID = options.Value });
+                HandleFormInput();
+            }
+        }
+    }
     private async Task OpenDialog()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -735,5 +815,9 @@
     public void NavigateCustomer()
     {
         NavigationManager.NavigateTo($"/customers/new-customer", forceLoad: true);
+    }
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
     }
 }

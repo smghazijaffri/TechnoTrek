@@ -261,6 +261,7 @@
                 Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                 UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                 ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                getUOM(Items);
                 if (purchase == null || Items.Count == 0)
                 {
                     NavigationManager.NavigateTo("/purchaserequisition/");
@@ -399,7 +400,20 @@
             return ex.Message;
         }
     }
+    public void getUOM(List<PR_Items> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
 
+        }
+    }
     public string ValidatePR()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))

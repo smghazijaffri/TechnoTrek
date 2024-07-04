@@ -45,6 +45,7 @@
         public bool Selected { get; set; }
         public string? SalesInvoiceID { get; set; }
         public string? Item { get; set; }
+        public string? UOM { get; set; }
         public int RowID { get; set; }
         public int Quantity { get; set; }
         public int Rate { get; set; }
@@ -55,7 +56,9 @@
         public string? CustomerID { get; set; }
         public string? Name { get; set; }
         public string? Address { get; set; }
-        public string? Contact { get; set; }
+       public string? Contact { get; set; }
+       public string? CustomerType { get; set; }
+        
     }
 
     public class GoodsIssue : BaseRecord

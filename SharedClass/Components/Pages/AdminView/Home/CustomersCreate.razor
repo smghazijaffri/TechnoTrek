@@ -43,6 +43,15 @@
             <label class="form-label">Contact Number</label>
             <input type="text" class="form-control" @bind="customer.Contact">
         </div>
+        <div class="col-md-6">
+            <label class="form-label">Customer Type</label>
+            <select class="form-select" aria-label="Item Type" @bind="customer.CustomerType">
+                <option value="">Select Customer</option>
+                <option value="Bulk">Bulk</option>
+                <option value="Retail">Retail</option>
+            </select>
+        </div>
+
     </form>
 </div>
 
@@ -135,6 +144,7 @@
             if (string.IsNullOrWhiteSpace(customer.Name)) { return $"Please enter Customer Name"; }
             if (string.IsNullOrWhiteSpace(customer.Address)) { return $"Please enter Customer Address"; }
             if (string.IsNullOrWhiteSpace(customer.Contact)) { return $"Please enter Customer Contact"; }
+            if (string.IsNullOrWhiteSpace(customer.CustomerType)) { return $"Please select Customer Type"; }
 
             if (customer.CustomerID != null)
             {

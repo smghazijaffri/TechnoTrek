@@ -106,6 +106,7 @@
         public int AcceptedQuantity { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
+        public string UOM { get; set; }
     }
 
     public class Quotation : BaseRecord
@@ -164,6 +165,7 @@
         public int AcceptedQuantity { get; set; }
         public int Rate { get; set; }
         public int Amount { get; set; }
+        public string? UOM { get; set; }
     }
 
     public class UnitofMeasure : BaseRecord
