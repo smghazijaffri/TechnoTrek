@@ -9,6 +9,8 @@ using System.Text.Json;
 using BoldReports.Web;
 using System.Data;
 using Dapper;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace SharedClass.Components.Data
 {
@@ -242,6 +244,20 @@ namespace SharedClass.Components.Data
             await db.ExecuteAsync("item_Compatibility", parameters, commandType: CommandType.StoredProcedure);
             string outputValue = parameters.Get<string>("@Output");
             return outputValue == "Allow";
+        }
+
+        public static string HashPassword(string password)
+        {
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(password));
+                StringBuilder builder = new StringBuilder();
+                foreach (byte b in bytes)
+                {
+                    builder.Append(b.ToString("x2"));
+                }
+                return builder.ToString();
+            }
         }
     }
 }

@@ -44,5 +44,11 @@ namespace SharedClass.Components.Data
                 return (false, null);
             }
         }
+
+        public static bool VerifyPassword(string inputPassword, string storedHash)
+        {
+            string hashedInputPassword = Select.HashPassword(inputPassword);
+            return hashedInputPassword == storedHash;
+        }
     }
 }
