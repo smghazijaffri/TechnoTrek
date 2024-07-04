@@ -7,7 +7,7 @@
 
 <!-- Modal -->
 <div class="modal" tabindex="-1" id="quickViewModal" aria-labelledby="quickViewModal" aria-hidden="true"
-     style="display: @(IsVisible ? "block" : "none");">
+     style="display: @(IsVisible ? "block" : "none");" @onkeydown="HandleKeyDown">
     <div class="modal-dialog modal-fullscreen ps-3 pt-3 pe-4 pb-3">
         <div class="modal-content" style="border-radius:20px;">
             <div class="modal-header">
@@ -59,13 +59,13 @@
 </div>
 <!-- Modal -->
 
-<script>
+@* <script>
     window.addEventListener('keydown', function (event) {
         if (event.key === "Escape") {
             DotNet.invokeMethodAsync('SharedClass', 'CloseModal');
         }
     });
-</script>
+</script> *@
 
 @code {
     public class BuildPcViewModel
@@ -118,6 +118,14 @@
     private void ShowQuickView()
     {
         Model.IsModalOpen = true;
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            CloseQuickView();
+        }
     }
 
     private async void CloseQuickView()
@@ -188,13 +196,13 @@
         }
     }
 
-    [JSInvokable]
-    public static Task CloseModal()
-    {
-        if (_instance != null)
-        {
-            _instance.CloseQuickView();
-        }
-        return Task.CompletedTask;
-    }
+    // [JSInvokable]
+    // public static Task CloseModal()
+    // {
+    //     if (_instance != null)
+    //     {
+    //         _instance.CloseQuickView();
+    //     }
+    //     return Task.CompletedTask;
+    // }
 }

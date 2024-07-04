@@ -562,60 +562,71 @@
             {
                 BOM bom = new BOM();
                 var customerID = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-                var customerName = db.QueryFirstOrDefault<string>("Select Name from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
-                var customerContact = db.QueryFirstOrDefault<string>("Select Contact from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
-                string BOMName = $"BOM for {customerName}-{customerContact}-{DateTime.Today}";
-                bom.BOMName = BOMName;
-                bom.ItemName = customerID + " PC";
-                bom.DocumentDate = DateTime.Now.Date;
-                bom.IsActive = true;
-                bom.Type = "Customer";
-                bom.BOMID = crud.CRD(bom, "CreateBOM");
-
-                List<CustomPC_Items> customItems = new List<CustomPC_Items>();
-                customItems.Add(new CustomPC_Items { ItemID = MotherboardCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = SupplyCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = CaseCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = CoolerCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = ProcessorCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = MemoryCode, Quantity = AppState.MemoryQuantity });
-                customItems.Add(new CustomPC_Items { ItemID = GraphicsCode, Quantity = 1 });
-                customItems.Add(new CustomPC_Items { ItemID = StorageCode, Quantity = AppState.StorageQuantity });
-                DataTable dataTable = new DataTable("CustomPC_ItemsTable");
-
-                dataTable.Columns.Add("ItemID", typeof(string));
-                dataTable.Columns.Add("Quantity", typeof(int));
-
-                foreach (var item in customItems)
+                if (!string.IsNullOrEmpty(customerID))
                 {
-                    DataRow row = dataTable.NewRow();
-                    row["ItemID"] = item.ItemID;
-                    row["Quantity"] = item.Quantity;
-                    dataTable.Rows.Add(row);
-                }
-                var parameters = new DynamicParameters();
-                parameters.Add("@CustomPCItems", dataTable.AsTableValuedParameter("dbo.CustomPC_Items"));
-                parameters.Add("@BOMID", bom.BOMID);
-                parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
+                    var customerName = db.QueryFirstOrDefault<string>("Select Name from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
+                    var customerContact = db.QueryFirstOrDefault<string>("Select Contact from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
+                    string BOMName = $"BOM for {customerName}-{customerContact}-{DateTime.Today.ToString("MM/dd/yyyy")}";
+                    bom.BOMName = BOMName;
+                    bom.ItemName = customerID + " PC";
+                    bom.DocumentDate = DateTime.Now.Date;
+                    bom.IsActive = true;
+                    bom.Type = "Customer";
+                    bom.BOMID = crud.CRD(bom, "CreateBOM");
 
-                db.Execute("CustomPcBOM_Items", parameters, commandType: CommandType.StoredProcedure);
-                string ErrorMessage = parameters.Get<string>("@ErrorMessage");
-                if (ErrorMessage != null)
-                {
-                    Snackbar.Clear();
-                    Snackbar.Add(ErrorMessage, Severity.Error);
+
+                    List<CustomPC_Items> customItems = new List<CustomPC_Items>();
+                    customItems.Add(new CustomPC_Items { ItemID = MotherboardCode, Quantity = 1 });
+                    customItems.Add(new CustomPC_Items { ItemID = SupplyCode, Quantity = 1 });
+                    customItems.Add(new CustomPC_Items { ItemID = CaseCode, Quantity = 1 });
+                    customItems.Add(new CustomPC_Items { ItemID = CoolerCode, Quantity = 1 });
+                    customItems.Add(new CustomPC_Items { ItemID = ProcessorCode, Quantity = 1 });
+                    customItems.Add(new CustomPC_Items { ItemID = MemoryCode, Quantity = AppState.MemoryQuantity });
+                    customItems.Add(new CustomPC_Items { ItemID = GraphicsCode, Quantity = 1 });
+                    customItems.Add(new CustomPC_Items { ItemID = StorageCode, Quantity = AppState.StorageQuantity });
+                    DataTable dataTable = new DataTable("CustomPC_ItemsTable");
+
+                    dataTable.Columns.Add("ItemID", typeof(string));
+                    dataTable.Columns.Add("Quantity", typeof(int));
+
+                    foreach (var item in customItems)
+                    {
+                        DataRow row = dataTable.NewRow();
+                        row["ItemID"] = item.ItemID;
+                        row["Quantity"] = item.Quantity;
+                        dataTable.Rows.Add(row);
+                    }
+                    var parameters = new DynamicParameters();
+                    parameters.Add("@CustomPCItems", dataTable.AsTableValuedParameter("dbo.CustomPC_Items"));
+                    parameters.Add("@BOMID", bom.BOMID);
+                    parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
+
+                    db.Execute("CustomPcBOM_Items", parameters, commandType: CommandType.StoredProcedure);
+                    string ErrorMessage = parameters.Get<string>("@ErrorMessage");
+                    if (ErrorMessage != null)
+                    {
+                        Snackbar.Clear();
+                        Snackbar.Add(ErrorMessage, Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Clear();
+                        Snackbar.Add("Order Confirmed", Severity.Success);
+                        ClearComponentSelectionsAsync();
+                    }
                 }
                 else
                 {
-                    Snackbar.Clear();
-                    Snackbar.Add("Order Confirmed", Severity.Success);
-                    ClearComponentSelectionsAsync();
+                    AppState.CartItemCount = 0;
+                    AppState.Username = string.Empty;
+                    AppState.CustomerAuthorized = false;
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                    Snackbar.Add("User not found.", Severity.Error);
                 }
+                StateHasChanged();
+                NavigationManager.NavigateTo("/", forceLoad: true);
             }
-            StateHasChanged();
-            NavigationManager.NavigateTo("/", forceLoad: true);
         }
-
         catch (Exception ex)
         {
             Snackbar.Clear();

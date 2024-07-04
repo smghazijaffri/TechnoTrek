@@ -41,7 +41,7 @@
                 </ul>
             </div>
         }
-        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO" hidden="@IsCustomer">
             Save
         </button>
     </div>
@@ -108,9 +108,9 @@
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center;">
-                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
+                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" readonly="@IsCustomer" />
                                 @(index + 1)
                             </div>
                         </td>
@@ -227,7 +227,7 @@
     bool isMobile = false;
     bool IsCustomer = false;
     bool Createbutton = false;
-    bool ReadonlyHidden { get { return !IsSaving; } }
+    bool ReadonlyHidden { get { return !IsSaving || IsCustomer; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
 
     DropDown DropDownUOM = new DropDown();
@@ -253,13 +253,21 @@
                 {
                     bom = db.QueryFirstOrDefault<BOM>("Select * from BOM  where BOMID = @BOMID", new { BOMID = BOMID });
                     if (bom == null) { NavigationManager.NavigateTo("/billofmaterial/"); }
-                    if (bom.Type == "Customer") { IsCustomer = true; }
+                    if (bom.Type == "Customer")
+                    {
+                        IsCustomer = true;
+                        header = bom.BOMName;
+                    }
+                    else
+                    {
+                        header = bom.ItemName;
+                    }
                     Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     UOMName = db.Query<string>("select UOMName from BOM_Item inner join UOM on UOMID = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join BOM_Item  on uom = UOM  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
                     DisplayPO = false;
-                    header = bom.ItemName;
+
                     IsSaving = true;
 
                     if (bom.IsActive)
