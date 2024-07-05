@@ -121,7 +121,7 @@
                 {
                     users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
 
-                    if (users == null || string.IsNullOrEmpty(AppState.Username))
+                    if (users == null)
                     {
                         NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
                         return;

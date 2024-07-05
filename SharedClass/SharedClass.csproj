@@ -18,6 +18,15 @@
 
   <ItemGroup>
     <Compile Remove="Backup\**" />
+    <Content Remove="Backup\**" />
+    <EmbeddedResource Remove="Backup\**" />
+    <MauiCss Remove="Backup\**" />
+    <MauiXaml Remove="Backup\**" />
+    <None Remove="Backup\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Backup\**" />
     <Compile Remove="Scripts\**" />
     <Content Remove="Backup\**" />
     <Content Remove="Scripts\**" />
@@ -156,6 +165,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Components\Pages\AdminView\Buying\Buying.razor" />
     <None Include="Components\Pages\AdminView\Buying\Buying.razor" />
   </ItemGroup>
 
