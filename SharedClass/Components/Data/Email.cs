@@ -20,7 +20,6 @@ namespace SharedClass.Components.Data
 
             foreach (var email in emails)
             {
-                SendModel sendModel = new SendModel
                 SendModel sendModel = new()
                 {
                     Body = GetEmailBody(email.VendorName),
