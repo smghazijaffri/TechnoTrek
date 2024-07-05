@@ -108,9 +108,9 @@
             <input type="date" @bind="salesinvoice.DueDate" class="form-control" readonly="@ReadonlyHidden">
         </div>
         <div class="col-md-6">
-            <MudCheckBox @bind-Value="@salesinvoice.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
-            <MudCheckBox @bind-Value="@salesinvoice.IsPartiallyPaid" Size="Size.Small" Dense="true" Label="Partially Paid" readonly="@Hidden"></MudCheckBox>
-            <MudCheckBox @bind-Value="@salesinvoice.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
+            <MudCheckBox @bind-Value="@isPartiallyPaid" Size="Size.Small" Dense="true" Label="Partially Paid" readonly="@Hidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
         </div>
     </form>
 </div>
@@ -258,6 +258,7 @@
     bool IsPaid { get; set; } = false;
     bool IsReturn { get; set; } = false;
     bool PartiallyPaid { get; set; } = false;
+    bool isPartiallyPaid { get; set; } = false;
     bool Readonly { get { return IsCancelled || Paid; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool Hidden { get { return IsCancelled || Paid || Overdue; } }
@@ -320,14 +321,20 @@
                 else if (salesinvoice.Status == SaleStatus.Paid)
                 {
                     Paid = true;
+                    IsPaid = true;
                     salesinvoice.IsPaid = true;
                     IsSaving = false;
+                    PartiallyPaid = false;
+                    isPartiallyPaid = false;
+                    Overdue = false;
                 }
                 else if (salesinvoice.Status == SaleStatus.PartiallyPaid)
                 {
                     salesinvoice.IsPartiallyPaid = true;
                     PartiallyPaid = true;
+                    isPartiallyPaid = true;
                     Paid = false;
+                    IsPaid = false;
                     salesinvoice.IsPaid = false;
                     IsSaving = false;
                 }
@@ -337,6 +344,7 @@
                     salesinvoice.IsPartiallyPaid = false;
                     PartiallyPaid = false;
                     Paid = false;
+                    IsPaid = false;
                     salesinvoice.IsPaid = false;
                     IsSaving = false;
                 }
@@ -422,24 +430,27 @@
                 }
                 else if (IsDraft)
                 {
-                    if (salesinvoice.IsPaid)
+                    if (IsPaid)
                     {
+                        Paid = true;
                         salesinvoice.Status = PurchaseStatuses.Paid;
                     }
-                    else if (salesinvoice.IsPartiallyPaid)
+                    else if (isPartiallyPaid)
                     {
+                        PartiallyPaid = true;
                         salesinvoice.Status = PurchaseStatuses.PartiallyPaid;
                     }
                 }
-                else if (salesinvoice.IsPaid)
+                else if (IsPaid)
                 {
+                    Paid = true;
                     salesinvoice.Status = PurchaseStatuses.Paid;
                 }
                 else if (Overdue)
                 {
                     salesinvoice.Status = PurchaseStatuses.Overdue;
                 }
-                else if (salesinvoice.IsPaid || Overdue)
+                else if (Paid || Overdue)
                 {
                     salesinvoice.Status = PurchaseStatuses.Cancelled;
                 }
@@ -458,25 +469,6 @@
                     return output.ErrorMessage;
                 }
                 salesinvoice.SalesInvoiceID = output.Output;
-                // salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreateSaleInvoice");
-
-                // foreach (var PR in Items)
-                // {
-                //     if (IsDelete.Any(Del => Del == PR.RowID))
-                //     {
-                //         IsDelete.Remove(PR.RowID);
-                //     }
-                //     PR.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                //     DisplaySI = false;
-                //     crud.CRD(PR, "SIItem");
-                // }
-
-                // foreach (var del in IsDelete)
-                // {
-                //     invoiceitem.RowID = del;
-                //     invoiceitem.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                //     crud.CRD(invoiceitem, "SIItem", System.Data.CommandType.StoredProcedure, true);
-                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (SalesInvoiceID == null)
@@ -500,7 +492,6 @@
 
                 else
                 {
-                    IsDraft = false;
                     return "Error in saving Invoice";
                 }
             }
@@ -535,9 +526,11 @@
 
             if (salesinvoice.CustomerID == null) return "Please Select a Customer";
 
-            if (salesinvoice.IsPaid && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+            if (IsPaid && isPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
 
-            if (!salesinvoice.IsPaid && !salesinvoice.IsPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
+            if (!IsPaid && !isPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
+
+            if (Overdue && isPartiallyPaid) return "Overdu Invoice cannot be Partially Paid";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
             if (Items.Count > 0)
@@ -599,38 +592,36 @@
     {
         if (IsDraft)
         {
-            if (salesinvoice.IsPaid)
-            {
-                Paid = true;
-            }
-            if (salesinvoice.IsPartiallyPaid)
-            {
-                PartiallyPaid = true;
-            }
             IsDraft = false;
             IsSaving = false;
         }
-        else if (salesinvoice.IsPartiallyPaid)
+        else if (isPartiallyPaid)
         {
             salesinvoice.IsPartiallyPaid = true; ;
-            PartiallyPaid = true;
             Paid = false;
+            IsPaid = false;
             IsSaving = false;
+            IsDraft = false;
+            PartiallyPaid = true;
         }
-        else if (salesinvoice.IsPaid)
+        else if (IsPaid)
         {
             salesinvoice.IsPaid = true;
             Overdue = false;
             Paid = true;
             PartiallyPaid = false;
             IsSaving = false;
+            IsDraft = false;
         }
         else if (Overdue)
         {
-            if (salesinvoice.IsPaid)
+            if (IsPaid)
             {
                 Overdue = false;
                 Paid = true;
+                salesinvoice.IsPaid = true;
+                isPartiallyPaid = false;
+                PartiallyPaid = false;
             }
             else { Overdue = true; }
         }
@@ -744,6 +735,7 @@
             }
         }
     }
+
     public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownUOM.FilterOptions(e, rowIndex);
@@ -756,6 +748,7 @@
         }
         StateHasChanged();
     }
+
     public void SelectUOMOption(Option options, int rowIndex)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -799,6 +792,7 @@
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+
     private async Task OpenDialog()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -849,6 +843,7 @@
     {
         NavigationManager.NavigateTo($"/customers/new-customer", forceLoad: true);
     }
+
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
