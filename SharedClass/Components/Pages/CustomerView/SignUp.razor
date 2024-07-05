@@ -101,7 +101,6 @@
     [Parameter]
     public string? Usernames { get; set; }
 
-    string header = "SignUp";
     string pattern = @"^\d{5}-\d{7}-\d{1}$";
     string passwordPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
 
@@ -164,9 +163,13 @@
                     return validate;
                 }
 
-                header = users.UserName;
                 users.Status = PurchaseStatuses.Enabled;
                 users.Role = "Customer";
+
+                if (!string.IsNullOrEmpty(users.UserPassword) && !users.UserPassword.StartsWith("SHA256$"))
+                {
+                    users.UserPassword = Select.HashPassword(users.UserPassword);
+                }
 
                 OutputClass output = new OutputClass();
                 output = crud.CRD2(users, "CreateUpdateDeleteUser", outputMessage: true, errorMessage: true);
@@ -180,7 +183,7 @@
                     users.UserID = output.Output;
                 }
 
-                return "SignUp Successful";
+                return "Successful";
             }
         }
         catch (Exception ex)
@@ -196,7 +199,6 @@
         {
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Success);
-            NavigationManager.NavigateTo("/login/", forceLoad: true);
         }
         else
         {
@@ -219,8 +221,13 @@
         if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
         if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
         if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
-        if (!Regex.IsMatch(users.UserPassword, passwordPattern))
-        { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
+        if (!string.IsNullOrWhiteSpace(users.UserPassword) && !users.UserPassword.StartsWith("SHA256$"))
+        {
+            if (!Regex.IsMatch(users.UserPassword, passwordPattern))
+            {
+                return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character.";
+            }
+        }
         if (!Regex.IsMatch(users.UserIdentity, pattern))
         { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
         if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }

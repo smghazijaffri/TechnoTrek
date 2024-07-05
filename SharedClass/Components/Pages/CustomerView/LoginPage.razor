@@ -1,6 +1,7 @@
 ﻿@page "/login"
 
 @inject Login login;
+@inject Users users;
 @inject Connection con;
 @inject AppState AppState;
 @inject ISnackbar Snackbar;
@@ -31,6 +32,49 @@
     string Username = string.Empty;
     string Password = string.Empty;
     bool IsLoginSuccessful = false;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            using SqlConnection db = new SqlConnection(con.connectionString);
+
+            if (!string.IsNullOrEmpty(AppState.Username) && AppState.CustomerAuthorized)
+            {
+                users = db.QueryFirstOrDefault<Users>("SELECT * FROM Users WHERE UserName = @Username", new { Username = AppState.Username });
+
+                if (users == null)
+                {
+                    NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
+                    return;
+                }
+                else
+                {
+                    NavigationManager.NavigateTo($"/user/{AppState.Username}", forceLoad: true, replace: true);
+                    return;
+                }
+            }
+
+            if (AppState.Authorized)
+            {
+                if (users == null)
+                {
+                    NavigationManager.NavigateTo("/signup/", forceLoad: true, replace: true);
+                    return;
+                }
+                else
+                {
+                    NavigationManager.NavigateTo("/dashboard/", forceLoad: true, replace: true);
+                    return;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+        StateHasChanged();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
