@@ -24,7 +24,7 @@ namespace SharedClass.Components.Data
 
             try
             {
-                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND UserPassword = @Password AND Status != 'Disabled'";
+                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND UserPassword = @Password AND Status = 'Enabled'";
                 var parameters = new { Username = username, Password = password };
                 var userAuth = await con.QueryFirstOrDefaultAsync<UserAuth>(query, parameters);
 
