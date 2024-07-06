@@ -40,11 +40,17 @@
                     <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Production Order</li>
                 </ul>
             </div>
-            <div class="m-4"></div>
+            @if (IsCustomer)
+            {
+                <div class="m-4"></div>
+            }
         }
-        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO" hidden="@IsCustomer">
-            Save
-        </button>
+        @if (!IsCustomer)
+        {
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
+                Save
+            </button>
+        }
     </div>
 </div>
 
