@@ -20,13 +20,24 @@
         <div class="mb-3">
             <InputText id="passwordInput" placeholder="Password" type="password" class="form-control text-danger" @bind-Value="Password" style="backdrop-filter: blur(5px);" />
         </div>
-        <button type="submit" class="btn btn-danger rounded-lg" @onclick="Pagelogin">Login</button>
+        @if (!LoggingIn)
+        {
+            <button type="submit" class="btn btn-danger rounded-lg" @onclick="Pagelogin">Login</button>
+        }
+        else if (LoggingIn)
+        {
+            <button class="btn btn-danger" type="button" disabled>
+                <span class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
+                <span role="status">Logging in...</span>
+            </button>
+        }
         <button type="submit" class="btn btn-danger rounded-lg" @onclick="SignUp">SignUp</button>
     </EditForm>
 </div>
 
 @code {
     bool isMobile = false;
+    bool LoggingIn = false;
 
     string? DeviceType { get; set; }
     string Username = string.Empty;
@@ -88,42 +99,61 @@
 
     private async void Pagelogin()
     {
-        var (IsLoginSuccessful, Role) = await login.Access(Username, Password, Snackbar);
-        if (IsLoginSuccessful)
+        if (LoggingIn)
         {
-            if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-            AppState.Username = Username;
-            AppState.Role = Role;
+            return;
+        }
 
-            if (Role != "Customer")
+        LoggingIn = true;
+
+        try
+        {
+            var (IsLoginSuccessful, Role) = await login.Access(Username, Password, Snackbar);
+            if (IsLoginSuccessful)
             {
-                AppState.Authorized = true;
-                AppState.CustomerAuthorized = false;
-                NavigationManager.NavigateTo("/dashboard");
+                if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                AppState.Username = Username;
+                AppState.Role = Role;
+
+                if (Role != "Customer")
+                {
+                    AppState.Authorized = true;
+                    AppState.CustomerAuthorized = false;
+                    NavigationManager.NavigateTo("/dashboard");
+                }
+                else
+                {
+                    using SqlConnection db = new SqlConnection(con.connectionString);
+                    string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+                    var result = await Select.RetrieveCartItems(userid);
+
+                    foreach (var item in result)
+                    {
+                        AppState.CartItemCount++;
+                    }
+
+                    AppState.CustomerAuthorized = true;
+                    AppState.Authorized = false;
+                    NavigationManager.NavigateTo("/", forceLoad: true);
+                }
+                Snackbar.Clear();
+                Snackbar.Add("Welcome " + Username, Severity.Success);
             }
             else
             {
-                using SqlConnection db = new SqlConnection(con.connectionString);
-                string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-                var result = await Select.RetrieveCartItems(userid);
-
-                foreach (var item in result)
-                {
-                    AppState.CartItemCount++;
-                }
-
-                AppState.CustomerAuthorized = true;
-                AppState.Authorized = false;
-                NavigationManager.NavigateTo("/", forceLoad: true);
+                Snackbar.Clear();
+                Snackbar.Add("Login failed. Please check your credentials.", Severity.Error);
+                if (isMobile) Vibration.Default.Vibrate();
             }
-            Snackbar.Clear();
-            Snackbar.Add("Welcome " + Username, Severity.Success);
         }
-        else
+        catch (SqlException ex)
         {
             Snackbar.Clear();
-            Snackbar.Add("Login failed. Please check your credentials.", Severity.Error);
-            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            LoggingIn = false;
         }
     }
 

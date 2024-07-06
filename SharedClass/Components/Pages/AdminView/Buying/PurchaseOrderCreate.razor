@@ -321,11 +321,12 @@
     DropDown DropDownItem = new DropDown();
     SingleDropDown DropDownVendor = new SingleDropDown();
 
+    List<PO_Items> Items = new List<PO_Items>();
+
     List<int> IsDelete = new List<int>();
     List<int> quantity = new List<int>();
     List<string> UOMName = new List<string>();
     List<string> ItemName = new List<string>();
-    List<PO_Items> Items = new List<PO_Items>();
 
     protected override async void OnInitialized()
     {
@@ -749,6 +750,7 @@
             }
         }
     }
+
     public void getUOM(List<PO_Items> Items)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -763,6 +765,7 @@
 
         }
     }
+
     public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
     {
         bool result = DropDownUOM.FilterOptions(e, rowIndex);
