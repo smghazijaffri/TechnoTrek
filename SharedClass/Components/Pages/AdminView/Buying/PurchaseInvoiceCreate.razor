@@ -66,9 +66,7 @@
         }
         @if (Unpaid || IsPaid || Overdue && !IsCancelled)
         {
-            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
-                <i class="bi bi-file-earmark-arrow-down"></i>
-            </button>
+            <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
             </button>

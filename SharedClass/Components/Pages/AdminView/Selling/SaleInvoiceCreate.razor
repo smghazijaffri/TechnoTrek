@@ -62,9 +62,7 @@
         }
         @if (Paid || Overdue && !IsCancelled)
         {
-            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
-                <i class="bi bi-file-earmark-arrow-down"></i>
-            </button>
+            <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
             </button>
@@ -303,6 +301,7 @@
                 customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleInvoice si on si.CustomerID = si.CustomerID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
                 UOMName = db.Query<string>("select UOMName from SI_Item pr inner join UOM u on pr.UOM = u.UOMID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                 quantity = db.Query<int>("select StockQuantity from UOM Inner Join SI_Item on UOM = UOMID  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                getUOM(Items);
                 if (salesinvoice == null || Items.Count == 0)
                     NavigationManager.NavigateTo("/saleinvoice/");
 
@@ -355,6 +354,9 @@
                 Items = db.Query<SI_Item>("select Quantity ,* from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                 ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode  where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join GoodIssue so on so.CustomerID = c.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                quantity = db.Query<int>("select StockQuantity from UOM Inner Join GI_Items on UOM = UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                UOMName = db.Query<string>("select UOMName from GI_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                getUOM(Items);
                 salesinvoice.RefrenceDocument = GoodsIssueID;
                 await _protectedLocalStore.SetLocalAsync("GoodsIssueID", "");
             }
@@ -362,8 +364,11 @@
             {
                 salesinvoice.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                 Items = db.Query<SI_Item>("select Quantity ,* from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                getUOM(Items);
                 salesinvoice.RefrenceDocument = SaleOrderID;
                 await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
             }
@@ -499,6 +504,21 @@
         catch (Exception ex)
         {
             return ex.Message;
+        }
+    }
+
+    public void getUOM(List<SI_Item> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
+
         }
     }
 
@@ -657,6 +677,7 @@
                 }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
+                quantity.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
             }
         }
