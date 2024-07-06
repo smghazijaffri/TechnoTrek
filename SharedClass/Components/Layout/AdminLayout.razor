@@ -16,10 +16,12 @@
 {
     <MudLayout>
         <div style="display:flex;">
-            <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
+            <MudAppBar Elevation="0" Class="bg-transparent d-flex justify-content-between" Style="color:black; backdrop-filter: blur(8px);">
                 <MudIconButton Icon="@(open ? Icons.Material.TwoTone.Close : Icons.Material.TwoTone.Menu)"
                                Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
                 <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+                <div style="flex-grow: 1;"></div>
+                <MudChip Variant="Variant.Text" Color="Color.Info">@AppState.Username</MudChip>
             </MudAppBar>
             <MudDrawer @bind-Open="@open" Breakpoint="@Breakpoint.Lg" Elevation="1" Variant="@DrawerVariant.Responsive"
                        PreserveOpenState="false"
@@ -81,7 +83,6 @@
 @code {
     bool open = false;
     bool isLoading = false;
-    bool isAuthorized { get; set; }
 
     protected override void OnInitialized()
     {
@@ -98,7 +99,6 @@
                 string User = AppState.Username;
                 string Role = AppState.Role;
 
-                isAuthorized = AppState.Authorized;
                 if (AppState.Authorized)
                 {
                     isLoading = true;
@@ -121,7 +121,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 
