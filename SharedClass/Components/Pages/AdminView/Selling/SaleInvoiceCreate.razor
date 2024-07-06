@@ -309,6 +309,8 @@
                 header = salesinvoice.SalesInvoiceName;
                 if (salesinvoice.Status == SaleStatus.Draft)
                 {
+                    if (salesinvoice.Status == "Paid") IsPaid = true;
+                    else if (salesinvoice.Status == "Partially Paid") isPartiallyPaid = true;
                     IsDraft = true;
                     IsSaving = false;
                 }
@@ -455,7 +457,7 @@
                 {
                     salesinvoice.Status = PurchaseStatuses.Overdue;
                 }
-                else if (Paid || Overdue)
+                else if (IsPaid || Overdue)
                 {
                     salesinvoice.Status = PurchaseStatuses.Cancelled;
                 }
@@ -614,41 +616,27 @@
         {
             IsDraft = false;
             IsSaving = false;
-        }
-        else if (isPartiallyPaid)
-        {
-            salesinvoice.IsPartiallyPaid = true; ;
-            Paid = false;
-            IsPaid = false;
-            IsSaving = false;
-            IsDraft = false;
-            PartiallyPaid = true;
-        }
-        else if (IsPaid)
-        {
-            salesinvoice.IsPaid = true;
-            Overdue = false;
-            Paid = true;
-            PartiallyPaid = false;
-            IsSaving = false;
-            IsDraft = false;
-        }
-        else if (Overdue)
-        {
-            if (IsPaid)
+            if (salesinvoice.Status == PurchaseStatuses.Paid)
             {
-                Overdue = false;
-                Paid = true;
-                salesinvoice.IsPaid = true;
-                isPartiallyPaid = false;
-                PartiallyPaid = false;
+                IsPaid = true;
             }
-            else { Overdue = true; }
+            else if (salesinvoice.Status == PurchaseStatuses.PartiallyPaid)
+            {
+                isPartiallyPaid = true;
+            }
         }
         else if (IsSaving)
         {
             IsDraft = true;
             IsSaving = false;
+        }
+        else if (IsCancelled)
+        {
+            IsDraft = false;
+            IsSaving = false;
+            IsPaid = false;
+            Paid = false;
+            isPartiallyPaid = false;
         }
         StateHasChanged();
     }
@@ -690,6 +678,10 @@
             IsSaving = true;
             IsDraft = false;
             Paid = false;
+            IsPaid = false;
+            salesinvoice.IsPartiallyPaid = false;
+            salesinvoice.IsPaid = false;
+            isPartiallyPaid = false;
             GetSubmitButtonText();
             StateHasChanged();
         }
@@ -846,6 +838,7 @@
             cancelall.ID = salesinvoice.SalesInvoiceID;
             cancelall.type = "Sale Invoice";
             crud.CRD(cancelall, "CancelAll");
+            IsCancelled = true;
             ToggleApproval();
         }
         catch (Exception ex)
