@@ -141,8 +141,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
@@ -356,7 +355,7 @@
                 {
                     AddRow();
                 }
-                DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer").ToList();
+                DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer where CustomerType = 'Bulk'").ToList();
                 DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
             }
             StateHasChanged();
@@ -425,24 +424,38 @@
                 {
                     issue.Status = SaleStatus.Cancelled;
                 }
-
-                issue.GoodsIssueID = crud.CRD(issue, "CreateGoodIssue");
-                GIItems.GoodsIssueID = issue.GoodsIssueID;
-                crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
-
-                foreach (var GI in Items)
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
                 {
-                    GI.GoodsIssueID = issue.GoodsIssueID;
-                    DisplayPO = false;
-                    crud.CRD(GI, "CreateGI_Items");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(issue);
+                parameters.Add("@GIItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteGIItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateGoodIssue", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    GIItems.RowID = del;
-                    GIItems.GoodsIssueID = issue.GoodsIssueID;
-                    crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+                    return output.ErrorMessage;
                 }
+                issue.GoodsIssueID = output.Output;
+                // issue.GoodsIssueID = crud.CRD(issue, "CreateGoodIssue");
+                // GIItems.GoodsIssueID = issue.GoodsIssueID;
+                // crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+
+                // foreach (var GI in Items)
+                // {
+                //     GI.GoodsIssueID = issue.GoodsIssueID;
+                //     DisplayPO = false;
+                //     crud.CRD(GI, "CreateGI_Items");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     GIItems.RowID = del;
+                //     GIItems.GoodsIssueID = issue.GoodsIssueID;
+                //     crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+                // }
 
                 IsDelete.Clear();
                 ToggleApproval();
