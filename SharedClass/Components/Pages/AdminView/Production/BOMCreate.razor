@@ -108,8 +108,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
 
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
@@ -329,28 +328,43 @@
                     header = bom.ItemName;
                 }
 
-                bom.BOMID = crud.CRD(bom, "CreateBOM");
-
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    foreach (int del in IsDelete)
-                    {
-                        if (PO.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
-                    }
-                    PO.BOMID = bom.BOMID;
-                    DisplayPO = false;
-                    crud.CRD(PO, "BOMItem");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(bom);
+                parameters.Add("@BOMItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteBOM_Items", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateBOM", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    BOMItem.RowID = del;
-                    BOMItem.BOMID = bom.BOMID;
-                    crud.CRD(BOMItem, "BOMItem", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                bom.BOMID = output.Output;
+                // bom.BOMID = crud.CRD(bom, "CreateBOM");
+
+                // foreach (var PO in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (PO.RowID == del)
+                //         {
+                //             IsDelete.Remove(del);
+                //         }
+                //     }
+                //     PO.BOMID = bom.BOMID;
+                //     DisplayPO = false;
+                //     crud.CRD(PO, "BOMItem");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     BOMItem.RowID = del;
+                //     BOMItem.BOMID = bom.BOMID;
+                //     crud.CRD(BOMItem, "BOMItem", System.Data.CommandType.StoredProcedure, true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (BOMID == null)
