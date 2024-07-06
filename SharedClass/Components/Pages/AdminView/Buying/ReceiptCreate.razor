@@ -145,7 +145,6 @@
                     var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-
                     item.Amount = (item.Rate * item.AcceptedQuantity);
                     <tr>
                         <td style="vertical-align: middle;">
@@ -285,13 +284,14 @@
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted; } }
 
+    DropDown DropDownUOM = new DropDown();
     DropDown DropDownItem = new DropDown();
     SingleDropDown DropDownVendor = new SingleDropDown();
 
+    List<GR_Items> Items = new List<GR_Items>();
+
     List<int> IsDelete = new List<int>();
     List<string> ItemName = new List<string>();
-    List<GR_Items> Items = new List<GR_Items>();
-    DropDown DropDownUOM = new DropDown();
     List<string> UOMName = new List<string>();
 
     protected override async void OnInitialized()
@@ -437,27 +437,6 @@
                 }
                 purchase.GoodReceiptID = outputClass.Output;
 
-                // foreach (var PO in Items)
-                // {
-                //     foreach (int del in IsDelete)
-                //     {
-                //         if (PO.RowID == del)
-                //         {
-                //             IsDelete.Remove(del);
-                //         }
-                //     }
-                //     PO.GoodReceiptID = purchase.GoodReceiptID;
-                //     DisplayPO = false;
-                //     crud.CRD(PO, "GoodReceiptItems");
-                // }
-
-                // foreach (var del in IsDelete)
-                // {
-                //     ReItem.RowID = del;
-                //     ReItem.GoodReceiptID = purchase.GoodReceiptID;
-                //     crud.CRD(ReItem, "GoodReceiptItems", IsDelete: true);
-                // }
-
                 IsDelete.Clear();
                 ToggleApproval();
 
@@ -493,6 +472,7 @@
             return ex.Message;
         }
     }
+
     public void getUOM(List<GR_Items> Items)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -507,6 +487,7 @@
 
         }
     }
+
     public string ValidateGR()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -635,7 +616,9 @@
                 }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
+                UOMName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
+                DropDownUOM.ListItems.RemoveAt(i);
             }
         }
     }
@@ -702,7 +685,33 @@
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+                HandleFormInput();
+            }
+        }
+    }
 
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    public void SelectUOMOption(Option options, int rowIndex)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                Items[rowIndex].UOM = options.Value;
                 HandleFormInput();
             }
         }
@@ -767,33 +776,6 @@
             NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }
-    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
-    {
-        bool result = DropDownUOM.FilterOptions(e, rowIndex);
-        if (result == true)
-        {
-            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
-            {
-                Items[rowIndex].UOM = "";
-            }
-        }
-        StateHasChanged();
-    }
-
-    public void SelectUOMOption(Option options, int rowIndex)
-    {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        {
-            bool result = DropDownUOM.SelectOption(options, rowIndex);
-            if (result == false)
-            {
-                UOMName[rowIndex] = options.Text;
-                Items[rowIndex].UOM = options.Value;
-                HandleFormInput();
-            }
-        }
-    }
-
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);

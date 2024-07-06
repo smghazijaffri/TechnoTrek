@@ -120,7 +120,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreatePurchaseInvoice", IsDelete: true, outputMessage: true);
+                output = crud.CRD2(item, "CreatePurchaseInvoice", IsDelete: true, outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);

@@ -160,11 +160,11 @@
                     <th class="col col-auto" style="min-width:150px">
                         Item
                     </th>
+                    <th class="col col-auto text-center" style="width: 160px;">
+                        UOM
+                    </th>
                     <th class="col col-auto" style="width: 160px;">
                         Accepted Quantity
-                    </th>  
-                    <th class="col col-auto" style="width: 160px;">
-                        UOM
                     </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         Rate
@@ -233,8 +233,6 @@
                                 </ul>
                             </div>
                         </td>
-
-
                         <td><input type="text" inputmode="numeric" id="quantity" class="form-control" @bind="item.AcceptedQuantity" readonly="@ReadonlyHidden" /></td>
                         <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" /></td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
@@ -324,13 +322,14 @@
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue || UnpaidtoPaid; } }
 
+    DropDown DropDownUOM = new DropDown();
     DropDown DropDownItem = new DropDown();
     SingleDropDown DropDownVendor = new SingleDropDown();
 
+    List<PI_Items> Items = new List<PI_Items>();
+
     List<int> IsDelete = new List<int>();
     List<string> ItemName = new List<string>();
-    List<PI_Items> Items = new List<PI_Items>();
-    DropDown DropDownUOM = new DropDown();
     List<string> UOMName = new List<string>();
 
     protected override async void OnInitialized()
@@ -406,8 +405,10 @@
                 {
                     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
                     Items = db.Query<PI_Items>("select Quantity as AcceptedQuantity ,* from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
-                    ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PO_Items pr inner join UOM u on pr.UOM = u.UOMID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
+                    getUOM(Items);
                     purchase.RefrenceDocument = PurchaseOrderID;
                     purchase.DueDate = DateTime.Now;
                     purchase.VendorInvoiceDate = DateTime.Now;
@@ -419,6 +420,8 @@
                     Items = db.Query<PI_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
                     ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID });
+                    UOMName = db.Query<string>("select UOMName from GR_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
+                    getUOM(Items);
                     purchase.RefrenceDocument = GoodReceiptID;
                     purchase.DueDate = DateTime.Now;
                     purchase.VendorInvoiceDate = DateTime.Now;
@@ -451,11 +454,6 @@
         get { return Items.Sum(item => item.AcceptedQuantity); }
     }
 
-    public int SumTotal
-    {
-        get { return Items.Sum(item => item.Amount); }
-    }
-
     public string createPurchase()
     {
         try
@@ -483,6 +481,8 @@
                 }
 
                 purchase.PurchaseInvoiceName = titleBuilder.ToString();
+                purchase.TotalQuantity = SumQuantity;
+                purchase.TotalAmount = SumAmounts;
                 header = titleBuilder.ToString();
 
                 if (IsSaving)
@@ -534,25 +534,6 @@
                     return outputClass.ErrorMessage;
                 }
                 purchase.PurchaseInvoiceID = outputClass.Output;
-                // purchase.PurchaseInvoiceID = crud.CRD(purchase, "CreatePurchaseInvoice");
-
-                // foreach (var PR in Items)
-                // {
-                //     if (IsDelete.Any(Del => Del == PR.RowID))
-                //     {
-                //         IsDelete.Remove(PR.RowID);
-                //     }
-                //     PR.PurchaseInvoiceID = purchase.PurchaseInvoiceID;
-                //     DisplayPR = false;
-                //     crud.CRD(PR, "PIItems");
-                // }
-
-                // foreach (var del in IsDelete)
-                // {
-                //     invoiceitem.RowID = del;
-                //     invoiceitem.PurchaseInvoiceID = purchase.PurchaseInvoiceID;
-                //     crud.CRD(invoiceitem, "PIItems", System.Data.CommandType.StoredProcedure, true);
-                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (PurchaseInvoiceID == null)
@@ -737,7 +718,9 @@
                 }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
+                UOMName.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
+                DropDownUOM.ListItems.RemoveAt(i);
             }
         }
     }
@@ -758,6 +741,7 @@
             IsSaving = false;
         }
     }
+
     public void getUOM(List<PI_Items> Items)
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -766,12 +750,13 @@
             foreach (var item in Items)
             {
                 DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
                 count++;
             }
 
         }
     }
+
     public void FilterVendorOptions(ChangeEventArgs e)
     {
         bool result = DropDownVendor.FilterOptions(e);
@@ -823,7 +808,6 @@
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
-                // Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
                 HandleFormInput();
             }
         }
@@ -854,11 +838,11 @@
             }
         }
     }
+
     private async Task OpenDialog()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-
             string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = purchase.PurchaseInvoiceID });
 
             if (GetStatus == PurchaseStatuses.Cancelled)
@@ -928,10 +912,12 @@
     {
         NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
+
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
     }
+
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
