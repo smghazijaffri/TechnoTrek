@@ -14,7 +14,7 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                           Href="/purchaseorder/new-purchase-order" Size="Size.Large">Create</MudButton>
+                           OnClick="Create" Size="Size.Large">Create</MudButton>
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
@@ -86,6 +86,11 @@
         if ($"{element.PurchaseOrderID} {element.TotalAmount} {element.DocumentDate}".Contains(searchString)) return true;
 
         return false;
+    }
+
+    private void Create()
+    {
+        NavigationManager.NavigateTo($"/purchaseorder/new-purchase-order", forceLoad: true);
     }
 
     private void DeleteSelectedItems()

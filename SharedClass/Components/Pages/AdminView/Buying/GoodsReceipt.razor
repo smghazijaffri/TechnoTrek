@@ -14,7 +14,7 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                           Href="/goodsreceipt/new-goods-receipt" Size="Size.Large">Create</MudButton>
+                           OnClick="Create" Size="Size.Large">Create</MudButton>
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
@@ -87,6 +87,11 @@
         if ($"{element.GoodReceiptID} {element.TotalAmount} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
+    }
+
+    private void Create()
+    {
+        NavigationManager.NavigateTo($"/goodsreceipt/new-goods-receipt", forceLoad: true);
     }
 
     private void DeleteSelectedItems()

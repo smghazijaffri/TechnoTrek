@@ -14,7 +14,7 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-end">
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                           Style="text-transform:none; margin-bottom: 20px;" Href="/vendors/new-vendor" Size="Size.Large">
+                           Style="text-transform:none; margin-bottom: 20px;" OnClick="Create" Size="Size.Large">
                     Create
                 </MudButton>
                 @if (selectedItems.Any())
@@ -95,6 +95,11 @@
         if ($"{element.CreationDate} {element.VendorID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
+    }
+
+    private void Create()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
     }
 
     private void DeleteSelectedItems()
