@@ -208,6 +208,22 @@
         public string? AlternateID { get; set; }
         public string? ItemID { get; set; }
     }
+    public class Stock_Entry : BaseRecord
+    { 
+        public string? StockID { get; set; }
+        public string? StockEntryType { get; set; }
+        public string? Status { get; set; }
+
+    }
+    public class StockEntry_Items: BaseRecord
+    {
+        public string? StockID { get; set; }
+        public string? ItemID { get; set; }
+        public int Quantity { get; set; }
+        public int Rate { get; set; }
+        public int RowID { get; set; }
+        public bool Selected { get; set; }
+    }
 
     public class Stock : BaseRecord
     {
