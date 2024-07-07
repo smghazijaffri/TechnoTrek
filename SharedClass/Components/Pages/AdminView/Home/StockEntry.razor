@@ -3,9 +3,9 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Stock_Entry stock;
 @inject Select select;
 @inject Connection con;
+@inject Stock_Entry stock;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -28,10 +28,6 @@
             @if (IsSubmitted)
             {
                 <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
-            }
-            @if (IsCancelled)
-            {
-                <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
             }
         </h3>
     </div>
@@ -123,12 +119,11 @@
                             </div>
                         </td>
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                        <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@ReadonlyHidden"  /></td>
+                        <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                     </tr>
                 }
             </tbody>
         </table>
-
     </form>
     <div class="col-12 d-flex justify-content-start p-0">
         <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
@@ -172,30 +167,18 @@
     bool IsSaving = true;
     bool DisplayPR = true;
     bool isMobile = false;
+    bool Hiderate = false;
     bool IsSubmitted = false;
     bool IsCancelled = false;
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool ReadonlyHidden { get { return IsCancelled || IsSubmitted; } }
-    bool Hiderate = false;
 
     DropDown DropDownItem = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    List<StockEntry_Items> Items = new List<StockEntry_Items>();
     List<string> ItemName = new List<string>();
-    private string SelectedEntryType
-    {
-        get => stock.StockEntryType;
-        set
-        {
-            if (stock.StockEntryType != value)
-            {
-                stock.StockEntryType = value;
+    List<StockEntry_Items> Items = new List<StockEntry_Items>();
 
-                changeEntryType();
-            }
-        }
-    }
     protected override async void OnInitialized()
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
@@ -212,8 +195,7 @@
                 stock = db.QueryFirstOrDefault<Stock_Entry>("select * from Stock_Entry where StockID = @StockID", new { StockID = EntryID });
                 Items = db.Query<StockEntry_Items>("select *,Item as ItemID ,BasicRate as Rate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
                 ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntry_Items SE INNER JOIN Items I1 ON SE.Item = I1.ItemCode WHERE SE.StockID = @StockID", new { StockID = EntryID }).ToList();
-                if (stock == null || Items.Count == 0)
-                    NavigationManager.NavigateTo("/stock-entry/");
+                if (stock == null || Items.Count == 0) NavigationManager.NavigateTo("/stock-entry/");
 
                 DisplayPR = false;
                 header = stock.StockEntryType;
@@ -283,8 +265,8 @@
                 var parameters = new DynamicParameters(stock);
                 parameters.Add("@StockEntryItem", ItemTable.AsTableValuedParameter("Purhcase"));
                 parameters.Add("@DeleteSTItems", Delete.AsTableValuedParameter("DeleteType"));
-                
-                
+
+
                 OutputClass output = crud.CRD3(parameters, "Create_StockEntry", outputMessage: true, errorMessage: true);
 
                 if (output.ErrorMessage != null)
@@ -323,6 +305,20 @@
         catch (Exception ex)
         {
             return ex.Message;
+        }
+    }
+
+    private string SelectedEntryType
+    {
+        get => stock.StockEntryType;
+        set
+        {
+            if (stock.StockEntryType != value)
+            {
+                stock.StockEntryType = value;
+
+                changeEntryType();
+            }
         }
     }
 
@@ -510,6 +506,7 @@
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+
     public void changeEntryType()
     {
         if (stock.StockEntryType == "Goods Issue")
@@ -523,6 +520,7 @@
         StateHasChanged();
 
     }
+
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);

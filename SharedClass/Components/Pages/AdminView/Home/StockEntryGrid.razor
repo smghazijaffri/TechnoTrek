@@ -1,9 +1,9 @@
-﻿@page "/uom"
+﻿@page "/stock-entry"
 
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Connection con;
-@inject UnitofMeasure uom;
+@inject Stock_Entry stock;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 
@@ -19,8 +19,8 @@
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
-                               Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
-                               Size="Size.Large">Delete</MudButton>
+                               Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error"
+                               OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
                 }
             </div>
         </div>
@@ -28,26 +28,26 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="UnitofMeasure" Items="@Elements" MultiSelection="true"
-                      @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<UnitofMeasure,bool>(FilterFunc1)" Elevation="4">
+            <MudTable @ref="_table" T="Stock_Entry" Items="@Elements" MultiSelection="true"
+                      @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
+                      Virtualize="true" Filter="new Func<Stock_Entry,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Unit of Measures</MudText>
+                    <MudText Typo="Typo.h6">Stock Entry</MudText>
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>UOM ID</MudTh>
-                    <MudTh>UOM Name</MudTh>
+                    <MudTh>Stock Entry ID</MudTh>
+                    <MudTh>Stock Entry Type</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="UOM ID">@context.UOMID</MudTd>
-                    <MudTd DataLabel="UOM Name">@context.UOMName</MudTd>
+                    <MudTd DataLabel="Stock Entry ID">@context.StockID</MudTd>
+                    <MudTd DataLabel="Stock Entry Type">@context.StockEntryType</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
@@ -61,37 +61,37 @@
 
 @code {
     private string searchString1 = "";
-    private MudTable<UnitofMeasure> _table;
-    private IEnumerable<UnitofMeasure> Elements = new List<UnitofMeasure>();
-    private HashSet<UnitofMeasure> selectedItems = new HashSet<UnitofMeasure>();
+    private MudTable<Stock_Entry> _table;
+    private IEnumerable<Stock_Entry> Elements = new List<Stock_Entry>();
+    private HashSet<Stock_Entry> selectedItems = new HashSet<Stock_Entry>();
 
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<UnitofMeasure>("SELECT * FROM UOM");
+        Elements = await db.QueryAsync<Stock_Entry>("SELECT * FROM Stock_Entry");
     }
 
-    void OnRowClick(TableRowClickEventArgs<UnitofMeasure> args)
+    void OnRowClick(TableRowClickEventArgs<Stock_Entry> args)
     {
-        uom.UOMID = args.Item.UOMID;
-        NavigationManager.NavigateTo($"/uom/{uom.UOMID}");
+        stock.StockID = args.Item.StockID;
+        NavigationManager.NavigateTo($"/stock-entry/{stock.StockID}");
     }
 
-    private bool FilterFunc1(UnitofMeasure element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(Stock_Entry element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(UnitofMeasure element, string searchString)
+    private bool FilterFunc(Stock_Entry element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.UOMName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.StockEntryType.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.CreationDate} {element.UOMID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate} {element.StockID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
 
     private void Create()
     {
-        NavigationManager.NavigateTo($"/uom/new-uom", forceLoad: true);
+        NavigationManager.NavigateTo($"/stock-entry/new-stock-entry", forceLoad: true);
     }
 
     private void DeleteSelectedItems()
@@ -102,19 +102,12 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
-        if (itemsToDelete.Count == 0)
-        {
-            Snackbar.Add("No uom with status 'Disabled' to delete", Severity.Info);
-            return;
-        }
-
         try
         {
-            foreach (var item in itemsToDelete)
+            foreach (var item in selectedItems)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateUOM", IsDelete: true, outputMessage: true, errorMessage: true);
+                output = crud.CRD2(item, "Create_StockEntry", IsDelete: true, outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);
@@ -122,8 +115,8 @@
                 }
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.UOMID == e.UOMID)).ToList();
-            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+            Elements = Elements.Where(e => !selectedItems.Any(d => d.StockID == e.StockID)).ToList();
+            Snackbar.Add($"{selectedItems.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)
         {
