@@ -7,12 +7,11 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
-<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+@* <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
     <img src="_content/SharedClass/Images/dell1.jpg" style="width: 100%; height: 100%; object-fit: cover;" />
-</div>
-<div style="position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; margin-top: 24vh;">
+</div> *@
+@* <div style="position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; margin-top: 24vh;">
     <EditForm Model="@login" style="text-align: center; width: 300px;">
         <div class="mb-3">
             <InputText id="usernameInput" placeholder="Username" class="form-control text-danger" @bind-Value="Username" style="backdrop-filter: blur(5px);" />
@@ -22,7 +21,7 @@
         </div>
         @if (!LoggingIn)
         {
-            <button type="submit" class="btn btn-danger rounded-lg" @onclick="Pagelogin">Login</button>
+            <button type="submit" class="btn btn-danger rounded-lg me-4" @onclick="Pagelogin">Login</button>
         }
         else if (LoggingIn)
         {
@@ -33,6 +32,35 @@
         }
         <button type="submit" class="btn btn-danger rounded-lg" @onclick="SignUp">SignUp</button>
     </EditForm>
+</div> *@
+<div class="d-flex justify-content-center bg-danger bg-gradient align-middle" style="height: 100vh">
+    <div class="d-flex justify-content-center ma-16 rounded-xl shadow-lg border-2 w-auto mud-border-secondary pa-4 h-50 align-middle" style="backdrop-filter: blur(5px);">
+        <EditForm Model="@login" class="text-center ma-10 align-middle" style="width: 50vw">
+            <div class="mb-10">
+                <h4 style="font-style:italic; color:white;">WELCOME</h4>
+            </div>
+            <div class="mb-10">
+                <InputText id="usernameInput" placeholder="Username" class="form-control bg-transparent text-danger" @bind-Value="Username" style="backdrop-filter: blur(5px);" />
+            </div>
+            <div class="mb-10">
+                <InputText id="passwordInput" placeholder="Password" type="password" class="form-control bg-transparent text-danger" @bind-Value="Password" style="backdrop-filter: blur(5px);" />
+            </div>
+            <div class="mb-16">
+                @if (!LoggingIn)
+                {
+                    <button type="submit" class="btn btn-danger rounded-lg me-4 shadow-lg btn-lg" @onclick="Pagelogin">Login</button>
+                }
+                else if (LoggingIn)
+                {
+                    <button class="btn btn-danger shadow-lg btn-lg" type="button" disabled>
+                        <span class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
+                        <span role="status">Logging in...</span>
+                    </button>
+                }
+                <button type="submit" class="btn btn-danger rounded-lg shadow-lg btn-lg" @onclick="SignUp">SignUp</button>
+            </div>
+        </EditForm>
+    </div>
 </div>
 
 @code {
