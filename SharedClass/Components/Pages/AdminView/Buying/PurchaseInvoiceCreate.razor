@@ -402,7 +402,7 @@
                 else if (!string.IsNullOrWhiteSpace(PurchaseOrderID))
                 {
                     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from PurchaseOrder where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
-                    Items = db.Query<PI_Items>("select Quantity as AcceptedQuantity ,* from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
+                    Items = db.Query<PI_Items>("select Quantity as AcceptedQuantity,Item,UOM,Rate,Amount,RequiredBy from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from PO_Items inner join Items on Item = ItemCode where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                     UOMName = db.Query<string>("select UOMName from PO_Items pr inner join UOM u on pr.UOM = u.UOMID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PurchaseOrderID });
@@ -415,7 +415,7 @@
                 else if (!string.IsNullOrWhiteSpace(GoodReceiptID))
                 {
                     purchase = db.QueryFirstOrDefault<PurchaseInvoice>("Select * from GoodReceipt where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID });
-                    Items = db.Query<PI_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
+                    Items = db.Query<PI_Items>("select Item,AcceptedQuantity,Rate,Amount,UOM from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
                     ItemName = db.Query<string>("select ItemName from GR_Items inner join Items on Item = ItemCode  where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join GoodReceipt gr on gr.VendorID = v.VendorID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID });
                     UOMName = db.Query<string>("select UOMName from GR_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = GoodReceiptID }).ToList();

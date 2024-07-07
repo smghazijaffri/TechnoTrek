@@ -399,7 +399,7 @@
                 }
                 else if (!string.IsNullOrWhiteSpace(PRNumber))
                 {
-                    Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    Items = db.Query<PO_Items>("Select Item,Quantity,UOM,RequiredBy from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join PR_Items on UOM = UOMID  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
@@ -410,7 +410,7 @@
                 else if (!string.IsNullOrWhiteSpace(QuotationID))
                 {
                     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
-                    Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    Items = db.Query<PO_Items>("select Item,Quantity,UOM,Rate,Amount from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join QU_Items on UOM = UOMID  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     UOMName = db.Query<string>("select UOMName from RFQ_Items pr inner join UOM u on pr.UOM = u.UOMID where RFQNumber = @RFQNumber", new { RFQNumber = QuotationID }).ToList();

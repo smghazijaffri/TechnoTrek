@@ -343,7 +343,7 @@
                 else if (!string.IsNullOrWhiteSpace(RFQNumber))
                 {
                     purchase.VendorID = VendorID;
-                    Items = db.Query<QU_Items>("select * from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                    Items = db.Query<QU_Items>("select Item,UOM,RequiredBy,Quantity from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from RFQ_Items inner join Items on Item = ItemCode where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select * from Vendor where VendorID  = @VendorID", new { VendorID = VendorID });
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join RFQ_Items on UOM = UOMID  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();

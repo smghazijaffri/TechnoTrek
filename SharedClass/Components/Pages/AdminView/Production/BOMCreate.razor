@@ -501,19 +501,22 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            bool result = DropDownItem.SelectOption(options, rowIndex);
-            if (result == false)
+            if (!Items.Any(option => option.Item == options.Value) && ItemName[rowIndex] != options.Text )
             {
-                if (Items[rowIndex].Item != options.Value)
-                {
-                    UOMName[rowIndex] = "";
-                }
+                bool result = DropDownItem.SelectOption(options, rowIndex);
+                if (result == false)
+                {   
+                    if (Items[rowIndex].Item != options.Value)
+                    {
+                        UOMName[rowIndex] = "";
+                    }
 
-                ItemName[rowIndex] = options.Text;
-                Items[rowIndex].Item = options.Value;
-                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
-                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
-                HandleFormInput();
+                    ItemName[rowIndex] = options.Text;
+                    Items[rowIndex].Item = options.Value;
+                    Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                    DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+                    HandleFormInput();
+                }
             }
         }
     }
