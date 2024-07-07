@@ -7,12 +7,12 @@
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
 @inject PurchaseRequisition purchaserequisition;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-between">
+                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/buying">Buying</MudChip>
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
                            Href="/purchaserequisition/new-purchase-request" Size="Size.Large">Create</MudButton>
                 @if (selectedItems.Any())
@@ -27,7 +27,7 @@
     <div class="row">
         <div class="col-md-12">
             <MudTable @ref="_table" T="PurchaseRequisition" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<PurchaseRequisition,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<PurchaseRequisition,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Purchase Requisitions</MudText>
@@ -60,7 +60,6 @@
     public string? SearchString { get; set; }
 
     private string searchString1 = "";
-    private bool _selectOnRowClick = true;
     private MudTable<PurchaseRequisition> _table;
     private IEnumerable<PurchaseRequisition> Elements = new List<PurchaseRequisition>();
     private HashSet<PurchaseRequisition> selectedItems = new HashSet<PurchaseRequisition>();

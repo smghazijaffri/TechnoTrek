@@ -254,6 +254,17 @@
         if (DeviceType == "Mobile") isMobile = true;
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
+            var GoodsIssueID = string.Empty;
+            var ProductionOrderID = string.Empty;
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodsIssueID"))
+            {
+                GoodsIssueID = await _protectedLocalStore.GetLocalAsync<string>("GoodsIssueID");
+            }
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "ProductionOrderID"))
+            {
+                ProductionOrderID = await _protectedLocalStore.GetLocalAsync<string>("ProductionOrderID");
+            }
+
             purchase.DocumentDate = DateTime.Now;
             if (PRNumber != null)
             {
@@ -295,6 +306,30 @@
                     IsReceived = true;
                     IsSaving = false;
                 }
+            }
+            else if (!string.IsNullOrWhiteSpace(GoodsIssueID))
+            {
+                Items = db.Query<PR_Items>("select * from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                UOMName = db.Query<string>("select UOMName from GI_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                getUOM(Items);
+                foreach (var item in Items)
+                {
+                    item.RequiredBy = DateTime.Today;
+                }
+                await _protectedLocalStore.SetLocalAsync("GoodsIssueID", "");
+            }
+            else if (!string.IsNullOrWhiteSpace(ProductionOrderID))
+            {
+                Items = db.Query<PR_Items>("select * from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                UOMName = db.Query<string>("select UOMName from PRO_Items pr inner join UOM u on pr.UOMID = u.UOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                getUOM(Items);
+                foreach (var item in Items)
+                {
+                    item.RequiredBy = DateTime.Today;
+                }
+                await _protectedLocalStore.SetLocalAsync("ProductionOrderID", "");
             }
             else
             {
