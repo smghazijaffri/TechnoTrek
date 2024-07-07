@@ -56,9 +56,9 @@
         public string? CustomerID { get; set; }
         public string? Name { get; set; }
         public string? Address { get; set; }
-       public string? Contact { get; set; }
-       public string? CustomerType { get; set; }
-        
+        public string? Contact { get; set; }
+        public string? CustomerType { get; set; }
+
     }
 
     public class GoodsIssue : BaseRecord
@@ -105,5 +105,26 @@
         public string? IsReturn { get; set; }
         public string? DueDate { get; set; }
         public string? DocumentDate { get; set; }
+    }
+
+    public class BulkOrder : BaseRecord
+    {
+        public string? BulkOrderID { get; set; }
+        public string? BulkOrderName { get; set; }
+        public string? CustomerID { get; set; }
+        public string? Status { get; set; }
+        public int TotalAmount { get; set; }
+        public int TotalQuantity { get; set; }
+    }
+
+    public class BO_Items : BaseRecord
+    {
+        public string? BulkOrderID { get; set; }
+        public int RowID { get; set; }
+        public string? Item { get; set; }
+        public int Quantity { get; set; }
+        public string? UOM { get; set; }
+        public int Rate { get; set; }
+        public int Amount { get; set; }
     }
 }

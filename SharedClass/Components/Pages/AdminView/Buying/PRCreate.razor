@@ -254,6 +254,7 @@
         if (DeviceType == "Mobile") isMobile = true;
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
+            var BulkOrderID = string.Empty;
             var GoodsIssueID = string.Empty;
             var ProductionOrderID = string.Empty;
             if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodsIssueID"))
@@ -263,6 +264,10 @@
             if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "ProductionOrderID"))
             {
                 ProductionOrderID = await _protectedLocalStore.GetLocalAsync<string>("ProductionOrderID");
+            }
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BulkOrderID"))
+            {
+                BulkOrderID = await _protectedLocalStore.GetLocalAsync<string>("BulkOrderID");
             }
 
             purchase.DocumentDate = DateTime.Now;
@@ -330,6 +335,18 @@
                     item.RequiredBy = DateTime.Today;
                 }
                 await _protectedLocalStore.SetLocalAsync("ProductionOrderID", "");
+            }
+            else if (!string.IsNullOrWhiteSpace(BulkOrderID))
+            {
+                Items = db.Query<PR_Items>("select * from PRO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOMID = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                getUOM(Items);
+                foreach (var item in Items)
+                {
+                    item.RequiredBy = DateTime.Today;
+                }
+                await _protectedLocalStore.SetLocalAsync("BulkOrderID", "");
             }
             else
             {

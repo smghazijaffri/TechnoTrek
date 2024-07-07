@@ -67,10 +67,7 @@
                 <MudCard>
                     <MudCardHeader Class="d-flex justify-content-between">
                         <MudText Typo="Typo.h6">Inventory</MudText>
-                        @* <button type="submit" title="Download Report" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
-                            <i class="bi bi-file-earmark-arrow-down"></i>
-                        </button> *@
-                        <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Error" aria-label="download" OnClick="DownloadReport" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Error" OnClick="DownloadReport" />
                     </MudCardHeader>
                     <MudCardContent>
                         @if (RealTimeSeries != null && RealTimeXAxisLabels.ToArray() != null)

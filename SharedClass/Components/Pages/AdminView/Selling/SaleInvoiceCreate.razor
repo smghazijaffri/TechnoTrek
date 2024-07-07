@@ -15,14 +15,6 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/buying">Buying</a></li>
-            <li class="breadcrumb-item"><a href="/PurchaseInvoice">Purchase Requisition</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@header</li>
-        </ol>
-    </nav> *@
-
 <div class="row p-3 align-items-center">
     <div class="col-6">
         <h3>
@@ -433,33 +425,33 @@
 
                 if (IsSaving)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Draft;
+                    salesinvoice.Status = SaleStatus.Draft;
                 }
                 else if (IsDraft)
                 {
                     if (IsPaid)
                     {
                         Paid = true;
-                        salesinvoice.Status = PurchaseStatuses.Paid;
+                        salesinvoice.Status = SaleStatus.Paid;
                     }
                     else if (isPartiallyPaid)
                     {
                         PartiallyPaid = true;
-                        salesinvoice.Status = PurchaseStatuses.PartiallyPaid;
+                        salesinvoice.Status = SaleStatus.PartiallyPaid;
                     }
                 }
                 else if (IsPaid)
                 {
                     Paid = true;
-                    salesinvoice.Status = PurchaseStatuses.Paid;
+                    salesinvoice.Status = SaleStatus.Paid;
                 }
                 else if (Overdue)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Overdue;
+                    salesinvoice.Status = SaleStatus.Overdue;
                 }
                 else if (IsPaid || Overdue)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Cancelled;
+                    salesinvoice.Status = SaleStatus.Cancelled;
                 }
                 DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
                 DataTable ItemTable = Select.ItemTable();
@@ -616,11 +608,11 @@
         {
             IsDraft = false;
             IsSaving = false;
-            if (salesinvoice.Status == PurchaseStatuses.Paid)
+            if (salesinvoice.Status == SaleStatus.Paid)
             {
                 IsPaid = true;
             }
-            else if (salesinvoice.Status == PurchaseStatuses.PartiallyPaid)
+            else if (salesinvoice.Status == SaleStatus.PartiallyPaid)
             {
                 isPartiallyPaid = true;
             }
