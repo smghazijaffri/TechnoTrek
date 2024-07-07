@@ -53,6 +53,15 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
+        @if (IsDraft)
+        {
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                </ul>
+            </div>
+        }
         @if (!IsCompleted || !IsClosed)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
@@ -172,6 +181,13 @@
         </div>
     </form>
 </div>
+
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+</script>
 
 @code {
     [Parameter]
@@ -414,6 +430,12 @@
 
 
             if (string.IsNullOrWhiteSpace(production.BOMID)) return $"Please select a BOM";
+            foreach (var PO in Items)
+            {
+                int CheckItem = 0;
+                CheckItem = db.QueryFirstOrDefault<int>("Select Quantity from Stock where ItemID = @ItemID", new { ItemID = PO.Item });
+                if (CheckItem == 0) { return $"Item on Row: {PO.RowID} does not have enough Quantity"; }
+            }
             // if (string.IsNullOrWhiteSpace(BOM.BOMID)) { return "Please select a BOM"; }
 
             // if (!DropDownBOM.Options.Any(option => option.Text == BOM.ItemName)) return "Please Select Valid BOM";
@@ -625,5 +647,28 @@
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+    }
+
+    public void CreatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = production.ProductionOrderID });
+
+            if (GetStatus != SaleStatus.Draft)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Request, Production Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Production Order ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("ProductionOrderID", production.ProductionOrderID);
+            NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
     }
 }
