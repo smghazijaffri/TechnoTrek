@@ -59,6 +59,8 @@ builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseOrderAnalysis>();
+builder.Services.AddScoped<StockEntry_Items>();
+builder.Services.AddScoped<Stock_Entry>();
 builder.Services.AddScoped<SharedClass.Components.Data.Email>();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddMudServices();

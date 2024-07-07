@@ -3,7 +3,7 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Stock stock;
+@inject Stock_Entry stock;
 @inject Select select;
 @inject Connection con;
 @inject ISnackbar Snackbar;
@@ -55,12 +55,12 @@
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6" hidden="@DisplayPR">
             <label class="form-label">Stock Entry ID</label>
-            <input type="text" class="form-control" @bind="stock.EntryID" readonly="@IsSubmitted">
+            <input type="text" class="form-control" @bind="stock.StockID" readonly="@IsSubmitted">
         </div>
         <div class="col-md-6">
             <label class="form-label">Stock Entry Type</label>
-            <select class="form-select" aria-label="Stock Entry Type" @bind="stock.Type" readonly="@IsSubmitted">
-                <option value=""></option>
+            <select class="form-select" aria-label="Stock Entry Type" readonly="@IsSubmitted" @bind="SelectedEntryType">
+                <option value="">Select entry Type</option>
                 <option value="Goods Receipt">Goods Receipt</option>
                 <option value="Goods Issue">Goods Issue</option>
             </select>
@@ -83,7 +83,7 @@
                     <th class="col col-auto" style="width: 70px; min-width: 70px;">
                         Quantity
                     </th>
-                    <th class="col col-auto" style="width: 150px; min-width: 150px;">
+                    <th class="col col-auto" style="width: 150px; min-width: 150px;" hidden="@Hiderate">
                         Basic Rate
                     </th>
                 </tr>
@@ -92,10 +92,9 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
 
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     <tr>
                         <td style="vertical-align: middle;">
                             <div style="display: flex; justify-content: center;">
@@ -124,7 +123,7 @@
                             </div>
                         </td>
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                        <td><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                        <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@ReadonlyHidden"  /></td>
                     </tr>
                 }
             </tbody>
@@ -177,13 +176,26 @@
     bool IsCancelled = false;
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool ReadonlyHidden { get { return IsCancelled || IsSubmitted; } }
+    bool Hiderate = false;
 
     DropDown DropDownItem = new DropDown();
 
     List<int> IsDelete = new List<int>();
-    List<Stock> Items = new List<Stock>();
+    List<StockEntry_Items> Items = new List<StockEntry_Items>();
     List<string> ItemName = new List<string>();
+    private string SelectedEntryType
+    {
+        get => stock.StockEntryType;
+        set
+        {
+            if (stock.StockEntryType != value)
+            {
+                stock.StockEntryType = value;
 
+                changeEntryType();
+            }
+        }
+    }
     protected override async void OnInitialized()
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
@@ -197,14 +209,14 @@
         {
             if (EntryID != null)
             {
-                stock = db.QueryFirstOrDefault<Stock>("select * from StockEntries where EntryID = @EntryID", new { EntryID = EntryID });
-                Items = db.Query<Stock>("Select * from StockEntries where EntryID = @EntryID", new { EntryID = EntryID }).ToList();
-                ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntries SE INNER JOIN Items I1 ON SE.ItemID = I1.ItemCode WHERE SE.EntryID = @EntryID", new { EntryID = EntryID }).ToList();
+                stock = db.QueryFirstOrDefault<Stock_Entry>("select * from Stock_Entry where StockID = @StockID", new { StockID = EntryID });
+                Items = db.Query<StockEntry_Items>("select *,Item as ItemID ,BasicRate as Rate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
+                ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntry_Items SE INNER JOIN Items I1 ON SE.Item = I1.ItemCode WHERE SE.StockID = @StockID", new { StockID = EntryID }).ToList();
                 if (stock == null || Items.Count == 0)
                     NavigationManager.NavigateTo("/stock-entry/");
 
                 DisplayPR = false;
-                header = stock.Type;
+                header = stock.StockEntryType;
                 if (stock.Status == PurchaseStatuses.Submitted)
                 {
                     IsSubmitted = true;
@@ -223,9 +235,9 @@
             }
             else if (!string.IsNullOrWhiteSpace(ItemCode))
             {
-                Items = db.Query<Stock>("Select * from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
+                Items = db.Query<StockEntry_Items>("Select * from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
                 ItemName = db.Query<string>("Select ItemName from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
-                stock.Type = "Goods Receipt";
+                stock.StockEntryType = "Goods Receipt";
                 await _protectedLocalStore.SetLocalAsync("ItemCode", "");
             }
             else
@@ -251,8 +263,8 @@
                 {
                     return validate;
                 }
-
-                header = stock.Type;
+                stock.StockEntryType = SelectedEntryType;
+                header = stock.StockEntryType;
 
                 if (IsSaving)
                 {
@@ -262,9 +274,18 @@
                 {
                     stock.Status = ProductionStatus.Submitted;
                 }
-
-                OutputClass output = new OutputClass();
-                output = crud.CRD2(stock, "Manage_StockEntry", outputMessage: true, errorMessage: true);
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
+                {
+                    ItemTable.Rows.Add(PO.RowID, PO.ItemID, PO.Quantity, null, PO.Rate, null, null);
+                }
+                var parameters = new DynamicParameters(stock);
+                parameters.Add("@StockEntryItem", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSTItems", Delete.AsTableValuedParameter("DeleteType"));
+                
+                
+                OutputClass output = crud.CRD3(parameters, "Create_StockEntry", outputMessage: true, errorMessage: true);
 
                 if (output.ErrorMessage != null)
                 {
@@ -272,14 +293,14 @@
                 }
                 else
                 {
-                    stock.EntryID = output.Output;
+                    stock.StockID = output.Output;
                 }
 
                 ToggleApproval();
 
                 if (EntryID == null)
                 {
-                    NavigationManager.NavigateTo($"/stock-entry/{stock.EntryID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/stock-entry/{stock.StockID}", forceLoad: true);
                 }
 
                 if (IsDraft)
@@ -309,9 +330,9 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (stock.EntryID != null)
+            if (stock.StockID != null)
             {
-                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where EntryID = @EntryID", new { EntryID = stock.EntryID });
+                string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock_Entry where StockID = @StockID", new { StockID = stock.StockID });
                 if (GetStatus != null)
                 {
                     if (GetStatus == PurchaseStatuses.Submitted && !IsCancelled) return "Stock Entry has already been submitted changes cannot be done";
@@ -323,16 +344,17 @@
                     return "Stock Entry ID does not exist";
                 }
             }
-
+            int count = 0;
             foreach (var PR in Items)
             {
-                if (string.IsNullOrWhiteSpace(ItemName[PR.RowID - 1])) return $"Please Enter Item on Row: {PR.RowID}";
+                count++;
+                if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                if (PR.Quantity <= 0) return $"Row {PR.RowID}: Quantity cannot be less than or equal to 0";
+                if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                if (PR.Rate <= 0 || string.IsNullOrWhiteSpace((PR.Rate).ToString())) return $"Row {PR.RowID}: Rate cannot be less than or equal to 0";
+                if (PR.Rate <= 0 || string.IsNullOrWhiteSpace((PR.Rate).ToString())) return $"Row {count}: Rate cannot be less than or equal to 0";
 
-                if (!DropDownItem.Options.Any(option => option.Text == ItemName[PR.RowID - 1])) return $"Item on Row: {PR.RowID} does not exist";
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
             }
 
             return null;
@@ -390,7 +412,7 @@
     private void AddRow()
     {
         HandleFormInput();
-        Items.Add(new Stock
+        Items.Add(new StockEntry_Items
             {
                 Rate = 0,
                 Quantity = 1
@@ -453,7 +475,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where EntryID = @EntryID", new { EntryID = stock.EntryID });
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where EntryID = @EntryID", new { EntryID = stock.StockID });
             if (GetStatus != null)
             {
                 if (GetStatus == PurchaseStatuses.Cancelled)
@@ -478,7 +500,7 @@
         try
         {
             CancelAll cancelall = new CancelAll();
-            cancelall.ID = stock.EntryID;
+            cancelall.ID = stock.StockID;
             cancelall.type = "Stock Entry";
             crud.CRD(cancelall, "CancelAll");
             ToggleApproval();
@@ -488,7 +510,19 @@
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+    public void changeEntryType()
+    {
+        if (stock.StockEntryType == "Goods Issue")
+        {
+            Hiderate = true;
+        }
+        else
+        {
+            Hiderate = false;
+        }
+        StateHasChanged();
 
+    }
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
