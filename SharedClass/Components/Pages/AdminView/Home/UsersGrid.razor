@@ -31,8 +31,7 @@
         <div class="col-md-12">
             <MudTable @ref="_table" T="Users" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<Users,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick"
-                      Elevation="4">
+                      Filter="new Func<Users,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Employees</MudText>
@@ -64,9 +63,8 @@
 </div>
 
 @code {
-    private string searchString1 = "";
-    private bool _selectOnRowClick = true;
     private MudTable<Users> _table;
+    private string searchString1 = "";
     private IEnumerable<Users> Elements = new List<Users>();
     private HashSet<Users> selectedItems = new HashSet<Users>();
 
