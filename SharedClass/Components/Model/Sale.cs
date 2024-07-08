@@ -119,6 +119,7 @@
 
     public class BO_Items : BaseRecord
     {
+        public bool Selected { get; set; }
         public string? BulkOrderID { get; set; }
         public int RowID { get; set; }
         public string? Item { get; set; }
