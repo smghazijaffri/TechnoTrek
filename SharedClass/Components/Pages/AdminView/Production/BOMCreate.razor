@@ -371,6 +371,10 @@
                 {
                     NavigationManager.NavigateTo($"/billofmaterial/{bom.BOMID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                }
                 CheckStatus();
 
                 return "BOM Saved Successfully";

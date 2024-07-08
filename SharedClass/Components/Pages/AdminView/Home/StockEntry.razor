@@ -205,7 +205,7 @@
             }
             else if (!string.IsNullOrWhiteSpace(ItemCode))
             {
-                Items = db.Query<StockEntry_Items>("Select * from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
+                Items = db.Query<StockEntry_Items>("select ItemCode as Item, 1 as Quantity, 0 as BasicRate from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
                 ItemName = db.Query<string>("Select ItemName from Items where ItemCode = @ItemCode", new { ItemCode = ItemCode }).ToList();
                 stock.StockEntryType = "Goods Receipt";
                 await _protectedLocalStore.SetLocalAsync("ItemCode", "");

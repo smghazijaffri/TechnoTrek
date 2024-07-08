@@ -454,6 +454,10 @@
                 {
                     NavigationManager.NavigateTo($"/requestforquotation/{rfq.RFQNumber}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<RFQ_Items>("select * from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "RFQ Saved Successfully";

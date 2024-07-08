@@ -480,6 +480,10 @@
                 {
                     NavigationManager.NavigateTo($"/saleinvoice/{salesinvoice.SalesInvoiceID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<SI_Item>("Select * from SI_Item where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Invoice Saved Successfully";
