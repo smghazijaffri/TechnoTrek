@@ -301,8 +301,8 @@
                 header = salesinvoice.SalesInvoiceName;
                 if (salesinvoice.Status == SaleStatus.Draft)
                 {
-                    if (salesinvoice.Status == "Paid") IsPaid = true;
-                    else if (salesinvoice.Status == "Partially Paid") isPartiallyPaid = true;
+                    if (salesinvoice.IsPaid == true) IsPaid = true;
+                    else if (salesinvoice.IsPartiallyPaid == true) isPartiallyPaid = true;
                     IsDraft = true;
                     IsSaving = false;
                 }
@@ -311,7 +311,7 @@
                     IsCancelled = true;
                     IsSaving = false;
                 }
-                else if (salesinvoice.Status == SaleStatus.Paid)
+                else if (salesinvoice.Status == SaleStatus.Paid || salesinvoice.IsPaid)
                 {
                     Paid = true;
                     IsPaid = true;
@@ -321,7 +321,7 @@
                     isPartiallyPaid = false;
                     Overdue = false;
                 }
-                else if (salesinvoice.Status == SaleStatus.PartiallyPaid)
+                else if (salesinvoice.Status == SaleStatus.PartiallyPaid || salesinvoice.IsPartiallyPaid)
                 {
                     salesinvoice.IsPartiallyPaid = true;
                     PartiallyPaid = true;
@@ -372,7 +372,7 @@
             }
 
             DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
-            DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer where CustomerType = 'Bulk'").ToList();
+            DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer").ToList();
         }
         StateHasChanged();
 
@@ -387,11 +387,6 @@
     public int SumQuantity
     {
         get { return Items.Sum(item => item.Quantity); }
-    }
-
-    public int SumTotal
-    {
-        get { return Items.Sum(item => item.Amount); }
     }
 
     public string createPurchase()
@@ -422,6 +417,8 @@
 
                 salesinvoice.SalesInvoiceName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
+                salesinvoice.TotalAmount = SumAmounts;
+                salesinvoice.TotalQuantity = SumQuantity;
 
                 if (IsSaving)
                 {
@@ -433,17 +430,26 @@
                     {
                         Paid = true;
                         salesinvoice.Status = SaleStatus.Paid;
+                        salesinvoice.IsPaid = true;
                     }
                     else if (isPartiallyPaid)
                     {
                         PartiallyPaid = true;
                         salesinvoice.Status = SaleStatus.PartiallyPaid;
+                        salesinvoice.IsPartiallyPaid = true;
                     }
                 }
                 else if (IsPaid)
                 {
                     Paid = true;
                     salesinvoice.Status = SaleStatus.Paid;
+                    salesinvoice.IsPaid = true;
+                }
+                else if (isPartiallyPaid)
+                {
+                    PartiallyPaid = true;
+                    salesinvoice.Status = SaleStatus.PartiallyPaid;
+                    salesinvoice.IsPartiallyPaid = true;
                 }
                 else if (Overdue)
                 {

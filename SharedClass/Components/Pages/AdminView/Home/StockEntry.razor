@@ -32,16 +32,10 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        @if (!IsSubmitted && !IsCancelled)
+        @if (!IsSubmitted)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                 @GetSubmitButtonText()
-            </button>
-        }
-        @if (!IsCancelled && IsSubmitted)
-        {
-            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                Cancel
             </button>
         }
     </div>
@@ -55,7 +49,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Stock Entry Type</label>
-            <select class="form-select" aria-label="Stock Entry Type" readonly="@IsSubmitted" @bind="SelectedEntryType">
+            <select class="form-select" aria-label="Stock Entry Type" disabled="@IsSubmitted" @bind="SelectedEntryType">
                 <option value="">Select entry Type</option>
                 <option value="Goods Receipt">Goods Receipt</option>
                 <option value="Goods Issue">Goods Issue</option>
@@ -169,9 +163,8 @@
     bool isMobile = false;
     bool Hiderate = false;
     bool IsSubmitted = false;
-    bool IsCancelled = false;
+    bool ReadonlyHidden { get { return  IsSubmitted; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
-    bool ReadonlyHidden { get { return IsCancelled || IsSubmitted; } }
 
     DropDown DropDownItem = new DropDown();
 
@@ -193,7 +186,7 @@
             if (EntryID != null)
             {
                 stock = db.QueryFirstOrDefault<Stock_Entry>("select * from Stock_Entry where StockID = @StockID", new { StockID = EntryID });
-                Items = db.Query<StockEntry_Items>("select *,Item as ItemID ,BasicRate as Rate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
+                Items = db.Query<StockEntry_Items>("Select RowID, StockID, Item as ItemID, Quantity, BasicRate as Rate, CreationDate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
                 ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntry_Items SE INNER JOIN Items I1 ON SE.Item = I1.ItemCode WHERE SE.StockID = @StockID", new { StockID = EntryID }).ToList();
                 if (stock == null || Items.Count == 0) NavigationManager.NavigateTo("/stock-entry/");
 
@@ -207,11 +200,6 @@
                 else if (stock.Status == PurchaseStatuses.Draft)
                 {
                     IsDraft = true;
-                    IsSaving = false;
-                }
-                else if (stock.Status == PurchaseStatuses.Cancelled)
-                {
-                    IsCancelled = true;
                     IsSaving = false;
                 }
             }
@@ -331,9 +319,7 @@
                 string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock_Entry where StockID = @StockID", new { StockID = stock.StockID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == PurchaseStatuses.Submitted && !IsCancelled) return "Stock Entry has already been submitted changes cannot be done";
-
-                    if (GetStatus == PurchaseStatuses.Cancelled && !IsCancelled) return "This Stock Entry has already been Cancelled";
+                    if (GetStatus == PurchaseStatuses.Submitted && IsSubmitted) return "Stock Entry has already been submitted changes cannot be done";
                 }
                 else
                 {
@@ -399,7 +385,6 @@
         }
         else if (IsSubmitted)
         {
-            IsCancelled = true;
             IsSaving = false;
             IsSubmitted = false;
         }
@@ -464,46 +449,6 @@
         {
             ItemName[rowIndex] = options.Text;
             Items[rowIndex].ItemID = options.Value;
-        }
-    }
-
-    private async Task OpenDialog()
-    {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from Stock where EntryID = @EntryID", new { EntryID = stock.StockID });
-            if (GetStatus != null)
-            {
-                if (GetStatus == PurchaseStatuses.Cancelled)
-                {
-                    Snackbar.Clear();
-                    Snackbar.Add("This Stock Entry has already been Cancelled", Severity.Error);
-                    return;
-                }
-            }
-            var options = new DialogOptions { ClassBackground = "dialog" };
-            var result = await DialogService.Show<Dialog>("Cancel Stock Entry", options).Result;
-
-            if (result.Data is bool && (bool)result.Data)
-            {
-                Cancel();
-            }
-        }
-    }
-
-    public void Cancel()
-    {
-        try
-        {
-            CancelAll cancelall = new CancelAll();
-            cancelall.ID = stock.StockID;
-            cancelall.type = "Stock Entry";
-            crud.CRD(cancelall, "CancelAll");
-            ToggleApproval();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 

@@ -143,7 +143,22 @@
                             ItemRates[item.ItemCode] = null;
                         }
                         quantities[item.ItemCode] = 20;
-                        itemQuantities[item.ItemCode] = 1;
+
+                        if (!string.IsNullOrEmpty((AppState.MemoryQuantity).ToString()) || AppState.MemoryQuantity > 1)
+                        {
+                            if (item.ItemCode == AppState.Memory)
+                            {
+                                itemQuantities[item.ItemCode] = AppState.MemoryQuantity;
+                            }
+                            else
+                            {
+                                itemQuantities[item.ItemCode] = 1;
+                            }
+                        }
+                        else
+                        {
+                            itemQuantities[item.ItemCode] = 1;
+                        }
                     }
                 }
             }

@@ -102,9 +102,16 @@
             return;
         }
 
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Draft").ToList();
+        if (itemsToDelete.Count == 0)
+        {
+            Snackbar.Add("No items with status 'Draft' to delete", Severity.Info);
+            return;
+        }
+
         try
         {
-            foreach (var item in selectedItems)
+            foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
                 output = crud.CRD2(item, "Create_StockEntry", IsDelete: true, outputMessage: true, errorMessage: true);
@@ -115,8 +122,8 @@
                 }
             }
 
-            Elements = Elements.Where(e => !selectedItems.Any(d => d.StockID == e.StockID)).ToList();
-            Snackbar.Add($"{selectedItems.Count} items deleted", Severity.Success);
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.StockID == e.StockID)).ToList();
+            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)
         {

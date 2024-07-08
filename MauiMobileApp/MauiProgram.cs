@@ -45,6 +45,8 @@ namespace MauiMobileApp
             builder.Services.AddScoped<DropDown>();
             builder.Services.AddScoped<QU_Items>();
             builder.Services.AddScoped<Customer>();
+            builder.Services.AddScoped<BO_Items>();
+            builder.Services.AddScoped<BulkOrder>();
             builder.Services.AddScoped<ItemClass>();
             builder.Services.AddScoped<SaleOrder>();
             builder.Services.AddScoped<RFQVendor>();

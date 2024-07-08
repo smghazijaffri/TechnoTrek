@@ -567,13 +567,21 @@
                     var customerName = db.QueryFirstOrDefault<string>("Select Name from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
                     var customerContact = db.QueryFirstOrDefault<string>("Select Contact from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
                     string BOMName = $"BOM for {customerName}-{customerContact}-{DateTime.Today.ToString("MM/dd/yyyy")}";
-                    bom.BOMName = BOMName;
-                    bom.ItemName = customerID + " PC";
-                    bom.DocumentDate = DateTime.Now.Date;
-                    bom.IsActive = true;
-                    bom.Type = "Customer";
-                    bom.BOMID = crud.CRD(bom, "CreateBOM");
-
+                    var parameter = new DynamicParameters();
+                    parameter.Add("@BOMID", "");
+                    parameter.Add("@BOMName", BOMName);
+                    parameter.Add("@ItemName", (customerID + " PC"));
+                    parameter.Add("@DocumentDate", DateTime.Today);
+                    parameter.Add("@IsActive", true);
+                    parameter.Add("@Type", "Customer");
+                    OutputClass output = crud.CRD3(parameter, "CreateBOM", outputMessage: true, errorMessage: true);
+                    if (output.ErrorMessage != null)
+                    {
+                        Snackbar.Clear();
+                        Snackbar.Add(output.ErrorMessage, Severity.Error);
+                        return;
+                    }
+                    bom.BOMID = output.Output;
 
                     List<CustomPC_Items> customItems = new List<CustomPC_Items>();
                     customItems.Add(new CustomPC_Items { ItemID = MotherboardCode, Quantity = 1 });

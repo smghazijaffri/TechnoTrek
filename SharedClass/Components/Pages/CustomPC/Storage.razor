@@ -142,8 +142,24 @@
                         {
                             ItemRates[item.ItemCode] = null;
                         }
+
                         quantities[item.ItemCode] = 20;
-                        itemQuantities[item.ItemCode] = 1;
+
+                        if (!string.IsNullOrEmpty((AppState.StorageQuantity).ToString()) || AppState.StorageQuantity > 1)
+                        {
+                            if (item.ItemCode == AppState.Storage)
+                            {
+                                itemQuantities[item.ItemCode] = AppState.StorageQuantity;
+                            }
+                            else
+                            {
+                                itemQuantities[item.ItemCode] = 1;
+                            }
+                        }
+                        else
+                        {
+                            itemQuantities[item.ItemCode] = 1;
+                        }
                     }
                 }
             }

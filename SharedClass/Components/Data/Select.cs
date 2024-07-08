@@ -70,7 +70,7 @@ namespace SharedClass.Components.Data
 
             query += " ORDER BY ItemID";
 
-            return await con.QueryAsync<Stock>(query, new { ItemID });
+            return await con.QueryAsync<Stock>(query, new { ItemID = ItemID });
         }
 
         public static bool IsValidJson(string input)
