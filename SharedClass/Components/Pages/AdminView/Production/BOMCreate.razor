@@ -505,11 +505,11 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (!Items.Any(option => option.Item == options.Value) && ItemName[rowIndex] != options.Text )
+            if (!Items.Any(option => option.Item == options.Value) && ItemName[rowIndex] != options.Text)
             {
                 bool result = DropDownItem.SelectOption(options, rowIndex);
                 if (result == false)
-                {   
+                {
                     if (Items[rowIndex].Item != options.Value)
                     {
                         UOMName[rowIndex] = "";
