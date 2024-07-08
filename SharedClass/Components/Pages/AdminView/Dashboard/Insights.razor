@@ -332,7 +332,7 @@
                 TotalUOM = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
                 TotalProducts = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
                 TotalVendors = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();
-                TotalEmployees = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Users WHERE Status = 'Enabled'").FirstOrDefault();
+                TotalEmployees = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Users WHERE Status = 'Enabled' AND Role != 'Customer'").FirstOrDefault();
                 TotalIncome = db.Query<double>(@"SELECT COALESCE(SUM(TotalAmount), 0) FROM SaleInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
                     new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") }).FirstOrDefault();
                 TotalSpendings = db.Query<double>(@"SELECT COALESCE(SUM(TotalAmount), 0) FROM PurchaseInvoice WHERE Status = 'Paid' AND CreationDate >= @FiscalYearStart AND CreationDate < @FiscalYearEnd",
