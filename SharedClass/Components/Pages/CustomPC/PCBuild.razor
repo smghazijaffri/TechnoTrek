@@ -373,6 +373,12 @@
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
             }
+            if (string.IsNullOrEmpty(userid))
+            {
+                Snackbar.Add("User does not exist", Severity.Error);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
+            }
         }
         else
         {
