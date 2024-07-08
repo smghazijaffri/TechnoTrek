@@ -538,12 +538,15 @@
 
     public void SelectUOMOption(Option options, int rowIndex)
     {
-        bool result = DropDownUOM.SelectOption(options, rowIndex);
-        if (result == false)
+        if (!ItemUOM.Any(option => option.UOMID == options.Value) && UOMName[rowIndex] != options.Text)
         {
-            UOMName[rowIndex] = options.Text;
-            ItemUOM[rowIndex].UOMID = options.Value;
-            HandleFormInput();
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                ItemUOM[rowIndex].UOMID = options.Value;
+                HandleFormInput();
+            }
         }
     }
 
