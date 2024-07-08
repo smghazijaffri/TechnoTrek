@@ -260,6 +260,10 @@
                 {
                     NavigationManager.NavigateTo($"/bulk-order/{bulkorder.BulkOrderID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<BO_Items>("Select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                }
                 if (IsReceived)
                 {
                     return "Bulk Order Saved Successfully";

@@ -463,6 +463,10 @@
                 {
                     NavigationManager.NavigateTo($"/vendorquotation/{purchase.QuotationID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<QU_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Quotation Saved Successfully";

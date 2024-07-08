@@ -378,7 +378,10 @@
                 {
                     NavigationManager.NavigateTo($"/productionorder/{production.ProductionOrderID}", forceLoad: true);
                 }
-
+                else
+                {
+                    Items = db.Query<BOM_Item>("select * from PRO_items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Order Saved Successfully";

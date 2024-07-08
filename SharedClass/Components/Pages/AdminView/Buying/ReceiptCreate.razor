@@ -444,7 +444,10 @@
                 {
                     NavigationManager.NavigateTo($"/goodsreceipt/{purchase.GoodReceiptID}", forceLoad: true);
                 }
-
+                else
+                {
+                    Items = db.Query<GR_Items>("select * from GR_Items where GoodReceiptID = @GoodReceiptID", new { GoodReceiptID = ReceiptNumber }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Receipt Saved Successfully";
