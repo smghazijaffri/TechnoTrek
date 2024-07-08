@@ -425,6 +425,10 @@
                 {
                     NavigationManager.NavigateTo($"/PurchaseRequisition/{purchase.PRNumber}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Resquest Saved Successfully";

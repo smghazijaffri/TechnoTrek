@@ -538,6 +538,10 @@
                 {
                     NavigationManager.NavigateTo($"/purchaseinvoice/{purchase.PurchaseInvoiceID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<PI_Items>("Select * from PI_Items where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = PurchaseInvoiceID }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Invoice Saved Successfully";

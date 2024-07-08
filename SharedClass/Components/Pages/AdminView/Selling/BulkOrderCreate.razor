@@ -319,6 +319,10 @@
                 {
                     NavigationManager.NavigateTo($"/bulk-order/{bulkorder.BulkOrderID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<BO_Items>("Select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                }
                 if (IsReceived)
                 {
                     return "Bulk Order Saved Successfully";
@@ -371,16 +375,20 @@
             {
                 int count = 0;
 
-                foreach (var PI in Items)
+                foreach (var BO in Items)
                 {
                     count++;
                     if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                    if (PI.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
+                    if (BO.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
 
-                    if (PI.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
+                    if (BO.Quantity < 20 || BO.Quantity > 50) return $"Row {count}: Quantity cannot be less than 20 or greater than 50";
 
-                    if (PI.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
+                    if (string.IsNullOrWhiteSpace(BO.UOM)) return $"Please Enter UOM on Row: {count}";
+
+                    if (BO.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
+
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }
             }
             else

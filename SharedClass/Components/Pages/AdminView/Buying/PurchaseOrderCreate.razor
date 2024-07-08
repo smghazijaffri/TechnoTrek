@@ -413,7 +413,7 @@
                     Items = db.Query<PO_Items>("select Item,Quantity,UOM,Rate,Amount from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join QU_Items on UOM = UOMID  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
-                    UOMName = db.Query<string>("select UOMName from RFQ_Items pr inner join UOM u on pr.UOM = u.UOMID where RFQNumber = @RFQNumber", new { RFQNumber = QuotationID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from QU_Items pr inner join UOM u on pr.UOM = u.UOMID where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     getUOM(Items);
                     foreach (var item in Items)
                     {
@@ -507,6 +507,11 @@
                 if (PONumber == null)
                 {
                     NavigationManager.NavigateTo($"/purchaseorder/{purchase.PurchaseOrderID}", forceLoad: true);
+                }
+                else
+                {
+                    Items = db.Query<PO_Items>("select * from PO_Items where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+
                 }
                 if (IsDraft)
                 {

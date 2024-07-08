@@ -439,6 +439,10 @@
                 {
                     NavigationManager.NavigateTo($"/saleorder/{saleorder.SaleOrderID}", forceLoad: true);
                 }
+                else
+                {
+                    Items = db.Query<SO_Item>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                }
                 if (IsDraft)
                 {
                     return "Order Saved Successfully";
