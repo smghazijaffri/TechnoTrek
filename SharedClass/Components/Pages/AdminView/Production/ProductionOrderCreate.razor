@@ -28,7 +28,7 @@
             }
             @if (IsSubmitted)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Warning">Submitted</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
             }
             @if (IsNotStarted)
             {
@@ -36,7 +36,7 @@
             }
             @if (InProcess)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Warning">In Process</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Primary">In Process</MudChip>
             }
             @if (IsCompleted)
             {
@@ -44,32 +44,42 @@
             }
             @if (IsStopped)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Stopped</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Error">Stopped</MudChip>
             }
             @if (IsClosed)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Success">Closed</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Error">Closed</MudChip>
             }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        @if (!IsCompleted || !IsClosed)
+        @if (IsDraft)
+        {
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                </ul>
+            </div>
+        }
+        @if (InProcess)
+        {
+            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                Close
+            </button>
+        }
+        @if (!IsCompleted && !IsClosed)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
                 @GetSubmitButtonText()
             </button>
-
-            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" hidden="@Hidden" @onclick="OpenDialog">
-                Close
-            </button>
-
-            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" hidden="!@IsStopped" @onclick="SavePO">
+        }
+        @if (IsStopped)
+        {
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
                 Resume
             </button>
         }
-        <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" hidden="!@IsCompleted" @onclick="OpenDialog">
-            Close
-        </button>
     </div>
 </div>
 
@@ -173,6 +183,13 @@
     </form>
 </div>
 
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+</script>
+
 @code {
     [Parameter]
     public string? ProductionOrderID { get; set; }
@@ -224,9 +241,9 @@
                 {
                     production = db.QueryFirstOrDefault<ProductionOrder>("Select * from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
                     if (production == null) NavigationManager.NavigateTo("/productionorder/");
-                    Items = db.Query<BOM_Item>("select * from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
-                    ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode  where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
-                    UOMName = db.Query<string>("select UOMName from PRO_Items pr inner join UOM u on pr.UOMID = u.UOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    Items = db.Query<BOM_Item>("select * from PRO_items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on Item = ItemCode where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PRO_Items pr inner join UOM u on pr.UOM = u.UOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
                     BOM = db.QueryFirstOrDefault<BOM>("select v.* from BOM v inner join ProductionOrder po on po.BOMID = v.BOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
                     DisplayPO = false;
                     header = production.ProductionOrderName;
@@ -268,9 +285,14 @@
                 }
                 else if (!string.IsNullOrWhiteSpace(BOMID))
                 {
-                    Items = db.Query<BOM_Item>("Select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
-                    ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
-                    production.BOMID = BOMID;
+                    // Items = db.Query<BOM_Item>("Select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                    // ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
+                    // production.BOMID = BOMID;
+                    BOM = db.QueryFirstOrDefault<BOM>("Select * from BOM where BOMID = @BOMID", new { BOMID = BOMID });
+                    Option options = new Option();
+                    options.Value = BOM.BOMID;
+                    options.Text = BOM.BOMName;
+                    SelectBOMOption(options);
                     await _protectedLocalStore.SetLocalAsync("BOMID", "");
                 }
                 else
@@ -324,6 +346,18 @@
                 else if (IsDraft)
                 {
                     production.Status = ProductionStatus.Submitted;
+                }
+                else if (IsSubmitted)
+                {
+                    production.Status = ProductionStatus.Process;
+                }
+                else if (InProcess)
+                {
+                    production.Status = ProductionStatus.Completed;
+                }
+                else if (IsStopped)
+                {
+                    production.Status = ProductionStatus.Stopped;
                 }
 
                 OutputClass output = new OutputClass();
@@ -414,6 +448,12 @@
 
 
             if (string.IsNullOrWhiteSpace(production.BOMID)) return $"Please select a BOM";
+            foreach (var PO in Items)
+            {
+                int CheckItem = 0;
+                CheckItem = db.QueryFirstOrDefault<int>("Select Quantity from Stock where ItemID = @ItemID", new { ItemID = PO.Item });
+                if (CheckItem == 0) { return $"Item on Row: {PO.RowID} does not have enough Quantity"; }
+            }
             // if (string.IsNullOrWhiteSpace(BOM.BOMID)) { return "Please select a BOM"; }
 
             // if (!DropDownBOM.Options.Any(option => option.Text == BOM.ItemName)) return "Please Select Valid BOM";
@@ -608,7 +648,8 @@
             cancelall.ID = production.ProductionOrderID;
             cancelall.type = "Production Order";
             crud.CRD(cancelall, "CancelAll");
-            ToggleApproval();
+            InProcess = false;
+            IsClosed = true;
         }
         catch (Exception ex)
         {
@@ -625,5 +666,28 @@
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+    }
+
+    public void CreatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = production.ProductionOrderID });
+
+            if (GetStatus != SaleStatus.Draft)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Request, Production Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Production Order ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("ProductionOrderID", production.ProductionOrderID);
+            NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
     }
 }

@@ -1,0 +1,447 @@
+﻿@page "/bulk-order/{BulkOrderID?}"
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Select select;
+@inject Connection con;
+@inject BO_Items boItem;
+@inject Customer customer;
+@inject ISnackbar Snackbar;
+@inject BulkOrder bulkorder;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsReceived)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Received</MudChip>
+            }
+            @if (IsConfirmed)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Surface">Confirmed</MudChip>
+            }
+            @if (IsCancelled)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        @if (IsConfirmed)
+        {
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                </ul>
+            </div>
+        }
+        @if (IsReceived && !IsConfirmed && !IsCancelled)
+        {
+            <button type="submit" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="SaveBO">
+                Confirm
+            </button>
+        }
+        @if (!IsCancelled)
+        {
+            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                Cancel
+            </button>
+        }
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6" hidden>
+            <label class="form-label">Bulk Order ID</label>
+            <input type="text" class="form-control" @bind="bulkorder.BulkOrderID" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Customer</label>
+            <input type="text" class="form-control" @bind="customer.Name" readonly>
+        </div>
+    </form>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Address and Contact</h5>
+    <form class="row g-3" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Customer Address</label>
+            <input type="text" class="form-control" @bind="customer.Address" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Customer Contact</label>
+            <input type="text" class="form-control" @bind="customer.Contact" readonly>
+        </div>
+    </form>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Items</h5>
+    <form class="row g-3" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
+        <table class="table size table-hover">
+            <thead>
+                <tr>
+                    <th class="col col-auto" style="width: 50px;">
+                        No.
+                    </th>
+                    <th class="col col-auto" style="min-width:150px">
+                        Item
+                    </th>
+                    <th class="col col-auto" style="width: 160px;">
+                        Quantity
+                    </th>
+                    <th class="col col-auto" style="width: 160px;">
+                        UOM
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        Rate
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        Amount
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                @for (int index = 0; index < Items.Count; index++)
+                {
+                    var item = Items[index];
+                    var rowIndex = index;
+                    item.Amount = (item.Rate * (item.Quantity));
+                    <tr>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;"><input type="checkbox" class="me-1" readonly />@(index + 1)</div>
+                        </td>
+                        <td><input type="text" class="form-control" @bind="ItemName[rowIndex]" readonly></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly /></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="UOMName[rowIndex]" readonly /></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly /></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+    <div class="col-12 d-flex justify-content-start p-0">
+        <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden>Add Row</button>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Total Quantity</label>
+            <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Total Amount</label>
+            <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly>
+        </div>
+    </form>
+</div>
+
+@code {
+    [Parameter]
+    public string? BulkOrderID { get; set; }
+
+    string? header = string.Empty;
+    string? DeviceType { get; set; }
+
+    bool isMobile = false;
+    bool IsReceived = false;
+    bool IsConfirmed = false;
+    bool IsCancelled = false;
+
+    List<int> IsDelete = new List<int>();
+    List<string> UOMName = new List<string>();
+    List<string> ItemName = new List<string>();
+    List<BO_Items> Items = new List<BO_Items>();
+
+    protected override async void OnInitialized()
+    {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (BulkOrderID != null)
+            {
+                bulkorder = db.QueryFirstOrDefault<BulkOrder>("Select * from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
+                Items = db.Query<BO_Items>("Select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                ItemName = db.Query<string>("Select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                customer = db.QueryFirstOrDefault<Customer>("Select TOP(1)c.* from Customer c inner join BulkOrder si on si.CustomerID = si.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
+                UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                if (bulkorder == null || Items.Count == 0) NavigationManager.NavigateTo("/bulk-order/");
+
+                header = bulkorder.BulkOrderName;
+                if (bulkorder.Status == SaleStatus.Received)
+                {
+                    IsReceived = true;
+                }
+                else if (bulkorder.Status == SaleStatus.Cancelled)
+                {
+                    IsCancelled = true;
+                }
+                else if (bulkorder.Status == SaleStatus.Confirmed)
+                {
+                    IsConfirmed = true;
+                }
+            }
+        }
+        StateHasChanged();
+
+        base.OnInitialized();
+    }
+
+    public int SumAmounts
+    {
+        get { return Items.Sum(item => item.Amount); }
+    }
+
+    public int SumQuantity
+    {
+        get { return Items.Sum(item => item.Quantity); }
+    }
+
+    public string CreateBulkOrder()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidatePR();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                bulkorder.BulkOrderName = $"Bulk Order for {customer.Name}";
+                bulkorder.TotalAmount = SumAmounts;
+                bulkorder.TotalQuantity = SumQuantity;
+                header = bulkorder.BulkOrderName;
+
+                if (IsReceived)
+                {
+                    bulkorder.Status = SaleStatus.Received;
+                }
+                else if (IsConfirmed)
+                {
+                    bulkorder.Status = SaleStatus.Confirmed;
+                }
+                else if (IsCancelled)
+                {
+                    bulkorder.Status = SaleStatus.Cancelled;
+                }
+
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
+                {
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.Rate, PO.Amount, null);
+                }
+                var parameters = new DynamicParameters(bulkorder);
+                parameters.Add("@SIItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSIItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateSaleInvoice", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                bulkorder.BulkOrderID = output.Output;
+                IsDelete.Clear();
+                ToggleApproval();
+                if (BulkOrderID == null)
+                {
+                    NavigationManager.NavigateTo($"/bulk-order/{bulkorder.BulkOrderID}", forceLoad: true);
+                }
+                if (IsReceived)
+                {
+                    return "Bulk Order Saved Successfully";
+                }
+
+                else if (IsConfirmed)
+                {
+                    return "Bulk Order Confirmed Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Bulk Order Cancelled Successfully";
+                }
+
+                else
+                {
+                    return "Error in saving Bulk Order";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public string ValidatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (bulkorder.BulkOrderID != null)
+            {
+                string? GetStatus = db.QueryFirstOrDefault<string>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.BulkOrderID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == SaleStatus.Confirmed && IsConfirmed) return "Bulk Order has already been confirmed changes cannot be done";
+
+                    if (GetStatus == SaleStatus.Cancelled && !IsCancelled) return "This Bulk Order has already been Cancelled";
+                }
+                else
+                {
+                    return "Bulk Order ID does not exist";
+                }
+            }
+
+            if (bulkorder.CustomerID == null) return "No Customer Found";
+
+            if (Items.Count > 0)
+            {
+                int count = 0;
+
+                foreach (var PI in Items)
+                {
+                    count++;
+                    if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
+
+                    if (PI.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
+
+                    if (PI.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
+
+                    if (PI.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
+                }
+            }
+            else
+            {
+                return $"There are no Items";
+            }
+
+            return null;
+        }
+    }
+
+    public void SaveBO()
+    {
+        string notification = CreateBulkOrder();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+        StateHasChanged();
+    }
+
+    public void CreatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.BulkOrderID });
+
+            if (GetStatus == SaleStatus.ToBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Request, Bulk Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Bulk Order ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("BulkOrderID", bulkorder.BulkOrderID);
+            NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
+    }
+
+    private void ToggleApproval()
+    {
+        if (IsReceived)
+        {
+            IsReceived = false;
+            if (bulkorder.Status == SaleStatus.Confirmed)
+            {
+                IsConfirmed = true;
+            }
+            else if (bulkorder.Status == SaleStatus.Cancelled)
+            {
+                IsCancelled = true;
+            }
+        }
+        else if (IsCancelled)
+        {
+            IsReceived = false;
+            IsConfirmed = false;
+        }
+        StateHasChanged();
+    }
+
+    private void AddRow()
+    {
+        Items.Add(new BO_Items
+            {
+                Quantity = 1
+            });
+        ItemName.Add("");
+    }
+
+    private async Task OpenDialog()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.BulkOrderID });
+
+            if (GetStatus == SaleStatus.Cancelled)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Bulk Order has already been Cancelled", Severity.Error);
+                return;
+            }
+
+        }
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        var result = await DialogService.Show<Dialog>("Cancel Bulk Order", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            Cancel();
+        }
+    }
+
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = bulkorder.BulkOrderID;
+            cancelall.type = "Bulk Order";
+            crud.CRD(cancelall, "CancelAll");
+            IsCancelled = true;
+            ToggleApproval();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

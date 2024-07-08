@@ -45,9 +45,7 @@
         }
         @if (IsApproved && !IsCancelled)
         {
-            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
-                <i class="bi bi-file-earmark-arrow-down"></i>
-            </button>
+            <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
@@ -355,9 +353,10 @@
                 }
                 else if (!string.IsNullOrWhiteSpace(PRNumber))
                 {
-                    Items = db.Query<RFQ_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    Items = db.Query<RFQ_Items>("Select Item,Quantity,UOM,RequiredBy from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join PR_Items on UOM = UOMID  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     rfq.RefrenceDocument = PRNumber;
                     AddRowVendor();
                     await _protectedLocalStore.SetLocalAsync("PRNumber", "");
@@ -845,4 +844,5 @@
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
     }
+    
 }

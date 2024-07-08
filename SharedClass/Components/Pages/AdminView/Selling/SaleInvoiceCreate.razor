@@ -15,14 +15,6 @@
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
 
-@* <nav class="ps-3 pt-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/buying">Buying</a></li>
-            <li class="breadcrumb-item"><a href="/PurchaseInvoice">Purchase Requisition</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@header</li>
-        </ol>
-    </nav> *@
-
 <div class="row p-3 align-items-center">
     <div class="col-6">
         <h3>
@@ -62,9 +54,7 @@
         }
         @if (Paid || Overdue && !IsCancelled)
         {
-            <button type="submit" title="Download Report" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="DownloadReport">
-                <i class="bi bi-file-earmark-arrow-down"></i>
-            </button>
+            <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
             </button>
@@ -108,9 +98,9 @@
             <input type="date" @bind="salesinvoice.DueDate" class="form-control" readonly="@ReadonlyHidden">
         </div>
         <div class="col-md-6">
-            <MudCheckBox @bind-Value="@salesinvoice.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
-            <MudCheckBox @bind-Value="@salesinvoice.IsPartiallyPaid" Size="Size.Small" Dense="true" Label="Partially Paid" readonly="@Hidden"></MudCheckBox>
-            <MudCheckBox @bind-Value="@salesinvoice.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
+            <MudCheckBox @bind-Value="@isPartiallyPaid" Size="Size.Small" Dense="true" Label="Partially Paid" readonly="@Hidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
         </div>
     </form>
 </div>
@@ -144,6 +134,9 @@
                     <th class="col col-auto" style="width: 160px;">
                         Quantity
                     </th>
+                    <th class="col col-auto" style="width: 160px;">
+                        UOM
+                    </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         Rate
                     </th>
@@ -156,10 +149,11 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
-                    item.Amount = (item.Rate * item.Quantity);
+                    DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                    item.Amount = (item.Rate * (item.Quantity * quantity[index]));
                     <tr>
                         <td style="vertical-align: middle;">
                             <div style="display: flex; justify-content: center;">
@@ -187,8 +181,30 @@
                                 </ul>
                             </div>
                         </td>
-
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex, true)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                            @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly /></td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
                     </tr>
@@ -232,12 +248,16 @@
     bool IsPaid { get; set; } = false;
     bool IsReturn { get; set; } = false;
     bool PartiallyPaid { get; set; } = false;
+    bool isPartiallyPaid { get; set; } = false;
     bool Readonly { get { return IsCancelled || Paid; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool Hidden { get { return IsCancelled || Paid || Overdue; } }
     bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid; } }
 
     DropDown DropDownItem = new DropDown();
+    List<string> UOMName = new List<string>();
+    List<int> quantity = new List<int>();
+    DropDown DropDownUOM = new DropDown();
 
     List<int> IsDelete = new List<int>();
     List<SI_Item> Items = new List<SI_Item>();
@@ -271,7 +291,9 @@
                 Items = db.Query<SI_Item>("Select * from SI_Item where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                 ItemName = db.Query<string>("select ItemName from SI_Item inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleInvoice si on si.CustomerID = si.CustomerID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
-
+                UOMName = db.Query<string>("select UOMName from SI_Item pr inner join UOM u on pr.UOM = u.UOMID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                quantity = db.Query<int>("select StockQuantity from UOM Inner Join SI_Item on UOM = UOMID  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID }).ToList();
+                getUOM(Items);
                 if (salesinvoice == null || Items.Count == 0)
                     NavigationManager.NavigateTo("/saleinvoice/");
 
@@ -279,6 +301,8 @@
                 header = salesinvoice.SalesInvoiceName;
                 if (salesinvoice.Status == SaleStatus.Draft)
                 {
+                    if (salesinvoice.IsPaid == true) IsPaid = true;
+                    else if (salesinvoice.IsPartiallyPaid == true) isPartiallyPaid = true;
                     IsDraft = true;
                     IsSaving = false;
                 }
@@ -287,17 +311,23 @@
                     IsCancelled = true;
                     IsSaving = false;
                 }
-                else if (salesinvoice.Status == SaleStatus.Paid)
+                else if (salesinvoice.Status == SaleStatus.Paid || salesinvoice.IsPaid)
                 {
                     Paid = true;
+                    IsPaid = true;
                     salesinvoice.IsPaid = true;
                     IsSaving = false;
+                    PartiallyPaid = false;
+                    isPartiallyPaid = false;
+                    Overdue = false;
                 }
-                else if (salesinvoice.Status == SaleStatus.PartiallyPaid)
+                else if (salesinvoice.Status == SaleStatus.PartiallyPaid || salesinvoice.IsPartiallyPaid)
                 {
                     salesinvoice.IsPartiallyPaid = true;
                     PartiallyPaid = true;
+                    isPartiallyPaid = true;
                     Paid = false;
+                    IsPaid = false;
                     salesinvoice.IsPaid = false;
                     IsSaving = false;
                 }
@@ -307,6 +337,7 @@
                     salesinvoice.IsPartiallyPaid = false;
                     PartiallyPaid = false;
                     Paid = false;
+                    IsPaid = false;
                     salesinvoice.IsPaid = false;
                     IsSaving = false;
                 }
@@ -317,6 +348,9 @@
                 Items = db.Query<SI_Item>("select Quantity ,* from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                 ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode  where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join GoodIssue so on so.CustomerID = c.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                quantity = db.Query<int>("select StockQuantity from UOM Inner Join GI_Items on UOM = UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                UOMName = db.Query<string>("select UOMName from GI_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                getUOM(Items);
                 salesinvoice.RefrenceDocument = GoodsIssueID;
                 await _protectedLocalStore.SetLocalAsync("GoodsIssueID", "");
             }
@@ -324,8 +358,11 @@
             {
                 salesinvoice.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                 Items = db.Query<SI_Item>("select Quantity ,* from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                getUOM(Items);
                 salesinvoice.RefrenceDocument = SaleOrderID;
                 await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
             }
@@ -350,11 +387,6 @@
     public int SumQuantity
     {
         get { return Items.Sum(item => item.Quantity); }
-    }
-
-    public int SumTotal
-    {
-        get { return Items.Sum(item => item.Amount); }
     }
 
     public string createPurchase()
@@ -385,54 +417,63 @@
 
                 salesinvoice.SalesInvoiceName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
+                salesinvoice.TotalAmount = SumAmounts;
+                salesinvoice.TotalQuantity = SumQuantity;
 
                 if (IsSaving)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Draft;
+                    salesinvoice.Status = SaleStatus.Draft;
                 }
                 else if (IsDraft)
                 {
-                    if (salesinvoice.IsPaid)
+                    if (IsPaid)
                     {
-                        salesinvoice.Status = PurchaseStatuses.Paid;
+                        Paid = true;
+                        salesinvoice.Status = SaleStatus.Paid;
+                        salesinvoice.IsPaid = true;
                     }
-                    else if (salesinvoice.IsPartiallyPaid)
+                    else if (isPartiallyPaid)
                     {
-                        salesinvoice.Status = PurchaseStatuses.PartiallyPaid;
+                        PartiallyPaid = true;
+                        salesinvoice.Status = SaleStatus.PartiallyPaid;
+                        salesinvoice.IsPartiallyPaid = true;
                     }
                 }
-                else if (salesinvoice.IsPaid)
+                else if (IsPaid)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Paid;
+                    Paid = true;
+                    salesinvoice.Status = SaleStatus.Paid;
+                    salesinvoice.IsPaid = true;
+                }
+                else if (isPartiallyPaid)
+                {
+                    PartiallyPaid = true;
+                    salesinvoice.Status = SaleStatus.PartiallyPaid;
+                    salesinvoice.IsPartiallyPaid = true;
                 }
                 else if (Overdue)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Overdue;
+                    salesinvoice.Status = SaleStatus.Overdue;
                 }
-                else if (salesinvoice.IsPaid || Overdue)
+                else if (IsPaid || Overdue)
                 {
-                    salesinvoice.Status = PurchaseStatuses.Cancelled;
+                    salesinvoice.Status = SaleStatus.Cancelled;
                 }
-
-                salesinvoice.SalesInvoiceID = crud.CRD(salesinvoice, "CreateSaleInvoice");
-
-                foreach (var PR in Items)
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
                 {
-                    if (IsDelete.Any(Del => Del == PR.RowID))
-                    {
-                        IsDelete.Remove(PR.RowID);
-                    }
-                    PR.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                    DisplaySI = false;
-                    crud.CRD(PR, "SIItem");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(salesinvoice);
+                parameters.Add("@SIItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSIItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateSaleInvoice", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    invoiceitem.RowID = del;
-                    invoiceitem.SalesInvoiceID = salesinvoice.SalesInvoiceID;
-                    crud.CRD(invoiceitem, "SIItem", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                salesinvoice.SalesInvoiceID = output.Output;
                 IsDelete.Clear();
                 ToggleApproval();
                 if (SalesInvoiceID == null)
@@ -456,7 +497,6 @@
 
                 else
                 {
-                    IsDraft = false;
                     return "Error in saving Invoice";
                 }
             }
@@ -464,6 +504,21 @@
         catch (Exception ex)
         {
             return ex.Message;
+        }
+    }
+
+    public void getUOM(List<SI_Item> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
+
         }
     }
 
@@ -491,25 +546,29 @@
 
             if (salesinvoice.CustomerID == null) return "Please Select a Customer";
 
-            if (salesinvoice.IsPaid && salesinvoice.IsPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+            if (IsPaid && isPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
 
-            if (!salesinvoice.IsPaid && !salesinvoice.IsPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
+            if (!IsPaid && !isPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
+
+            if (Overdue && isPartiallyPaid) return "Overdu Invoice cannot be Partially Paid";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
-
             if (Items.Count > 0)
             {
+                int count = 0;
+
                 foreach (var PI in Items)
                 {
-                    if (string.IsNullOrWhiteSpace(ItemName[PI.RowID - 1])) return $"Please Enter Item on Row: {PI.RowID}";
+                    count++;
+                    if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
-                    if (PI.Rate <= 0) return $"Row {PI.RowID}: Rate cannot be less than or equal to 0";
+                    if (PI.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
 
-                    if (PI.Quantity <= 0) return $"Row {PI.RowID}: Quantity cannot be less than or equal to 0";
+                    if (PI.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                    if (PI.Amount <= 0) return $"Row {PI.RowID}: Amount cannot be less than or equal to 0";
+                    if (PI.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
 
-                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[PI.RowID - 1])) return $"Item on Row: {PI.RowID} does not exist";
+                    if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }
             }
             else
@@ -553,45 +612,29 @@
     {
         if (IsDraft)
         {
-            if (salesinvoice.IsPaid)
-            {
-                Paid = true;
-            }
-            if (salesinvoice.IsPartiallyPaid)
-            {
-                PartiallyPaid = true;
-            }
             IsDraft = false;
             IsSaving = false;
-        }
-        else if (salesinvoice.IsPartiallyPaid)
-        {
-            salesinvoice.IsPartiallyPaid = true; ;
-            PartiallyPaid = true;
-            Paid = false;
-            IsSaving = false;
-        }
-        else if (salesinvoice.IsPaid)
-        {
-            salesinvoice.IsPaid = true;
-            Overdue = false;
-            Paid = true;
-            PartiallyPaid = false;
-            IsSaving = false;
-        }
-        else if (Overdue)
-        {
-            if (salesinvoice.IsPaid)
+            if (salesinvoice.Status == SaleStatus.Paid)
             {
-                Overdue = false;
-                Paid = true;
+                IsPaid = true;
             }
-            else { Overdue = true; }
+            else if (salesinvoice.Status == SaleStatus.PartiallyPaid)
+            {
+                isPartiallyPaid = true;
+            }
         }
         else if (IsSaving)
         {
             IsDraft = true;
             IsSaving = false;
+        }
+        else if (IsCancelled)
+        {
+            IsDraft = false;
+            IsSaving = false;
+            IsPaid = false;
+            Paid = false;
+            isPartiallyPaid = false;
         }
         StateHasChanged();
     }
@@ -604,6 +647,8 @@
                 Quantity = 1
             });
         ItemName.Add("");
+        UOMName.Add("");
+        quantity.Add(0);
     }
 
     private void DeleteRow()
@@ -618,6 +663,7 @@
                 }
                 Items.RemoveAt(i);
                 ItemName.RemoveAt(i);
+                quantity.RemoveAt(i);
                 DropDownItem.ListItems.RemoveAt(i);
             }
         }
@@ -629,6 +675,11 @@
         {
             IsSaving = true;
             IsDraft = false;
+            Paid = false;
+            IsPaid = false;
+            salesinvoice.IsPartiallyPaid = false;
+            salesinvoice.IsPaid = false;
+            isPartiallyPaid = false;
             GetSubmitButtonText();
             StateHasChanged();
         }
@@ -682,9 +733,43 @@
             bool result = DropDownItem.SelectOption(options, rowIndex);
             if (result == false)
             {
+                if (Items[rowIndex].Item != options.Value)
+                {
+                    UOMName[rowIndex] = "";
+                }
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
                 Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+
+                HandleFormInput();
+            }
+        }
+    }
+
+    public void FilterUOMOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownUOM.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownUOM.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
+            {
+                Items[rowIndex].UOM = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    public void SelectUOMOption(Option options, int rowIndex)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            bool result = DropDownUOM.SelectOption(options, rowIndex);
+            if (result == false)
+            {
+                UOMName[rowIndex] = options.Text;
+                Items[rowIndex].UOM = options.Value;
+                quantity[rowIndex] = db.QueryFirstOrDefault<int>("select StockQuantity from UOM where UOMID = @UOMID", new { UOMID = options.Value });
                 HandleFormInput();
             }
         }
@@ -751,6 +836,7 @@
             cancelall.ID = salesinvoice.SalesInvoiceID;
             cancelall.type = "Sale Invoice";
             crud.CRD(cancelall, "CancelAll");
+            IsCancelled = true;
             ToggleApproval();
         }
         catch (Exception ex)
@@ -768,5 +854,10 @@
     public void NavigateCustomer()
     {
         NavigationManager.NavigateTo($"/customers/new-customer", forceLoad: true);
+    }
+
+    public void NavigateUOM()
+    {
+        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
     }
 }

@@ -26,6 +26,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Backup\**" />
+    <Compile Remove="Scripts\**" />
+    <Content Remove="Backup\**" />
+    <Content Remove="Scripts\**" />
+    <EmbeddedResource Remove="Backup\**" />
+    <EmbeddedResource Remove="Scripts\**" />
+    <MauiCss Remove="Backup\**" />
+    <MauiCss Remove="Scripts\**" />
+    <MauiXaml Remove="Backup\**" />
+    <MauiXaml Remove="Scripts\**" />
+    <None Remove="Backup\**" />
+    <None Remove="Scripts\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="C:\Users\Dell\.nuget\packages\bootstrap\5.3.2\contentFiles\any\any\wwwroot\css\bootstrap-grid.css" />
     <Content Remove="C:\Users\Dell\.nuget\packages\bootstrap\5.3.2\contentFiles\any\any\wwwroot\css\bootstrap-grid.css.map" />
     <Content Remove="C:\Users\Dell\.nuget\packages\bootstrap\5.3.2\contentFiles\any\any\wwwroot\css\bootstrap-grid.min.css" />
@@ -122,7 +137,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BoldReports.Net.Core" Version="6.1.45" />
+    <PackageReference Include="BoldReports.Net.Core" Version="6.1.46" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
@@ -151,6 +166,11 @@
 
   <ItemGroup>
     <None Include="Components\Pages\AdminView\Buying\Buying.razor" />
+    <None Include="Components\Pages\AdminView\Buying\Buying.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Scripts\" />
   </ItemGroup>
 
 </Project>

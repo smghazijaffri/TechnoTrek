@@ -1,22 +1,19 @@
-﻿@page "/saleinvoice"
-@page "/saleinvoices/{SearchString?}"
+﻿@page "/bulk-order"
 
 @inject CRUD crud;
 @layout AdminLayout;
 @inject Select select;
 @inject Connection con;
+@inject Customer customer;
 @inject ISnackbar Snackbar;
-@inject SalesInvoice invoice;
+@inject BulkOrder bulkorder;
 @inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between">
-                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/selling">Selling</MudChip>
-                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                           OnClick="Create" Size="Size.Large">Create</MudButton>
+                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Style="margin-bottom: 20px;" Href="/selling">Selling</MudChip>
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
@@ -28,28 +25,30 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="SalesInvoice" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
-                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<SalesInvoice,bool>(FilterFunc1)" Elevation="4">
+            <MudTable @ref="_table" T="BulkOrder" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
+                      OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<BulkOrder,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Sales Invoices</MudText>
+                    <MudText Typo="Typo.h6">Bulk Order</MudText>
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Sales Invoice ID</MudTh>
+                    <MudTh>ID</MudTh>
                     <MudTh>Title</MudTh>
+                    <MudTh>Customer</MudTh>
                     <MudTh>Status</MudTh>
-                    <MudTh>Grand Total</MudTh>
-                    <MudTh>Document Date</MudTh>
+                    <MudTh>Total</MudTh>
+                    <MudTh>Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Sales Invoice Number">@context.SalesInvoiceID</MudTd>
-                    <MudTd DataLabel="Title">@context.SalesInvoiceName</MudTd>
+                    <MudTd DataLabel="ID">@context.BulkOrderID</MudTd>
+                    <MudTd DataLabel="Title">@context.BulkOrderName</MudTd>
+                    <MudTd DataLabel="Customer">@customer.Name</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
-                    <MudTd DataLabel="Document Date">@context.DocumentDate.ToString("MM/dd/yyyy")</MudTd>
+                    <MudTd DataLabel="Total">@context.TotalAmount</MudTd>
+                    <MudTd DataLabel="Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -63,10 +62,10 @@
     [Parameter]
     public string? SearchString { get; set; }
 
-    private string searchString1 = "";
-    private MudTable<SalesInvoice> _table;
-    private IEnumerable<SalesInvoice> Elements = new List<SalesInvoice>();
-    private HashSet<SalesInvoice> selectedItems = new HashSet<SalesInvoice>();
+    private MudTable<BulkOrder>? _table;
+    private string searchString1 = string.Empty;
+    private IEnumerable<BulkOrder> Elements = new List<BulkOrder>();
+    private HashSet<BulkOrder> selectedItems = new HashSet<BulkOrder>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,35 +73,32 @@
 
         if (!string.IsNullOrWhiteSpace(SearchString))
         {
-            Elements = await db.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'");
+            Elements = await db.QueryAsync<BulkOrder>("SELECT * FROM BulkOrder WHERE Status = 'Cancelled'");
+            customer = db.QueryFirstOrDefault<Customer>("Select TOP(1)c.* from customer c inner join BulkOrder si on si.CustomerID = si.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.CustomerID });
+
         }
         else
         {
-            Elements = await db.QueryAsync<SalesInvoice>("SELECT * FROM SaleInvoice");
+            Elements = await db.QueryAsync<BulkOrder>("SELECT * FROM BulkOrder");
         }
     }
 
-    void OnRowClick(TableRowClickEventArgs<SalesInvoice> args)
+    void OnRowClick(TableRowClickEventArgs<BulkOrder> args)
     {
-        invoice.SalesInvoiceID = args.Item.SalesInvoiceID;
-        NavigationManager.NavigateTo($"/saleinvoice/{invoice.SalesInvoiceID}");
+        bulkorder.BulkOrderID = args.Item.BulkOrderID;
+        NavigationManager.NavigateTo($"/bulk-order/{bulkorder.BulkOrderID}");
     }
 
-    private bool FilterFunc1(SalesInvoice element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(BulkOrder element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(SalesInvoice element, string searchString)
+    private bool FilterFunc(BulkOrder element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.SalesInvoiceName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.BulkOrderName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.SalesInvoiceID} {element.TotalAmount} {element.DocumentDate}".Contains(searchString)) return true;
+        if ($"{element.BulkOrderID} {element.TotalAmount} {element.TotalQuantity} {element.CreationDate}".Contains(searchString)) return true;
 
         return false;
-    }
-
-    private void Create()
-    {
-        NavigationManager.NavigateTo($"/saleinvoice/new-sales-invoice", forceLoad: true);
     }
 
     private void DeleteSelectedItems()
@@ -113,10 +109,10 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Draft" || item.Status == "Cancelled").ToList();
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Cancelled").ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No items with status 'Draft' or 'Cancelled' to delete", Severity.Info);
+            Snackbar.Add("No items with status 'Cancelled' to delete", Severity.Info);
             return;
         }
 
@@ -133,7 +129,7 @@
                 }
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.SalesInvoiceID == e.SalesInvoiceID)).ToList();
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.BulkOrderID == e.BulkOrderID)).ToList();
             Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)

@@ -70,7 +70,7 @@ namespace SharedClass.Components.Data
 
             query += " ORDER BY ItemID";
 
-            return await con.QueryAsync<Stock>(query, new { ItemID });
+            return await con.QueryAsync<Stock>(query, new { ItemID = ItemID });
         }
 
         public static bool IsValidJson(string input)
@@ -248,16 +248,13 @@ namespace SharedClass.Components.Data
 
         public static string HashPassword(string password)
         {
-            using (SHA256 sha256Hash = SHA256.Create())
+            byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+            StringBuilder builder = new();
+            foreach (byte b in bytes)
             {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(password));
-                StringBuilder builder = new StringBuilder();
-                foreach (byte b in bytes)
-                {
-                    builder.Append(b.ToString("x2"));
-                }
-                return builder.ToString();
+                builder.Append(b.ToString("x2"));
             }
+            return "SHA256$" + builder.ToString();
         }
     }
 }

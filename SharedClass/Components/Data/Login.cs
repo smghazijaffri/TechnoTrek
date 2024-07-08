@@ -24,16 +24,18 @@ namespace SharedClass.Components.Data
 
             try
             {
-                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND UserPassword = @Password AND Status != 'Disabled'";
-                var parameters = new { Username = username, Password = password };
+                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND Status != 'Disabled'";
+                var parameters = new { Username = username };
                 var userAuth = await con.QueryFirstOrDefaultAsync<UserAuth>(query, parameters);
 
-                if (userAuth != null)
+                if (userAuth != null && VerifyPassword(password, userAuth.UserPassword))
                 {
                     return (true, userAuth.Role);
                 }
                 else
                 {
+                    Snackbar.Clear();
+                    Snackbar.Add("Invalid username or password.", Severity.Error);
                     return (false, null);
                 }
             }

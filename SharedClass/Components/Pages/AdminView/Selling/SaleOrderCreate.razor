@@ -29,6 +29,10 @@
             {
                 <MudChip Variant="Variant.Text" Color="Color.Error">To Bill</MudChip>
             }
+            @if (ToIssue)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">To Issue</MudChip>
+            }
             @if (PartiallyPaid)
             {
                 <MudChip Variant="Variant.Text" Color="Color.Error">Partially Paid</MudChip>
@@ -50,7 +54,7 @@
                 @GetSubmitButtonText()
             </button>
         }
-        @if (ToBill || PartiallyPaid && !IsCancelled && !IsCompleted)
+        @if (ToIssue || ToBill || PartiallyPaid && !IsCancelled && !IsCompleted)
         {
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
@@ -59,7 +63,7 @@
                     <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
                     <li hidden="@IsCompleted" class="btn ms-2 m-1 text-sm-start" @onclick="CreateSI">Sales Invoice</li>
                     <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
-                    <li hidden="@ToBill || @IsCompleted" class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                    <li hidden="@ToBill || @IsCompleted || ToIssue" class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
                 </ul>
             </div>
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -157,8 +161,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
@@ -258,11 +261,12 @@
     bool IsSaving = true;
     bool DisplaySO = true;
     bool isMobile = false;
+    bool ToIssue = false;
     bool IsCancelled = false;
     bool IsCompleted = false;
     bool PartiallyPaid = false;
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
-    bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted || PartiallyPaid; } }
+    bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted || PartiallyPaid || ToIssue; } }
 
     DropDown DropDownUOM = new DropDown();
     DropDown DropDownItem = new DropDown();
@@ -291,7 +295,7 @@
                     if (saleorder == null) { NavigationManager.NavigateTo("/saleorder/"); }
                     Items = db.Query<SO_Item>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                    customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleOrder si on si.CustomerID = si.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
+                    customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join SaleOrder si on si.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                     UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     DisplaySO = false;
@@ -299,6 +303,11 @@
                     if (saleorder.Status == SaleStatus.ToBill)
                     {
                         ToBill = true;
+                        IsSaving = false;
+                    }
+                    else if(saleorder.Status == SaleStatus.ToIssue)
+                    {
+                        ToIssue = true;
                         IsSaving = false;
                     }
                     else if (saleorder.Status == SaleStatus.Draft)
@@ -384,30 +393,46 @@
                 }
                 else if (IsDraft)
                 {
-                    saleorder.Status = SaleStatus.ToBill;
+                    saleorder.Status = SaleStatus.ToIssue;
                 }
-                saleorder.SaleOrderID = crud.CRD(saleorder, "CreateSaleOrder");
-
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    foreach (int del in IsDelete)
-                    {
-                        if (PO.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
-                    }
-                    PO.SaleOrderID = saleorder.SaleOrderID;
-                    DisplaySO = false;
-                    crud.CRD(PO, "SOItem");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM,PO.Rate,PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(saleorder);
+                parameters.Add("@SOItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSOItem", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateSaleOrder", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    SOItem.RowID = del;
-                    SOItem.SaleOrderID = saleorder.SaleOrderID;
-                    crud.CRD(SOItem, "SOItem", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                saleorder.SaleOrderID = output.Output;
+
+                // saleorder.SaleOrderID = crud.CRD(saleorder, "CreateSaleOrder");
+
+                // foreach (var PO in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (PO.RowID == del)
+                //         {
+                //             IsDelete.Remove(del);
+                //         }
+                //     }
+                //     PO.SaleOrderID = saleorder.SaleOrderID;
+                //     DisplaySO = false;
+                //     crud.CRD(PO, "SOItem");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     SOItem.RowID = del;
+                //     SOItem.SaleOrderID = saleorder.SaleOrderID;
+                //     crud.CRD(SOItem, "SOItem", System.Data.CommandType.StoredProcedure, true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (SaleOrderID == null)
@@ -419,7 +444,7 @@
                     return "Order Saved Successfully";
                 }
 
-                else if (ToBill)
+                else if (ToIssue)
                 {
                     return "Sale Order Submitted Successfully";
                 }
@@ -451,7 +476,7 @@
                 string GetStatus = db.QueryFirstOrDefault<string>("Select Status from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = saleorder.SaleOrderID });
                 if (GetStatus != null)
                 {
-                    if (GetStatus == SaleStatus.ToBill && !ToBill) { return "Sale Order has already been submitted changes cannot be done"; }
+                    if (GetStatus == SaleStatus.ToIssue && !ToIssue) { return "Sale Order has already been submitted changes cannot be done"; }
 
                     if (GetStatus == SaleStatus.Cancelled && !IsCancelled) { return "This Sale Order has already been Cancelled"; }
                 }
@@ -481,6 +506,8 @@
 
                     if (PO.Rate <= 0) return $"Row {count}: Rate cannot be less than or equal to 0";
 
+                    if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {count}";
+
                     if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
                 }
             }
@@ -509,7 +536,7 @@
 
     private string GetSubmitButtonText()
     {
-        if (ToBill)
+        if (ToIssue || ToBill)
         {
             return "Cancel";
         }
@@ -528,7 +555,8 @@
         if (IsDraft)
         {
             IsDraft = false;
-            ToBill = true;
+            ToIssue = true;
+            ToBill = false;
             IsSaving = false;
         }
         else if (IsSaving)
@@ -540,6 +568,14 @@
         {
             IsCancelled = true;
             IsSaving = false;
+            ToBill = false;
+            ToIssue = false;
+        }
+        else if (ToIssue)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            ToIssue = false;
             ToBill = false;
         }
         else if (IsCompleted)
@@ -718,7 +754,7 @@
         {
             string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = saleorder.SaleOrderID });
 
-            if (GetStatus != SaleStatus.ToBill)
+            if (GetStatus != SaleStatus.ToIssue)
             {
                 Snackbar.Clear();
                 Snackbar.Add("Cannot create Goods Issue, Sales Order has already been " + GetStatus, Severity.Error);
@@ -741,7 +777,7 @@
         {
             string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = saleorder.SaleOrderID });
 
-            if (GetStatus != SaleStatus.ToBill)
+            if (GetStatus != SaleStatus.ToIssue)
             {
                 Snackbar.Clear();
                 Snackbar.Add("Cannot create Purchase Request, Sales Order has already been " + GetStatus, Severity.Error);
@@ -764,7 +800,7 @@
         {
             string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = saleorder.SaleOrderID });
 
-            if (GetStatus != SaleStatus.ToBill)
+            if (GetStatus != SaleStatus.ToIssue)
             {
                 Snackbar.Clear();
                 Snackbar.Add("Cannot create Sales Invoice, Sales Order has already been " + GetStatus, Severity.Error);

@@ -12,9 +12,10 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-between">
+                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/home">Home</MudChip>
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                           Style="text-transform:none; margin-bottom: 20px;" Href="/customers/new-customer" Size="Size.Large">
+                           Style="text-transform:none; margin-bottom: 20px;" OnClick="Create" Size="Size.Large">
                     Create
                 </MudButton>
                 @if (selectedItems.Any())
@@ -31,7 +32,7 @@
         <div class="col-md-12">
             <MudTable @ref="_table" T="Customer" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<Customer,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                      Filter="new Func<Customer,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Customers</MudText>
@@ -63,7 +64,6 @@
 @code {
     private MudTable<Customer> _table;
     private string searchString1 = "";
-    private bool _selectOnRowClick = true;
     private IEnumerable<Customer> Elements = new List<Customer>();
     private HashSet<Customer> selectedItems = new HashSet<Customer>();
 
@@ -90,6 +90,11 @@
         if (element.Address.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
+    }
+
+    private void Create()
+    {
+        NavigationManager.NavigateTo($"/customers/new-customer", forceLoad: true);
     }
 
     private void DeleteSelectedItems()

@@ -12,9 +12,10 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-between">
+                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/home">Home</MudChip>
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
-                           Style="text-transform:none; margin-bottom: 20px;" Href="/vendors/new-vendor" Size="Size.Large">
+                           Style="text-transform:none; margin-bottom: 20px;" OnClick="Create" Size="Size.Large">
                     Create
                 </MudButton>
                 @if (selectedItems.Any())
@@ -31,7 +32,7 @@
         <div class="col-md-12">
             <MudTable @ref="_table" T="Vendor" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<Vendor,bool>(FilterFunc1)" @bind-SelectOnRowClick="@_selectOnRowClick" Elevation="4">
+                      Filter="new Func<Vendor,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Vendors</MudText>
@@ -67,7 +68,6 @@
 @code {
     private MudTable<Vendor> _table;
     private string searchString1 = "";
-    private bool _selectOnRowClick = true;
     private IEnumerable<Vendor> Elements = new List<Vendor>();
     private HashSet<Vendor> selectedItems = new HashSet<Vendor>();
 
@@ -97,6 +97,11 @@
         return false;
     }
 
+    private void Create()
+    {
+        NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);
+    }
+
     private void DeleteSelectedItems()
     {
         if (selectedItems == null || !selectedItems.Any())
@@ -117,7 +122,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateVendor", IsDelete: true, outputMessage: true);
+                output = crud.CRD2(item, "CreateVendor", IsDelete: true, outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);

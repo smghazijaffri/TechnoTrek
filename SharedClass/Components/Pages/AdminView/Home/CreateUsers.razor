@@ -178,14 +178,21 @@
 
                 header = users.UserName;
 
-                // users.UserPassword = Select.HashPassword(users.UserPassword);
+                if (!string.IsNullOrEmpty(users.UserPassword) && !users.UserPassword.StartsWith("SHA256$"))
+                {
+                    users.UserPassword = Select.HashPassword(users.UserPassword);
+                }
 
                 if (!Disabled)
                 {
+                    IsSaving = false;
+                    IsEnabled = true;
                     users.Status = PurchaseStatuses.Enabled;
                 }
                 else if (Disabled)
                 {
+                    IsSaving = false;
+                    IsDisabled = true;
                     users.Status = PurchaseStatuses.Disabled;
                 }
 
@@ -211,11 +218,11 @@
                 }
                 else if (!Disabled)
                 {
-                    return "User Enabled Successfully";
+                    return "Saved Successfully";
                 }
                 else if (Disabled)
                 {
-                    return "User Disabled Successfully";
+                    return "Disabled Successfully";
                 }
                 else
                 {
@@ -265,8 +272,13 @@
         if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
         if (string.IsNullOrWhiteSpace((users.Birthday).ToString())) { return $"Please enter User Birthday"; }
         if (string.IsNullOrWhiteSpace(users.Gender)) { return $"Please enter User Gender"; }
-        if (!Regex.IsMatch(users.UserPassword, passwordPattern))
-        { return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character."; }
+        if (!string.IsNullOrWhiteSpace(users.UserPassword) && !users.UserPassword.StartsWith("SHA256$"))
+        {
+            if (!Regex.IsMatch(users.UserPassword, passwordPattern))
+            {
+                return "Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one digit, and one special character.";
+            }
+        }
         if (!Regex.IsMatch(users.UserIdentity, pattern))
         { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
         if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }

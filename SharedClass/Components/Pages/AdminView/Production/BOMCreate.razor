@@ -40,11 +40,17 @@
                     <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Production Order</li>
                 </ul>
             </div>
-            <div class="m-4"></div>
+            @if (IsCustomer)
+            {
+                <div class="m-4"></div>
+            }
         }
-        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO" hidden="@IsCustomer">
-            Save
-        </button>
+        @if (!IsCustomer)
+        {
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
+                Save
+            </button>
+        }
     </div>
 </div>
 
@@ -102,8 +108,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
 
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
@@ -323,28 +328,43 @@
                     header = bom.ItemName;
                 }
 
-                bom.BOMID = crud.CRD(bom, "CreateBOM");
-
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    foreach (int del in IsDelete)
-                    {
-                        if (PO.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
-                    }
-                    PO.BOMID = bom.BOMID;
-                    DisplayPO = false;
-                    crud.CRD(PO, "BOMItem");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(bom);
+                parameters.Add("@BOMItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteBOM_Items", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateBOM", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    BOMItem.RowID = del;
-                    BOMItem.BOMID = bom.BOMID;
-                    crud.CRD(BOMItem, "BOMItem", System.Data.CommandType.StoredProcedure, true);
+                    return output.ErrorMessage;
                 }
+                bom.BOMID = output.Output;
+                // bom.BOMID = crud.CRD(bom, "CreateBOM");
+
+                // foreach (var PO in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (PO.RowID == del)
+                //         {
+                //             IsDelete.Remove(del);
+                //         }
+                //     }
+                //     PO.BOMID = bom.BOMID;
+                //     DisplayPO = false;
+                //     crud.CRD(PO, "BOMItem");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     BOMItem.RowID = del;
+                //     BOMItem.BOMID = bom.BOMID;
+                //     crud.CRD(BOMItem, "BOMItem", System.Data.CommandType.StoredProcedure, true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (BOMID == null)
@@ -481,19 +501,22 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            bool result = DropDownItem.SelectOption(options, rowIndex);
-            if (result == false)
+            if (!Items.Any(option => option.Item == options.Value) && ItemName[rowIndex] != options.Text )
             {
-                if (Items[rowIndex].Item != options.Value)
-                {
-                    UOMName[rowIndex] = "";
-                }
+                bool result = DropDownItem.SelectOption(options, rowIndex);
+                if (result == false)
+                {   
+                    if (Items[rowIndex].Item != options.Value)
+                    {
+                        UOMName[rowIndex] = "";
+                    }
 
-                ItemName[rowIndex] = options.Text;
-                Items[rowIndex].Item = options.Value;
-                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
-                DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
-                HandleFormInput();
+                    ItemName[rowIndex] = options.Text;
+                    Items[rowIndex].Item = options.Value;
+                    Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                    DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
+                    HandleFormInput();
+                }
             }
         }
     }
@@ -556,7 +579,7 @@
 
     public void NavigateItem()
     {
-        NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+        NavigationManager.NavigateTo("/item/new-item", forceLoad: true);
     }
 
     public void CheckStatus()

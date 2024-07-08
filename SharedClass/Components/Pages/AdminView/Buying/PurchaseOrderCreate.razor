@@ -321,11 +321,12 @@
     DropDown DropDownItem = new DropDown();
     SingleDropDown DropDownVendor = new SingleDropDown();
 
+    List<PO_Items> Items = new List<PO_Items>();
+
     List<int> IsDelete = new List<int>();
     List<int> quantity = new List<int>();
     List<string> UOMName = new List<string>();
     List<string> ItemName = new List<string>();
-    List<PO_Items> Items = new List<PO_Items>();
 
     protected override async void OnInitialized()
     {
@@ -362,6 +363,7 @@
                     UOMName = db.Query<string>("select UOMName from PO_Items pr inner join UOM u on pr.UOM = u.UOMID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select v.* from Vendor v inner join PurchaseOrder po on po.VendorID = v.VendorID where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber });
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join PO_Items on UOM = UOMID  where PurchaseOrderID = @PurchaseOrderID", new { PurchaseOrderID = PONumber }).ToList();
+                    getUOM(Items);
                     DisplayPO = false;
                     header = purchase.PurchaseOrderName;
                     if (purchase.Status == PurchaseStatuses.ToReceiveBill)
@@ -397,18 +399,22 @@
                 }
                 else if (!string.IsNullOrWhiteSpace(PRNumber))
                 {
-                    Items = db.Query<PO_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    Items = db.Query<PO_Items>("Select Item,Quantity,UOM,RequiredBy from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join PR_Items on UOM = UOMID  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    getUOM(Items);
                     purchase.RefrenceDocument = PRNumber;
                     await _protectedLocalStore.SetLocalAsync("PRNumber", "");
                 }
                 else if (!string.IsNullOrWhiteSpace(QuotationID))
                 {
                     purchase.VendorID = db.QueryFirstOrDefault<string>("select VendorID from Quotation where QuotationID = @QuotationID", new { QuotationID = QuotationID });
-                    Items = db.Query<PO_Items>("select * from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    Items = db.Query<PO_Items>("select Item,Quantity,UOM,Rate,Amount from QU_Items where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     ItemName = db.Query<string>("select ItemName from QU_Items inner join Items on Item = ItemCode  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join QU_Items on UOM = UOMID  where QuotationID = @QuotationID", new { QuotationID = QuotationID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from RFQ_Items pr inner join UOM u on pr.UOM = u.UOMID where RFQNumber = @RFQNumber", new { RFQNumber = QuotationID }).ToList();
+                    getUOM(Items);
                     foreach (var item in Items)
                     {
                         item.RequiredBy = DateTime.Now;
@@ -742,6 +748,21 @@
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
                 HandleFormInput();
             }
+        }
+    }
+
+    public void getUOM(List<PO_Items> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
+
         }
     }
 

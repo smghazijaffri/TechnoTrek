@@ -15,12 +15,12 @@ namespace SharedClass.Components.Data
 
         public async Task GetEmailAsync(string RfqNumber)
         {
-            using SqlConnection db = new SqlConnection(con.connectionString);
+            using SqlConnection db = new(con.connectionString);
             var emails = db.Query<Vendor>("SELECT Email, VendorName FROM RFQVendor r INNER JOIN Vendor v ON r.VendorID = v.VendorID WHERE SendEmail = 1 AND RFQNumber = @RFQNumber", new { RFQNumber = RfqNumber }).ToList();
 
             foreach (var email in emails)
             {
-                SendModel sendModel = new SendModel
+                SendModel sendModel = new()
                 {
                     Body = GetEmailBody(email.VendorName),
                     To = email.Email,

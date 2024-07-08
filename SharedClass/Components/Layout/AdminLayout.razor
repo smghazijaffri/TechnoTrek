@@ -16,10 +16,12 @@
 {
     <MudLayout>
         <div style="display:flex;">
-            <MudAppBar Elevation="0" Class="bg-transparent" Style="display:flex; color:black; backdrop-filter: blur(8px);">
+            <MudAppBar Elevation="0" Class="bg-transparent d-flex justify-content-between" Style="color:black; backdrop-filter: blur(8px);">
                 <MudIconButton Icon="@(open ? Icons.Material.TwoTone.Close : Icons.Material.TwoTone.Menu)"
                                Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-                <MudImage Src="_content/SharedClass/Images/techlogo.png" Style="width: 200px" />
+                <MudImage Src="_content/SharedClass/Images/techlogo.png" @onclick='() => Navigate("dashboard")' Style="width: 190px; cursor: pointer;" />
+                <div style="flex-grow: 1;"></div>
+                <MudChip Variant="Variant.Text" Color="Color.Info" OnClick='() => Navigate(null)'>@AppState.Username</MudChip>
             </MudAppBar>
             <MudDrawer @bind-Open="@open" Breakpoint="@Breakpoint.Lg" Elevation="1" Variant="@DrawerVariant.Responsive"
                        PreserveOpenState="false"
@@ -58,7 +60,7 @@
                                    Style="background-color:transparent;" Color="Color.Info">Reports</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("users")'>
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.VerifiedUser" OnClick='() => Navigate("users")'
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SupervisedUserCircle" OnClick='() => Navigate("users")'
                                    Style="background-color:transparent;" Color="Color.Info">Employees</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" OnClick="Logout">
@@ -81,7 +83,6 @@
 @code {
     bool open = false;
     bool isLoading = false;
-    bool isAuthorized { get; set; }
 
     protected override void OnInitialized()
     {
@@ -98,7 +99,6 @@
                 string User = AppState.Username;
                 string Role = AppState.Role;
 
-                isAuthorized = AppState.Authorized;
                 if (AppState.Authorized)
                 {
                     isLoading = true;
@@ -121,7 +121,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 
@@ -140,12 +141,26 @@
         NavigationManager.NavigateTo("/");
     }
 
-    private void Navigate(string Page)
+    private void Navigate(string? Page = null)
     {
         Authorization();
         if (!string.IsNullOrWhiteSpace(Page))
         {
             NavigationManager.NavigateTo($"/{Page}");
+        }
+        else if (string.IsNullOrWhiteSpace(Page))
+        {
+            if (!string.IsNullOrWhiteSpace(AppState.Username))
+            {
+                using SqlConnection db = new SqlConnection(con.connectionString);
+                var UserID = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+                if (!string.IsNullOrWhiteSpace(UserID)) NavigationManager.NavigateTo($"/users/{UserID}");
+                else Snackbar.Add("Username not found", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("Username not found", Severity.Error);
+            }
         }
     }
 }

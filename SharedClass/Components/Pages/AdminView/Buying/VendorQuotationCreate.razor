@@ -140,8 +140,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
@@ -197,7 +196,7 @@
                                 </ul>
                             </div>
                         </td>
-                        <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly /></td>
+                        <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" /></td>
                         <td><input type="text" class="form-control" @bind="item.Amount" readonly /></td>
                     </tr>
                 }
@@ -344,10 +343,11 @@
                 else if (!string.IsNullOrWhiteSpace(RFQNumber))
                 {
                     purchase.VendorID = VendorID;
-                    Items = db.Query<QU_Items>("select * from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                    Items = db.Query<QU_Items>("select Item,UOM,RequiredBy,Quantity from RFQ_Items where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     ItemName = db.Query<string>("select ItemName from RFQ_Items inner join Items on Item = ItemCode where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     vendor = db.QueryFirstOrDefault<Vendor>("select * from Vendor where VendorID  = @VendorID", new { VendorID = VendorID });
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join RFQ_Items on UOM = UOMID  where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
+                    UOMName = db.Query<string>("select UOMName from RFQ_Items pr inner join UOM u on pr.UOM = u.UOMID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
                     purchase.RefrenceDocument = RFQNumber;
                     await _protectedLocalStore.SetLocalAsync("RFQNumber", "");
                     await _protectedLocalStore.SetLocalAsync("VendorID", "");
@@ -420,29 +420,43 @@
                 {
                     purchase.Status = PurchaseStatuses.Expired;
                 }
-
-                purchase.QuotationID = crud.CRD(purchase, "CreateQuotation");
-
-                foreach (var PO in Items)
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var item in Items)
                 {
-                    foreach (int del in IsDelete)
-                    {
-                        if (PO.RowID == del)
-                        {
-                            IsDelete.Remove(del);
-                        }
-                    }
-                    PO.QuotationID = purchase.QuotationID;
-                    DisplayPO = false;
-                    crud.CRD(PO, "QUItems");
+                    ItemTable.Rows.Add(item.RowID, item.Item, item.Quantity, item.UOM, item.Rate, item.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                var parameters = new DynamicParameters(purchase);
+                parameters.Add("@QUItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteQUItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass outputClass = crud.CRD3(parameters, "CreateQuotation", outputMessage: true, errorMessage: true);
+                if (outputClass.ErrorMessage != null)
                 {
-                    QUItem.RowID = del;
-                    QUItem.QuotationID = purchase.QuotationID;
-                    crud.CRD(QUItem, "QUItems", IsDelete: true);
+                    return outputClass.ErrorMessage;
                 }
+                purchase.QuotationID = outputClass.Output;
+                // purchase.QuotationID = crud.CRD(purchase, "CreateQuotation");
+
+                // foreach (var PO in Items)
+                // {
+                //     foreach (int del in IsDelete)
+                //     {
+                //         if (PO.RowID == del)
+                //         {
+                //             IsDelete.Remove(del);
+                //         }
+                //     }
+                //     PO.QuotationID = purchase.QuotationID;
+                //     DisplayPO = false;
+                //     crud.CRD(PO, "QUItems");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     QUItem.RowID = del;
+                //     QUItem.QuotationID = purchase.QuotationID;
+                //     crud.CRD(QUItem, "QUItems", IsDelete: true);
+                // }
                 IsDelete.Clear();
                 ToggleApproval();
                 if (QuotationID == null)
@@ -678,7 +692,7 @@
                 }
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
-                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                // Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
                 HandleFormInput();
             }

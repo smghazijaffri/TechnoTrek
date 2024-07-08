@@ -42,6 +42,15 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
+        @if (IsDraft)
+        {
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                </ul>
+            </div>
+        }
         @if (!ToBill && !IsCancelled && !IsCompleted)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePO">
@@ -53,7 +62,7 @@
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                    <li><a @onclick="CreateSI" class="btn ms-2 m-1 text-sm-start">Sales Invoice</a></li>
+                    <li @onclick="CreateSI" class="btn ms-2 m-1 text-sm-start">Sales Invoice</li>
                 </ul>
             </div>
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -141,8 +150,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
@@ -287,11 +295,12 @@
     DropDown DropDownItem = new DropDown();
     SingleDropDown DropDownCustomer = new SingleDropDown();
 
+    List<GI_Items> Items = new List<GI_Items>();
+
     List<int> IsDelete = new List<int>();
     List<int> quantity = new List<int>();
     List<string> UOMName = new List<string>();
     List<string> ItemName = new List<string>();
-    List<GI_Items> Items = new List<GI_Items>();
 
     protected override async void OnInitialized()
     {
@@ -314,8 +323,9 @@
                     Items = db.Query<GI_Items>("select * from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                     ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                     UOMName = db.Query<string>("select UOMName from GI_Items inner join UOM on UOMID = UOM  where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
-                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join GI_Items on UOM = UOMID  where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join GI_Items on UOM = UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                     customer = db.QueryFirstOrDefault<Customer>("select TOP(1)c.* from customer c inner join GoodIssue si on si.CustomerID = si.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
+                    getUOM(Items);
                     if (issue == null || Items.Count == 0)
                         NavigationManager.NavigateTo("/goodissue/");
 
@@ -345,10 +355,12 @@
                 else if (!string.IsNullOrWhiteSpace(SaleOrderID))
                 {
                     issue.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
-                    Items = db.Query<GI_Items>("select * from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    Items = db.Query<GI_Items>("select Item,Quantity,Rate,Amount,UOM from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode  where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                     customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                     UOMName = db.Query<string>("select UOMName from SO_Item it inner join ItemUOM iu on it.Item = iu.ItemID inner join UOM u on iu.UOMID =  u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    getUOM(Items);
                     issue.RefrenceDocument = SaleOrderID;
                     await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
                 }
@@ -425,24 +437,38 @@
                 {
                     issue.Status = SaleStatus.Cancelled;
                 }
-
-                issue.GoodsIssueID = crud.CRD(issue, "CreateGoodIssue");
-                GIItems.GoodsIssueID = issue.GoodsIssueID;
-                crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
-
-                foreach (var GI in Items)
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
                 {
-                    GI.GoodsIssueID = issue.GoodsIssueID;
-                    DisplayPO = false;
-                    crud.CRD(GI, "CreateGI_Items");
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
-
-                foreach (var del in IsDelete)
+                var parameters = new DynamicParameters(issue);
+                parameters.Add("@GIItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteGIItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateGoodIssue", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
                 {
-                    GIItems.RowID = del;
-                    GIItems.GoodsIssueID = issue.GoodsIssueID;
-                    crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+                    return output.ErrorMessage;
                 }
+                issue.GoodsIssueID = output.Output;
+                // issue.GoodsIssueID = crud.CRD(issue, "CreateGoodIssue");
+                // GIItems.GoodsIssueID = issue.GoodsIssueID;
+                // crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+
+                // foreach (var GI in Items)
+                // {
+                //     GI.GoodsIssueID = issue.GoodsIssueID;
+                //     DisplayPO = false;
+                //     crud.CRD(GI, "CreateGI_Items");
+                // }
+
+                // foreach (var del in IsDelete)
+                // {
+                //     GIItems.RowID = del;
+                //     GIItems.GoodsIssueID = issue.GoodsIssueID;
+                //     crud.CRD(GIItems, "CreateGI_Items", IsDelete: true);
+                // }
 
                 IsDelete.Clear();
                 ToggleApproval();
@@ -480,6 +506,21 @@
         }
     }
 
+    public void getUOM(List<GI_Items> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
+
+        }
+    }
+
     public string ValidateGR()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -499,11 +540,14 @@
                         return "Goods Issue ID does not exist";
                     }
                 }
-                foreach (var GI in Items)
+                if (!IsSaving)
                 {
-                    int CheckItem = 0;
-                    CheckItem = db.QueryFirstOrDefault<int>("Select Quantity from Stock where ItemID = @ItemID", new { ItemID = GI.Item });
-                    if (CheckItem == 0) { return $"Item on Row: {GI.RowID} does not have enough Quantity"; }
+                    foreach (var GI in Items)
+                    {
+                        int CheckItem = 0;
+                        CheckItem = db.QueryFirstOrDefault<int>("Select Quantity from Stock where ItemID = @ItemID", new { ItemID = GI.Item });
+                        if (CheckItem == 0) { return $"Item on Row: {GI.RowID} does not have enough Quantity"; }
+                    }
                 }
 
                 if (issue.DocumentDate == null) { return "Please Enter Document Date"; }
@@ -784,6 +828,29 @@
             }
             _protectedLocalStore.SetLocalAsync("GoodsIssueID", issue.GoodsIssueID);
             NavigationManager.NavigateTo("/saleinvoice/new-sales-invoice");
+        }
+    }
+
+    public void CreatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = issue.GoodsIssueID });
+
+            if (GetStatus == SaleStatus.ToBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Request, Goods Issue has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Goods Issue ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("GoodsIssueID", issue.GoodsIssueID);
+            NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
         }
     }
 

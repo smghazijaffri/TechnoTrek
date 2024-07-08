@@ -45,6 +45,8 @@ namespace MauiMobileApp
             builder.Services.AddScoped<DropDown>();
             builder.Services.AddScoped<QU_Items>();
             builder.Services.AddScoped<Customer>();
+            builder.Services.AddScoped<BO_Items>();
+            builder.Services.AddScoped<BulkOrder>();
             builder.Services.AddScoped<ItemClass>();
             builder.Services.AddScoped<SaleOrder>();
             builder.Services.AddScoped<RFQVendor>();
@@ -71,6 +73,8 @@ namespace MauiMobileApp
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseRequisition>();
             builder.Services.AddScoped<PurchaseOrderAnalysis>();
+            builder.Services.AddScoped<StockEntry_Items>();
+            builder.Services.AddScoped<Stock_Entry>();
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomEnd;

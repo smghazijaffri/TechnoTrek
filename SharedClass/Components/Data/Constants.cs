@@ -35,7 +35,9 @@
         public const string Pending = "Pending";
         public const string Expired = "Expired";
         public const string Ordered = "Ordered";
+        public const string ToIssue = "To Issue";
         public const string Received = "Received";
+        public const string Confirmed = "Confirmed";
         public const string Cancelled = "Cancelled";
         public const string Submitted = "Submitted";
         public const string Completed = "Completed";

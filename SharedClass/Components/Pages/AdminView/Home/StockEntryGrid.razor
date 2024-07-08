@@ -1,12 +1,11 @@
-﻿@page "/item"
+﻿@page "/stock-entry"
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
-@inject ItemClass items;
+@inject Connection con;
+@inject Stock_Entry stock;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="container-fluid">
     <div class="row">
@@ -20,8 +19,8 @@
                 @if (selectedItems.Any())
                 {
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
-                               Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
-                               Size="Size.Large">Delete</MudButton>
+                               Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error"
+                               OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
                 }
             </div>
         </div>
@@ -29,34 +28,28 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="ItemClass" Items="@Elements" MultiSelection="true"
+            <MudTable @ref="_table" T="Stock_Entry" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick"
-                      Virtualize="true" Filter="new Func<ItemClass,bool>(FilterFunc1)"
-                      Elevation="4">
+                      Virtualize="true" Filter="new Func<Stock_Entry,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Items</MudText>
+                    <MudText Typo="Typo.h6">Stock Entry</MudText>
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
-                    </MudTextField>
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Code</MudTh>
-                    <MudTh>Brand</MudTh>
-                    <MudTh>Title</MudTh>
-                    <MudTh>Type</MudTh>
+                    <MudTh>Stock Entry ID</MudTh>
+                    <MudTh>Stock Entry Type</MudTh>
                     <MudTh>Status</MudTh>
-                    <MudTh>Created</MudTh>
+                    <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Item Code">@context.ItemCode</MudTd>
-                    <MudTd DataLabel="Brand">@context.Brand</MudTd>
-                    <MudTd DataLabel="Title">@context.ItemName</MudTd>
-                    <MudTd DataLabel="Type">@context.ItemType</MudTd>
+                    <MudTd DataLabel="Stock Entry ID">@context.StockID</MudTd>
+                    <MudTd DataLabel="Stock Entry Type">@context.StockEntryType</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Created">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
+                    <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
                     <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
@@ -68,39 +61,37 @@
 
 @code {
     private string searchString1 = "";
-    private MudTable<ItemClass> _table;
-    private IEnumerable<ItemClass> Elements = new List<ItemClass>();
-    private HashSet<ItemClass> selectedItems = new HashSet<ItemClass>();
+    private MudTable<Stock_Entry> _table;
+    private IEnumerable<Stock_Entry> Elements = new List<Stock_Entry>();
+    private HashSet<Stock_Entry> selectedItems = new HashSet<Stock_Entry>();
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await select.GetItemsAsync();
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        Elements = await db.QueryAsync<Stock_Entry>("SELECT * FROM Stock_Entry");
     }
 
-    void OnRowClick(TableRowClickEventArgs<ItemClass> args)
+    void OnRowClick(TableRowClickEventArgs<Stock_Entry> args)
     {
-        items.ItemCode = args.Item.ItemCode;
-        NavigationManager.NavigateTo($"/item/{items.ItemCode}");
+        stock.StockID = args.Item.StockID;
+        NavigationManager.NavigateTo($"/stock-entry/{stock.StockID}");
     }
 
-    private bool FilterFunc1(ItemClass element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(Stock_Entry element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(ItemClass element, string searchString)
+    private bool FilterFunc(Stock_Entry element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.ItemCode.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.Brand.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.ItemName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.ItemType.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.StockEntryType.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.CreationDate}".Contains(searchString)) return true;
+        if ($"{element.CreationDate} {element.StockID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
 
     private void Create()
     {
-        NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+        NavigationManager.NavigateTo($"/stock-entry/new-stock-entry", forceLoad: true);
     }
 
     private void DeleteSelectedItems()
@@ -111,10 +102,10 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Draft").ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No items with status 'Disabled' to delete", Severity.Info);
+            Snackbar.Add("No items with status 'Draft' to delete", Severity.Info);
             return;
         }
 
@@ -123,7 +114,7 @@
             foreach (var item in itemsToDelete)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "Add_Item", IsDelete: true, errorMessage: true, outputMessage: true);
+                output = crud.CRD2(item, "Create_StockEntry", IsDelete: true, outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);
@@ -131,7 +122,7 @@
                 }
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.ItemCode == e.ItemCode)).ToList();
+            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.StockID == e.StockID)).ToList();
             Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
         catch (Exception ex)
