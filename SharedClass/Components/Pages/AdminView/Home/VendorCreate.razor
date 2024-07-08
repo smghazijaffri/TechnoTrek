@@ -39,7 +39,7 @@
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Name and Type</h5>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
-        <div class="col-md-6" hidden>
+        <div class="col-md-6" hidden="@IsSaving">
             <label class="form-label">Vendor ID</label>
             <input type="text" class="form-control" @bind="vendor.VendorID" readonly>
         </div>
@@ -52,10 +52,12 @@
             <input type="text" @bind="vendor.VendorGroup" class="form-control">
         </div>
         <div class="col-md-6">
-            <MudSelect T="string" Label="Vendor Type" @bind-Value="vendor.VendorType" AnchorOrigin="Origin.BottomCenter">
-                <MudSelectItem Value="@("Company")" />
-                <MudSelectItem Value="@("Individual")" />
-            </MudSelect>
+            <label class="form-label">Vendor Type</label>
+            <select class="form-select" aria-label="Item Type" @bind="vendor.VendorType">
+                <option value=""></option>
+                <option value="Company">Company</option>
+                <option value="Individual">Individual</option>
+            </select>
         </div>
         <div class="col-md-6">
             <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
