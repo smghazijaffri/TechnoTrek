@@ -784,18 +784,16 @@
         Snackbar.Add("Generating Report", Severity.Info);
         try
         {
-            var PdfByte = select.GetPdfAsync("Sales Invoice", salesinvoice.SalesInvoiceID);
-
-            var pdfBytes = Select.ExtractOddPages(PdfByte);
+            var PdfByte = await select.GetPdfAsync("Sales Invoice", salesinvoice.SalesInvoiceID);
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await Select.OpenPdfAsync(pdfBytes, $"{salesinvoice.SalesInvoiceID}.pdf");
+                await Select.OpenPdfAsync(PdfByte, $"{salesinvoice.SalesInvoiceID}.pdf");
             }
             else
             {
-                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var base64Pdf = Convert.ToBase64String(PdfByte);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
                 await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{salesinvoice.SalesInvoiceID}.pdf");
                 Snackbar.Add("Report Downloaded", Severity.Success);
@@ -813,7 +811,7 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
 
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
+            string? GetStatus = db.QueryFirstOrDefault<string>("Select Status from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = salesinvoice.SalesInvoiceID });
 
             if (GetStatus == SaleStatus.Cancelled)
             {

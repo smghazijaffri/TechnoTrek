@@ -16,7 +16,7 @@
         <h3>Reports</h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <MudButton Variant="Variant.Outlined" OnClick="GenerateReport" StartIcon="@Icons.Material.Filled.FilePresent" Color="Color.Primary">Generate Report</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="OnButtonClick" StartIcon="@Icons.Material.Filled.FilePresent" Color="Color.Primary">Generate Report</MudButton>
     </div>
 </div>
 
@@ -138,72 +138,70 @@
         StateHasChanged();
     }
 
-    public async void GenerateReport()
+    public async void OnButtonClick()
+    {
+        Snackbar.Clear();
+        if (string.IsNullOrEmpty(reports.ReportName))
+        {
+            if (isMobile) Vibration.Default.Vibrate();
+            Snackbar.Add("Please Select a Report", Severity.Error);
+            return;
+        }
+
+        if (invoice)
+        {
+            if (string.IsNullOrEmpty(reportparameters.InvoiceID) || reportparameters.InvoiceID == "Select an ID")
+            {
+                if (isMobile) Vibration.Default.Vibrate();
+                Snackbar.Add("Please Select an ID", Severity.Error);
+                return;
+            }
+        }
+
+        if (dateFilter)
+        {
+            if (string.IsNullOrEmpty(From.ToString()) || string.IsNullOrEmpty(To.ToString()))
+            {
+                if (isMobile) Vibration.Default.Vibrate();
+                Snackbar.Add("Please Select Dates", Severity.Error);
+                return;
+            }
+        }
+
+        Snackbar.Add("Generating Report", Severity.Info);
+
+        await GenerateReport();
+    }
+
+    public async Task GenerateReport()
     {
         try
         {
-            Snackbar.Clear();
-            if (string.IsNullOrEmpty(reports.ReportName))
-            {
-                if (isMobile) Vibration.Default.Vibrate();
-                Snackbar.Add("Please Select a Report", Severity.Error);
-                return;
-            }
-
-            if (invoice)
-            {
-                if (string.IsNullOrEmpty(reportparameters.InvoiceID) || reportparameters.InvoiceID == "Select an ID")
-                {
-                    if (isMobile) Vibration.Default.Vibrate();
-                    Snackbar.Add("Please Select an ID", Severity.Error);
-                    return;
-                }
-            }
-
-            if (dateFilter)
-            {
-                if (string.IsNullOrEmpty(From.ToString()) || string.IsNullOrEmpty(To.ToString()))
-                {
-                    if (isMobile) Vibration.Default.Vibrate();
-                    Snackbar.Add("Please Select Dates", Severity.Error);
-                    return;
-                }
-            }
-
-            Snackbar.Add("Generating Report", Severity.Info);
-
-            byte[] pdfBytes;
             byte[] PdfByte;
 
             if (!string.IsNullOrEmpty(reportparameters.InvoiceID) && reportparameters.InvoiceID != "Select an ID")
             {
-                PdfByte = select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
-
-                pdfBytes = Select.ExtractOddPages(PdfByte);
+                PdfByte = await select.GetPdfAsync(reports.ReportName, reportparameters.InvoiceID);
             }
             else if (!string.IsNullOrEmpty(From.ToString()) && !string.IsNullOrEmpty(To.ToString()))
             {
-                PdfByte = select.GetPdfAsync(reports.ReportName, null, From, To);
-
-                pdfBytes = Select.ExtractOddPages(PdfByte);
+                PdfByte = await select.GetPdfAsync(reports.ReportName, null, From, To);
             }
             else
             {
-                PdfByte = select.GetPdfAsync(reports.ReportName);
-
-                pdfBytes = Select.ExtractOddPages(PdfByte);
+                PdfByte = await select.GetPdfAsync(reports.ReportName);
             }
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await Select.OpenPdfAsync(pdfBytes, $"{reports.ReportName}.pdf");
+                await Select.OpenPdfAsync(PdfByte, $"{reports.ReportName}.pdf");
             }
             else
             {
-                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var base64Pdf = Convert.ToBase64String(PdfByte);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
-                PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(pdfBytes)}";
+                PdfDataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(PdfByte)}";
                 Snackbar.Add("Report Created", Severity.Success);
             }
         }

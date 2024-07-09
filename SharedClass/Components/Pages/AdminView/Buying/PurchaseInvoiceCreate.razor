@@ -845,7 +845,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = purchase.PurchaseInvoiceID });
+            string? GetStatus = db.QueryFirstOrDefault<string>("Select Status from PurchaseInvoice where PurchaseInvoiceID = @PurchaseInvoiceID", new { PurchaseInvoiceID = purchase.PurchaseInvoiceID });
 
             if (GetStatus == PurchaseStatuses.Cancelled)
             {
@@ -886,18 +886,16 @@
         Snackbar.Add("Generating Report", Severity.Info);
         try
         {
-            var PdfByte = select.GetPdfAsync("Purchase Invoice", purchase.PurchaseInvoiceID);
-
-            var pdfBytes = Select.ExtractOddPages(PdfByte);
+            var PdfByte = await select.GetPdfAsync("Purchase Invoice", purchase.PurchaseInvoiceID);
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await Select.OpenPdfAsync(pdfBytes, $"{purchase.PurchaseInvoiceID}.pdf");
+                await Select.OpenPdfAsync(PdfByte, $"{purchase.PurchaseInvoiceID}.pdf");
             }
             else
             {
-                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var base64Pdf = Convert.ToBase64String(PdfByte);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
                 await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{purchase.PurchaseInvoiceID}.pdf");
                 Snackbar.Add("Report Downloaded", Severity.Success);

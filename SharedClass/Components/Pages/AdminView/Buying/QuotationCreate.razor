@@ -809,19 +809,17 @@
     {
         try
         {
-            var PdfByte = select.GetPdfAsync("Request for Quotation", rfq.RFQNumber);
-
-            var pdfBytes = Select.ExtractOddPages(PdfByte);
+            var PdfByte = await select.GetPdfAsync("Request for Quotation", rfq.RFQNumber);
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await Select.OpenPdfAsync(pdfBytes, $"{rfq.RFQNumber}.pdf");
+                await Select.OpenPdfAsync(PdfByte, $"{rfq.RFQNumber}.pdf");
             }
             else
             {
                 Snackbar.Add("Downloading Report", Severity.Info);
-                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var base64Pdf = Convert.ToBase64String(PdfByte);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
                 await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"{rfq.RFQNumber}.pdf");
                 Snackbar.Add("Report Downloaded", Severity.Success);
@@ -848,5 +846,5 @@
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
     }
-    
+
 }

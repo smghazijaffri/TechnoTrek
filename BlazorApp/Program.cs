@@ -12,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<AppState>();
+
 builder.Services.AddScoped<BOM>();
 builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Stock>();
@@ -45,7 +48,7 @@ builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodsIssue>();
 builder.Services.AddScoped<GoodReceipt>();
-builder.Services.AddSingleton<AppState>();
+builder.Services.AddScoped<Stock_Entry>();
 builder.Services.AddScoped<SalesInvoice>();
 builder.Services.AddScoped<BindDropdown>();
 builder.Services.AddScoped<Compatibility>();
@@ -55,16 +58,17 @@ builder.Services.AddScoped<SingleDropDown>();
 builder.Services.AddScoped<PurchaseOrders>();
 builder.Services.AddScoped<ProductionOrder>();
 builder.Services.AddScoped<PurchaseInvoice>();
+builder.Services.AddScoped<StockEntry_Items>();
 builder.Services.AddScoped<ExampleJsInterop>();
 builder.Services.AddScoped<ReportParameters>();
 builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseOrderAnalysis>();
-builder.Services.AddScoped<StockEntry_Items>();
-builder.Services.AddScoped<Stock_Entry>();
 builder.Services.AddScoped<SharedClass.Components.Data.Email>();
+
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
+
 builder.Services.AddMudServices();
 builder.Services.AddMudServices(config =>
 {

@@ -149,50 +149,68 @@ namespace SharedClass.Components.Data
 
         }
 
-        public byte[] GetPdfAsync(string ReportName, string? ID = null, DateTime? from = null, DateTime? to = null)
+        public async Task<byte[]> GetPdfAsync(string reportName, string? id = null, DateTime? from = null, DateTime? to = null)
         {
-            DynamicParameters parameters = new();
-            parameters.Add("@ReportName", ReportName);
-            if (!string.IsNullOrEmpty(ID)) parameters.Add("@ID", ID);
-            if (!string.IsNullOrEmpty(from.ToString())) parameters.Add("@StartDate", from);
-            if (!string.IsNullOrEmpty(to.ToString())) parameters.Add("@EndDate", to);
-
-            var output = CRD4(parameters, "GetReportData", CommandType.StoredProcedure, errorMessage: true);
-            List<dynamic> reportData = output.Data;
-
-            if (reportData == null || reportData.Count == 0)
+            try
             {
-                throw new Exception("No data found for the specified report.");
+                DynamicParameters parameters = new();
+                parameters.Add("@ReportName", reportName);
+                if (!string.IsNullOrEmpty(id)) parameters.Add("@ID", id);
+                if (from.HasValue) parameters.Add("@StartDate", from);
+                if (to.HasValue) parameters.Add("@EndDate", to);
+
+                var output = await CRD4(parameters, "GetReportData", CommandType.StoredProcedure, errorMessage: true);
+                List<dynamic> reportData = output.Data;
+
+                if (reportData == null || reportData.Count == 0)
+                {
+                    throw new Exception("No data found for the specified report.");
+                }
+
+                using MemoryStream inputStream = new(await con.QuerySingleOrDefaultAsync<byte[]>(
+                    "SELECT RDLData FROM Reports WHERE ReportName = @ReportName",
+                    new { ReportName = reportName }) ?? throw new Exception("Report not found in the database."));
+
+                ReportWriter writer = new(inputStream);
+                writer.DataSources.Add(new ReportDataSource("DataSet1", reportData));
+
+                using MemoryStream pdfStream = new();
+                writer.Save(pdfStream, WriterFormat.PDF);
+
+                return ExtractOddPages(pdfStream.ToArray());
             }
-
-            using MemoryStream inputStream = new(con.QuerySingleOrDefault<byte[]>("SELECT RDLData FROM Reports WHERE ReportName = @ReportName", new { ReportName }) ?? throw new Exception("Report not found in the database."));
-            ReportWriter writer = new(inputStream);
-
-            writer.DataSources.Add(new ReportDataSource("DataSet1", reportData));
-
-            using MemoryStream memoryStream = new();
-            writer.Save(memoryStream, WriterFormat.PDF);
-
-            return memoryStream.ToArray();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating pdf: {ex.Message}");
+                throw;
+            }
         }
 
-        public static byte[] ExtractOddPages(byte[] pdfBytes)
+        private static byte[] ExtractOddPages(byte[] pdfBytes)
         {
-            using var inputDocument = PdfReader.Open(new MemoryStream(pdfBytes), PdfDocumentOpenMode.Import);
-            using var outputDocument = new PdfDocument();
-
-            for (int i = 0; i < inputDocument.PageCount; i++)
+            try
             {
-                if (i % 2 == 0)
+                using var inputStream = new MemoryStream(pdfBytes);
+                using var inputDocument = PdfReader.Open(inputStream, PdfDocumentOpenMode.Import);
+                using var outputDocument = new PdfDocument();
+
+                for (int i = 0; i < inputDocument.PageCount; i++)
                 {
-                    outputDocument.AddPage(inputDocument.Pages[i]);
+                    if (i % 2 == 0)
+                    {
+                        outputDocument.AddPage(inputDocument.Pages[i]);
+                    }
                 }
+
+                using var outputStream = new MemoryStream();
+                outputDocument.Save(outputStream);
+                return outputStream.ToArray();
             }
-
-            using var outputStream = new MemoryStream();
-
-            outputDocument.Save(outputStream);
-            return outputStream.ToArray();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error extracting odd pages: {ex.Message}");
+                throw;
+            }
         }
 
         public static async Task OpenPdfAsync(byte[] pdfBytes, string fileName)

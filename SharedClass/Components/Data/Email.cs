@@ -40,11 +40,9 @@ namespace SharedClass.Components.Data
                 message.Subject = sendModel.Subject;
                 message.Body = sendModel.Body;
                 message.IsBodyHtml = true;
-                byte[] pdfBytes = select.GetPdfAsync("Request for Quotation", sendModel.RFQNumber);
+                byte[] pdfBytes = await select.GetPdfAsync("Request for Quotation", sendModel.RFQNumber);
 
-                var attachmentBytes = Select.ExtractOddPages(pdfBytes);
-
-                var attachment = new Attachment(new MemoryStream(attachmentBytes), "Request for Quotation.pdf");
+                var attachment = new Attachment(new MemoryStream(pdfBytes), "Request for Quotation.pdf");
                 message.Attachments.Add(attachment);
 
                 using var client = new SmtpClient(Emailhost, EmailPort);

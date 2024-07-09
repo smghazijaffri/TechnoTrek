@@ -474,18 +474,16 @@
         Snackbar.Add("Generating Report", Severity.Info);
         try
         {
-            var PdfByte = select.GetPdfAsync("Inventory Report");
-
-            var pdfBytes = Select.ExtractOddPages(PdfByte);
+            var PdfByte = await select.GetPdfAsync("Inventory Report");
 
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await Select.OpenPdfAsync(pdfBytes, "Inventory Report.pdf");
+                await Select.OpenPdfAsync(PdfByte, "Inventory Report.pdf");
             }
             else
             {
-                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var base64Pdf = Convert.ToBase64String(PdfByte);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
                 await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, "Inventory Report.pdf");
                 Snackbar.Add("Report Downloaded", Severity.Success);

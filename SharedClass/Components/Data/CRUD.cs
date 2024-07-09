@@ -116,7 +116,7 @@ namespace SharedClass.Components.Data
             return output;
         }
 
-        public OutputClass CRD4(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool errorMessage = false)
+        public async Task<OutputClass> CRD4(DynamicParameters parameters, string sp, CommandType commandType = CommandType.StoredProcedure, bool errorMessage = false)
         {
             OutputClass output = new();
 
@@ -124,15 +124,15 @@ namespace SharedClass.Components.Data
             {
                 parameters.Add("@CreationDate", DateTime.Now);
 
-                if (errorMessage == true)
+                if (errorMessage)
                 {
                     parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
                 }
 
-                var result = db.Query(SP, parameters, commandType: commandType).ToList();
+                var result = (await db.QueryAsync(sp, parameters, commandType: commandType)).ToList();
                 output.Data = result;
 
-                if (errorMessage == true)
+                if (errorMessage)
                 {
                     output.ErrorMessage = parameters.Get<string>("@ErrorMessage");
                 }
