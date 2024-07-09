@@ -343,9 +343,9 @@
             }
             else if (!string.IsNullOrWhiteSpace(BulkOrderID))
             {
-                Items = db.Query<PR_Items>("select * from PRO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOMID = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                Items = db.Query<PR_Items>("select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                ItemName = db.Query<string>("select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
                 getUOM(Items);
                 foreach (var item in Items)
                 {

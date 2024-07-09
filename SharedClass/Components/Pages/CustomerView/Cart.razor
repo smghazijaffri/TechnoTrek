@@ -282,7 +282,35 @@
             {
                 await using SqlConnection db = new SqlConnection(con.connectionString);
                 var customerID = await db.QueryFirstOrDefaultAsync<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-
+                var customerName = db.QueryFirstOrDefault<string>("select Name from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
+                string bulkordername  = "BulkOrder for " + customerName + " on " + DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt");
+                int totalAmount = items.Sum(item => item.Price);
+                int totalQuantity = items.Sum(item => item.Quantity);
+                DataTable ItemTable = Select.ItemTable();
+                DataTable Delete = new DataTable();
+                Delete.Columns.Add("RowID", typeof(int));
+                foreach (var PO in items)
+                {
+                    ItemTable.Rows.Add(0, PO.Code, PO.Quantity, "UOM-001", 0, PO.Price, null);
+                }
+                BulkOrder bulkOrder = new BulkOrder
+                {
+                        BulkOrderID = null,
+                        BulkOrderName = bulkordername,
+                        CustomerID = customerID,
+                        Status = "Received",
+                        TotalAmount = totalAmount,
+                        TotalQuantity = totalQuantity
+                };
+                var parameters = new DynamicParameters(bulkOrder);
+                parameters.Add("@BOItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteBOItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateBulkOrder ", outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    Snackbar.Add(output.ErrorMessage, Severity.Error);
+                    return;
+                }
                 if (!string.IsNullOrEmpty(customerID))
                 {
                     await db.ExecuteAsync("Delete from Cart where UserID = @UserID", new { UserID = customerID });

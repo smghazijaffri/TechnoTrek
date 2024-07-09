@@ -23,7 +23,7 @@
             }
             @if (IsConfirmed)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Surface">Confirmed</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Confirmed</MudChip>
             }
             @if (IsCancelled)
             {
@@ -45,7 +45,7 @@
         }
         @if (IsReceived && !IsConfirmed && !IsCancelled)
         {
-            <button type="submit" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="SaveBO">
+            <button type="submit" class="btn btn-info m-1 rounded-3 text-sm-center" @onclick="SaveBO">
                 Confirm
             </button>
         }
@@ -198,7 +198,12 @@
         </div>
     </form>
 </div>
-
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+</script>
 @code {
     [Parameter]
     public string? BulkOrderID { get; set; }
@@ -287,11 +292,8 @@
                 bulkorder.TotalQuantity = SumQuantity;
                 header = bulkorder.BulkOrderName;
 
+
                 if (IsReceived)
-                {
-                    bulkorder.Status = SaleStatus.Received;
-                }
-                else if (IsConfirmed)
                 {
                     bulkorder.Status = SaleStatus.Confirmed;
                 }
@@ -304,12 +306,12 @@
                 DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.Rate, PO.Amount, null);
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, 0, PO.Amount, null);
                 }
                 var parameters = new DynamicParameters(bulkorder);
-                parameters.Add("@SIItems", ItemTable.AsTableValuedParameter("Purhcase"));
-                parameters.Add("@DeleteSIItems", Delete.AsTableValuedParameter("DeleteType"));
-                OutputClass output = crud.CRD3(parameters, "CreateSaleInvoice", outputMessage: true, errorMessage: true);
+                parameters.Add("@BOItems", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteBOItems", Delete.AsTableValuedParameter("DeleteType"));
+                OutputClass output = crud.CRD3(parameters, "CreateBulkOrder ", outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
