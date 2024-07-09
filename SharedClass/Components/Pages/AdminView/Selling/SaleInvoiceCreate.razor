@@ -345,7 +345,7 @@
             else if (!string.IsNullOrWhiteSpace(GoodsIssueID))
             {
                 salesinvoice.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from GoodIssue where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
-                Items = db.Query<SI_Item>("select Quantity ,* from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                Items = db.Query<SI_Item>("select * from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                 ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode  where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join GoodIssue so on so.CustomerID = c.CustomerID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID });
                 quantity = db.Query<int>("select StockQuantity from UOM Inner Join GI_Items on UOM = UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
@@ -357,7 +357,7 @@
             else if (!string.IsNullOrWhiteSpace(SaleOrderID))
             {
                 salesinvoice.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
-                Items = db.Query<SI_Item>("select Quantity ,* from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                Items = db.Query<SI_Item>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                 ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
                 customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
                 quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();

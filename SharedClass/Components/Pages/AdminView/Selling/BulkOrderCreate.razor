@@ -38,6 +38,8 @@
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                     <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                    <hr class="m-1 border-primary" />
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateSO">Sale Order</li>
                 </ul>
             </div>
         }
@@ -436,6 +438,29 @@
             }
             _protectedLocalStore.SetLocalAsync("BulkOrderID", bulkorder.BulkOrderID);
             NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
+    }
+
+    public void CreateSO()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.BulkOrderID });
+
+            if (GetStatus == SaleStatus.ToBill)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Sale Order, Bulk Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Bulk Order ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("BulkOrderID", bulkorder.BulkOrderID);
+            NavigationManager.NavigateTo("/saleorder/new-sales-order");
         }
     }
 
