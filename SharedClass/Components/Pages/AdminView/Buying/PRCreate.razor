@@ -255,6 +255,7 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             var BulkOrderID = string.Empty;
+            var SaleOrderID = string.Empty;
             var GoodsIssueID = string.Empty;
             var ProductionOrderID = string.Empty;
             if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodsIssueID"))
@@ -268,6 +269,10 @@
             if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BulkOrderID"))
             {
                 BulkOrderID = await _protectedLocalStore.GetLocalAsync<string>("BulkOrderID");
+            }
+            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleOrderID"))
+            {
+                SaleOrderID = await _protectedLocalStore.GetLocalAsync<string>("SaleOrderID");
             }
 
             purchase.DocumentDate = DateTime.Now;
@@ -347,6 +352,18 @@
                     item.RequiredBy = DateTime.Today;
                 }
                 await _protectedLocalStore.SetLocalAsync("BulkOrderID", "");
+            }
+            else if (!string.IsNullOrWhiteSpace(SaleOrderID))
+            {
+                Items = db.Query<PR_Items>("select * from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                getUOM(Items);
+                foreach (var item in Items)
+                {
+                    item.RequiredBy = DateTime.Today;
+                }
+                await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
             }
             else
             {

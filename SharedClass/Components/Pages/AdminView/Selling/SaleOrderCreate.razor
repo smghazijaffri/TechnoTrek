@@ -60,10 +60,10 @@
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
                     <li hidden="@IsCompleted" class="btn ms-2 m-1 text-sm-start" @onclick="CreateGI">Goods Issue</li>
-                    <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
+                    <hr hidden="@IsCompleted" class="m-1 border-primary" />
                     <li hidden="@IsCompleted" class="btn ms-2 m-1 text-sm-start" @onclick="CreateSI">Sales Invoice</li>
-                    <hr hidden="@ReadonlyHidden" class="m-1 border-primary" />
-                    <li hidden="@ToBill || @IsCompleted || ToIssue" class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                    <hr hidden="@Readonly" class="m-1 border-primary" />
+                    <li hidden="@Readonly" class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
                 </ul>
             </div>
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -265,6 +265,7 @@
     bool IsCancelled = false;
     bool IsCompleted = false;
     bool PartiallyPaid = false;
+    bool Readonly { get { return ToBill || IsCompleted; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool ReadonlyHidden { get { return IsCancelled || ToBill || IsCompleted || PartiallyPaid || ToIssue; } }
 
@@ -312,7 +313,7 @@
                         ToBill = true;
                         IsSaving = false;
                     }
-                    else if(saleorder.Status == SaleStatus.ToIssue)
+                    else if (saleorder.Status == SaleStatus.ToIssue)
                     {
                         ToIssue = true;
                         IsSaving = false;
@@ -432,7 +433,7 @@
                 DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM,PO.Rate,PO.Amount, null);
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Rate, PO.Amount, null);
                 }
                 var parameters = new DynamicParameters(saleorder);
                 parameters.Add("@SOItems", ItemTable.AsTableValuedParameter("Purhcase"));
