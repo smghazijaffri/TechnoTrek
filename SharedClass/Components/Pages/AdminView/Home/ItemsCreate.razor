@@ -208,9 +208,9 @@
             <form class="" @oninput="HandleFormInput" autocomplete="off">
                 @foreach (var item in itemsFromDatabase)
                 {
-                    @if (item.ItemCode != items.ItemCode)
+                    @if (item.ItemType == items.ItemType)
                     {
-                        @if (item.ItemType == items.ItemType)
+                        @if (item.ItemCode != items.ItemCode)
                         {
                             <div>
                                 <MudCheckBox @bind-Value="@item.Alternate" Color="Color.Info" Label="@item.ItemName"></MudCheckBox>
@@ -492,8 +492,8 @@
             Disabled = false;
             IsDisabled = false;
             IsEnabled = false;
-            StateHasChanged();
         }
+        StateHasChanged();
     }
 
     private void AddRow()

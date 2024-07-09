@@ -103,7 +103,7 @@
                                         {
                                             @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                <a class="dropdown-item" bind="@item.ItemID" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
+                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
                                                 <hr class="m-1 border-primary" />
                                             }
                                         }
@@ -113,7 +113,7 @@
                             </div>
                         </td>
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                        <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
+                        <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.BasicRate" readonly="@ReadonlyHidden" /></td>
                     </tr>
                 }
             </tbody>
@@ -163,7 +163,7 @@
     bool isMobile = false;
     bool Hiderate = false;
     bool IsSubmitted = false;
-    bool ReadonlyHidden { get { return  IsSubmitted; } }
+    bool ReadonlyHidden { get { return IsSubmitted; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
 
     DropDown DropDownItem = new DropDown();
@@ -186,7 +186,7 @@
             if (EntryID != null)
             {
                 stock = db.QueryFirstOrDefault<Stock_Entry>("select * from Stock_Entry where StockID = @StockID", new { StockID = EntryID });
-                Items = db.Query<StockEntry_Items>("Select RowID, StockID, Item as ItemID, Quantity, BasicRate as Rate, CreationDate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
+                Items = db.Query<StockEntry_Items>("Select RowID, StockID, Item as Item, Quantity, BasicRate, CreationDate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
                 ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntry_Items SE INNER JOIN Items I1 ON SE.Item = I1.ItemCode WHERE SE.StockID = @StockID", new { StockID = EntryID }).ToList();
                 if (stock == null || Items.Count == 0) NavigationManager.NavigateTo("/stock-entry/");
 
@@ -248,7 +248,7 @@
                 DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    ItemTable.Rows.Add(PO.RowID, PO.ItemID, PO.Quantity, null, PO.Rate, null, null);
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, null, PO.BasicRate, null, null);
                 }
                 var parameters = new DynamicParameters(stock);
                 parameters.Add("@StockEntryItem", ItemTable.AsTableValuedParameter("Purhcase"));
@@ -334,7 +334,7 @@
 
                 if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
-                if (PR.Rate <= 0 || string.IsNullOrWhiteSpace((PR.Rate).ToString())) return $"Row {count}: Rate cannot be less than or equal to 0";
+                if (PR.BasicRate <= 0 || string.IsNullOrWhiteSpace((PR.BasicRate).ToString())) return $"Row {count}: Rate cannot be less than or equal to 0";
 
                 if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
             }
@@ -395,7 +395,7 @@
         HandleFormInput();
         Items.Add(new StockEntry_Items
             {
-                Rate = 0,
+                BasicRate = 0,
                 Quantity = 1
             });
         ItemName.Add("");
@@ -434,9 +434,9 @@
         bool result = DropDownItem.FilterOptions(e, rowIndex);
         if (result == true)
         {
-            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].ItemID))
+            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].Item))
             {
-                Items[rowIndex].ItemID = "";
+                Items[rowIndex].Item = "";
             }
         }
         StateHasChanged();
@@ -448,7 +448,7 @@
         if (result == false)
         {
             ItemName[rowIndex] = options.Text;
-            Items[rowIndex].ItemID = options.Value;
+            Items[rowIndex].Item = options.Value;
         }
     }
 

@@ -479,13 +479,13 @@
             if (isMobile)
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                await Select.OpenPdfAsync(PdfByte, "Inventory Report.pdf");
+                await Select.OpenPdfAsync(PdfByte, $"Inventory Report {DateTime.Today.ToString("MM/dd/yyyy")}.pdf");
             }
             else
             {
                 var base64Pdf = Convert.ToBase64String(PdfByte);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64Pdf}";
-                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, "Inventory Report.pdf");
+                await JSRuntime.InvokeVoidAsync("downloadFile", pdfDataUrl, $"Inventory Report {DateTime.Now.ToString("MM/dd/yyyy, hh/mm/ss tt")}.pdf");
                 Snackbar.Add("Report Downloaded", Severity.Success);
             }
         }

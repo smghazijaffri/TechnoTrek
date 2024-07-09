@@ -210,19 +210,19 @@
     }
 
     public class Stock_Entry : BaseRecord
-    { 
+    {
         public string? StockID { get; set; }
         public string? StockEntryType { get; set; }
         public string? Status { get; set; }
 
     }
 
-    public class StockEntry_Items: BaseRecord
+    public class StockEntry_Items : BaseRecord
     {
         public string? StockID { get; set; }
-        public string? ItemID { get; set; }
+        public string? Item { get; set; }
         public int Quantity { get; set; }
-        public int Rate { get; set; }
+        public int BasicRate { get; set; }
         public int RowID { get; set; }
         public bool Selected { get; set; }
     }

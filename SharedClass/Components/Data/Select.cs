@@ -1,5 +1,6 @@
 ﻿using static SharedClass.Components.Pages.CustomPC.Motherboard;
 using SharedClass.Components.Model;
+using System.Security.Cryptography;
 using Microsoft.Data.SqlClient;
 using PdfSharpCore.Pdf.IO;
 using BoldReports.Writer;
@@ -8,9 +9,8 @@ using PdfSharpCore.Pdf;
 using System.Text.Json;
 using BoldReports.Web;
 using System.Data;
-using Dapper;
 using System.Text;
-using System.Security.Cryptography;
+using Dapper;
 
 namespace SharedClass.Components.Data
 {
@@ -89,30 +89,6 @@ namespace SharedClass.Components.Data
                 }
             }
             return false;
-        }
-
-        public static DataTable ConvertToDataTable<T>(List<T> list)
-        {
-            DataTable table = new();
-
-            PropertyInfo[] properties = typeof(T).GetProperties();
-
-            foreach (PropertyInfo property in properties)
-            {
-                table.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
-            }
-
-            foreach (T item in list)
-            {
-                DataRow row = table.NewRow();
-                foreach (PropertyInfo property in properties)
-                {
-                    row[property.Name] = property.GetValue(item) ?? DBNull.Value;
-                }
-                table.Rows.Add(row);
-            }
-
-            return table;
         }
 
         public static DataTable ItemTable()

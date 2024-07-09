@@ -1,8 +1,6 @@
 ﻿using Dapper;
 using System.Net;
 using System.Net.Mail;
-using BoldReports.Web;
-using BoldReports.Writer;
 using System.Data.SqlClient;
 using SharedClass.Components.Model;
 

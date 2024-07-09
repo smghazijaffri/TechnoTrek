@@ -1,6 +1,5 @@
 ﻿using SharedClass.Components.Model;
 using Microsoft.Data.SqlClient;
-using Microsoft.JSInterop;
 using MudBlazor;
 using Dapper;
 
