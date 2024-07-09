@@ -301,10 +301,36 @@
                 </div>
             </div>
         </div>
+        <button class="scroll-to-top" @onclick="ScrollToTop">
+           <i class="bi bi-arrow-up"></i>
+        </button>
     </div>
 }
 
 <CustomModal Model="model" IsVisible="isQuickViewVisible" ComponentName="@selectedComponentName" OnClose="HandleCloseModal" />
+
+<style>
+    .scroll-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: none;
+        width: 50px;
+        height: 50px;
+        background-color: transparent;
+        color: red;
+        border: none;
+        border-radius: 50%;
+        text-align: center;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 1000;
+    }
+
+        .scroll-to-top.show {
+            display: block;
+        }
+</style>
 
 @code {
     public List<string> CustomItems = new List<string>();
@@ -646,5 +672,10 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    private void ScrollToTop()
+    {
+        JSRuntime.InvokeVoidAsync("scrollToTop");
     }
 }
