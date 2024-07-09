@@ -61,7 +61,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Role</label>
-            <select class="form-select" aria-label="Role" @bind="users.Role">
+            <select class="form-select" aria-label="Role" disabled="@notAdmin" @bind="users.Role">
                 <option value=""></option>
                 <option value="Administrator">Administrator</option>
                 <option value="Purchase">Purchase</option>
@@ -71,7 +71,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label"></label>
-            <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+            <MudCheckBox @bind-Value="@Disabled" Disabled="!notAdmin" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
         </div>
     </form>
 </div>
@@ -228,8 +228,6 @@
                 {
                     return "Error in saving request";
                 }
-                StateHasChanged();
-                return "SignUp Successful";
             }
         }
         catch (Exception ex)

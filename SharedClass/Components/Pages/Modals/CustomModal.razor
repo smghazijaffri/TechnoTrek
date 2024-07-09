@@ -61,13 +61,6 @@
     </div>
 }
 <!-- Modal -->
-@* <script>
-    window.addEventListener('keydown', function (event) {
-        if (event.key === "Escape") {
-            DotNet.invokeMethodAsync('SharedClass', 'CloseModal');
-        }
-    });
-</script> *@
 
 @code {
     public class BuildPcViewModel
@@ -203,14 +196,4 @@
             Snackbar.Add($"Error cancelling: {ex.Message}", Severity.Error);
         }
     }
-
-    // [JSInvokable]
-    // public static Task CloseModal()
-    // {
-    //     if (_instance != null)
-    //     {
-    //         _instance.CloseQuickView();
-    //     }
-    //     return Task.CompletedTask;
-    // }
 }

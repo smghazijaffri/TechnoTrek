@@ -58,6 +58,7 @@ public static class MauiProgram
         builder.Services.AddScoped<Connection>();
         builder.Services.AddScoped<BaseRecord>();
         builder.Services.AddScoped<GoodsIssue>();
+        builder.Services.AddScoped<PCComponent>();
         builder.Services.AddScoped<GoodReceipt>();
         builder.Services.AddScoped<GoodReceipt>();
         builder.Services.AddScoped<Stock_Entry>();

@@ -47,6 +47,7 @@ builder.Services.AddScoped<Quotation>();
 builder.Services.AddScoped<BaseRecord>();
 builder.Services.AddScoped<Connection>();
 builder.Services.AddScoped<GoodsIssue>();
+builder.Services.AddScoped<PCComponent>();
 builder.Services.AddScoped<GoodReceipt>();
 builder.Services.AddScoped<Stock_Entry>();
 builder.Services.AddScoped<SalesInvoice>();
