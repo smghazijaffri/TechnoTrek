@@ -289,6 +289,13 @@
             {
                 saleorder.DocumentDate = DateTime.Now;
                 saleorder.DeliveryDate = DateTime.Now;
+
+                var BulkOrderID = string.Empty;
+
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BulkOrderID"))
+                {
+                    BulkOrderID = await _protectedLocalStore.GetLocalAsync<string>("BulkOrderID");
+                }
                 if (SaleOrderID != null)
                 {
                     saleorder = db.QueryFirstOrDefault<SaleOrder>("Select * from SaleOrder where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID });
@@ -331,6 +338,17 @@
                         IsSaving = false;
                     }
                 }
+                else if (!string.IsNullOrWhiteSpace(BulkOrderID))
+                {
+                    saleorder.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
+                    Items = db.Query<SO_Item>("select Quantity ,* from SO_Item where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join SaleOrder so on so.CustomerID = c.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
+                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join SO_Item on UOM = UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    getUOM(Items);
+                    await _protectedLocalStore.SetLocalAsync("BulkOrderID", "");
+                }
                 else
                 {
                     AddRow();
@@ -346,6 +364,21 @@
         }
 
         base.OnInitialized();
+    }
+
+    public void getUOM(List<SO_Item> Items)
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var item in Items)
+            {
+                DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+                DropDownUOM.ListItems[count].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = item.Item }).ToList();
+                count++;
+            }
+
+        }
     }
 
     public int SumAmounts
