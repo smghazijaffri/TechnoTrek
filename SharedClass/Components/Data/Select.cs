@@ -192,12 +192,23 @@ namespace SharedClass.Components.Data
         public static async Task OpenPdfAsync(byte[] pdfBytes, string fileName)
         {
             string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
-            await File.WriteAllBytesAsync(filePath, pdfBytes);
-            await Launcher.Default.OpenAsync(new OpenFileRequest
+
+            try
             {
-                File = new ReadOnlyFile(filePath)
-            });
+                await File.WriteAllBytesAsync(filePath, pdfBytes);
+
+                await Launcher.Default.OpenAsync(new OpenFileRequest
+                {
+                    File = new ReadOnlyFile(filePath)
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error opening PDF: {ex.Message}");
+                throw;
+            }
         }
+
 
         public static async Task<List<Bulk>> RetrieveCartItems(string userid)
         {
