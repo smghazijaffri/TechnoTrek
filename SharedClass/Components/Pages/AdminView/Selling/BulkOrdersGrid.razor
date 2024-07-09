@@ -4,7 +4,6 @@
 @layout AdminLayout;
 @inject Select select;
 @inject Connection con;
-@inject Customer customer;
 @inject ISnackbar Snackbar;
 @inject BulkOrder bulkorder;
 @inject NavigationManager NavigationManager;
@@ -45,7 +44,7 @@
                 <RowTemplate>
                     <MudTd DataLabel="ID">@context.BulkOrderID</MudTd>
                     <MudTd DataLabel="Title">@context.BulkOrderName</MudTd>
-                    <MudTd DataLabel="Customer">@customer.Name</MudTd>
+                    <MudTd DataLabel="Customer">@context.CustomerID</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Total">@context.TotalAmount</MudTd>
                     <MudTd DataLabel="Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
@@ -74,8 +73,6 @@
         if (!string.IsNullOrWhiteSpace(SearchString))
         {
             Elements = await db.QueryAsync<BulkOrder>("SELECT * FROM BulkOrder WHERE Status = 'Cancelled'");
-            customer = db.QueryFirstOrDefault<Customer>("Select TOP(1)c.* from customer c inner join BulkOrder si on si.CustomerID = si.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.CustomerID });
-
         }
         else
         {

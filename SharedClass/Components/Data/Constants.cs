@@ -10,6 +10,7 @@
         public const string Overdue = "Overdue";
         public const string Pending = "Pending";
         public const string Expired = "Expired";
+        public const string Return = "Returned";
         public const string Ordered = "Ordered";
         public const string Enabled = "Enabled";
         public const string Disabled = "Disabled";
@@ -35,6 +36,7 @@
         public const string Pending = "Pending";
         public const string Expired = "Expired";
         public const string Ordered = "Ordered";
+        public const string Return = "Returned";
         public const string ToIssue = "To Issue";
         public const string Received = "Received";
         public const string Confirmed = "Confirmed";

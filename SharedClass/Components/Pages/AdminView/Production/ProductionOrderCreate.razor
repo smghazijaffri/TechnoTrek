@@ -322,22 +322,9 @@
                 {
                     return validate;
                 }
-                StringBuilder titleBuilder = new StringBuilder("Purhcase Order for ");
 
-                foreach (string data in ItemName)
-                {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
-                    titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
-                }
-
-                production.ProductionOrderName = titleBuilder.ToString();
-                header = titleBuilder.ToString();
+                production.ProductionOrderName = $"Production Order for {production.BOMID}";
+                header = production.ProductionOrderName;
 
                 if (IsSaving)
                 {

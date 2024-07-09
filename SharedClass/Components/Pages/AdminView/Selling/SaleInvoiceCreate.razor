@@ -41,7 +41,11 @@
             }
             @if (Overdue)
             {
-                <MudChip Variant="Variant.Text" Color="Color.Dark">Overdue</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Overdue</MudChip>
+            }
+            @if (Return)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Returned</MudChip>
             }
         </h3>
     </div>
@@ -52,7 +56,7 @@
                 @GetSubmitButtonText()
             </button>
         }
-        @if (Paid || Overdue && !IsCancelled)
+        @if (Paid || Overdue || Return && !IsCancelled)
         {
             <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -100,7 +104,7 @@
         <div class="col-md-6">
             <MudCheckBox @bind-Value="@IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
             <MudCheckBox @bind-Value="@isPartiallyPaid" Size="Size.Small" Dense="true" Label="Partially Paid" readonly="@Hidden"></MudCheckBox>
-            <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@Readonly"></MudCheckBox>
         </div>
     </form>
 </div>
@@ -246,13 +250,14 @@
     bool IsCancelled = false;
     bool Paid { get; set; } = false;
     bool IsPaid { get; set; } = false;
+    bool Return { get; set; } = false;
     bool IsReturn { get; set; } = false;
     bool PartiallyPaid { get; set; } = false;
     bool isPartiallyPaid { get; set; } = false;
     bool Readonly { get { return IsCancelled || Paid; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool Hidden { get { return IsCancelled || Paid || Overdue; } }
-    bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid; } }
+    bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid || Return; } }
 
     DropDown DropDownItem = new DropDown();
     List<string> UOMName = new List<string>();
@@ -341,6 +346,19 @@
                     salesinvoice.IsPaid = false;
                     IsSaving = false;
                 }
+                else if (salesinvoice.Status == SaleStatus.Return)
+                {
+                    Return = true;
+                    IsReturn = true;
+                    salesinvoice.IsReturn = true;
+                    Overdue = false;
+                    salesinvoice.IsPartiallyPaid = false;
+                    PartiallyPaid = false;
+                    Paid = false;
+                    IsPaid = false;
+                    salesinvoice.IsPaid = false;
+                    IsSaving = false;
+                }
             }
             else if (!string.IsNullOrWhiteSpace(GoodsIssueID))
             {
@@ -403,16 +421,29 @@
 
                 StringBuilder titleBuilder = new StringBuilder("Sales Invoice for ");
 
-                foreach (string data in ItemName)
+                if (Items.Count > 2)
                 {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
+                    for (int i = 0; i < 2; i++)
+                    {
+                        titleBuilder.Append(ItemName[i]);
+                        titleBuilder.Append(", ");
+                    }
                     titleBuilder.Length -= 2;
                     titleBuilder.Append("...");
+                }
+                else
+                {
+                    foreach (string data in ItemName)
+                    {
+                        titleBuilder.Append(data);
+                        titleBuilder.Append(", ");
+                    }
+
+                    if (Items.Count > 0)
+                    {
+                        titleBuilder.Length -= 2;
+                        titleBuilder.Append(".");
+                    }
                 }
 
                 salesinvoice.SalesInvoiceName = titleBuilder.ToString();
@@ -431,6 +462,12 @@
                         Paid = true;
                         salesinvoice.Status = SaleStatus.Paid;
                         salesinvoice.IsPaid = true;
+                    }
+                    else if (IsReturn)
+                    {
+                        salesinvoice.Status = SaleStatus.Return;
+                        salesinvoice.IsReturn = true;
+                        Return = true;
                     }
                     else if (isPartiallyPaid)
                     {
@@ -451,11 +488,17 @@
                     salesinvoice.Status = SaleStatus.PartiallyPaid;
                     salesinvoice.IsPartiallyPaid = true;
                 }
+                else if (IsReturn)
+                {
+                    salesinvoice.Status = SaleStatus.Return;
+                    salesinvoice.IsReturn = true;
+                    Return = true;
+                }
                 else if (Overdue)
                 {
                     salesinvoice.Status = SaleStatus.Overdue;
                 }
-                else if (IsPaid || Overdue)
+                else if (IsPaid || Overdue || isPartiallyPaid || IsReturn)
                 {
                     salesinvoice.Status = SaleStatus.Cancelled;
                 }
@@ -492,6 +535,11 @@
                 else if (PartiallyPaid || Paid)
                 {
                     return "Sale Invoice Submitted Successfully";
+                }
+
+                else if (IsReturn)
+                {
+                    return "Sale Invoice Returned Successfully";
                 }
 
                 else if (IsCancelled)
@@ -550,11 +598,15 @@
 
             if (salesinvoice.CustomerID == null) return "Please Select a Customer";
 
-            if (IsPaid && isPartiallyPaid) return "Invoice can't be Paid and Partially Paid at the same time";
+            if (IsPaid && isPartiallyPaid && IsReturn) return "Invoice can't be Paid, Partially Paid and marked return at the same time";
 
-            if (!IsPaid && !isPartiallyPaid) return "Invoice has to be Paid or Partially Paid to submit";
+            if (IsPaid && isPartiallyPaid) return "Invoice can't be Paid and Partially at the same time";
 
-            if (Overdue && isPartiallyPaid) return "Overdu Invoice cannot be Partially Paid";
+            if (isPartiallyPaid && IsReturn) return "Invoice can't be Partially Paid and marked return at the same time";
+
+            if (!IsPaid && !isPartiallyPaid && !IsReturn) return "Invoice has to be Paid, Partially Paid or marked Return to submit";
+
+            if (Overdue && isPartiallyPaid) return "Overdue Invoice cannot be Partially Paid";
 
             if (salesinvoice.DueDate < salesinvoice.DocumentDate) return "DueDate cannot be before DocumentDate";
             if (Items.Count > 0)
@@ -626,6 +678,10 @@
             {
                 isPartiallyPaid = true;
             }
+            else if (salesinvoice.Status == SaleStatus.Return)
+            {
+                IsReturn = true;
+            }
         }
         else if (IsSaving)
         {
@@ -638,6 +694,7 @@
             IsSaving = false;
             IsPaid = false;
             Paid = false;
+            IsReturn = false;
             isPartiallyPaid = false;
         }
         StateHasChanged();
@@ -684,6 +741,8 @@
             salesinvoice.IsPartiallyPaid = false;
             salesinvoice.IsPaid = false;
             isPartiallyPaid = false;
+            IsReturn = false;
+            Return = false;
             GetSubmitButtonText();
             StateHasChanged();
         }
