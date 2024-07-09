@@ -55,6 +55,14 @@
             {
                 <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
             }
+            @if (UnpaidtoReturn)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+            @if (Return)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Returned</MudChip>
+            }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
@@ -64,7 +72,7 @@
                 @GetSubmitButtonText()
             </button>
         }
-        @if (Unpaid || IsPaid || Overdue && !IsCancelled)
+        @if (Unpaid || IsPaid || Overdue || Return && !IsCancelled)
         {
             <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -112,7 +120,7 @@
         <div class="col-md-6">
             <label class="form-label"></label>
             <MudCheckBox @bind-Value="@purchase.IsPaid" Size="Size.Small" Dense="true" Label="Paid" readonly="@Readonly"></MudCheckBox>
-            <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@ReadonlyHidden"></MudCheckBox>
+            <MudCheckBox @bind-Value="@purchase.IsReturn" Size="Size.Small" Dense="true" Label="Return" readonly="@Readonly"></MudCheckBox>
 
         </div>
     </form>
@@ -307,18 +315,21 @@
     string? DeviceType { get; set; }
     string header = "Create Purchase Invoice";
 
+    bool Return = true;
     bool Unpaid = false;
     bool IsDraft = false;
     bool IsSaving = true;
+    bool IsReturn = true;
     bool Overdue = false;
     bool isMobile = false;
     bool DisplayPR = true;
     bool IsCancelled = false;
     bool UnpaidtoPaid = false;
+    bool UnpaidtoReturn = false;
     bool IsPaid { get; set; } = false;
     bool Readonly { get { return IsCancelled || IsPaid; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
-    bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue || UnpaidtoPaid; } }
+    bool ReadonlyHidden { get { return IsCancelled || Unpaid || IsPaid || Overdue || UnpaidtoPaid || IsReturn || UnpaidtoReturn; } }
 
     DropDown DropDownUOM = new DropDown();
     DropDown DropDownItem = new DropDown();
@@ -398,6 +409,13 @@
                         Overdue = true;
                         IsSaving = false;
                     }
+                    else if (purchase.Status == PurchaseStatuses.Return)
+                    {
+                        IsReturn = true;
+                        Return = true;
+                        purchase.IsReturn = true;
+                        UnpaidtoReturn = false;
+                    }
                 }
                 else if (!string.IsNullOrWhiteSpace(PurchaseOrderID))
                 {
@@ -466,16 +484,29 @@
 
                 StringBuilder titleBuilder = new StringBuilder("Purhcase Invoice for ");
 
-                foreach (string data in ItemName)
+                if (Items.Count > 2)
                 {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
+                    for (int i = 0; i < 2; i++)
+                    {
+                        titleBuilder.Append(ItemName[i]);
+                        titleBuilder.Append(", ");
+                    }
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
+                    titleBuilder.Append("...");
+                }
+                else
+                {
+                    foreach (string data in ItemName)
+                    {
+                        titleBuilder.Append(data);
+                        titleBuilder.Append(", ");
+                    }
+
+                    if (Items.Count > 0)
+                    {
+                        titleBuilder.Length -= 2;
+                        titleBuilder.Append(".");
+                    }
                 }
 
                 purchase.PurchaseInvoiceName = titleBuilder.ToString();
@@ -493,6 +524,10 @@
                     {
                         purchase.Status = PurchaseStatuses.Paid;
                     }
+                    else if (purchase.IsReturn == true)
+                    {
+                        purchase.Status = PurchaseStatuses.Return;
+                    }
                     else
                     {
                         if (purchase.DueDate < DateTime.Today)
@@ -507,9 +542,28 @@
                 }
                 else if (UnpaidtoPaid)
                 {
-                    purchase.Status = PurchaseStatuses.Paid;
+                    if (purchase.IsPaid == true)
+                    {
+                        purchase.Status = PurchaseStatuses.Paid;
+                    }
+                    else if (purchase.IsReturn == true)
+                    {
+                        purchase.Status = PurchaseStatuses.Return;
+                    }
                 }
-                else if (Unpaid || IsPaid || Overdue)
+                else if (UnpaidtoReturn)
+                {
+                    if (purchase.IsPaid == true)
+                    {
+                        purchase.Status = PurchaseStatuses.Paid;
+                    }
+                    else if (purchase.IsReturn == true)
+                    {
+                        purchase.Status = PurchaseStatuses.Return;
+                    }
+                }
+
+                else if (Unpaid || IsPaid || Overdue || IsReturn)
                 {
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
@@ -551,6 +605,11 @@
                 {
                     UnpaidtoPaid = false;
                     return "Purchase Invoice Submitted Successfully";
+                }
+
+                else if (IsReturn)
+                {
+                    return "Purchase Invoice Returned Successfully";
                 }
 
                 else if (IsCancelled)
@@ -659,9 +718,13 @@
         {
             IsDraft = false;
             IsSaving = false;
-            if (purchase.Status == PurchaseStatuses.Paid)
+            if (purchase.IsPaid == true)
             {
-                IsPaid = true;
+                purchase.Status = PurchaseStatuses.Paid;
+            }
+            else if (purchase.IsReturn == true)
+            {
+                purchase.Status = PurchaseStatuses.Return;
             }
             else
             {
@@ -686,14 +749,21 @@
             IsSaving = false;
             UnpaidtoPaid = false;
         }
+        else if (UnpaidtoReturn)
+        {
+            IsReturn = true;
+            IsSaving = false;
+            UnpaidtoReturn = false;
+        }
 
-        else if (Unpaid || IsPaid || Overdue)
+        else if (Unpaid || IsPaid || Overdue || IsReturn)
         {
             IsCancelled = true;
             IsSaving = false;
             Unpaid = false;
             IsPaid = false;
             Overdue = false;
+            IsReturn = false;
         }
     }
 
@@ -738,9 +808,18 @@
         }
         if (Unpaid)
         {
-            Unpaid = false;
-            UnpaidtoPaid = true;
-            IsSaving = false;
+            if (IsReturn)
+            {
+                Unpaid = false;
+                UnpaidtoReturn = false;
+                IsSaving = false;
+            }
+            else if (IsPaid)
+            {
+                Unpaid = false;
+                UnpaidtoPaid = true;
+                IsSaving = false;
+            }
         }
     }
 

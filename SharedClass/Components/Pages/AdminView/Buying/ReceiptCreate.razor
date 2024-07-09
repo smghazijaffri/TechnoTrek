@@ -52,8 +52,6 @@
             <div class="dropdown m-1" id="dropdown">
                 <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
                 <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                    <li><a href="#" class="btn ms-2 m-1 text-sm-start">Purchase Return</a></li>
-                    <hr class="m-1 border-primary" />
                     <li><a @onclick="CreatePI" class="btn ms-2 m-1 text-sm-start">Purchase Invoice</a></li>
                 </ul>
             </div>
@@ -129,7 +127,7 @@
                     </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         UOM
-                    </th> 
+                    </th>
                     <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
                         Rate
                     </th>
@@ -198,7 +196,7 @@
                                 </ul>
                             </div>
                         </td>
-                        <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden"/></td>
+                        <td><input type="text" inputmode="numeric" id="rate" class="form-control" @bind="item.Rate" readonly="@ReadonlyHidden" /></td>
                         <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
                     </tr>
                 }
@@ -397,22 +395,36 @@
                 }
                 StringBuilder titleBuilder = new StringBuilder("Goods Receipt for ");
 
-                foreach (string data in ItemName)
+                if (Items.Count > 2)
                 {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
+                    for (int i = 0; i < 2; i++)
+                    {
+                        titleBuilder.Append(ItemName[i]);
+                        titleBuilder.Append(", ");
+                    }
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
+                    titleBuilder.Append("...");
+                }
+                else
+                {
+                    foreach (string data in ItemName)
+                    {
+                        titleBuilder.Append(data);
+                        titleBuilder.Append(", ");
+                    }
+
+                    if (Items.Count > 0)
+                    {
+                        titleBuilder.Length -= 2; 
+                        titleBuilder.Append(".");
+                    }
                 }
 
                 purchase.GoodReceiptName = titleBuilder.ToString();
                 header = titleBuilder.ToString();
                 purchase.TotalAmount = SumAmounts;
                 purchase.TotalQuantity = SumQuantity;
+
                 if (IsSaving)
                 {
                     purchase.Status = PurchaseStatuses.Draft;
@@ -528,7 +540,7 @@
                     if (PO.AcceptedQuantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
 
                     if (PO.Amount <= 0) return $"Row {count}: Amount cannot be less than or equal to 0";
-                  
+
                     if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {count}";
 
                     if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";

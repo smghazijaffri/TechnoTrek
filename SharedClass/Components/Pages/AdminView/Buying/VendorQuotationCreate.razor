@@ -392,16 +392,29 @@
                 }
                 StringBuilder titleBuilder = new StringBuilder("Quotation for ");
 
-                foreach (string data in ItemName)
+                if (Items.Count > 2)
                 {
-                    titleBuilder.Append(data);
-                    titleBuilder.Append(", ");
-                }
-
-                if (Items.Count > 0)
-                {
+                    for (int i = 0; i < 2; i++)
+                    {
+                        titleBuilder.Append(ItemName[i]);
+                        titleBuilder.Append(", ");
+                    }
                     titleBuilder.Length -= 2;
-                    titleBuilder.Append(".");
+                    titleBuilder.Append("...");
+                }
+                else
+                {
+                    foreach (string data in ItemName)
+                    {
+                        titleBuilder.Append(data);
+                        titleBuilder.Append(", ");
+                    }
+
+                    if (Items.Count > 0)
+                    {
+                        titleBuilder.Length -= 2;
+                        titleBuilder.Append(".");
+                    }
                 }
 
                 purchase.QuotationName = titleBuilder.ToString();
