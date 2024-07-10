@@ -102,10 +102,10 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled" && item.UOMName != "Each").ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No uom with status 'Disabled' to delete", Severity.Info);
+            Snackbar.Add("No UOM with status 'Disabled' to delete", Severity.Info);
             return;
         }
 
