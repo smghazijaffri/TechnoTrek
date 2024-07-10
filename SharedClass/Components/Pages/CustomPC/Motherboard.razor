@@ -119,22 +119,25 @@
     {
         try
         {
-            if (!string.IsNullOrEmpty(AppState.Processor))
+            if (AppState.Motherboard != selectedMotherboard.ItemCode)
             {
-                AppState.Processor = string.Empty;
-                AppState.Memory = string.Empty;
-                AppState.MemoryQuantity = 0;
-                AppState.Storage = string.Empty;
-                AppState.StorageQuantity = 0;
-                AppState.GPU = string.Empty;
-                AppState.PSU = string.Empty;
-                AppState.Case = string.Empty;
-                AppState.Cooler = string.Empty;
-                Snackbar.Clear();
-                Snackbar.Add("Please reselect the processor, memory, storage, cooler, case, power supply, and graphics card.", Severity.Info);
+                if (!string.IsNullOrEmpty(AppState.Processor))
+                {
+                    AppState.Processor = string.Empty;
+                    AppState.Memory = string.Empty;
+                    AppState.MemoryQuantity = 0;
+                    AppState.Storage = string.Empty;
+                    AppState.StorageQuantity = 0;
+                    AppState.GPU = string.Empty;
+                    AppState.PSU = string.Empty;
+                    AppState.Case = string.Empty;
+                    AppState.Cooler = string.Empty;
+                    Snackbar.Clear();
+                    Snackbar.Add("Please reselect the processor, memory, storage, cooler, case, power supply, and graphics card.", Severity.Info);
 
-                Snackbar.Clear();
-                Snackbar.Add("Please reselect other components", Severity.Info);
+                    Snackbar.Clear();
+                    Snackbar.Add("Please reselect other components", Severity.Info);
+                }
             }
 
             AppState.Motherboard = selectedMotherboard.ItemCode;
