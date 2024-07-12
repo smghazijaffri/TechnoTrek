@@ -72,24 +72,27 @@
                                         </div>
                                     </div>
                                     <div class="col-lg-5">
-                                        <div class="card text-white rounded-3" style="background-color: transparent; backdrop-filter: blur(2px); border-radius: 10px;">
-                                            <div class="card-body">
+                                        @if (AppState.CartItemCount > 0)
+                                        {
+                                            <div class="card text-white rounded-3" style="background-color: transparent; backdrop-filter: blur(2px); border-radius: 10px;">
+                                                <div class="card-body">
 
-                                                <hr class="my-4">
+                                                    <hr class="my-4">
 
-                                                <div class="d-flex justify-content-between mb-4">
-                                                    <h4 class="mb-2">Total</h4>
-                                                    <h4 class="mb-2">Rs. @totalAmount</h4>
-                                                </div>
-
-                                                <button type="button" data-mdb-button-init data-mdb-ripple-init @onclick="Checkout" class="btn" style="background-color:gold">
-                                                    <div class="d-flex justify-content-between">
-                                                        <span>Checkout <i class="bi bi-arrow-right-circle ms-2"></i></span>
+                                                    <div class="d-flex justify-content-between mb-4">
+                                                        <h4 class="mb-2">Total</h4>
+                                                        <h4 class="mb-2">Rs. @totalAmount</h4>
                                                     </div>
-                                                </button>
 
+                                                    <button type="button" data-mdb-button-init data-mdb-ripple-init @onclick="Checkout" class="btn" style="background-color:gold">
+                                                        <div class="d-flex justify-content-between">
+                                                            <span>Checkout <i class="bi bi-arrow-right-circle ms-2"></i></span>
+                                                        </div>
+                                                    </button>
+
+                                                </div>
                                             </div>
-                                        </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -283,7 +286,7 @@
                 await using SqlConnection db = new SqlConnection(con.connectionString);
                 var customerID = await db.QueryFirstOrDefaultAsync<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
                 var customerName = db.QueryFirstOrDefault<string>("select Name from Customer where CustomerID = @CustomerID", new { CustomerID = customerID });
-                string bulkordername  = "BulkOrder for " + customerName + " on " + DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt");
+                string bulkordername = "BulkOrder for " + customerName + " on " + DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt");
                 int totalAmount = items.Sum(item => item.Price);
                 int totalQuantity = items.Sum(item => item.Quantity);
                 DataTable ItemTable = Select.ItemTable();
@@ -294,14 +297,14 @@
                     ItemTable.Rows.Add(0, PO.Code, PO.Quantity, "UOM-001", 0, PO.Price, null);
                 }
                 BulkOrder bulkOrder = new BulkOrder
-                {
+                    {
                         BulkOrderID = null,
                         BulkOrderName = bulkordername,
                         CustomerID = customerID,
                         Status = "Received",
                         TotalAmount = totalAmount,
                         TotalQuantity = totalQuantity
-                };
+                    };
                 var parameters = new DynamicParameters(bulkOrder);
                 parameters.Add("@BOItems", ItemTable.AsTableValuedParameter("Purhcase"));
                 parameters.Add("@DeleteBOItems", Delete.AsTableValuedParameter("DeleteType"));
