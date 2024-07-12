@@ -150,11 +150,21 @@
 
                                 @if (!string.IsNullOrEmpty(AppState.Case) && !string.IsNullOrEmpty(AppState.Memory) && !string.IsNullOrEmpty(AppState.Cooler) && !string.IsNullOrEmpty(AppState.PSU) && !string.IsNullOrEmpty(AppState.Storage) && !string.IsNullOrEmpty(AppState.GPU) && !string.IsNullOrEmpty(AppState.Processor) && !string.IsNullOrEmpty(AppState.Motherboard))
                                 {
-                                    <div class="row mt-3 m-auto">
-                                        <div class="col-12 text-center">
-                                            <NavLink @onclick="SaveBOM" class="btn btnpc" style="background-color:#A687CB; color:white">Confirm</NavLink>
+                                    @if (!isConfirming)
+                                    {
+                                        <div class="row mt-3 m-auto">
+                                            <div class="col-12 text-center">
+                                                <NavLink @onclick="SaveBOM" class="btn btnpc" style="background-color:#A687CB; color:white">Confirm</NavLink>
+                                            </div>
                                         </div>
-                                    </div>
+                                    }
+                                    else if (isConfirming)
+                                    {
+                                        <button class="btn btn-danger rounded-lg me-4" type="button" disabled>
+                                            <span class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
+                                            <span role="status">Confirming...</span>
+                                        </button>
+                                    }
                                 }
                             </div>
                         </div>
@@ -217,8 +227,6 @@
 @code {
     private List<PCComponent> components;
 
-    public List<string> CustomItems = new List<string>();
-
     BuildPcViewModel model = new BuildPcViewModel();
 
     string? Role { get; set; }
@@ -230,43 +238,45 @@
     bool IsVisible { get; set; }
     bool isQuickViewVisible = false;
 
-    string Case { get; set; }
-    string CaseCode { get; set; }
+    string? Case { get; set; }
+    string? CaseCode { get; set; }
     int CasePrice { get; set; }
 
-    string Memory { get; set; }
-    string MemoryCode { get; set; }
+    string? Memory { get; set; }
+    string? MemoryCode { get; set; }
     int MemoryPrice { get; set; }
     int MemoryQuantity { get; set; }
 
-    string Cooler { get; set; }
-    string CoolerCode { get; set; }
+    string? Cooler { get; set; }
+    string? CoolerCode { get; set; }
     int CoolerPrice { get; set; }
 
-    string Supply { get; set; }
-    string SupplyCode { get; set; }
+    string? Supply { get; set; }
+    string? SupplyCode { get; set; }
     int SupplyPrice { get; set; }
 
-    string Storage { get; set; }
-    string StorageCode { get; set; }
+    string? Storage { get; set; }
+    string? StorageCode { get; set; }
     int StoragePrice { get; set; }
     int StorageQuantity { get; set; }
 
-    string Graphics { get; set; }
-    string GraphicsCode { get; set; }
+    string? Graphics { get; set; }
+    string? GraphicsCode { get; set; }
     int GraphicsPrice { get; set; }
 
-    string Processor { get; set; }
-    string ProcessorCode { get; set; }
+    string? Processor { get; set; }
+    string? ProcessorCode { get; set; }
     int ProcessorPrice { get; set; }
 
-    string Motherboard { get; set; }
-    string MotherboardCode { get; set; }
+    string? Motherboard { get; set; }
+    string? MotherboardCode { get; set; }
     int MotherboardPrice { get; set; }
 
     int totalPrice { get; set; } = 0;
 
     string selectedComponentName = "";
+
+    bool isConfirming = false;
 
     protected async override void OnInitialized()
     {
@@ -493,6 +503,14 @@
 
     public void SaveBOM()
     {
+        if (isConfirming)
+        {
+            Snackbar.Add("Please Wait", Severity.Info);
+            return;
+        }
+
+        isConfirming = true;
+
         try
         {
             if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
@@ -577,6 +595,10 @@
         {
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isConfirming = false;
         }
     }
 

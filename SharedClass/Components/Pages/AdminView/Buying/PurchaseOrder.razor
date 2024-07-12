@@ -14,13 +14,15 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between">
                 <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/buying">Buying</MudChip>
-                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
-                           OnClick="Create" Size="Size.Large">Create</MudButton>
-                @if (selectedItems.Any())
-                {
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
-                               Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
-                }
+                <div>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Style="text-transform:none; margin-bottom: 20px;"
+                               OnClick="Create" Size="Size.Large">Create</MudButton>
+                    @if (selectedItems.Any())
+                    {
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
+                                   Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                    }
+                </div>
             </div>
         </div>
     </div>

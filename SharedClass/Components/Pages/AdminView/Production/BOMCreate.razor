@@ -40,7 +40,8 @@
                     <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Production Order</li>
                 </ul>
             </div>
-            @if (IsCustomer)
+
+            @if (!IsCustomer)
             {
                 <div class="m-4"></div>
             }
@@ -176,6 +177,19 @@
         <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@ReadonlyHidden">Add Row</button>
         <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow" hidden="@ReadonlyHidden">Delete</button>
     </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Total Quantity</label>
+            <input type="text" inputmode="numeric" class="form-control" value="@SumQuantity" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Total Amount</label>
+            <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly>
+        </div>
+    </form>
 </div>
 
 <script>

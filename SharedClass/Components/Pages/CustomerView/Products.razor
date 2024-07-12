@@ -81,12 +81,14 @@
             if (Role != "Customer")
             {
                 Snackbar.Add("Please login as a Customer", Severity.Error);
+                Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
             }
             if (string.IsNullOrEmpty(userid))
             {
                 Snackbar.Add("User does not exist", Severity.Error);
+                Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
             }
@@ -95,6 +97,7 @@
         {
             Snackbar.Add("Please login as a Customer", Severity.Error);
             AppState.Authorized = false;
+            Task.Delay(1000);
             NavigationManager.NavigateTo("/login", forceLoad: true);
             return;
         }

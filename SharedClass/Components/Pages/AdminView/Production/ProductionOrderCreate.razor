@@ -84,7 +84,7 @@
 </div>
 
 <div class="justify-content-center" hidden="@Progress">
-    <MudProgressLinear Color="Color.Info" Size="Size.Medium" Value="@value" Class="my-7" />
+    <MudProgressLinear Color="Color.Success" Size="Size.Medium" Value="@value" Class="my-7" />
 </div>
 
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
@@ -193,33 +193,33 @@
 @code {
     [Parameter]
     public string? ProductionOrderID { get; set; }
-    private string header = "New Production Order";
+    string header = "New Production Order";
 
     bool isMobile = false;
     string? DeviceType { get; set; }
 
     int value = 0;
 
-    private bool IsSaving = true;
-    private bool IsDraft = false;
-    private bool IsClosed = false;
-    private bool DisplayPO = true;
-    private bool InProcess = false;
-    private bool IsStopped = false;
-    private bool IsSubmitted = false;
-    private bool IsCompleted = false;
-    private bool IsNotStarted = false;
+    bool IsSaving = true;
+    bool IsDraft = false;
+    bool IsClosed = false;
+    bool DisplayPO = true;
+    bool InProcess = false;
+    bool IsStopped = false;
+    bool IsSubmitted = false;
+    bool IsCompleted = false;
+    bool IsNotStarted = false;
 
-    public bool Hidden { get { return !IsSaving || !IsDraft; } }
-    public bool ReadonlyHidden { get { return IsClosed || IsCompleted; } }
-    public bool Progress { get { return !IsSaving || IsDraft || !IsClosed; } }
+    bool Hidden { get { return !IsSaving || !IsDraft; } }
+    bool ReadonlyHidden { get { return IsClosed || IsCompleted; } }
+    bool Progress { get { return IsSaving || IsDraft || IsClosed; } }
 
-    public SingleDropDown DropDownBOM = new SingleDropDown();
+    SingleDropDown DropDownBOM = new SingleDropDown();
 
     List<int> IsDelete = new List<int>();
-    public List<string> ItemName = new List<string>();
-    public List<string> UOMName = new List<string>();
-    private List<BOM_Item> Items = new List<BOM_Item>();
+    List<string> ItemName = new List<string>();
+    List<string> UOMName = new List<string>();
+    List<BOM_Item> Items = new List<BOM_Item>();
 
     protected override async void OnInitialized()
     {
@@ -261,11 +261,13 @@
                     {
                         InProcess = true;
                         IsSaving = false;
+                        value = 50;
                     }
                     else if (production.Status == ProductionStatus.Stopped)
                     {
                         IsStopped = true;
                         IsSaving = false;
+                        value = 50;
                     }
                     else if (production.Status == ProductionStatus.Draft)
                     {
@@ -276,6 +278,7 @@
                     {
                         IsCompleted = true;
                         IsSaving = false;
+                        value = 100;
                     }
                     else if (production.Status == ProductionStatus.Closed)
                     {
@@ -285,9 +288,6 @@
                 }
                 else if (!string.IsNullOrWhiteSpace(BOMID))
                 {
-                    // Items = db.Query<BOM_Item>("Select * from BOM_Item where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
-                    // ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = BOMID }).ToList();
-                    // production.BOMID = BOMID;
                     BOM = db.QueryFirstOrDefault<BOM>("Select * from BOM where BOMID = @BOMID", new { BOMID = BOMID });
                     Option options = new Option();
                     options.Value = BOM.BOMID;
