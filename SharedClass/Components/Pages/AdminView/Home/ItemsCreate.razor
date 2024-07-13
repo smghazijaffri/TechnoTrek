@@ -7,6 +7,7 @@
 @inject Connection con;
 @inject ItemUOM itemuom;
 @inject ItemClass items;
+@inject Stock stock;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject Compatibility compatibility;
@@ -80,6 +81,10 @@
             <label class="form-label">Lead Time in Days</label>
             <input type="text" inputmode="numeric" id="num" @bind="items.LeadTime" class="form-control">
             <label class="form-label">Average time taken by the supplier to deliver</label>
+        </div> 
+        <div class="col-md-6">
+            <label class="form-label">Mark Up %</label>
+            <input type="text" inputmode="numeric" id="num2" @bind="stock.Markup" class="form-control">
         </div>
         <div class="col-md-6">
             <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
@@ -246,6 +251,24 @@
             $(this).val(inputValue.replace(nonNumberRegex, ''));
         }
     });
+    $('#num2').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
+        }
+    });
+    $('#num2').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
+        }
+    });
 </script>
 
 @code {
@@ -283,6 +306,7 @@
                     items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
                     ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
                     UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                    stock.Markup = db.QueryFirstOrDefault<int>("select TOP(1)Markup from Stock it where ItemID = @ItemID", new { ItemID = ItemID });
                     itemsFromDatabase = db.Query<ItemClass>(@"SELECT
                                                 it.*,
                                                 MAX(CASE WHEN ic.ItemID = @ItemID THEN 1 ELSE 0 END) AS Compatible,
@@ -393,6 +417,7 @@
                 parameters.Add("@ItemUOMDelete", DeleteTable.AsTableValuedParameter("UOMDelete"));
                 parameters.Add("@ItemCompatible", CompTable.AsTableValuedParameter("CompatibleItems"));
                 parameters.Add("@AlternateItems", AltTable.AsTableValuedParameter("AlternateItems"));
+                parameters.Add("@Markup", stock.Markup);
                 OutputClass output = new OutputClass();
                 output = crud.CRD3(parameters, "Add_Item", outputMessage: true, errorMessage: true);
                 items.ItemCode = output.Output;
@@ -461,6 +486,7 @@
             }
 
             if (string.IsNullOrWhiteSpace(items.ItemName)) { return $"Please enter Item Name"; }
+            if (stock.Markup == 0) { return $"Please enter Markup"; }
             if (string.IsNullOrWhiteSpace(items.ItemType)) { return $"Please enter Item Type"; }
             if (items.LeadTime <= 0) { return $"Lead Time cannot be less than or equal to 0"; }
             if (string.IsNullOrWhiteSpace(items.Brand)) { return $"Please enter Item Brand"; }

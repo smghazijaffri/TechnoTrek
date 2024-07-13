@@ -237,6 +237,8 @@
         public int RowID { get; set; }
         public bool Selected { get; set; }
         public string? Status { get; set; }
+        public int Markup { get; set; }
+        public int SellingPrice { get; set; }
     }
 
     public class SendModel

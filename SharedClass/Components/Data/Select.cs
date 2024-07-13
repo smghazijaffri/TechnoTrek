@@ -213,7 +213,7 @@ namespace SharedClass.Components.Data
         public static async Task<List<Bulk>> RetrieveCartItems(string userid)
         {
             List<Bulk> cartItems = [];
-            CRUD crud = new();
+            CRUD crud = new CRUD();
             try
             {
                 var parameters = new DynamicParameters();
