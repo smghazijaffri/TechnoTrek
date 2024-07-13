@@ -4,7 +4,6 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <MudTabs Centered="true" Rounded="true" PanelClass="pa-6" Class="m-auto">
     <MudTabPanel Text="General" Class="d-flex justify-content-center">
@@ -62,26 +61,50 @@
         </MudGrid>
 
         <h5 class="m-3">Analytics</h5>
-        <MudGrid>
-            <MudItem xs="12" lg="8">
-                <MudCard>
-                    <MudCardHeader Class="d-flex justify-content-between">
-                        <MudText Typo="Typo.h6">Inventory</MudText>
-                        <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Error" OnClick="DownloadReport" />
-                    </MudCardHeader>
-                    <MudCardContent>
-                        @if (RealTimeSeries != null && RealTimeXAxisLabels.ToArray() != null)
-                        {
-                            <MudChart ChartType="ChartType.Bar" ChartSeries="@RealTimeSeries" XAxisLabels="@RealTimeXAxisLabels.ToArray()" Height="auto" />
-                        }
-                        else
-                        {
-                            <MudText Typo="Typo.subtitle1">No data...</MudText>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
+        @* <MudGrid>
+        <MudItem xs="12" lg="8">
+        <MudCard>
+        <MudCardHeader Class="d-flex justify-content-between">
+        <MudText Typo="Typo.h6">Inventory</MudText>
+        <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Error" OnClick="DownloadReport" />
+        </MudCardHeader>
+        <MudCardContent>
+        @if (RealTimeSeries != null && RealTimeXAxisLabels.ToArray() != null)
+        {
+        <MudChart ChartType="ChartType.Bar" ChartSeries="@RealTimeSeries" XAxisLabels="@RealTimeXAxisLabels.ToArray()" Height="auto" />
+        }
+        else
+        {
+        <MudText Typo="Typo.subtitle1">No data...</MudText>
+        }
+        </MudCardContent>
+        </MudCard>
+        </MudItem> *@
+        <MudGrid Class="mt-3 shadow-lg border border-secondary-subtle">
+            @if (InventoryDetails != null && InventoryDetails.Any())
+            {
+                <Syncfusion.Blazor.Charts.SfChart Title="Inventory" EnableAnimation="true">
+                    <Syncfusion.Blazor.Charts.ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"
+                                                                EdgeLabelPlacement="Syncfusion.Blazor.Charts.EdgeLabelPlacement.Shift"
+                                                                LabelIntersectAction="Syncfusion.Blazor.Charts.LabelIntersectAction.Wrap">
+                    </Syncfusion.Blazor.Charts.ChartPrimaryXAxis>
+
+                    <Syncfusion.Blazor.Charts.ChartSeriesCollection>
+                        <Syncfusion.Blazor.Charts.ChartSeries DataSource="@InventoryDetails" XName="Item" YName="Quantity" Opacity="0.5" DashArray="5,5" Fill="blue" Type="Syncfusion.Blazor.Charts.ChartSeriesType.Column">
+                            <Syncfusion.Blazor.Charts.ChartSeriesBorder Width="2" Color="red"></Syncfusion.Blazor.Charts.ChartSeriesBorder>
+                            <Syncfusion.Blazor.Charts.ChartMarker>
+                                <Syncfusion.Blazor.Charts.ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                            </Syncfusion.Blazor.Charts.ChartMarker>
+                        </Syncfusion.Blazor.Charts.ChartSeries>
+                    </Syncfusion.Blazor.Charts.ChartSeriesCollection>
+                </Syncfusion.Blazor.Charts.SfChart>
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle1">No data...</MudText>
+            }
         </MudGrid>
+        @* </MudGrid> *@
     </MudTabPanel>
 
     <MudTabPanel Text="Purchase">
@@ -129,27 +152,7 @@
                 </MudCard>
             </MudItem>
         </MudGrid>
-
-        <MudGrid>
-            <MudItem xs="12" lg="8">
-                <MudCard>
-                    <MudCardHeader Class="d-flex justify-content-center">
-                        <MudText Typo="Typo.h6">Monthly Purchases</MudText>
-                    </MudCardHeader>
-                    <MudCardContent Class="text-center">
-                        @if (PurchaseSeries != null && PurchaseXAxisLabels != null && PurchaseXAxisLabels.Length > 0)
-                        {
-                            <MudChart ChartType="ChartType.Bar" ChartSeries="@PurchaseSeries.ToList()" XAxisLabels="@PurchaseXAxisLabels" Height="auto" />
-                            <MudText Typo="Typo.subtitle1">Max Purchase Amount: Rs. @PurchaseYAxisMax@PurchaseYAxisUnit</MudText>
-                        }
-                        else
-                        {
-                            <MudText Typo="Typo.subtitle1">No data...</MudText>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        </MudGrid>
+        <PurchaseInsight FiscalYearEnd="@FiscalYearEnd" FiscalYearStart="@FiscalYearStart" />
     </MudTabPanel>
 
     <MudTabPanel Text="Sales">
@@ -187,65 +190,7 @@
                 </MudCard>
             </MudItem>
         </MudGrid>
-
-        <MudGrid>
-            <MudItem xs="12" lg="4">
-                <MudCard>
-                    <MudCardHeader Class="d-flex justify-content-center">
-                        <MudText Typo="Typo.h6">Sales Comparison</MudText>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        <MudChart ChartType="ChartType.Donut" InputData="@SalesComparisonData" InputLabels="@SalesComparisonLabels" Height="350px"></MudChart>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-
-            <MudItem xs="12" lg="4">
-                <MudCard Class="text-center">
-                    <h6 class="m-2">Top 10 Selling Items</h6>
-                    <MudSimpleTable Style="overflow-x: auto;">
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>Name</th>
-                                <th>Sold</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var (index, item) in TopSellingItems.Select((value, i) => (i + 1, value)))
-                            {
-                                <tr>
-                                    <td>@index</td>
-                                    <td>@item.ItemName</td>
-                                    <td>@item.TotalQuantitySold</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-                </MudCard>
-            </MudItem>
-        </MudGrid>
-
-        <MudGrid>
-            <MudItem xs="12" lg="8">
-                <MudCard>
-                    <MudCardHeader Class="d-flex justify-content-center">
-                        <MudText Typo="Typo.h6">Monthly Sales</MudText>
-                    </MudCardHeader>
-                    <MudCardContent Class="text-center">
-                        @if (SalesSeries != null && SalesXAxisLabels != null && SalesXAxisLabels.Length > 0)
-                        {
-                            <MudChart ChartType="ChartType.Bar" ChartSeries="@SalesSeries.ToList()" XAxisLabels="@SalesXAxisLabels" Height="auto" />
-                            <MudText Typo="Typo.subtitle1">Max Sale Amount: Rs. @YAxisMax@YAxisUnit</MudText>
-                        }
-                        else
-                        {
-                            <MudText Typo="Typo.subtitle1">No data...</MudText>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        </MudGrid>
+        <SalesInsight FiscalYearEnd="@FiscalYearEnd" FiscalYearStart="@FiscalYearStart" />
     </MudTabPanel>
 
     <MudTabPanel Text="Production">
@@ -297,9 +242,9 @@
 
     List<ChartSeries>? SalesSeries;
     List<ChartSeries>? PurchaseSeries;
-    List<dynamic> TopSellingItems = new List<dynamic>();
     List<string> RealTimeXAxisLabels { get; set; } = new List<string> { };
     List<ChartSeries> RealTimeSeries { get; set; } = new List<ChartSeries>();
+    List<InventoryData> InventoryDetails { get; set; } = new List<InventoryData>();
 
     protected override async void OnInitialized()
     {
@@ -327,7 +272,7 @@
             try
             {
                 TotalCustomers = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Customer").FirstOrDefault();
-                var stockData = await db.QueryAsync<Stock>("SELECT * FROM Stock ORDER BY 'ItemID'");
+                var stockData = await db.QueryAsync<dynamic>("SELECT it.ItemName AS Item, s.Quantity FROM Stock s inner join Items it on s.ItemID = it.ItemCode ORDER BY it.ItemName");
                 TotalUOM = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
                 TotalProducts = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
                 TotalVendors = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();
@@ -341,40 +286,35 @@
                 PendingPurchaseRequest = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM PurchaseRequest WHERE Status = 'Pending'").FirstOrDefault();
                 NewCustomerBom = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM BOM WHERE IsActive = 'true' AND TYPE = 'Customer'").FirstOrDefault();
                 PartiallyPaidandOverdueSaleInvoice = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'").FirstOrDefault();
-                var saleOrderData = await db.QueryAsync<dynamic>("SELECT Item, COALESCE(SUM(Quantity), 0) AS TotalQuantitySold FROM SO_Item GROUP BY Item ORDER BY TotalQuantitySold DESC");
-                var queryResult = await db.QueryAsync<dynamic>("SELECT TOP 10 so.Item, COALESCE(SUM(so.Quantity), 0) AS TotalQuantitySold, it.ItemName FROM SO_Item so inner join Items it on it.ItemCode = so.Item GROUP BY so.Item, it.ItemName ORDER BY TotalQuantitySold DESC");
+                // var saleOrderData = await db.QueryAsync<dynamic>("SELECT Item, COALESCE(SUM(Quantity), 0) AS TotalQuantitySold FROM SO_Item GROUP BY Item ORDER BY TotalQuantitySold DESC");
+                // var queryResult = await db.QueryAsync<dynamic>("SELECT TOP 10 so.Item, COALESCE(SUM(so.Quantity), 0) AS TotalQuantitySold, it.ItemName FROM SO_Item so inner join Items it on it.ItemCode = so.Item GROUP BY so.Item, it.ItemName ORDER BY TotalQuantitySold DESC");
                 var monthlySalesData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(si.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM SI_Item si
                 inner join SaleInvoice s on s.SalesInvoiceID = si.SalesInvoiceID WHERE IsPaid = 1 AND si.CreationDate >= @FiscalYearStart AND si.CreationDate < @FiscalYearEnd GROUP BY FORMAT(si.CreationDate, 'yyyy-MM') ORDER BY Month",
                     new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
-                var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM PI_Items pi
-                inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
-                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
+                // var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM PI_Items pi
+                // inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
+                //     new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
 
-                TopSellingItems = queryResult.ToList();
+                // TopSellingItems = queryResult.ToList();
 
-                TotalProfit = TotalIncome - TotalSpendings;
+                //TotalProfit = TotalIncome - TotalSpendings;
 
-                foreach (var data in stockData)
-                {
-                    if (!RealTimeXAxisLabels.Contains(data.ItemID))
+                // foreach (var data in stockData)
+                // {
+                //     if (!RealTimeXAxisLabels.Contains(data.ItemID))
+                //     {
+                //         RealTimeXAxisLabels.Add(data.ItemID);
+                //     }
+                // }
+
+                InventoryDetails = stockData.Select(data => new InventoryData
                     {
-                        RealTimeXAxisLabels.Add(data.ItemID);
-                    }
-                }
+                        Item = data.Item,
+                        Quantity = (int)data.Quantity
+                    }).ToList();
 
-                RealTimeSeries = new List<ChartSeries>
-                {
-                    new ChartSeries
-                    {
-                        Name = "Items",
-                        Data = stockData.OrderBy(stock => stock.ItemID)
-                                        .Select(stock => (double)stock.Quantity)
-                                        .ToArray()
-                    }
-                };
-
-                SalesComparisonData = saleOrderData.Select(order => (double)order.TotalQuantitySold).ToArray();
-                SalesComparisonLabels = saleOrderData.Select(order => (string)order.Item).ToArray();
+                // SalesComparisonData = saleOrderData.Select(order => (double)order.TotalQuantitySold).ToArray();
+                // SalesComparisonLabels = saleOrderData.Select(order => (string)order.Item).ToArray();
 
                 SalesXAxisLabels = monthlySalesData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
                 var salesAmounts = monthlySalesData.Select(data => (double)data.TotalSales).ToArray();
@@ -410,39 +350,39 @@
                     }
                 };
 
-                PurchaseXAxisLabels = monthlyPurchaseData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
-                var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
+                // PurchaseXAxisLabels = monthlyPurchaseData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
+                // var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
 
-                if (purchaseAmounts.Any())
-                {
-                    PurchaseYAxisMax = purchaseAmounts.Max();
-                    if (PurchaseYAxisMax >= 1_000_000)
-                    {
-                        PurchaseYAxisUnit = "M";
-                        PurchaseYAxisMax /= 1_000_000;
-                        purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
-                    }
-                    else if (PurchaseYAxisMax >= 1_000)
-                    {
-                        PurchaseYAxisUnit = "K";
-                        PurchaseYAxisMax /= 1_000;
-                        purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
-                    }
-                }
-                else
-                {
-                    PurchaseYAxisMax = 0;
-                    PurchaseYAxisUnit = string.Empty;
-                }
+                // if (purchaseAmounts.Any())
+                // {
+                //     PurchaseYAxisMax = purchaseAmounts.Max();
+                //     if (PurchaseYAxisMax >= 1_000_000)
+                //     {
+                //         PurchaseYAxisUnit = "M";
+                //         PurchaseYAxisMax /= 1_000_000;
+                //         purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
+                //     }
+                //     else if (PurchaseYAxisMax >= 1_000)
+                //     {
+                //         PurchaseYAxisUnit = "K";
+                //         PurchaseYAxisMax /= 1_000;
+                //         purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
+                //     }
+                // }
+                // else
+                // {
+                //     PurchaseYAxisMax = 0;
+                //     PurchaseYAxisUnit = string.Empty;
+                // }
 
-                PurchaseSeries = new List<ChartSeries>
-                {
-                    new ChartSeries
-                    {
-                        Name = "Purchase Amount",
-                        Data = purchaseAmounts
-                    }
-                };
+                // PurchaseSeries = new List<ChartSeries>
+                // {
+                //     new ChartSeries
+                //     {
+                //         Name = "Purchase Amount",
+                //         Data = purchaseAmounts
+                //     }
+                // };
             }
             catch (Exception ex)
             {
@@ -570,5 +510,11 @@
             Snackbar.Clear();
             Snackbar.Add("No Partially Paid or Overdue Sale Invoices", Severity.Info);
         }
+    }
+
+    public class InventoryData
+    {
+        public string Item { get; set; }
+        public int Quantity { get; set; }
     }
 }

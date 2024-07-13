@@ -1,0 +1,139 @@
+﻿@using Syncfusion.Blazor.Charts
+
+@layout AdminLayout;
+@inject Select select;
+@inject Connection con;
+
+<MudGrid>
+    <MudItem xs="12" lg="4">
+        <MudCard>
+            <MudCardHeader Class="d-flex justify-content-center">
+                <MudText Typo="Typo.h6">Purchase Comparison</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (PurchaseOrderDetails != null && PurchaseOrderDetails.Any())
+                {
+                    <SfAccumulationChart>
+                        <AccumulationChartSeriesCollection>
+                            <AccumulationChartSeries DataSource="@PurchaseOrderDetails" XName="Item" YName="TotalQuantityPurchased" Name="Item" InnerRadius="40%">
+                                <AccumulationDataLabelSettings Visible="true" Name="TotalQuantityPurchased"></AccumulationDataLabelSettings>
+                            </AccumulationChartSeries>
+                        </AccumulationChartSeriesCollection>
+
+                        <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+                        <AccumulationChartTooltipSettings Enable="true"></AccumulationChartTooltipSettings>
+                    </SfAccumulationChart>
+                }
+                else
+                {
+                    <p>Loading data...</p>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudGrid Class="mt-3 shadow-lg border border-secondary-subtle">
+    @if (MonthlyPurchaseDetails != null && MonthlyPurchaseDetails.Any())
+    {
+        <SfChart Title="Monthly Purchase">
+            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+
+            <ChartPrimaryYAxis LabelFormat="@YAxisFormat"></ChartPrimaryYAxis>
+
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@MonthlyPurchaseDetails" XName="Month" YName="TotalSales" Opacity="0.5" DashArray="5,5" Fill="blue" Type="ChartSeriesType.Bar">
+                    <ChartSeriesBorder Width="2" Color="red"></ChartSeriesBorder>
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                    </ChartMarker>
+                </ChartSeries>
+            </ChartSeriesCollection>
+        </SfChart>
+    }
+    else
+    {
+        <MudText Typo="Typo.subtitle1">No data...</MudText>
+    }
+</MudGrid>
+
+@code {
+    [Parameter]
+    public DateTime FiscalYearEnd { get; set; }
+
+    [Parameter]
+    public DateTime FiscalYearStart { get; set; }
+
+    string YAxisUnit = "";
+    string YAxisFormat => YAxisUnit switch
+    {
+        "M" => "#,##0,,M",
+        "K" => "#,##0,K",
+        _ => "#,##0"
+    };
+
+    List<PurchaseData> MonthlyPurchaseDetails { get; set; } = new List<PurchaseData>();
+    List<PurchaseOrderData> PurchaseOrderDetails { get; set; } = new List<PurchaseOrderData>();
+
+    protected override async void OnInitialized()
+    {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        var purchaseOrderData = await db.QueryAsync<dynamic>("SELECT it.ItemName AS Item, COALESCE(SUM(sot.Quantity), 0) AS TotalQuantityPurchased FROM PO_Items sot inner join Items it on sot.Item = it.ItemCode GROUP BY it.ItemName ORDER BY TotalQuantityPurchased DESC");
+        var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM PI_Items pi inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
+                    new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
+
+        var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
+
+        PurchaseOrderDetails = purchaseOrderData.Select(data => new PurchaseOrderData
+            {
+                Item = data.Item,
+                TotalQuantityPurchased = data.TotalQuantityPurchased
+            }).ToList();
+
+        if (purchaseAmounts.Any())
+        {
+            double yAxisMax = purchaseAmounts.Max();
+            string yAxisUnit = string.Empty;
+
+            if (yAxisMax >= 1_000_000)
+            {
+                yAxisUnit = "M";
+                yAxisMax /= 1_000_000;
+                purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
+            }
+            else if (yAxisMax >= 1_000)
+            {
+                yAxisUnit = "K";
+                yAxisMax /= 1_000;
+                purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
+            }
+
+            YAxisUnit = yAxisUnit;
+        }
+        else
+        {
+            YAxisUnit = string.Empty;
+        }
+
+        MonthlyPurchaseDetails = monthlyPurchaseData.Select(data => new PurchaseData
+            {
+                Month = DateTime.Parse($"{data.Month}-01").ToString("MMMM"),
+                TotalSales = (double)data.TotalSales
+            }).ToList();
+
+        StateHasChanged();
+        base.OnInitialized();
+    }
+
+    public class PurchaseData
+    {
+        public string Month { get; set; }
+        public double TotalSales { get; set; }
+    }
+
+    public class PurchaseOrderData
+    {
+        public string Item { get; set; }
+        public double TotalQuantityPurchased { get; set; }
+    }
+}

@@ -154,6 +154,7 @@
     <PackageReference Include="MudBlazor.ThemeManager" Version="1.1.0" />
     <PackageReference Include="PdfSharpCore" Version="1.3.64" />
     <PackageReference Include="ProtectedBrowserStorage.NETStandard" Version="1.1.2" />
+    <PackageReference Include="Syncfusion.Blazor.Charts" Version="26.1.41" />
   </ItemGroup>
 
   <ItemGroup>

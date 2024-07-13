@@ -6,6 +6,7 @@ using ProtectedLocalStore;
 using MudBlazor.Services;
 using SharedClass;
 using MudBlazor;
+using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +69,8 @@ builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseOrderAnalysis>();
 builder.Services.AddScoped<SharedClass.Components.Data.Email>();
 
+builder.Services.AddSyncfusionBlazor();
+
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 
 builder.Services.AddMudServices();
@@ -88,6 +91,8 @@ builder.Services.AddProtectedLocalStore(new EncryptionService(
                 new KeyInfo("45BLO2yoJkvBwz99kBEMlNkxvL40vUSGaqr/WBu3+Vg=", "Ou3fn+I9SVicGWMLkFEgZQ==")));
 
 Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
+
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCeUx0RXxbf1x0ZF1MY19bRH5PMyBoS35RckVkWHxeeHdWRmhbVEF+");
 
 var app = builder.Build();
 
