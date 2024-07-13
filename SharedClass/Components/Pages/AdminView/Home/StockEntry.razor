@@ -228,12 +228,13 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
+                stock.StockEntryType = SelectedEntryType;
                 string validate = ValidateSE();
                 if (validate != null)
                 {
                     return validate;
                 }
-                stock.StockEntryType = SelectedEntryType;
+               
                 header = stock.StockEntryType;
 
                 if (IsSaving)
@@ -333,8 +334,11 @@
                 if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
 
                 if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
+                if (stock.StockEntryType == "Goods Receipt")
+                {
+                    if (PR.BasicRate <= 0 || string.IsNullOrWhiteSpace((PR.BasicRate).ToString())) return $"Row {count}: Rate cannot be less than or equal to 0";
 
-                if (PR.BasicRate <= 0 || string.IsNullOrWhiteSpace((PR.BasicRate).ToString())) return $"Row {count}: Rate cannot be less than or equal to 0";
+                }
 
                 if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
             }

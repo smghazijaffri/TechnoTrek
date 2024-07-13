@@ -7,6 +7,8 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@using SharedClass.Components.Data;
 
 <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
     <img src="_content/SharedClass/Images/dell1.jpg" style="width: 100%; height: 100%; object-fit: cover;" />
@@ -147,12 +149,18 @@
                 {
                     AppState.Authorized = true;
                     AppState.CustomerAuthorized = false;
+                    using SqlConnection db = new SqlConnection(con.connectionString);
+                    string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+                    LocalStorageString localStorage = new LocalStorageString(userid);
+                    LocalStorage.SetItemAsync("UserID", userid);
                     NavigationManager.NavigateTo("/dashboard");
                 }
                 else
                 {
                     using SqlConnection db = new SqlConnection(con.connectionString);
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+                    LocalStorage.SetItemAsync("UserID", userid);
+
                     var result = await Select.RetrieveCartItems(userid);
 
                     foreach (var item in result)

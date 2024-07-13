@@ -723,7 +723,7 @@
             {
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
-                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("select Sellingprice from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text , u.UOMID as Value  from UOM u inner join ItemUOM it on it.UOMID = u.UOMID where ItemID = @ItemID", new { ItemID = options.Value }).ToList();
                 HandleFormInput();
             }

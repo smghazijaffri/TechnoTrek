@@ -136,7 +136,7 @@
                         var stock = await select.GetStockDataAsync(item.ItemCode);
                         if (stock != null && stock.Any())
                         {
-                            ItemRates[item.ItemCode] = stock.FirstOrDefault()?.Rate;
+                            ItemRates[item.ItemCode] = stock.FirstOrDefault()?.SellingPrice;
                         }
                         else
                         {

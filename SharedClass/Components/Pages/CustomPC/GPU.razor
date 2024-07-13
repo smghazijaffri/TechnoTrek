@@ -120,7 +120,7 @@
                     foreach (var item in Graphics)
                     {
                         var stock = await select.GetStockDataAsync(item.ItemCode);
-                        ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.Rate;
+                        ItemRates[item.ItemCode] = stock?.FirstOrDefault()?.SellingPrice;
                         quantities[item.ItemCode] = 20;
                     }
                 }
