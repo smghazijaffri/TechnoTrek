@@ -61,28 +61,10 @@
         </MudGrid>
 
         <h5 class="m-3">Analytics</h5>
-        @* <MudGrid>
-        <MudItem xs="12" lg="8">
-        <MudCard>
-        <MudCardHeader Class="d-flex justify-content-between">
-        <MudText Typo="Typo.h6">Inventory</MudText>
-        <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Error" OnClick="DownloadReport" />
-        </MudCardHeader>
-        <MudCardContent>
-        @if (RealTimeSeries != null && RealTimeXAxisLabels.ToArray() != null)
-        {
-        <MudChart ChartType="ChartType.Bar" ChartSeries="@RealTimeSeries" XAxisLabels="@RealTimeXAxisLabels.ToArray()" Height="auto" />
-        }
-        else
-        {
-        <MudText Typo="Typo.subtitle1">No data...</MudText>
-        }
-        </MudCardContent>
-        </MudCard>
-        </MudItem> *@
         <MudGrid Class="mt-3 shadow-lg border border-secondary-subtle">
             @if (InventoryDetails != null && InventoryDetails.Any())
             {
+                <MudIconButton Icon="@Icons.Material.Outlined.Download" Title="Download Report" Color="Color.Error" OnClick="DownloadReport" />
                 <Syncfusion.Blazor.Charts.SfChart Title="Inventory" EnableAnimation="true">
                     <Syncfusion.Blazor.Charts.ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"
                                                                 EdgeLabelPlacement="Syncfusion.Blazor.Charts.EdgeLabelPlacement.Shift"
@@ -104,7 +86,6 @@
                 <MudText Typo="Typo.subtitle1">No data...</MudText>
             }
         </MudGrid>
-        @* </MudGrid> *@
     </MudTabPanel>
 
     <MudTabPanel Text="Purchase">
@@ -226,24 +207,12 @@
     int PendingPurchaseRequest { get; set; }
     int PartiallyPaidandOverdueSaleInvoice { get; set; }
 
-    double YAxisMax;
-    double PurchaseYAxisMax;
     double TotalIncome { get; set; }
     double TotalProfit { get; set; }
     double TotalSpendings { get; set; }
-    double[]? SalesComparisonData { get; set; }
 
-    string YAxisUnit = "";
-    string[]? SalesXAxisLabels;
-    string[]? PurchaseXAxisLabels;
-    string PurchaseYAxisUnit = "";
     string? DeviceType { get; set; }
-    string[]? SalesComparisonLabels { get; set; }
 
-    List<ChartSeries>? SalesSeries;
-    List<ChartSeries>? PurchaseSeries;
-    List<string> RealTimeXAxisLabels { get; set; } = new List<string> { };
-    List<ChartSeries> RealTimeSeries { get; set; } = new List<ChartSeries>();
     List<InventoryData> InventoryDetails { get; set; } = new List<InventoryData>();
 
     protected override async void OnInitialized()
@@ -286,103 +255,17 @@
                 PendingPurchaseRequest = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM PurchaseRequest WHERE Status = 'Pending'").FirstOrDefault();
                 NewCustomerBom = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM BOM WHERE IsActive = 'true' AND TYPE = 'Customer'").FirstOrDefault();
                 PartiallyPaidandOverdueSaleInvoice = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM SaleInvoice WHERE Status = 'Partially Paid' OR Status = 'Overdue'").FirstOrDefault();
-                // var saleOrderData = await db.QueryAsync<dynamic>("SELECT Item, COALESCE(SUM(Quantity), 0) AS TotalQuantitySold FROM SO_Item GROUP BY Item ORDER BY TotalQuantitySold DESC");
-                // var queryResult = await db.QueryAsync<dynamic>("SELECT TOP 10 so.Item, COALESCE(SUM(so.Quantity), 0) AS TotalQuantitySold, it.ItemName FROM SO_Item so inner join Items it on it.ItemCode = so.Item GROUP BY so.Item, it.ItemName ORDER BY TotalQuantitySold DESC");
                 var monthlySalesData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(si.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM SI_Item si
                 inner join SaleInvoice s on s.SalesInvoiceID = si.SalesInvoiceID WHERE IsPaid = 1 AND si.CreationDate >= @FiscalYearStart AND si.CreationDate < @FiscalYearEnd GROUP BY FORMAT(si.CreationDate, 'yyyy-MM') ORDER BY Month",
                     new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
-                // var monthlyPurchaseData = await db.QueryAsync<dynamic>(@"SELECT FORMAT(pi.CreationDate, 'yyyy-MM') AS Month, COALESCE(SUM(Amount), 0) AS TotalSales FROM PI_Items pi
-                // inner join PurchaseInvoice p on p.PurchaseInvoiceID = pi.PurchaseInvoiceID WHERE IsPaid = 1 AND pi.CreationDate >= @FiscalYearStart AND pi.CreationDate < @FiscalYearEnd GROUP BY FORMAT(pi.CreationDate, 'yyyy-MM') ORDER BY Month",
-                //     new { FiscalYearStart = FiscalYearStart.ToString("yyyy-MM-dd"), FiscalYearEnd = FiscalYearEnd.ToString("yyyy-MM-dd") });
 
-                // TopSellingItems = queryResult.ToList();
-
-                //TotalProfit = TotalIncome - TotalSpendings;
-
-                // foreach (var data in stockData)
-                // {
-                //     if (!RealTimeXAxisLabels.Contains(data.ItemID))
-                //     {
-                //         RealTimeXAxisLabels.Add(data.ItemID);
-                //     }
-                // }
+                TotalProfit = TotalIncome - TotalSpendings;
 
                 InventoryDetails = stockData.Select(data => new InventoryData
                     {
                         Item = data.Item,
                         Quantity = (int)data.Quantity
                     }).ToList();
-
-                // SalesComparisonData = saleOrderData.Select(order => (double)order.TotalQuantitySold).ToArray();
-                // SalesComparisonLabels = saleOrderData.Select(order => (string)order.Item).ToArray();
-
-                SalesXAxisLabels = monthlySalesData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
-                var salesAmounts = monthlySalesData.Select(data => (double)data.TotalSales).ToArray();
-
-                if (salesAmounts.Any())
-                {
-                    YAxisMax = salesAmounts.Max();
-                    if (YAxisMax >= 1_000_000)
-                    {
-                        YAxisUnit = "M";
-                        YAxisMax /= 1_000_000;
-                        salesAmounts = salesAmounts.Select(s => s / 1_000_000).ToArray();
-                    }
-                    else if (YAxisMax >= 1_000)
-                    {
-                        YAxisUnit = "K";
-                        YAxisMax /= 1_000;
-                        salesAmounts = salesAmounts.Select(s => s / 1_000).ToArray();
-                    }
-                }
-                else
-                {
-                    YAxisMax = 0;
-                    YAxisUnit = string.Empty;
-                }
-
-                SalesSeries = new List<ChartSeries>
-                {
-                    new ChartSeries
-                    {
-                        Name = "Sales Amount",
-                        Data = salesAmounts
-                    }
-                };
-
-                // PurchaseXAxisLabels = monthlyPurchaseData.Select(data => DateTime.Parse($"{data.Month}-01").ToString("MMMM")).ToArray();
-                // var purchaseAmounts = monthlyPurchaseData.Select(data => (double)data.TotalSales).ToArray();
-
-                // if (purchaseAmounts.Any())
-                // {
-                //     PurchaseYAxisMax = purchaseAmounts.Max();
-                //     if (PurchaseYAxisMax >= 1_000_000)
-                //     {
-                //         PurchaseYAxisUnit = "M";
-                //         PurchaseYAxisMax /= 1_000_000;
-                //         purchaseAmounts = purchaseAmounts.Select(s => s / 1_000_000).ToArray();
-                //     }
-                //     else if (PurchaseYAxisMax >= 1_000)
-                //     {
-                //         PurchaseYAxisUnit = "K";
-                //         PurchaseYAxisMax /= 1_000;
-                //         purchaseAmounts = purchaseAmounts.Select(s => s / 1_000).ToArray();
-                //     }
-                // }
-                // else
-                // {
-                //     PurchaseYAxisMax = 0;
-                //     PurchaseYAxisUnit = string.Empty;
-                // }
-
-                // PurchaseSeries = new List<ChartSeries>
-                // {
-                //     new ChartSeries
-                //     {
-                //         Name = "Purchase Amount",
-                //         Data = purchaseAmounts
-                //     }
-                // };
             }
             catch (Exception ex)
             {
