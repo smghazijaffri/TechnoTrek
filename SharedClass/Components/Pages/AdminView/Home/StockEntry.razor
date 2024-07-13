@@ -50,7 +50,7 @@
         <div class="col-md-6">
             <label class="form-label">Stock Entry Type</label>
             <select class="form-select" aria-label="Stock Entry Type" disabled="@IsSubmitted" @bind="SelectedEntryType">
-                <option value="">Select entry Type</option>
+                <option value="">Select Entry Type</option>
                 <option value="Goods Receipt">Goods Receipt</option>
                 <option value="Goods Issue">Goods Issue</option>
             </select>
@@ -73,9 +73,12 @@
                     <th class="col col-auto" style="width: 70px; min-width: 70px;">
                         Quantity
                     </th>
-                    <th class="col col-auto" style="width: 150px; min-width: 150px;" hidden="@Hiderate">
-                        Basic Rate
-                    </th>
+                    @if (!IsIssue)
+                    {
+                        <th class="col col-auto" style="width: 150px; min-width: 150px;" hidden="@Hiderate">
+                            Basic Rate
+                        </th>
+                    }
                 </tr>
             </thead>
             <tbody id="table-body">
@@ -113,7 +116,10 @@
                             </div>
                         </td>
                         <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                        <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.BasicRate" readonly="@ReadonlyHidden" /></td>
+                        @if (!IsIssue)
+                        {
+                            <td hidden="@Hiderate"><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.BasicRate" readonly="@ReadonlyHidden" /></td>
+                        }
                     </tr>
                 }
             </tbody>
@@ -157,6 +163,7 @@
     string? DeviceType { get; set; }
     string header = "Create Stock Entry";
 
+    bool IsIssue = false;
     bool IsDraft = false;
     bool IsSaving = true;
     bool DisplayPR = true;
@@ -189,7 +196,7 @@
                 Items = db.Query<StockEntry_Items>("Select RowID, StockID, Item as Item, Quantity, BasicRate, CreationDate from StockEntry_Items where StockID = @StockID ", new { StockID = EntryID }).ToList();
                 ItemName = db.Query<string>("SELECT I1.ItemName FROM StockEntry_Items SE INNER JOIN Items I1 ON SE.Item = I1.ItemCode WHERE SE.StockID = @StockID", new { StockID = EntryID }).ToList();
                 if (stock == null || Items.Count == 0) NavigationManager.NavigateTo("/stock-entry/");
-
+                if (stock.StockEntryType == "Goods Issue") IsIssue = true;
                 DisplayPR = false;
                 header = stock.StockEntryType;
                 if (stock.Status == PurchaseStatuses.Submitted)
@@ -234,7 +241,7 @@
                 {
                     return validate;
                 }
-               
+
                 header = stock.StockEntryType;
 
                 if (IsSaving)
@@ -327,6 +334,7 @@
                     return "Stock Entry ID does not exist";
                 }
             }
+            if (string.IsNullOrEmpty(stock.StockEntryType)) return $"Please Select Entry Type";
             int count = 0;
             foreach (var PR in Items)
             {

@@ -487,6 +487,8 @@
                     Paid = true;
                     salesinvoice.Status = SaleStatus.Paid;
                     salesinvoice.IsPaid = true;
+                    PartiallyPaid = false;
+                    salesinvoice.IsPartiallyPaid = false;
                 }
                 else if (isPartiallyPaid)
                 {
