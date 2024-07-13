@@ -161,7 +161,7 @@
                     <tr>
                         <td style="vertical-align: middle;">
                             <div style="display: flex; justify-content: center;">
-                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@checkboxreadonly" />
                                 @(index + 1)
                             </div>
                         </td>
@@ -232,6 +232,10 @@
             <label class="form-label">Total Amount</label>
             <input type="text" inputmode="numeric" class="form-control" value="@SumAmounts" readonly="@ReadonlyHidden">
         </div>
+        <div class="col-md-6">
+            <label class="form-label">Remaining Amount</label>
+            <input type="text" inputmode="numeric" class="form-control" @bind="salesinvoice.Remainingamount" readonly="@ReadonlyHidden">
+        </div>
     </form>
 </div>
 
@@ -257,7 +261,9 @@
     bool Readonly { get { return IsCancelled || Paid; } }
     bool IsAnyItemSelected => Items.Any(item => item.Selected);
     bool Hidden { get { return IsCancelled || Paid || Overdue; } }
-    bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid || Return; } }
+    bool ReadonlyHidden { get { return IsCancelled || Overdue || PartiallyPaid || Paid || refdoc || Return; } }
+    bool checkboxreadonly = false;
+    bool refdoc = false;
 
     DropDown DropDownItem = new DropDown();
     List<string> UOMName = new List<string>();
@@ -502,6 +508,8 @@
                 {
                     salesinvoice.Status = SaleStatus.Cancelled;
                 }
+                if (IsPaid == true) salesinvoice.IsPaid = true;
+                else if (isPartiallyPaid == true) salesinvoice.IsPartiallyPaid = true;
                 DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
                 DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
@@ -511,11 +519,12 @@
                 var parameters = new DynamicParameters(salesinvoice);
                 parameters.Add("@SIItems", ItemTable.AsTableValuedParameter("Purhcase"));
                 parameters.Add("@DeleteSIItems", Delete.AsTableValuedParameter("DeleteType"));
-                OutputClass output = crud.CRD3(parameters, "CreateSaleInvoice", outputMessage: true, errorMessage: true);
+                OutputClass output = crud.CRD3(parameters, "CreateSaleInvoice", outputMessage: true, errorMessage: true, Remainingamount: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
                 }
+                salesinvoice.Remainingamount = output.RemainingAmount;
                 salesinvoice.SalesInvoiceID = output.Output;
                 IsDelete.Clear();
                 ToggleApproval();

@@ -38,6 +38,7 @@
         public bool IsPaid { get; set; }
         public bool IsPartiallyPaid { get; set; }
         public bool IsReturn { get; set; }
+        public int Remainingamount { get; set; }
     }
 
     public class SI_Item : BaseRecord

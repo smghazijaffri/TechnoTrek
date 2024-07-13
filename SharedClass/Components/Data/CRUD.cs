@@ -76,7 +76,7 @@ namespace SharedClass.Components.Data
             return output;
         }
 
-        public OutputClass CRD3(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false)
+        public OutputClass CRD3(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false, bool Remainingamount = false )
         {
             OutputClass output = new();
 
@@ -100,6 +100,11 @@ namespace SharedClass.Components.Data
                 {
                     parameters.Add("@ErrorMessage", dbType: DbType.String, direction: ParameterDirection.Output, size: 2000);
                 }
+                if (Remainingamount == true)
+                {
+                    parameters.Add("@Remainingamount", dbType: DbType.Int32, direction: ParameterDirection.Output, size: 2000);
+
+                }
 
                 db.Execute(SP, parameters, commandType: CommandType.StoredProcedure);
 
@@ -110,6 +115,10 @@ namespace SharedClass.Components.Data
                 if (errorMessage == true)
                 {
                     output.ErrorMessage = parameters.Get<string>("@ErrorMessage");
+                }
+                if (Remainingamount == true)
+                {
+                    output.RemainingAmount = parameters.Get<int>("@Remainingamount");
                 }
             }
 

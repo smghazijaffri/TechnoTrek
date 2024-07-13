@@ -11,6 +11,7 @@
     {
         public string? Output { get; set; }
         public string? ErrorMessage { get; set; }
+        public int RemainingAmount { get; set; }
         public List<dynamic>? Data { get; set; }
     }
 
