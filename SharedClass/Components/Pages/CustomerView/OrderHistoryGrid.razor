@@ -1,9 +1,9 @@
-﻿@page "/bulk-order"
+﻿@page "/order-history"
 
 @inject CRUD crud;
-@layout AdminLayout;
 @inject Select select;
 @inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject BulkOrder bulkorder;
 @inject NavigationManager NavigationManager;
@@ -11,42 +11,29 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <div class="d-flex justify-content-between">
-                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Style="margin-bottom: 20px;" Href="/selling">Selling</MudChip>
-                @if (selectedItems.Any())
-                {
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Style="text-transform:none; margin-bottom: 20px;"
-                               Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
-                }
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
             <MudTable @ref="_table" T="BulkOrder" Items="@Elements" MultiSelection="true" @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px"
                       OnRowClick="@OnRowClick" Virtualize="true" Filter="new Func<BulkOrder,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Bulk Order</MudText>
+                    @if (selectedItems.Any())
+                    {
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline" Class="mt-3"
+                                   Color="Color.Error" OnClick="DeleteSelectedItems" Size="Size.Large">Delete</MudButton>
+                    }
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>ID</MudTh>
-                    <MudTh>Title</MudTh>
-                    <MudTh>Customer</MudTh>
                     <MudTh>Status</MudTh>
-                    <MudTh>Total</MudTh>
+                    <MudTh>Total Amount</MudTh>
+                    <MudTh>Total Quantity</MudTh>
                     <MudTh>Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="ID">@context.BulkOrderID</MudTd>
-                    <MudTd DataLabel="Title">@context.BulkOrderName</MudTd>
-                    <MudTd DataLabel="Customer">@context.CustomerID</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
-                    <MudTd DataLabel="Total">@context.TotalAmount</MudTd>
+                    <MudTd DataLabel="Total Amount">@context.TotalAmount</MudTd>
+                    <MudTd DataLabel="Total Quantity">@context.TotalQuantity</MudTd>
                     <MudTd DataLabel="Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
@@ -58,22 +45,59 @@
 </div>
 
 @code {
-    private MudTable<BulkOrder>? _table;
-    private string searchString1 = string.Empty;
-    private IEnumerable<BulkOrder> Elements = new List<BulkOrder>();
-    private HashSet<BulkOrder> selectedItems = new HashSet<BulkOrder>();
+    MudTable<BulkOrder>? _table;
+    string? userid { get; set; }
+    string searchString1 = string.Empty;
+    IEnumerable<BulkOrder> Elements = new List<BulkOrder>();
+    HashSet<BulkOrder> selectedItems = new HashSet<BulkOrder>();
 
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
 
-        Elements = await db.QueryAsync<BulkOrder>("SELECT * FROM BulkOrder");
+        if (!string.IsNullOrEmpty(AppState.Username) && !string.IsNullOrEmpty(AppState.Role))
+        {
+            userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+
+            if (AppState.Role != "Customer")
+            {
+                Snackbar.Add("Please login as a Customer", Severity.Error);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(userid))
+            {
+                Snackbar.Add("User does not exist", Severity.Error);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+        }
+        else
+        {
+            Snackbar.Add("Please login as a Customer", Severity.Error);
+            AppState.Authorized = false;
+            await Task.Delay(1000);
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        Elements = await db.QueryAsync<BulkOrder>($"SELECT * FROM BulkOrder WHERE CustomerID = '{userid}'");
+
+        if (!Elements.Any())
+        {
+            Snackbar.Add("No Orders to show", Severity.Error);
+            await Task.Delay(1000);
+            NavigationManager.NavigateTo("/products", forceLoad: true);
+        }
     }
 
     void OnRowClick(TableRowClickEventArgs<BulkOrder> args)
     {
         bulkorder.BulkOrderID = args.Item.BulkOrderID;
-        NavigationManager.NavigateTo($"/bulk-order/{bulkorder.BulkOrderID}");
+        NavigationManager.NavigateTo($"/order-history/{bulkorder.BulkOrderID}");
     }
 
     private bool FilterFunc1(BulkOrder element) => FilterFunc(element, searchString1);
@@ -96,10 +120,10 @@
             return;
         }
 
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Cancelled").ToList();
+        var itemsToDelete = selectedItems.Where(item => item.Status == "Cancelled" && item.Status == "Received").ToList();
         if (itemsToDelete.Count == 0)
         {
-            Snackbar.Add("No items with status 'Cancelled' to delete", Severity.Info);
+            Snackbar.Add("Confirmed Orders cannot be deleted", Severity.Info);
             return;
         }
 
@@ -117,7 +141,7 @@
             }
 
             Elements = Elements.Where(e => !itemsToDelete.Any(d => d.BulkOrderID == e.BulkOrderID)).ToList();
-            Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
+            Snackbar.Add($"{itemsToDelete.Count} ordered deleted", Severity.Success);
         }
         catch (Exception ex)
         {

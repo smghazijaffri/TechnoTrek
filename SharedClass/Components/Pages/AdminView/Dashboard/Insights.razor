@@ -82,7 +82,6 @@
                 </MudCard>
             </MudItem>
         </MudGrid>
-
     </MudTabPanel>
 
     <MudTabPanel Text="Purchase">
@@ -328,7 +327,7 @@
             try
             {
                 TotalCustomers = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Customer").FirstOrDefault();
-                var stockData = await db.QueryAsync<dynamic>("SELECT * FROM Stock ORDER BY 'ItemID'");
+                var stockData = await db.QueryAsync<Stock>("SELECT * FROM Stock ORDER BY 'ItemID'");
                 TotalUOM = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM UOM WHERE Status = 'Enabled'").FirstOrDefault();
                 TotalProducts = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Items WHERE Status = 'Enabled'").FirstOrDefault();
                 TotalVendors = db.Query<int>("SELECT COALESCE(COUNT(*), 0) FROM Vendor WHERE Status = 'Enabled'").FirstOrDefault();

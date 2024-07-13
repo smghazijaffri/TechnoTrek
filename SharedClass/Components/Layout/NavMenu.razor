@@ -28,6 +28,14 @@
                         <span class="bi bi-bag"></span> Products
                     </NavLink>
                 </li>
+                @if (AppState.CustomerAuthorized)
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-item nav-link" href="/order-history" style="color: #5535F0; font-size:16px;">
+                            <span class="bi bi-clock-history"></span> Orders
+                        </NavLink>
+                    </li>
+                }
                 <li class="nav-item">
                     <NavLink class="nav-item nav-link" href="/cart" style="color: #5535F0; font-size:16px;">
                         <MudBadge Origin="@Origin.TopRight" Content="@AppState.CartItemCount" Color="Color.Primary" Overlap="false" Class="">

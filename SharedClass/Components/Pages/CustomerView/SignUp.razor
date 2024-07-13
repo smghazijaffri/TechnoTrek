@@ -216,6 +216,7 @@
         if (string.IsNullOrWhiteSpace(users.LastName)) { return $"Please enter Last Name"; }
         if (string.IsNullOrWhiteSpace(users.UserPassword)) { return $"Please enter User Password"; }
         if (string.IsNullOrWhiteSpace(users.UserEmail)) { return $"Please enter User Email"; }
+        if (!IsValidEmail(users.UserEmail)) { return $"Please enter a valid email address"; }
         if (string.IsNullOrWhiteSpace(users.UserPhone)) { return $"Please enter User Phone"; }
         if (string.IsNullOrWhiteSpace(users.Address)) { return $"Please enter User Address"; }
         if (string.IsNullOrWhiteSpace(users.UserIdentity)) { return $"Please enter User Identity"; }
@@ -230,7 +231,7 @@
         }
         if (!Regex.IsMatch(users.UserIdentity, pattern))
         { return "Invalid Identity Number format. Correct format is 42310-1234567-8."; }
-        if (!IsAtLeast18YearsOld(users.Birthday)) { return "User must be at least 18 years old."; }
+        if (!IsAtLeast14YearsOld(users.Birthday)) { return "User must be at least 14 years old."; }
 
         if (string.IsNullOrEmpty(users.UserID))
         {
@@ -269,14 +270,27 @@
         users.UserIdentity = input;
     }
 
-    private bool IsAtLeast18YearsOld(DateTime birthday)
+    private bool IsAtLeast14YearsOld(DateTime birthday)
     {
         DateTime today = DateTime.Today;
         int age = today.Year - birthday.Year;
 
         if (birthday.Date > today.AddYears(-age)) age--;
 
-        return age >= 18;
+        return age >= 14 && age <= 100;
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private void Logout()
