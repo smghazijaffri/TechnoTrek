@@ -348,7 +348,8 @@
                 }
 
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(production, "Create_ProductionOrder", outputMessage: true, errorMessage: true);
+                var parameter = new DynamicParameters(production);
+                output = crud.CRD3(parameter, "Create_ProductionOrder", outputMessage: true, errorMessage: true);
 
                 if (output.ErrorMessage != null)
                 {
