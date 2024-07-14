@@ -81,7 +81,7 @@
             <label class="form-label">Lead Time in Days</label>
             <input type="text" inputmode="numeric" id="num" @bind="items.LeadTime" class="form-control">
             <label class="form-label">Average time taken by the supplier to deliver</label>
-        </div> 
+        </div>
         <div class="col-md-6">
             <label class="form-label">Mark Up %</label>
             <input type="text" inputmode="numeric" id="num2" @bind="stock.Markup" class="form-control">
@@ -298,7 +298,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            itemsFromDatabase = await db.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' ORDER BY ItemCode");
+            itemsFromDatabase = await db.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' AND Status != 'Disabled' ORDER BY ItemCode");
             try
             {
                 if (ItemID != null)
@@ -317,6 +317,7 @@
                                                 ItemCompability ic ON it.ItemCode = ic.CompatibilityID
                                             LEFT JOIN
                                                 ItemAlternate ia ON it.ItemCode = ia.AlternateID
+                                            WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' AND Status != 'Disabled'
                                             GROUP BY
                                             it.ItemCode,
                                                    it.ItemName,
@@ -346,7 +347,7 @@
                 {
                     AddRow();
                 }
-                DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM").ToList();
+                DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM WHERE Status = 'Enabled'").ToList();
                 StateHasChanged();
             }
             catch (Exception ex)

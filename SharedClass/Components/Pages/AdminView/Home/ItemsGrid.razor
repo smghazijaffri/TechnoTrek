@@ -126,6 +126,7 @@
             {
                 OutputClass output = new OutputClass();
                 var parameter = new DynamicParameters(item);
+                parameter.Add("@Markup", null);
                 output = crud.CRD3(parameter, "Add_Item", IsDelete: true, errorMessage: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
