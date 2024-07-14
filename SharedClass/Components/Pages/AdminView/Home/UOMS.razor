@@ -128,6 +128,18 @@
             Elements = Elements.Where(e => !itemsToDelete.Any(d => d.UOMID == e.UOMID)).ToList();
             Snackbar.Add($"{itemsToDelete.Count} items deleted", Severity.Success);
         }
+        catch (SqlException ex)
+        {
+            if (ex.Number == 547)
+            {
+                Snackbar.Add("UOM cannot be deleted it is in use", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+
+            }
+        }
         catch (Exception ex)
         {
             Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);

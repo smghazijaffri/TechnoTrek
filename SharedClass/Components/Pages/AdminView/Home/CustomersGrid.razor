@@ -124,6 +124,18 @@
             Elements = Elements.Where(e => !items.Any(d => d.CustomerID == e.CustomerID)).ToList();
             Snackbar.Add($"{items.Count} items deleted", Severity.Success);
         }
+        catch (SqlException ex)
+        {
+            if (ex.Number == 547)
+            {
+                Snackbar.Add("Customer cannot be deleted it is in use", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+
+            }
+        }
         catch (Exception ex)
         {
             Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
