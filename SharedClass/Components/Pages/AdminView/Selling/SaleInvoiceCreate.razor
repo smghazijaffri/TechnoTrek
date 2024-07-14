@@ -485,12 +485,14 @@
                         Paid = true;
                         salesinvoice.Status = SaleStatus.Paid;
                         salesinvoice.IsPaid = true;
+                        salesinvoice.IsPartiallyPaid = false;
                     }
                     else if (IsReturn)
                     {
                         salesinvoice.Status = SaleStatus.Return;
                         salesinvoice.IsReturn = true;
                         Return = true;
+                        salesinvoice.IsPartiallyPaid = false;
                     }
                     else if (isPartiallyPaid)
                     {
