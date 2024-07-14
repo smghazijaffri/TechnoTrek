@@ -447,7 +447,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.BulkOrderID });
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
 
             if (GetStatus == SaleStatus.ToBill)
             {

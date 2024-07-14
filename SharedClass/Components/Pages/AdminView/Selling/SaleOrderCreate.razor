@@ -342,7 +342,7 @@
                 else if (!string.IsNullOrWhiteSpace(BulkOrderID))
                 {
                     saleorder.CustomerID = db.QueryFirstOrDefault<string>("select CustomerID from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
-                    Items = db.Query<SO_Item>("select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    Items = db.Query<SO_Item>("select Item,UOM,Quantity,Rate,Amount from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
                     ItemName = db.Query<string>("select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
                     customer = db.QueryFirstOrDefault<Customer>("select c.* from Customer c inner join BulkOrder so on so.CustomerID = c.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
                     quantity = db.Query<int>("select StockQuantity from UOM Inner Join BO_Items on UOM = UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
