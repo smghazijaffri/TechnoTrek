@@ -148,8 +148,13 @@
                     uom.Status = PurchaseStatuses.Disabled;
                     IsSaving = false;
                 }
-
-                uom.UOMID = crud.CRD(uom, "CreateUOM");
+                var parameter = new DynamicParameters(uom);
+                OutputClass output = crud.CRD3(parameter, "CreateUOM",errorMessage:true,outputMessage:true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                uom.UOMID = output.Output;
 
                 if (UOMID == null)
                 {

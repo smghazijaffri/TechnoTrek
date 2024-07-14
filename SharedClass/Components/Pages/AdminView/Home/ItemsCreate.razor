@@ -325,7 +325,8 @@
                                                    it.LeadTime,
                                                    it.Status,
                                                    it.CreationDate,
-                                                   it.Brand", new { ItemID = ItemID });
+                                                   it.Brand,
+                                                   it.UserID", new { ItemID = ItemID });
                     if (items == null)
                         NavigationManager.NavigateTo("/item/");
                     header = items.ItemName;

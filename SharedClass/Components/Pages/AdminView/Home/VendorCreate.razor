@@ -154,8 +154,13 @@
                     IsSaving = false;
                 }
 
-                vendor.VendorID = crud.CRD(vendor, "CreateVendor");
-
+                var paramter = new DynamicParameters(vendor);
+                OutputClass output = crud.CRD3(paramter, "CreateVendor", errorMessage:true,outputMessage:true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                vendor.VendorID = output.Output;
                 if (VendorID == null)
                 {
                     NavigationManager.NavigateTo($"/vendors/{vendor.VendorID}", forceLoad: true);

@@ -50,15 +50,26 @@
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        @if (!IsCancelled && !Paid)
+        @if (!IsCancelled && !Paid && !Return)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                 @GetSubmitButtonText()
             </button>
         }
+
         @if (Paid || Overdue || Return && !IsCancelled)
         {
             <MudIconButton Icon="@Icons.Material.Outlined.Download" Color="Color.Info" aria-label="download" OnClick="DownloadReport" />
+            if (Return)
+            {
+                <div class="dropdown m-1" id="dropdown">
+                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePI">Purchase Invoice</li>
+                       
+                    </ul>
+                </div>
+            }
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
                 Cancel
             </button>
@@ -238,7 +249,12 @@
         </div>
     </form>
 </div>
-
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+</script>
 @code {
     [Parameter]
     public string? SalesInvoiceID { get; set; }
@@ -314,6 +330,7 @@
                 {
                     if (salesinvoice.IsPaid == true) IsPaid = true;
                     else if (salesinvoice.IsPartiallyPaid == true) isPartiallyPaid = true;
+                    else if (salesinvoice.IsReturn == true) IsReturn = true;
                     IsDraft = true;
                     IsSaving = false;
                 }
@@ -352,7 +369,7 @@
                     salesinvoice.IsPaid = false;
                     IsSaving = false;
                 }
-                else if (salesinvoice.Status == SaleStatus.Return)
+                else if (salesinvoice.Status == SaleStatus.Return || salesinvoice.IsPartiallyPaid)
                 {
                     Return = true;
                     IsReturn = true;
@@ -510,6 +527,7 @@
                 }
                 if (IsPaid == true) salesinvoice.IsPaid = true;
                 else if (isPartiallyPaid == true) salesinvoice.IsPartiallyPaid = true;
+                else if (IsReturn == true) salesinvoice.IsReturn = true;
                 DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
                 DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
@@ -915,7 +933,28 @@
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+    public void CreatePI()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SalesInvoiceID });
 
+            if (GetStatus != SaleStatus.Return)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Invoice, Sales Inoivce has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Sales Invoice ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("SaleInoivceID", SalesInvoiceID);
+            NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
+        }
+    }
     public void NavigateItem()
     {
         NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);

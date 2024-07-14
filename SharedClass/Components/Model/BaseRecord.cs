@@ -53,4 +53,8 @@
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
+    public static class UserIDSession 
+    { 
+        public static string? UserID { get; set; }
+    }
 }

@@ -151,15 +151,14 @@
                     AppState.CustomerAuthorized = false;
                     using SqlConnection db = new SqlConnection(con.connectionString);
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-                    LocalStorageString localStorage = new LocalStorageString(userid);
-                    LocalStorage.SetItemAsync("UserID", userid);
+                    UserIDSession.UserID = userid;
                     NavigationManager.NavigateTo("/dashboard");
                 }
                 else
                 {
                     using SqlConnection db = new SqlConnection(con.connectionString);
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-                    LocalStorage.SetItemAsync("UserID", userid);
+                    UserIDSession.UserID = userid;
 
                     var result = await Select.RetrieveCartItems(userid);
 

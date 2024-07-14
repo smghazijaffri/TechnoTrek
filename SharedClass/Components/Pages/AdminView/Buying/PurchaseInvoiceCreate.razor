@@ -353,6 +353,7 @@
                 purchase.DueDate = DateTime.Now;
                 var PurchaseOrderID = string.Empty;
                 var GoodReceiptID = string.Empty;
+                var SaleInvoiceID = string.Empty;
 
                 if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PurchaseOrderID"))
                 {
@@ -362,6 +363,10 @@
                 if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodReceiptID"))
                 {
                     GoodReceiptID = await _protectedLocalStore.GetLocalAsync<string>("GoodReceiptID");
+                }
+                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleInoivceID"))
+                {
+                    SaleInvoiceID = await _protectedLocalStore.GetLocalAsync<string>("SaleInoivceID");
                 }
 
                 if (PurchaseInvoiceID != null)
@@ -442,6 +447,18 @@
                     purchase.DueDate = DateTime.Now;
                     purchase.VendorInvoiceDate = DateTime.Now;
                     await _protectedLocalStore.SetLocalAsync("GoodReceiptID", "");
+                }
+                else if (!string.IsNullOrWhiteSpace(SaleInvoiceID))
+                {
+                    purchase = db.QueryFirstOrDefault<PurchaseInvoice>("Select * from SaleInvoice where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SaleInvoiceID });
+                    Items = db.Query<PI_Items>("select Item,Quantity as AcceptedQuantity,Rate,Amount,UOM from SI_Item where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SaleInvoiceID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from SI_Item inner join Items on Item = ItemCode  where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SaleInvoiceID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from SI_Item pr inner join UOM u on pr.UOM = u.UOMID where SalesInvoiceID = @SalesInvoiceID", new { SalesInvoiceID = SaleInvoiceID }).ToList();
+                    getUOM(Items);
+                    purchase.RefrenceDocument = SaleInvoiceID;
+                    purchase.DueDate = DateTime.Now;
+                    purchase.VendorInvoiceDate = DateTime.Now;
+                    await _protectedLocalStore.SetLocalAsync("SaleInoivceID", "");
                 }
                 else
                 {

@@ -90,7 +90,9 @@ namespace SharedClass.Components.Data
                 {
                     parameters.Add("@ForInsert", 1);
                 }
+               
                 parameters.Add("@CreationDate", DateTime.Now);
+                parameters.Add("@UserID", UserIDSession.UserID);
 
                 if (outputMessage == true)
                 {
