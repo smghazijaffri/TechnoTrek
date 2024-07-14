@@ -315,12 +315,12 @@
     string? DeviceType { get; set; }
     string header = "Create Purchase Invoice";
 
-    bool Return = true;
+    bool Return = false;
     bool Unpaid = false;
     bool IsDraft = false;
     bool IsSaving = true;
-    bool IsReturn = true;
     bool Overdue = false;
+    bool IsReturn = false;
     bool isMobile = false;
     bool DisplayPR = true;
     bool IsCancelled = false;
@@ -343,10 +343,10 @@
 
     protected override async void OnInitialized()
     {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
         try
         {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-            if (DeviceType == "Mobile") isMobile = true;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 purchase.DocumentDate = DateTime.Now;
@@ -539,10 +539,12 @@
                 {
                     if (purchase.IsPaid == true)
                     {
+                        IsPaid = true;
                         purchase.Status = PurchaseStatuses.Paid;
                     }
                     else if (purchase.IsReturn == true)
                     {
+                        IsReturn = true;
                         purchase.Status = PurchaseStatuses.Return;
                     }
                     else
@@ -553,6 +555,7 @@
                         }
                         else
                         {
+                            Unpaid = true;
                             purchase.Status = PurchaseStatuses.Unpaid;
                         }
                     }
@@ -561,10 +564,12 @@
                 {
                     if (purchase.IsPaid == true)
                     {
+                        IsPaid = true;
                         purchase.Status = PurchaseStatuses.Paid;
                     }
                     else if (purchase.IsReturn == true)
                     {
+                        IsReturn = true;
                         purchase.Status = PurchaseStatuses.Return;
                     }
                 }
@@ -572,16 +577,19 @@
                 {
                     if (purchase.IsPaid == true)
                     {
+                        IsPaid = true;
                         purchase.Status = PurchaseStatuses.Paid;
                     }
                     else if (purchase.IsReturn == true)
                     {
+                        IsReturn = true;
                         purchase.Status = PurchaseStatuses.Return;
                     }
                 }
 
                 else if (Unpaid || IsPaid || Overdue || IsReturn)
                 {
+                    IsCancelled = true;
                     purchase.Status = PurchaseStatuses.Cancelled;
                 }
                 if (string.IsNullOrWhiteSpace(purchase.VendorInvoiceNumber))
@@ -626,6 +634,8 @@
 
                 else if (IsReturn)
                 {
+                    IsReturn = true;
+                    UnpaidtoReturn = false;
                     return "Purchase Invoice Returned Successfully";
                 }
 
@@ -636,6 +646,7 @@
 
                 else
                 {
+                    IsSaving = true;
                     IsDraft = false;
                     return "Error in saving Invoice";
                 }
