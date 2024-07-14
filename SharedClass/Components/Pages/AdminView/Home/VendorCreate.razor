@@ -90,7 +90,7 @@
 
     bool IsSaving = true;
     bool Disabled = false;
-    bool IsEnabled = false;
+    bool IsEnabled = true;
     bool IsDisabled = false;
     bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
 
@@ -141,12 +141,10 @@
                     return validate;
                 }
 
-                header = vendor.VendorName;
 
                 if (IsEnabled)
                 {
                     vendor.Status = PurchaseStatuses.Enabled;
-                    IsSaving = false;
                 }
                 else if (IsDisabled)
                 {
@@ -160,6 +158,20 @@
                 {
                     return output.ErrorMessage;
                 }
+                header = vendor.VendorName;
+
+                if (IsEnabled)
+                {
+                    IsSaving = false;
+
+                }
+                else if (IsDisabled)
+                {
+                    IsSaving = false;
+
+                }
+                if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
+                if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
                 vendor.VendorID = output.Output;
                 if (VendorID == null)
                 {
@@ -208,8 +220,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
-            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
+           
 
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return $"Please enter Vendor Name"; }
             if (string.IsNullOrWhiteSpace(vendor.VendorGroup)) { return $"Please enter Vendor Group"; }
@@ -217,19 +228,19 @@
             if (string.IsNullOrWhiteSpace(vendor.Address)) { return $"Please enter Vendor Address"; }
             if (string.IsNullOrWhiteSpace(vendor.Contact)) { return $"Please enter Vendor Contact"; }
             if (string.IsNullOrWhiteSpace(vendor.Email)) { return $"Please enter Vendor Email"; }
-            if (vendor.VendorID != null)
-            {
-                int countvendorEmail = db.QueryFirstOrDefault<int>("Select Count(1) from Vendor where VendorID != @VendorID and Email = @Email", new { VendorID = vendor.VendorID, Email = vendor.Email });
-                if (countvendorEmail == 0)
-                {
-                    return "This Email is already in use";
-                }
-                int countvendorContact = db.QueryFirstOrDefault<int>("Select Count(1) from Vendor where VendorID != @VendorID and Contact = @Contact", new { VendorID = vendor.VendorID, Contact = vendor.Contact });
-                if (countvendorEmail == 0)
-                {
-                    return "This Contact is already in use";
-                }
-            }
+            // if (vendor.VendorID != null)
+            // {
+            //     int countvendorEmail = db.QueryFirstOrDefault<int>("Select Count(1) from Vendor where VendorID != @VendorID and Email = @Email", new { VendorID = vendor.VendorID, Email = vendor.Email });
+            //     if (countvendorEmail > 0)
+            //     {
+            //         return "This Email is already in use";
+            //     }
+            //     int countvendorContact = db.QueryFirstOrDefault<int>("Select Count(1) from Vendor where VendorID != @VendorID and Contact = @Contact", new { VendorID = vendor.VendorID, Contact = vendor.Contact });
+            //     if (countvendorEmail > 0)
+            //     {
+            //         return "This Contact is already in use";
+            //     }
+            // }
             if (string.IsNullOrWhiteSpace(vendor.Email)) { return $"Please enter Vendor Email"; }
 
             return null;
