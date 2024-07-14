@@ -139,8 +139,6 @@
                     return validate;
                 }
 
-                header = uom.UOMName;
-
                 if (IsEnabled)
                 {
                     uom.Status = PurchaseStatuses.Enabled;
@@ -152,11 +150,17 @@
                     IsSaving = false;
                 }
                 var parameter = new DynamicParameters(uom);
-                OutputClass output = crud.CRD3(parameter, "CreateUOM",errorMessage:true,outputMessage:true);
+                OutputClass output = crud.CRD3(parameter, "CreateUOM", errorMessage: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
                 }
+
+                if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
+                if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
+
+                header = uom.UOMName;
+
                 uom.UOMID = output.Output;
 
                 if (UOMID == null)
@@ -206,9 +210,6 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
-            if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
-
             if (string.IsNullOrWhiteSpace(uom.UOMName)) { return $"Please enter UOM Name"; }
             if (string.IsNullOrWhiteSpace((uom.StockQuantity).ToString()) || uom.StockQuantity == 0) { return $"Please enter Default Quantity"; }
 
