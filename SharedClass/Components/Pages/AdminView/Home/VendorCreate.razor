@@ -110,12 +110,14 @@
                     {
                         IsEnabled = true;
                         IsSaving = false;
+                        IsDisabled = false;
                     }
                     else if (vendor.Status == PurchaseStatuses.Disabled)
                     {
                         Disabled = true;
                         IsDisabled = true;
                         IsSaving = false;
+                        IsEnabled = false;
                     }
                 }
             }
@@ -141,6 +143,14 @@
                     return validate;
                 }
 
+                if (!Disabled)
+                {
+                    IsEnabled = true; IsDisabled = false;
+                }
+                else if (Disabled)
+                {
+                    IsEnabled = false; IsDisabled = true;
+                }
 
                 if (IsEnabled)
                 {
@@ -153,7 +163,7 @@
                 }
 
                 var paramter = new DynamicParameters(vendor);
-                OutputClass output = crud.CRD3(paramter, "CreateVendor", errorMessage:true,outputMessage:true);
+                OutputClass output = crud.CRD3(paramter, "CreateVendor", errorMessage: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
@@ -168,10 +178,7 @@
                 else if (IsDisabled)
                 {
                     IsSaving = false;
-
                 }
-                if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
-                if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
                 vendor.VendorID = output.Output;
                 if (VendorID == null)
                 {
@@ -220,7 +227,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-           
+
 
             if (string.IsNullOrWhiteSpace(vendor.VendorName)) { return $"Please enter Vendor Name"; }
             if (string.IsNullOrWhiteSpace(vendor.VendorGroup)) { return $"Please enter Vendor Group"; }
