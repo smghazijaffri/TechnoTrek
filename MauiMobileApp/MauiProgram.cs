@@ -100,7 +100,7 @@ public static class MauiProgram
 
         Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
-        Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCeUx0RXxbf1x0ZF1MY19bRH5PMyBoS35RckVkWHxeeHdWRmhbVEF+");
+        Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXhfd3RdRGVfUUN1VkA=");
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

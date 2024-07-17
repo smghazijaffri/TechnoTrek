@@ -1,3 +1,4 @@
+using Email = SharedClass.Components.Data.Email;
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Stock>();
 builder.Services.AddScoped<Login>();
 builder.Services.AddScoped<Users>();
+builder.Services.AddScoped<Email>();
 builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Vendor>();
 builder.Services.AddScoped<Report>();
@@ -67,7 +69,6 @@ builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseOrderAnalysis>();
-builder.Services.AddScoped<SharedClass.Components.Data.Email>();
 
 builder.Services.AddSyncfusionBlazor();
 
@@ -92,7 +93,7 @@ builder.Services.AddProtectedLocalStore(new EncryptionService(
 
 Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCeUx0RXxbf1x0ZF1MY19bRH5PMyBoS35RckVkWHxeeHdWRmhbVEF+");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXhfd3RdRGVfUUN1VkA=");
 
 var app = builder.Build();
 
