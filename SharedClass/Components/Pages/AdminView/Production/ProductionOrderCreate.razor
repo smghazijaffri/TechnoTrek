@@ -604,7 +604,7 @@
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 Items = db.Query<BOM_Item>("select * from BOM_Item where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
-                ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode  where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
+                ItemName = db.Query<string>("select ItemName from BOM_Item inner join Items on Item = ItemCode where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
                 UOMName = db.Query<string>("select UOMName from BOM_Item inner join UOM on UOMID = UOM where BOMID = @BOMID", new { BOMID = options.Value }).ToList();
             }
         }
