@@ -3,14 +3,16 @@
 @using Microsoft.Maui.Controls;
 
 @layout AdminLayout;
+@implements IDisposable;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
 
 <div class="m-auto">
     <Insights />
 </div>
 
-<script defer>
+@* <script defer>
     window.disableBackGesture = function () {
         window.history.pushState(null, document.title, location.href);
         window.addEventListener('popstate', function (event) {
@@ -31,45 +33,67 @@
             window.history.pushState(null, document.title, location.href);
         });
     };
-</script>
+</script> *@
 
 @code {
-    string? DeviceType { get; set; }
+    // string? DeviceType { get; set; }
 
-    private DotNetObjectReference<Dashboard>? objRef;
+    private IDisposable? registration;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    // private DotNetObjectReference<Dashboard>? objRef;
+
+    protected override void OnInitialized()
     {
-        if (firstRender)
+        registration = NavigationManager.RegisterLocationChangingHandler(OnLocationChanging);
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         registration = NavigationManager.RegisterLocationChangingHandler(OnLocationChanging);
+
+    //         // DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+
+    //         // if (DeviceType == "Mobile")
+    //         // {
+    //         //     objRef = DotNetObjectReference.Create(this);
+    //         //     await TriggerDotNetInstanceMethod();
+    //         // }
+    //         // else
+    //         // {
+    //         //     await JSRuntime.InvokeVoidAsync("disableBackGesture");
+    //         // }
+    //     }
+    // }
+
+    private ValueTask OnLocationChanging(LocationChangingContext context)
+    {
+        if (context.TargetLocation == "/login" || context.TargetLocation == "/cart" || context.TargetLocation == "/user" || context.TargetLocation == "/order-history"
+        || context.TargetLocation == "/products" || context.TargetLocation == "/signup" || context.TargetLocation == "/buildpc")
         {
-            DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
-
-            if (DeviceType == "Mobile")
-            {
-                objRef = DotNetObjectReference.Create(this);
-                await TriggerDotNetInstanceMethod();
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("disableBackGesture");
-            }
+            context.PreventNavigation();
         }
+
+        return ValueTask.CompletedTask;
     }
 
-    public async Task TriggerDotNetInstanceMethod()
-    {
-        string result = await JSRuntime.InvokeAsync<string>("disableBackGestureMobile", objRef);
-    }
+    public void Dispose() => registration?.Dispose();
 
-    [JSInvokable]
-    public void HandleBackGesture()
-    {
-        Application.Current.Quit();
-    }
+    // public async Task TriggerDotNetInstanceMethod()
+    // {
+    //     string result = await JSRuntime.InvokeAsync<string>("disableBackGestureMobile", objRef);
+    // }
 
-    public void Dispose()
-    {
-        objRef?.Dispose();
-        JSRuntime.InvokeVoidAsync("enableBackGesture");
-    }
+    // [JSInvokable]
+    // public void HandleBackGesture()
+    // {
+    //     Application.Current.Quit();
+    // }
+
+    // public void Dispose()
+    // {
+    //     objRef?.Dispose();
+    //     JSRuntime.InvokeVoidAsync("enableBackGesture");
+    // }
 }

@@ -7,14 +7,12 @@
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject NavigationManager NavigationManager;
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
-@using SharedClass.Components.Data;
 
 <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
     <img src="_content/SharedClass/Images/dell1.jpg" style="width: 100%; height: 100%; object-fit: cover;" />
 </div>
 <div style="position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; margin-top: 24vh;">
-    <EditForm Model="@login" style="text-align: center; width: 300px;" autocomplete="off">
+    <EditForm Model="@login" style="text-align: center; width: 300px;" autocomplete="off" Enhance>
         <div class="mb-3">
             <InputText id="usernameInput" placeholder="Username" class="form-control text-danger" @bind-Value="Username" style="backdrop-filter: blur(5px);" />
         </div>
@@ -138,25 +136,27 @@
 
         try
         {
-            var (IsLoginSuccessful, Role) = await login.Access(Username, Password, Snackbar);
+            var IsLoginSuccessful = await login.Access(Username, Password, Snackbar);
+
             if (IsLoginSuccessful)
             {
+                using SqlConnection db = new SqlConnection(con.connectionString);
                 if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
                 AppState.Username = Username;
-                AppState.Role = Role;
 
-                if (Role != "Customer")
+                var role = db.QueryFirstOrDefault<string>("Select Role from Users where UserName = @Username", new { Username = Username });
+
+                if (role != "Customer")
                 {
                     AppState.Authorized = true;
+                    AppState.Role = role;
                     AppState.CustomerAuthorized = false;
-                    using SqlConnection db = new SqlConnection(con.connectionString);
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
                     UserIDSession.UserID = userid;
                     NavigationManager.NavigateTo("/dashboard");
                 }
                 else
                 {
-                    using SqlConnection db = new SqlConnection(con.connectionString);
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
                     UserIDSession.UserID = userid;
 
@@ -169,6 +169,7 @@
 
                     AppState.CustomerAuthorized = true;
                     AppState.Authorized = false;
+                    AppState.Role = role;
                     NavigationManager.NavigateTo("/", forceLoad: true);
                 }
                 Snackbar.Clear();

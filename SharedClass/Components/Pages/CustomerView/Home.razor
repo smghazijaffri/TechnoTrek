@@ -1,6 +1,7 @@
 ﻿@page "/"
 
-@inject Login login;
+@inject Connection con;
+@inject AppState AppState;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject IDialogService DialogService;
@@ -95,7 +96,47 @@
     string? result;
     string? DeviceType { get; set; }
 
+    string? Role { get; set; }
+    string? Username { get; set; }
+
     private DotNetObjectReference<Home>? objRef;
+
+    protected override async void OnInitialized()
+    {
+        try
+        {
+            using SqlConnection db = new SqlConnection(con.connectionString);
+
+            Username = AppState.Username;
+            Role = AppState.Role;
+            if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
+            {
+                var userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
+                if (string.IsNullOrEmpty(userid))
+                {
+                    Snackbar.Add("User does not exist", Severity.Error);
+                    await Task.Delay(1000);
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+                else if (Role != "Customer")
+                {
+                    Snackbar.Add("Please login as a Customer", Severity.Error);
+                    await Task.Delay(1000);
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Success);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

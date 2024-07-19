@@ -3,7 +3,6 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
 @inject Connection con;
 @inject GI_Items GIItems;
 @inject GoodsIssue issue;
@@ -306,16 +305,18 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
+
+        var SaleOrderID = string.Empty;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleOrderID"))
+        {
+            SaleOrderID = await _protectedLocalStore.GetLocalAsync<string>("SaleOrderID");
+        }
+
         try
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
                 issue.DocumentDate = DateTime.Now;
-                var SaleOrderID = string.Empty;
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleOrderID"))
-                {
-                    SaleOrderID = await _protectedLocalStore.GetLocalAsync<string>("SaleOrderID");
-                }
 
                 if (GoodsIssueID != null)
                 {
@@ -371,14 +372,16 @@
                 DropDownCustomer.Options = db.Query<Option>("select CustomerID as Value, Name as Text from Customer").ToList();
                 DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
             }
-            StateHasChanged();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
-
-        base.OnInitialized();
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public int SumAmounts

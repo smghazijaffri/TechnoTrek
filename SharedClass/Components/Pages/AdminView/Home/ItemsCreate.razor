@@ -296,18 +296,17 @@
 
     protected override async void OnInitialized()
     {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+        try
         {
+            using SqlConnection db = new SqlConnection(con.connectionString);
             itemsFromDatabase = await db.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' AND Status != 'Disabled' ORDER BY ItemCode");
-            try
+            if (ItemID != null)
             {
-                if (ItemID != null)
-                {
-                    items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
-                    ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
-                    UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
-                    stock.Markup = db.QueryFirstOrDefault<int>("select TOP(1)Markup from Stock it where ItemID = @ItemID", new { ItemID = ItemID });
-                    itemsFromDatabase = db.Query<ItemClass>(@"SELECT
+                items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
+                ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                UOMName = db.Query<string>("select UOMName from ItemUOM it inner join UOM iu on it.UOMID = iu.UOMID where ItemID = @ItemID", new { ItemID = ItemID }).ToList();
+                stock.Markup = db.QueryFirstOrDefault<int>("select TOP(1)Markup from Stock it where ItemID = @ItemID", new { ItemID = ItemID });
+                itemsFromDatabase = db.Query<ItemClass>(@"SELECT
                                                 it.*,
                                                 MAX(CASE WHEN ic.ItemID = @ItemID THEN 1 ELSE 0 END) AS Compatible,
                                                 MAX(CASE WHEN ia.ItemID = @ItemID THEN 1 ELSE 0 END) AS Alternate
@@ -328,36 +327,37 @@
                                                    it.CreationDate,
                                                    it.Brand,
                                                    it.UserID", new { ItemID = ItemID });
-                    if (items == null)
-                        NavigationManager.NavigateTo("/item/");
-                    header = items.ItemName;
-                    if (items.Status == PurchaseStatuses.Enabled)
-                    {
-                        IsEnabled = true;
-                        IsSaving = false;
-                    }
-                    else if (items.Status == PurchaseStatuses.Disabled)
-                    {
-                        Disabled = true;
-                        IsDisabled = true;
-                        IsSaving = false;
-                    }
-                }
-                else
+                if (items == null)
+                    NavigationManager.NavigateTo("/item/");
+                header = items.ItemName;
+                if (items.Status == PurchaseStatuses.Enabled)
                 {
-                    AddRow();
+                    IsEnabled = true;
+                    IsSaving = false;
                 }
-                DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM WHERE Status = 'Enabled'").ToList();
-                StateHasChanged();
+                else if (items.Status == PurchaseStatuses.Disabled)
+                {
+                    Disabled = true;
+                    IsDisabled = true;
+                    IsSaving = false;
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Clear();
-                Snackbar.Add(ex.Message, Severity.Error);
+                AddRow();
             }
+            DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM WHERE Status = 'Enabled'").ToList();
         }
-
-        base.OnInitialized();
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public string createItem()

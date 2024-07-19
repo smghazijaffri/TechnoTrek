@@ -4,9 +4,7 @@
 @inject BOM BOM;
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
 @inject Connection con;
-@inject BOM_Item bomItem;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
 @inject ProductionOrder production;
@@ -225,18 +223,20 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
+
+        var BOMID = string.Empty;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BOMID"))
+        {
+            BOMID = await _protectedLocalStore.GetLocalAsync<string>("BOMID");
+
+        }
+
         try
         {
             production.StartDate = DateTime.Today;
             production.EndDate = DateTime.Today;
-            var BOMID = string.Empty;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BOMID"))
-                {
-                    BOMID = await _protectedLocalStore.GetLocalAsync<string>("BOMID");
-
-                }
                 if (ProductionOrderID != null)
                 {
                     production = db.QueryFirstOrDefault<ProductionOrder>("Select * from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
@@ -301,14 +301,16 @@
                 }
                 DropDownBOM.Options = db.Query<Option>("Select BOMID as Value, BOMName as Text from BOM Where IsActive = 'true' ORDER BY CAST(SUBSTRING(BOMID, 5, LEN(BOMID)-5) AS INT)").ToList();
             }
-            StateHasChanged();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
-
-        base.OnInitialized();
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public string createPurchase()

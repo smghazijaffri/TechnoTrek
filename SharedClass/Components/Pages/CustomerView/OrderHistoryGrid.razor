@@ -58,18 +58,29 @@
         if (!string.IsNullOrEmpty(AppState.Username) && !string.IsNullOrEmpty(AppState.Role))
         {
             userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-
-            if (AppState.Role != "Customer")
+            var role = db.QueryFirstOrDefault<string>("Select Role from Users where UserName = @Username", new { Username = AppState.Username });
+            if (string.IsNullOrEmpty(userid))
             {
-                Snackbar.Add("Please login as a Customer", Severity.Error);
+                Snackbar.Add("User does not exist", Severity.Error);
                 await Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
             }
-
-            if (string.IsNullOrEmpty(userid))
+            else if (AppState.Role == "Customer" && role != "Customer")
             {
-                Snackbar.Add("User does not exist", Severity.Error);
+                AppState.Authorized = false;
+                AppState.Role = string.Empty;
+                AppState.Username = string.Empty;
+                AppState.CustomerAuthorized = false;
+                UserIDSession.UserID = string.Empty;
+                Snackbar.Add("Authentication failure, please login again", Severity.Error);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/login");
+                return;
+            }
+            else if (AppState.Role != "Customer")
+            {
+                Snackbar.Add("Please login as a Customer", Severity.Error);
                 await Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
@@ -84,13 +95,25 @@
             return;
         }
 
-        Elements = await db.QueryAsync<BulkOrder>($"SELECT * FROM BulkOrder WHERE CustomerID = '{userid}'");
-
-        if (!Elements.Any())
+        try
         {
-            Snackbar.Add("No Orders to show", Severity.Error);
-            await Task.Delay(1000);
-            NavigationManager.NavigateTo("/products", forceLoad: true);
+            Elements = await db.QueryAsync<BulkOrder>($"SELECT * FROM BulkOrder WHERE CustomerID = '{userid}'");
+
+            if (!Elements.Any())
+            {
+                Snackbar.Add("No Orders to show", Severity.Error);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/products", forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Success);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
         }
     }
 

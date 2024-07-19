@@ -14,35 +14,35 @@ namespace SharedClass.Components.Data
             con = GetSqlConnection();
         }
 
-        public async Task<(bool IsAuthorized, string Role)> Access(string username, string password, ISnackbar Snackbar)
+        public async Task<bool> Access(string username, string password, ISnackbar Snackbar)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                return (false, null);
+                return (false);
             }
 
             try
             {
-                var query = "SELECT UserName, UserPassword, Role FROM Users WHERE UserName = @Username AND Status != 'Disabled'";
+                var query = "SELECT TOP(1) UserName, UserPassword FROM Users WHERE UserName = @Username AND Status != 'Disabled'";
                 var parameters = new { Username = username };
                 var userAuth = await con.QueryFirstOrDefaultAsync<UserAuth>(query, parameters);
 
                 if (userAuth != null && VerifyPassword(password, userAuth.UserPassword))
                 {
-                    return (true, userAuth.Role);
+                    return (true);
                 }
                 else
                 {
                     Snackbar.Clear();
                     Snackbar.Add("Invalid username or password.", Severity.Error);
-                    return (false, null);
+                    return (false);
                 }
             }
             catch (SqlException ex)
             {
                 Snackbar.Clear();
                 Snackbar.Add($"An error occurred while verifying the credentials: {ex.Message}", Severity.Error);
-                return (false, null);
+                return (false);
             }
         }
 
