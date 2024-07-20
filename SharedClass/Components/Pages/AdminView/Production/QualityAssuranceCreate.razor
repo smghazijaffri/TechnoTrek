@@ -1,0 +1,622 @@
+﻿@page "/qualityassurance/new-quality-assurance"
+@page "/qualityassurance/{QAID?}"
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject QA_Items qaItems;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject ProductionOrder production;
+@inject IDialogService DialogService;
+@inject QualityAssurance qualityassurance;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+            @if (IsDraft)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+            }
+            @if (IsSubmitted)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Submitted</MudChip>
+            }
+            @if (IsApproved)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Approved</MudChip>
+            }
+            @if (IsRejected)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Rejected</MudChip>
+            }
+            @if (IsCancelled)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        @* @if (IsApproved)
+        {
+        <div class="dropdown m-1" id="dropdown">
+        <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+        <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+        </ul>
+        </div>
+        } *@
+        @if (IsApproved || IsSubmitted)
+        {
+            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                Cancel
+            </button>
+        }
+        @if (!IsApproved && !IsCancelled)
+        {
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveQA">
+                @GetSubmitButtonText()
+            </button>
+        }
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6" hidden="@DisplayPO">
+            <label class="form-label">Quality Assurance ID</label>
+            <input type="text" class="form-control" @bind="qualityassurance.QAID" readonly>
+        </div>
+        <div class="col-md-6" hidden="@DisplayPO">
+            <label class="form-label">Item Name</label>
+            <input type="text" class="form-control" @bind="production.ProductionOrderName">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Production Order</label>
+            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownProduction.CloseDropdown(e)">
+                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownProduction.ToggleDropdown()" @bind="production.ProductionOrderName"
+                       placeholder="Select Production Order" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterProductionOptions(e)" />
+                <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownProduction.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                    <li>
+                        @if (DropDownProduction.ListItems[0].FilteredOptions != null)
+                        {
+                            @foreach (var option in DropDownProduction.ListItems[0].FilteredOptions)
+                            {
+                                <a class="dropdown-item" @onclick="() => SelectProductionOption(option)">@option.Text</a>
+                                <hr class="m-1 border-primary" />
+                            }
+                        }
+                        <button @onclick="NavigateProduction" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create new Production Order</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input type="date" @bind="qualityassurance.Date" class="form-control" readonly="@ReadonlyHidden">
+        </div>
+    </form>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Items</h5>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
+        <table class="table size table-hover">
+            <thead>
+                <tr>
+                    <th class="col col-auto" style="width: 50px;">
+                        No.
+                    </th>
+                    <th class="col col-auto" style="min-width:150px">
+                        Item
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        UOM
+                    </th>
+                    <th class="col col-auto" style="width: 70px;">
+                        Quantity
+                    </th>
+                    <th class="col col-auto text-center" style="min-width: 150px; width: 150px">
+                        Status
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                @for (int index = 0; index < Items.Count; index++)
+                {
+                    var item = Items[index];
+                    item.RowID = index + 1;
+                    var rowIndex = item.RowID - 1;
+                    <tr>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
+                                @(index + 1)
+                            </div>
+                        </td>
+                        <td><input type="text" class="form-control" @bind="ItemName[rowIndex]" readonly /></td>
+                        <td><input type="text" class="form-control" @bind="UOMName[rowIndex]" readonly /></td>
+                        <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@(item.Status != "Fail")" /></td>
+                        <td>
+                            <select class="form-select" aria-label="Item Status" @onchange="(e) => OnStatusChange(e, item)">
+                                <option value=""></option>
+                                <option value="Pass">Pass</option>
+                                <option value="Fail">Fail</option>
+                            </select>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+</script>
+
+@code {
+    [Parameter]
+    public string? QAID { get; set; }
+    string header = "New Quality Assurance";
+
+    bool isMobile = false;
+    string? DeviceType { get; set; }
+
+    bool IsSaving = true;
+    bool IsDraft = false;
+    bool DisplayPO = true;
+    bool IsApproved = false;
+    bool IsRejected = false;
+    bool IsSubmitted = false;
+    bool IsCancelled = false;
+
+    bool Hidden { get { return !IsSaving || !IsDraft; } }
+    bool Progress { get { return IsSaving || IsDraft || IsCancelled; } }
+    bool ReadonlyHidden { get { return IsCancelled || IsApproved || IsRejected; } }
+
+    SingleDropDown DropDownProduction = new SingleDropDown();
+
+    List<int> IsDelete = new List<int>();
+    List<string> ItemName = new List<string>();
+    List<string> UOMName = new List<string>();
+    List<QA_Items> Items = new List<QA_Items>();
+
+    protected override async void OnInitialized()
+    {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+
+        var ProductionOrderID = string.Empty;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "ProductionOrderID"))
+        {
+            ProductionOrderID = await _protectedLocalStore.GetLocalAsync<string>("ProductionOrderID");
+        }
+
+        try
+        {
+            qualityassurance.Date = DateTime.Today;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                if (QAID != null)
+                {
+                    qualityassurance = db.QueryFirstOrDefault<QualityAssurance>("Select * from QualityAssurance where QAID = @QAID", new { QAID = QAID });
+                    if (qualityassurance == null) NavigationManager.NavigateTo("/qualityassurance/");
+                    Items = db.Query<QA_Items>("select * from QA_Items where QAID = @QAID", new { QAID = QAID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from QA_Items inner join Items on Item = ItemCode where QAID = @QAID", new { QAID = QAID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from QA_Items pr inner join UOM u on pr.UOM = u.UOMID where QAID = @QAID", new { QAID = QAID }).ToList();
+                    production = db.QueryFirstOrDefault<ProductionOrder>("select v.* from ProductionOrder v inner join QualityAssurance po on po.ProductionOrderID = v.ProductionOrderID where QAID = @QAID", new { QAID = QAID });
+                    DisplayPO = false;
+                    header = qualityassurance.QualityAssuranceName;
+                    if (qualityassurance.Status == ProductionStatus.Submitted)
+                    {
+                        IsSubmitted = true;
+                        IsSaving = false;
+                    }
+                    else if (qualityassurance.Status == ProductionStatus.Draft)
+                    {
+                        IsDraft = true;
+                        IsSaving = false;
+                    }
+                    else if (qualityassurance.Status == ProductionStatus.Approved)
+                    {
+                        IsApproved = true;
+                        IsSaving = false;
+                    }
+                    else if (qualityassurance.Status == ProductionStatus.Rejected)
+                    {
+                        IsRejected = true;
+                        IsSaving = false;
+                    }
+                    else if (qualityassurance.Status == ProductionStatus.Cancelled)
+                    {
+                        IsCancelled = true;
+                        IsSaving = false;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(ProductionOrderID))
+                {
+                    production = db.QueryFirstOrDefault<ProductionOrder>("Select * from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID });
+                    Option options = new Option();
+                    options.Value = production.ProductionOrderID;
+                    options.Text = production.ProductionOrderName;
+                    SelectProductionOption(options);
+                    await _protectedLocalStore.SetLocalAsync("ProductionOrderID", "");
+                }
+                else
+                {
+                    AddRow();
+                }
+                DropDownProduction.Options = db.Query<Option>("Select ProductionOrderID as Value, ProductionOrderName as Text from ProductionOrder Where Status = 'Completed' ORDER BY CAST(SUBSTRING(ProductionOrderID, 5, LEN(ProductionOrderID)-5) AS INT)").ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
+    }
+
+    public string createQA()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidatePO();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                qualityassurance.QualityAssuranceName = $"Quality Assurance for {qualityassurance.ProductionOrderID}";
+                header = qualityassurance.QualityAssuranceName;
+
+                if (IsSaving)
+                {
+                    qualityassurance.Status = ProductionStatus.Draft;
+                }
+                else if (IsDraft)
+                {
+                    qualityassurance.Status = ProductionStatus.Submitted;
+                }
+                else if (IsSubmitted)
+                {
+                    qualityassurance.Status = ProductionStatus.Approved;
+                }
+
+                OutputClass output = new OutputClass();
+                var parameter = new DynamicParameters(qualityassurance);
+                output = crud.CRD3(parameter, "Create_ProductionOrder", outputMessage: true, errorMessage: true);
+
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                else
+                {
+                    qualityassurance.QAID = output.Output;
+                }
+
+                ToggleApproval();
+
+                if (QAID == null)
+                {
+                    NavigationManager.NavigateTo($"/productionorder/{qualityassurance.QAID}", forceLoad: true);
+                }
+                else
+                {
+                    Items = db.Query<QA_Items>("select * from QA_Items where QAID = @QAID", new { QAID = QAID }).ToList();
+                }
+                if (IsDraft)
+                {
+                    return "Order Saved Successfully";
+                }
+
+                else if (IsSubmitted)
+                {
+                    return "Quality Assurance Submitted Successfully";
+                }
+
+                else if (IsApproved)
+                {
+                    return "Quality Assurance has Approved Successfully";
+                }
+
+                else if (IsRejected)
+                {
+                    return "Quality Assurance has Rejected Successfully";
+                }
+
+                else if (IsCancelled)
+                {
+                    return "Quality Assurance has been Cancelled";
+                }
+
+                else
+                {
+                    IsDraft = false;
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private void OnStatusChange(ChangeEventArgs e, QA_Items item)
+    {
+        try
+        {
+            var Value = e.Value.ToString();
+            item.Status = Value;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    public string ValidatePO()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (qualityassurance.QAID != null)
+            {
+                string? GetStatus = db.QueryFirstOrDefault<string>("Select Status from QualityAssurance where QAID = @QAID", new { QAID = qualityassurance.QAID });
+                if (GetStatus != null)
+                {
+                    if (GetStatus == ProductionStatus.Submitted && !IsSubmitted) { return "Quality Assurance has already been submitted, changes cannot be done"; }
+                    if (GetStatus == ProductionStatus.Approved && !IsApproved) { return "Quality Assurance has already been approved, changes cannot be done"; }
+                    if (GetStatus == ProductionStatus.Rejected && !IsRejected) { return "Quality Assurance has already been rejected, changes cannot be done"; }
+                    if (GetStatus == ProductionStatus.Cancelled && !IsCancelled) { return "This Quality Assurance has already been Cancelled"; }
+                }
+                else
+                {
+                    return "Quality Assurance ID does not exist";
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(qualityassurance.ProductionOrderID)) return $"Please select a Production Order";
+            // foreach (var PO in Items)
+            // {
+            //     int CheckItem = 0;
+            //     CheckItem = db.QueryFirstOrDefault<int>("Select Quantity from Stock where ItemID = @ItemID", new { ItemID = PO.Item });
+            //     if (CheckItem == 0) { return $"Item on Row: {PO.RowID} does not have enough Quantity"; }
+            // }
+            // if (string.IsNullOrWhiteSpace(BOM.BOMID)) { return "Please select a BOM"; }
+
+            // if (!DropDownProduction.Options.Any(option => option.Text == BOM.ItemName)) return "Please Select Valid BOM";
+
+            // foreach (var PO in Items)
+            // {
+            //     if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please Enter Item on Row: {PO.RowID}";
+
+            //     if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
+
+            //     if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
+
+            //     if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
+
+            //     if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
+            // }
+
+            return null;
+        }
+    }
+
+    public void SaveQA()
+    {
+        string notification = createQA();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    private string GetSubmitButtonText()
+    {
+        if (IsSubmitted)
+        {
+            return "Complete";
+        }
+        else if (IsDraft)
+        {
+            return "Submit";
+        }
+        else
+        {
+            return "Save";
+        }
+    }
+
+    private void ToggleApproval()
+    {
+        if (IsDraft)
+        {
+            IsDraft = false;
+            IsSubmitted = true;
+            IsSaving = false;
+        }
+        else if (IsSaving)
+        {
+            IsDraft = true;
+            IsSaving = false;
+        }
+        else if (IsSubmitted)
+        {
+            IsApproved = true;
+            IsSaving = false;
+            IsSubmitted = false;
+        }
+        else if (IsApproved)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            IsApproved = false;
+        }
+        else if (IsRejected)
+        {
+            IsCancelled = true;
+            IsSaving = false;
+            IsRejected = false;
+        }
+    }
+
+    private void AddRow()
+    {
+        HandleFormInput();
+        Items.Add(new QA_Items
+            {
+                Quantity = 1
+            });
+        ItemName.Add("");
+        UOMName.Add("");
+    }
+
+    private void DeleteRow(int index)
+    {
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                IsDelete.Add(Items[i].RowID);
+                Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                UOMName.RemoveAt(i);
+            }
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (IsDraft)
+        {
+            IsSaving = true;
+            IsDraft = false;
+            GetSubmitButtonText();
+            StateHasChanged();
+        }
+    }
+
+    public void FilterProductionOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownProduction.FilterOptions(e);
+        StateHasChanged();
+    }
+
+    private void SelectProductionOption(Option options)
+    {
+        bool result = DropDownProduction.SelectOption(options);
+        if (result == false)
+        {
+            production.ProductionOrderName = options.Text;
+            qualityassurance.ProductionOrderID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                Items = db.Query<QA_Items>("select * from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
+                ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on Item = ItemCode where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
+                UOMName = db.Query<string>("select UOMName from PRO_Items inner join UOM on UOMID = UOM where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
+            }
+        }
+    }
+
+    private async Task OpenDialog()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+
+            string? GetStatus = db.QueryFirstOrDefault<string>("Select Status from QualityAssurance where QAID = @QAID", new { QAID = qualityassurance.QAID });
+
+            if (GetStatus == ProductionStatus.Closed)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("This Quality Assurance has already been Cancelled", Severity.Error);
+                return;
+            }
+        }
+        var options = new DialogOptions { ClassBackground = "dialog" };
+        var result = await DialogService.Show<Dialog>("Close Quality Assurance", options).Result;
+
+        if (result.Data is bool && (bool)result.Data)
+        {
+            Cancel();
+        }
+    }
+
+    public void Cancel()
+    {
+        try
+        {
+            CancelAll cancelall = new CancelAll();
+            cancelall.ID = qualityassurance.QAID;
+            cancelall.type = "Quality Assurance";
+            crud.CRD(cancelall, "CancelAll");
+            IsCancelled = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.ToString(), Severity.Error);
+        }
+    }
+
+    public void NavigateProduction()
+    {
+        NavigationManager.NavigateTo($"/productionorder/new-production-order", forceLoad: true);
+    }
+
+    public void NavigateItem()
+    {
+        NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
+    }
+
+    public void CreatePR()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from QualityAssurance where QAID = @QAID", new { QAID = qualityassurance.QAID });
+
+            if (GetStatus != SaleStatus.Draft)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Purchase Request, Quality Assurance has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Quality Assurance ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("QAID", qualityassurance.QAID);
+            NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
+    }
+}

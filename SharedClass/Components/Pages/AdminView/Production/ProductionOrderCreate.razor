@@ -78,6 +78,12 @@
                 Resume
             </button>
         }
+        @if (IsCompleted)
+        {
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="CreateQA">
+                Quality Assurance
+            </button>
+        }
     </div>
 </div>
 
@@ -122,6 +128,7 @@
         </div>
     </form>
 </div>
+
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
     <h5>Required Items</h5>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
@@ -228,7 +235,6 @@
         if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BOMID"))
         {
             BOMID = await _protectedLocalStore.GetLocalAsync<string>("BOMID");
-
         }
 
         try
@@ -424,7 +430,7 @@
         {
             if (production.ProductionOrderID != null)
             {
-                string GetStatus = db.QueryFirstOrDefault<string>("Select Status from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = production.ProductionOrderID });
+                string? GetStatus = db.QueryFirstOrDefault<string>("Select Status from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = production.ProductionOrderID });
                 if (GetStatus != null)
                 {
                     if (GetStatus == ProductionStatus.Submitted && !IsSubmitted) { return "Production Order has already been submitted, changes cannot be done"; }
@@ -438,7 +444,6 @@
                     return "Production Order ID does not exist";
                 }
             }
-
 
             if (string.IsNullOrWhiteSpace(production.BOMID)) return $"Please select a BOM";
             foreach (var PO in Items)
@@ -681,6 +686,29 @@
             }
             _protectedLocalStore.SetLocalAsync("ProductionOrderID", production.ProductionOrderID);
             NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
+    }
+
+    public void CreateQA()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from ProductionOrder where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = production.ProductionOrderID });
+
+            if (GetStatus != SaleStatus.Completed)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot create Quality Assurance, Production Order has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Production Order ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("ProductionOrderID", production.ProductionOrderID);
+            NavigationManager.NavigateTo("qualityassurance/new-quality-assurance");
         }
     }
 }

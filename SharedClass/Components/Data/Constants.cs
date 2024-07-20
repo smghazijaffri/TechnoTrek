@@ -58,6 +58,8 @@
         public const string Active = "Active";
         public const string Closed = "Closed";
         public const string Stopped = "Stopped";
+        public const string Approved = "Approved";
+        public const string Rejected = "Rejected";
         public const string InActive = "InActive";
         public const string Process = "In Process";
         public const string Cancelled = "Cancelled";
