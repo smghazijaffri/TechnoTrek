@@ -61,6 +61,7 @@ public static class MauiProgram
         builder.Services.AddScoped<BaseRecord>();
         builder.Services.AddScoped<Connection>();
         builder.Services.AddScoped<GoodsIssue>();
+        builder.Services.AddScoped<PointofSale>();
         builder.Services.AddScoped<PCComponent>();
         builder.Services.AddScoped<GoodReceipt>();
         builder.Services.AddScoped<Stock_Entry>();
@@ -77,6 +78,7 @@ public static class MauiProgram
         builder.Services.AddScoped<ExampleJsInterop>();
         builder.Services.AddScoped<QualityAssurance>();
         builder.Services.AddScoped<ReportParameters>();
+        builder.Services.AddScoped<SelectedItemsPOS>();
         builder.Services.AddScoped<RequestForQuotation>();
         builder.Services.AddScoped<PurchaseRequisition>();
         builder.Services.AddScoped<PurchaseRequisition>();

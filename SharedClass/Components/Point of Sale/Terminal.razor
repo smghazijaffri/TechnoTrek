@@ -1,0 +1,199 @@
+﻿@page "/pos/pos-terminal"
+
+@layout AdminLayout;
+
+@inject Select select;
+@inject Connection con;
+@inject Customer customer;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject SelectedItemsPOS poscustomer;
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+
+<MudGrid>
+    <MudItem xs="6">
+        <MudDataGrid T="PointofSale" Items="@Elements" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
+                     RowClick="@RowClicked" Height="450px" FixedHeader="true" Virtualize="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Name" Title="Item" SortBy="@_sortBy" />
+                <PropertyColumn Property="x => x.Quantity" Title="Available Quantity" />
+                <PropertyColumn Property="x => x.Rate" Title="Price" />
+            </Columns>
+        </MudDataGrid>
+    </MudItem>
+    <MudItem xs="6">
+        <MudTable Items="@SelectedItems" Hover="true" SortLabel="Sort By" CommitEditTooltip="Save" OnCommitEditClick="@(() => Snackbar.Add("Saved"))"
+                  EditTrigger="TableEditTrigger.RowClick" Height="450px" FixedHeader="true">
+            <HeaderContent>
+                <MudTh>Item</MudTh>
+                <MudTh>Available Quantity</MudTh>
+                <MudTh>Price</MudTh>
+                <MudTh>Amount</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Item">@context.Name</MudTd>
+                <MudTd DataLabel="Available Quantity">@context.Quantity</MudTd>
+                <MudTd DataLabel="Price">@context.Rate</MudTd>
+                <MudTd DataLabel="Amount">@context.Amount</MudTd>
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd DataLabel="Available Quantity">@context.Quantity</MudTd>
+            </RowEditingTemplate>
+        </MudTable>
+    </MudItem>
+    <MudItem xs="3">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=3</MudPaper>
+    </MudItem>
+    <MudItem xs="3">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=3</MudPaper>
+    </MudItem>
+    <MudItem xs="3">
+        <MudPaper Class="d-flex align-center justify-start mud-width-full py-4">
+            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownCustomer.CloseDropdown(e)">
+                <input type="text" id="Item" @onclick="() => DropDownCustomer.ToggleDropdown()" @bind="customer.Name" placeholder="Select a Customer"
+                       class="text-start btn dropdown-toggle bg-white border" @oninput="e => FilterCustomerOptions(e)" />
+                <ul class="dropdown-menu w-100" id="ul" style="max-height: 200px; overflow-y: auto; display: @(DropDownCustomer.ListItems[0].IsDropdownOpen ? "block" : "none");"
+                    aria-labelledby="dropdownMenuButton">
+                    <li>
+                        @if (DropDownCustomer.ListItems[0].FilteredOptions != null)
+                        {
+                            @foreach (var option in DropDownCustomer.ListItems[0].FilteredOptions)
+                            {
+                                <a class="dropdown-item" @onclick="() => SelectCustomerOption(option)">@option.Text</a>
+                                <hr class="m-1 border-primary" />
+                            }
+                        }
+                        <button @onclick="NavigateCustomer" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new Customer</button>
+                    </li>
+                </ul>
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="3">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=3</MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    string? _searchString;
+
+    bool _sortNameByLength;
+
+    decimal TotalQuantity => SelectedItems.Sum(i => i.Quantity);
+    decimal TotalAmount => SelectedItems.Sum(i => i.Rate) * TotalQuantity;
+
+    IEnumerable<PointofSale> Elements = new List<PointofSale>();
+
+    List<SelectedItemsPOS> SelectedItems = new List<SelectedItemsPOS>();
+
+    SingleDropDown DropDownCustomer = new SingleDropDown();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        try
+        {
+            Elements = await db.QueryAsync<PointofSale>("Select it.ItemCode AS Code, it.ItemName AS Name, st.Quantity, st.Rate From Items it inner join Stock st on it.ItemCode = st.ItemID");
+            DropDownCustomer.Options = db.Query<Option>("Select CustomerID AS Value, Name AS Text From Customer").ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    public void FilterCustomerOptions(ChangeEventArgs e)
+    {
+        bool result = DropDownCustomer.FilterOptions(e);
+        if (result == true)
+        {
+            if (!DropDownCustomer.ListItems[0].FilteredOptions.Any(option => option.Text == customer.Name))
+            {
+                poscustomer.CustomerID = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void SelectCustomerOption(Option options)
+    {
+        bool result = DropDownCustomer.SelectOption(options);
+        if (result == false)
+        {
+            customer.Name = options.Text;
+            poscustomer.CustomerID = options.Value;
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                customer = db.QueryFirstOrDefault<Customer>("Select * from Customer where CustomerID = @CustomerID", new { CustomerID = options.Value });
+            }
+        }
+    }
+
+    public void NavigateCustomer()
+    {
+        NavigationManager.NavigateTo($"/customers/new-customer", forceLoad: true);
+    }
+
+    Func<PointofSale, object> _sortBy => x =>
+    {
+        if (_sortNameByLength)
+            return x.Name.Length;
+        else
+            return x.Name;
+    };
+
+    Func<PointofSale, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if ($"{x.Quantity} {x.Rate}".Contains(_searchString))
+            return true;
+
+        return false;
+    };
+
+    void RowClicked(DataGridRowClickEventArgs<PointofSale> args)
+    {
+        var existingItem = SelectedItems.FirstOrDefault(i => i.Code == args.Item.Code);
+        if (existingItem != null)
+        {
+            if (existingItem.Quantity < args.Item.Quantity)
+            {
+                existingItem.Quantity++;
+            }
+            else
+            {
+                Snackbar.Add("Not enough quantity", Severity.Error);
+            }
+        }
+        else
+        {
+            var newItem = new SelectedItemsPOS
+                {
+                    Code = args.Item.Code,
+                    Name = args.Item.Name,
+                    Quantity = 1,
+                    Rate = args.Item.Rate
+                };
+            SelectedItems.Add(newItem);
+        }
+    }
+
+    void RemoveItem(SelectedItemsPOS item)
+    {
+        SelectedItems.Remove(item);
+    }
+}
