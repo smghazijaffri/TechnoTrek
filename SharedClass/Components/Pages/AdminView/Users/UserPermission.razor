@@ -1,0 +1,162 @@
+﻿@page "/user-permission/new"
+@page "/user-permission/{PermissionID?}"
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject UserPermissions permission;
+@inject NavigationManager NavigationManager;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+            @if (!IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Saved</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUOM">
+            Save
+        </button>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Permission Name</label>
+            <input type="text" @bind="permission.PermissionName" class="form-control">
+        </div>
+    </form>
+</div>
+
+@code {
+    [Parameter]
+    public string? PermissionID { get; set; }
+
+    string header = "New Permission";
+
+    bool IsSaving = true;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                if (PermissionID != null)
+                {
+                    permission = db.QueryFirstOrDefault<UserPermissions>("Select * from UserPermissions where PermissionID = @PermissionID", new { PermissionID = PermissionID });
+                    if (permission == null) NavigationManager.NavigateTo("/user-permission/");
+
+                    header = permission.PermissionName;
+                    IsSaving = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
+    }
+
+    public string createUOM()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidateUOM();
+                if (validate != null)
+                {
+                    IsSaving = true;
+                    return validate;
+                }
+
+                if (IsSaving)
+                {
+                    IsSaving = false;
+                }
+
+                var parameter = new DynamicParameters(permission);
+                OutputClass output = crud.CRD3(parameter, "CreateUOM", errorMessage: true, outputMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+
+                header = permission.PermissionName;
+
+                permission.PermissionID = output.Output;
+
+                if (PermissionID == null)
+                {
+                    NavigationManager.NavigateTo($"/user-permission/{permission.PermissionID}", forceLoad: true);
+                }
+                if (IsSaving)
+                {
+                    return "Permission Created Successfully";
+                }
+                else if (!IsSaving)
+                {
+                    return "Permission Saved Successfully";
+                }
+                else
+                {
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public void SaveUOM()
+    {
+        string notification = createUOM();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    public string ValidateUOM()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (string.IsNullOrWhiteSpace(permission.PermissionName)) { return $"Please enter Permission Name"; }
+
+            return null;
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (!IsSaving)
+        {
+            IsSaving = true;
+            StateHasChanged();
+        }
+    }
+}

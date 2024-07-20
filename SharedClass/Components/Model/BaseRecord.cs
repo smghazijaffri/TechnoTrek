@@ -54,8 +54,27 @@
         public DateTime? EndDate { get; set; }
     }
 
-    public static class UserIDSession 
-    { 
+    public static class UserIDSession
+    {
         public static string? UserID { get; set; }
+    }
+
+    public class UserPermissions : BaseRecord
+    {
+        public string? PermissionID { get; set; }
+        public string? PermissionName { get; set; }
+    }
+
+    public class UserRoles : BaseRecord
+    {
+        public string? RoleID { get; set; }
+        public string? RoleName { get; set; }
+    }
+
+    public class RolePermissions : BaseRecord
+    {
+        public int ID { get; set; }
+        public string? RoleID { get; set; }
+        public string? PermissionID { get; set; }
     }
 }

@@ -1,0 +1,36 @@
+﻿@page "/user-settings";
+
+@layout AdminLayout;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject NavigationManager NavigationManager;
+@inject ProtectedLocalStorage _protectedLocalStore;
+
+<h4>Quick Access</h4>
+<div class="row m-auto">
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.AdUnits" Href="/user-permission" Style="border-radius:10px">
+                Permissions
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.Bolt" Href="/user-role" Style="border-radius:10px">
+                Roles
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+    <MudPaper Width="300px" Elevation="1" Style="margin-right:20px; border-radius:10px; margin-bottom: 20px;">
+        <MudList Clickable="true">
+            <MudListItem Avatar="@Icons.Material.Outlined.FireTruck" Href="/users" Style="border-radius:10px">
+                Employees
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+</div>
+
+@code {
+
+}

@@ -58,9 +58,9 @@
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.InsertDriveFile" OnClick='() => Navigate("reports")'
                                    Style="background-color:transparent;" Color="Color.Info">Reports</MudButton>
                     </MudNavLink>
-                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("users")'>
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SupervisedUserCircle" OnClick='() => Navigate("users")'
-                                   Style="background-color:transparent;" Color="Color.Info">Employees</MudButton>
+                    <MudNavLink Match="NavLinkMatch.All" OnClick='() => Navigate("user-settings")'>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SupervisedUserCircle" OnClick='() => Navigate("user-settings")'
+                                   Style="background-color:transparent;" Color="Color.Info">User Settings</MudButton>
                     </MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" OnClick="Logout">
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.TwoTone.Logout" OnClick="Logout"

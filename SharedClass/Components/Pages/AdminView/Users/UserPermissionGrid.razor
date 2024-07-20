@@ -1,0 +1,141 @@
+﻿@page "/user-permission"
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject UserPermissions user;
+@inject ISnackbar Snackbar;
+@inject NavigationManager NavigationManager;
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between">
+                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/user-settings">User Settings</MudChip>
+                <div>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
+                               Style="text-transform:none; margin-bottom: 20px;" OnClick="Create" Size="Size.Large">
+                        Create
+                    </MudButton>
+                    @if (selectedItems.Any())
+                    {
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.DeleteOutline"
+                                   Style="text-transform:none; margin-bottom: 20px;" Color="Color.Error" OnClick="DeleteSelectedItems"
+                                   Size="Size.Large">Delete</MudButton>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <MudTable @ref="_table" T="UserPermissions" Items="@Elements" MultiSelection="true"
+                      @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
+                      Filter="new Func<UserPermissions,bool>(FilterFunc1)" Elevation="4">
+
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Permissions</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+                </ToolBarContent>
+
+                <HeaderContent>
+                    <MudTh>Permission ID</MudTh>
+                    <MudTh>Permission Name</MudTh>
+                    <MudTh>Creation Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Permission ID">@context.PermissionID</MudTd>
+                    <MudTd DataLabel="Permission Name">@context.PermissionName</MudTd>
+                    <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                </PagerContent>
+            </MudTable>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchString1 = "";
+    private MudTable<UserPermissions> _table;
+    private IEnumerable<UserPermissions> Elements = new List<UserPermissions>();
+    private HashSet<UserPermissions> selectedItems = new HashSet<UserPermissions>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        Elements = await db.QueryAsync<UserPermissions>("SELECT * FROM UserPermissions");
+    }
+
+    void OnRowClick(TableRowClickEventArgs<UserPermissions> args)
+    {
+        user.PermissionID = args.Item.PermissionID;
+        NavigationManager.NavigateTo($"/user-permission/{user.PermissionID}");
+    }
+
+    private bool FilterFunc1(UserPermissions element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(UserPermissions element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.PermissionName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate} {element.PermissionID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+
+        return false;
+    }
+
+    private void Create()
+    {
+        NavigationManager.NavigateTo($"/user-permission/new", forceLoad: true);
+    }
+
+    private void DeleteSelectedItems()
+    {
+        if (selectedItems == null || !selectedItems.Any())
+        {
+            Snackbar.Add("No items selected to delete", Severity.Info);
+            return;
+        }
+
+        try
+        {
+            foreach (var item in selectedItems)
+            {
+                OutputClass output = new OutputClass();
+                var parameter = new DynamicParameters(item);
+                output = crud.CRD3(parameter, "CreateUOM", IsDelete: true, outputMessage: true, errorMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    Snackbar.Add(output.ErrorMessage, Severity.Error);
+                    return;
+                }
+            }
+
+            Elements = Elements.Where(e => !selectedItems.Any(d => d.PermissionID == e.PermissionID)).ToList();
+            Snackbar.Add($"{selectedItems.Count} items deleted", Severity.Success);
+        }
+        catch (SqlException ex)
+        {
+            if (ex.Number == 547)
+            {
+                Snackbar.Add("Permission cannot be deleted it is in use", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+        }
+
+        selectedItems.Clear();
+        StateHasChanged();
+    }
+}

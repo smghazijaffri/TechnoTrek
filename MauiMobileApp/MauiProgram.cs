@@ -52,6 +52,7 @@ public static class MauiProgram
         builder.Services.AddScoped<QU_Items>();
         builder.Services.AddScoped<PI_Items>();
         builder.Services.AddScoped<BO_Items>();
+        builder.Services.AddScoped<UserRoles>();
         builder.Services.AddScoped<ItemClass>();
         builder.Services.AddScoped<SaleOrder>();
         builder.Services.AddScoped<BulkOrder>();
@@ -71,6 +72,8 @@ public static class MauiProgram
         builder.Services.AddScoped<UnitofMeasure>();
         builder.Services.AddScoped<SingleDropDown>();
         builder.Services.AddScoped<PurchaseOrders>();
+        builder.Services.AddScoped<UserPermissions>();
+        builder.Services.AddScoped<RolePermissions>();
         builder.Services.AddScoped<ProductionOrder>();
         builder.Services.AddScoped<PurchaseInvoice>();
         builder.Services.AddScoped<StockEntry_Items>();
