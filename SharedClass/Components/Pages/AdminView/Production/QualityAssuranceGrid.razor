@@ -66,7 +66,7 @@
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<QualityAssurance>("SELECT * FROM QualityAssurance ORDER BY CAST(SUBSTRING(BOMID, 5, LEN(BOMID) - 5) AS INT)");
+        Elements = await db.QueryAsync<QualityAssurance>("SELECT * FROM QualityAssurance ORDER BY CAST(SUBSTRING(QAID, 5, LEN(QAID) - 5) AS INT)");
     }
 
     void OnRowClick(TableRowClickEventArgs<QualityAssurance> args)
