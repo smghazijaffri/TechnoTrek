@@ -1,0 +1,351 @@
+﻿@page "/stock-reconciliation/new-stock-reconciliation"
+@page "/stock-reconciliation/{StockReconciliationID?}"
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Select select;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject IJSRuntime JSRuntime;
+@inject IDialogService DialogService;
+@inject SingleDropDown singledropdown;
+@inject StockReconciliation reconciliation;
+@inject NavigationManager NavigationManager;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (!IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Saved</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        @if (!IsSaving)
+        {
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
+                Save
+            </button>
+        }
+    </div>
+</div>
+
+@if (IsSaving)
+{
+    <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+        <form class="row g-3" autocomplete="off">
+            <div class="col-md-6" hidden="@DisplayPR">
+                <label class="form-label">Stock Reconciliation ID</label>
+                <input type="text" class="form-control" @bind="reconciliation.StockReconciliationID" readonly="@IsSaving">
+            </div>
+        </form>
+    </div>
+}
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Items</h5>
+    <form class="row g-3" autocomplete="off" style="overflow-x: @(isMobile? "scroll" : "")">
+        <table class="table size table-hover">
+            <thead>
+                <tr>
+                    <th class="col col-auto" style="width: 50px;">
+                        No.
+                    </th>
+                    <th class="col col-auto" style="min-width:150px">
+                        Item
+                    </th>
+                    <th class="col col-auto" style="width: 70px; min-width: 70px;">
+                        Quantity
+                    </th>
+                    <th class="col col-auto" style="width: 150px; min-width: 150px;">
+                        Rate
+                    </th>
+                    <th class="col col-auto" style="width: 150px; min-width: 150px;">
+                        Sellig Price
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                @for (int index = 0; index < Items.Count; index++)
+                {
+                    var item = Items[index];
+                    DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
+
+                    var rowIndex = index;
+                    <tr>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
+                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@IsSaving" />
+                                <b>@(index + 1)</b>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" disabled="@IsSaving" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                       placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                @if (!IsSaving)
+                                {
+                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                         aria-labelledby="dropdownMenuButton">
+                                        <li>
+                                            @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
+                                            {
+                                                @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
+                                                {
+                                                    <a class="dropdown-item" bind="@item.ItemID" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
+                                                    <hr class="m-1 border-primary" />
+                                                }
+                                            }
+                                            <button @onclick="NavigateItem" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                        </li>
+                                    </ul>
+                                }
+                            </div>
+                        </td>
+                        <td><input type="text" inputmode="numeric" class="form-control" min="1" id="quantity" @bind="item.Quantity" readonly="@IsSaving" /></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.Rate" readonly="@IsSaving" /></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" id="quantity" @bind="item.SellingPrice" readonly="@IsSaving" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+    <div class="col-12 d-flex justify-content-start p-0">
+        <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@IsSaving">Add Row</button>
+        <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow" hidden="@IsSaving">Delete</button>
+    </div>
+</div>
+
+<script>
+    function toggleDropdown() {
+        var dropdownMenu = document.getElementById("dropdownMenu");
+        dropdownMenu.style.display = (dropdownMenu.style.display === "block") ? "none" : "block";
+    }
+    $('#quantity').on('input', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
+        }
+    });
+    $('#quantity').on('paste', function () {
+        debugger;
+        var inputValue = $(this).val();
+        var nonNumberRegex = /[^0-9]|[-]{2,}/g;
+
+        if (nonNumberRegex.test(inputValue)) {
+            $(this).val(inputValue.replace(nonNumberRegex, ''));
+        }
+    });
+</script>
+
+@code {
+    [Parameter]
+    public string? StockReconciliationID { get; set; }
+
+    string? DeviceType { get; set; }
+    string header = "Create Stock Reconciliation";
+
+    bool IsSaving = false;
+    bool DisplayPR = true;
+    bool isMobile = false;
+    bool IsAnyItemSelected => Items.Any(item => item.Selected);
+
+    DropDown DropDownItem = new DropDown();
+
+    List<int> IsDelete = new List<int>();
+    List<string> ItemName = new List<string>();
+    List<SR_Items> Items = new List<SR_Items>();
+
+    protected override async void OnInitialized()
+    {
+        DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
+        if (DeviceType == "Mobile") isMobile = true;
+
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (StockReconciliationID != null)
+            {
+                reconciliation = db.QueryFirstOrDefault<StockReconciliation>("select * from StockReconciliation where StockReconciliationID = @StockReconciliationID", new { StockReconciliationID = StockReconciliationID });
+                Items = db.Query<SR_Items>("Select RowID, StockReconciliationID, ItemID, Quantity, Rate, CreationDate from SR_Items where StockReconciliationID = @StockReconciliationID ", new { StockReconciliationID = StockReconciliationID }).ToList();
+                ItemName = db.Query<string>("SELECT I1.ItemName FROM SR_Items SE INNER JOIN Items I1 ON SE.ItemID = I1.ItemCode WHERE SE.StockReconciliationID = @StockReconciliationID", new { StockReconciliationID = StockReconciliationID }).ToList();
+                if (reconciliation == null || Items.Count == 0) NavigationManager.NavigateTo("/stock-reconciliation");
+                DisplayPR = false;
+                header = reconciliation.StockReconciliationID;
+                IsSaving = true;
+            }
+            else
+            {
+                AddRow();
+            }
+
+            DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
+        }
+        StateHasChanged();
+
+        base.OnInitialized();
+    }
+
+    public string createPurchase()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidateSE();
+                if (validate != null)
+                {
+                    return validate;
+                }
+
+                header = reconciliation.StockReconciliationID;
+
+                DataTable Delete = Select.ConvertIntToDataTable(IsDelete);
+                DataTable ItemTable = Select.ItemTable();
+                foreach (var PO in Items)
+                {
+                    ItemTable.Rows.Add(PO.RowID, PO.ItemID, PO.Quantity, null, PO.Rate, null, null);
+                }
+                var parameters = new DynamicParameters(reconciliation);
+                parameters.Add("@StockEntryItem", ItemTable.AsTableValuedParameter("Purhcase"));
+                parameters.Add("@DeleteSTItems", Delete.AsTableValuedParameter("DeleteType"));
+
+
+                OutputClass output = crud.CRD3(parameters, "Create_StockEntry", outputMessage: true, errorMessage: true);
+
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+                else
+                {
+                    reconciliation.StockReconciliationID = output.Output;
+                }
+
+                if (StockReconciliationID == null)
+                {
+                    NavigationManager.NavigateTo($"/reconciliation-entry/{reconciliation.StockReconciliationID}", forceLoad: true);
+                }
+
+
+                if (!IsSaving)
+                {
+                    IsSaving = true;
+                    return "Stock Reconciliation Saved Successfully";
+                }
+
+                else
+                {
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public string ValidateSE()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            int count = 0;
+            foreach (var PR in Items)
+            {
+                count++;
+                if (string.IsNullOrWhiteSpace(ItemName[count - 1])) return $"Please Enter Item on Row: {count}";
+
+                if (PR.Quantity <= 0) return $"Row {count}: Quantity cannot be less than or equal to 0";
+
+                if (PR.Rate <= 0 || string.IsNullOrWhiteSpace((PR.Rate).ToString())) return $"Row {count}: Rate cannot be less than or equal to 0";
+
+                if (!DropDownItem.Options.Any(option => option.Text == ItemName[count - 1])) return $"Item on Row: {count} does not exist";
+            }
+
+            return null;
+        }
+    }
+
+    public void SavePR()
+    {
+        string notification = createPurchase();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    private void AddRow()
+    {
+        Items.Add(new SR_Items
+            {
+                Rate = 0,
+                Quantity = 1
+            });
+        ItemName.Add("");
+    }
+
+    private void DeleteRow()
+    {
+        for (int i = Items.Count - 1; i >= 0; i--)
+        {
+            if (Items[i].Selected)
+            {
+                if (Items[i].RowID != 0)
+                {
+                    IsDelete.Add(Items[i].RowID);
+                }
+                Items.RemoveAt(i);
+                ItemName.RemoveAt(i);
+                DropDownItem.ListItems.RemoveAt(i);
+            }
+        }
+    }
+
+    public void FilterItemOptions(ChangeEventArgs e, int rowIndex)
+    {
+        bool result = DropDownItem.FilterOptions(e, rowIndex);
+        if (result == true)
+        {
+            if (!DropDownItem.ListItems[rowIndex].FilteredOptions.Any(option => option.Text == Items[rowIndex].ItemID))
+            {
+                Items[rowIndex].ItemID = "";
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void SelectItemOption(Option options, int rowIndex)
+    {
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        bool result = DropDownItem.SelectOption(options, rowIndex);
+        if (result == false)
+        {
+            ItemName[rowIndex] = options.Text;
+            Items[rowIndex].ItemID = options.Value;
+            Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select Rate from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+            Items[rowIndex].Quantity = db.QueryFirstOrDefault<int>("Select Quantity from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+            Items[rowIndex].SellingPrice = db.QueryFirstOrDefault<int>("Select SellingPrice from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+        }
+    }
+
+    public void NavigateItem()
+    {
+        NavigationManager.NavigateTo("/item/new-item", forceLoad: true);
+    }
+}

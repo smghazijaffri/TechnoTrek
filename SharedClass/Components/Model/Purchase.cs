@@ -214,7 +214,6 @@
         public string? StockID { get; set; }
         public string? StockEntryType { get; set; }
         public string? Status { get; set; }
-
     }
 
     public class StockEntry_Items : BaseRecord
@@ -299,5 +298,21 @@
         public string? UOMName { get; set; }
         public string? Rate { get; set; }
         public string? ItemAmount { get; set; }
+    }
+
+    public class StockReconciliation : BaseRecord
+    {
+        public string? StockReconciliationID { get; set; }
+    }
+
+    public class SR_Items : BaseRecord
+    {
+        public string? StockReconciliationID { get; set; }
+        public string? ItemID { get; set; }
+        public int Quantity { get; set; }
+        public int Rate { get; set; }
+        public int SellingPrice { get; set; }
+        public int RowID { get; set; }
+        public bool Selected { get; set; }
     }
 }

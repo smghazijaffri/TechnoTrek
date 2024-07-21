@@ -844,7 +844,7 @@
                 }
                 ItemName[rowIndex] = options.Text;
                 Items[rowIndex].Item = options.Value;
-                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select Sellingprice from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
+                Items[rowIndex].Rate = db.QueryFirstOrDefault<int>("Select SellingPrice from Stock WHERE ItemID = @ItemID", new { ItemID = options.Value });
                 DropDownUOM.ListItems[rowIndex].FilteredOptions = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM WHERE Status = 'Enabled'", new { ItemID = options.Value }).ToList();
 
                 HandleFormInput();
