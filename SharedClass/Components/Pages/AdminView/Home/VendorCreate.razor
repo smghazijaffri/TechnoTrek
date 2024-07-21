@@ -89,9 +89,8 @@
 
     bool IsSaving = true;
     bool Disabled = false;
-    bool IsEnabled = true;
+    bool IsEnabled = false;
     bool IsDisabled = false;
-    bool ReadonlyHidden { get { return IsEnabled || IsDisabled; } }
 
     protected override void OnInitialized()
     {
@@ -144,6 +143,8 @@
                     return validate;
                 }
 
+                IsEnabled = true;
+
                 if (!Disabled)
                 {
                     IsEnabled = true; IsDisabled = false;
@@ -169,6 +170,7 @@
                 {
                     return output.ErrorMessage;
                 }
+
                 header = vendor.VendorName;
 
                 if (IsEnabled)
