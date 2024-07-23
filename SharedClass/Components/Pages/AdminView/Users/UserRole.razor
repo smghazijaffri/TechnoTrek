@@ -5,7 +5,7 @@
 @layout AdminLayout;
 @inject Connection con;
 @inject ISnackbar Snackbar;
-@inject UserRoles permission;
+@inject UserRoles role;
 @inject UserPermissions rolepermission;
 @inject NavigationManager NavigationManager;
 
@@ -34,29 +34,25 @@
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6">
             <label class="form-label">Role Name</label>
-            <input type="text" @bind="permission.RoleName" class="form-control">
+            <input type="text" @bind="role.RoleName" class="form-control">
         </div>
     </form>
 </div>
 
 <div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Permissions</h5>
+    <label class="form-label">Check Role Permissions</label>
     <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
         <div class="col-md-6">
-            <div class="row m-3 p-3 rounded-3 shadow-sm bg-light" style="max-height: 300px; overflow-y: auto;">
-                <h5>Permissions</h5>
-                <label class="form-label">Check Role Permissions</label>
-                <form class="" @oninput="HandleFormInput" autocomplete="off">
-                    @foreach (var item in userpermissions)
-                    {
-                        @if (item.PermissionID != rolepermission.PermissionID)
-                        {
-                            <div>
-                                <MudCheckBox @bind-Value="@item.PermissionID" Color="Color.Info" Label="@item.PermissionName"></MudCheckBox>
-                            </div>
-                        }
-                    }
-                </form>
-            </div>
+            @foreach (var item in Permissions)
+            {
+                @if (item.PermissionID != rolepermission.PermissionID)
+                {
+                    <div>
+                        <MudCheckBox @bind-Value="@item.PermissionID" Color="Color.Info" Label="@item.PermissionName"></MudCheckBox>
+                    </div>
+                }
+            }
         </div>
     </form>
 </div>
@@ -69,7 +65,9 @@
 
     bool IsSaving = true;
 
-    IEnumerable<UserPermissions> userpermissions = new List<UserPermissions>();
+    List<UserPermissions> Permissions = new List<UserPermissions>();
+
+    List<RolePermissions> RolePermissions = new List<RolePermissions>();
 
     protected override void OnInitialized()
     {
@@ -77,16 +75,16 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                // if (RoleID != null)
-                // {
-                //     permission = db.QueryFirstOrDefault<UserRoles>("Select * from UserRoles where RoleID = @RoleID", new { RoleID = RoleID });
-                //     userpermissions = db.Query<UserPermissions>("Select * from RolePermissios where RoleID = @RoleID", new { RoleID = RoleID });
-                //     if (permission == null) NavigationManager.NavigateTo("/user-role/");
+                if (RoleID != null)
+                {
+                    role = db.QueryFirstOrDefault<UserRoles>("Select * from UserRoles where RoleID = @RoleID", new { RoleID = RoleID });
+                    RolePermissions = db.Query<RolePermissions>("Select * from RolePermissions where RoleID = @RoleID", new { RoleID = RoleID }).ToList();
+                    if (role == null) NavigationManager.NavigateTo("/user-role/");
 
-                //     header = permission.RoleName;
-                //     IsSaving = false;
-                // }
-                // rolepermission = db.Query<RolePermissions>("Select * from RolePermissios where RoleID = @RoleID", new { RoleID = RoleID }).ToList();
+                    header = role.RoleName;
+                    IsSaving = false;
+                }
+                Permissions = db.Query<UserPermissions>("Select * from UserPermissions").ToList();
             }
         }
         catch (Exception ex)
@@ -118,20 +116,20 @@
                     IsSaving = false;
                 }
 
-                var parameter = new DynamicParameters(permission);
-                OutputClass output = crud.CRD3(parameter, "CreateUOM", errorMessage: true, outputMessage: true);
+                var parameter = new DynamicParameters(role);
+                OutputClass output = crud.CRD3(parameter, "ManageUserRoles", errorMessage: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
                 }
 
-                header = permission.RoleName;
+                header = role.RoleName;
 
-                permission.RoleID = output.Output;
+                role.RoleID = output.Output;
 
                 if (RoleID == null)
                 {
-                    NavigationManager.NavigateTo($"/user-role/{permission.RoleID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/user-role/{role.RoleID}", forceLoad: true);
                 }
                 if (IsSaving)
                 {
@@ -172,7 +170,7 @@
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
-            if (string.IsNullOrWhiteSpace(permission.RoleName)) { return $"Please enter Role Name"; }
+            if (string.IsNullOrWhiteSpace(role.RoleName)) { return $"Please enter Role Name"; }
 
             return null;
         }

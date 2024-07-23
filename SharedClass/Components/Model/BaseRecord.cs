@@ -24,7 +24,7 @@
         public required string? UserPassword { get; set; }
         public required string? UserEmail { get; set; }
         public required string? UserPhone { get; set; }
-        public required string? Role { get; set; }
+        public required int? Role { get; set; }
         public required string? Address { get; set; }
         public required string? UserIdentity { get; set; }
         public required string? Gender { get; set; }

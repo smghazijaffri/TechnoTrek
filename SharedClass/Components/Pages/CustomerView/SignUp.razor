@@ -168,7 +168,8 @@
                 }
 
                 users.Status = PurchaseStatuses.Enabled;
-                users.Role = "Customer";
+                var role = db.QueryFirstOrDefault<string>("Select r.RoleName as Role from UserRoles r inner join Users u on u.Role = r.RoleID where UserName = @Username", new { Username = users.UserName });
+                role = "Customer";
 
                 if (!string.IsNullOrEmpty(users.UserPassword) && !users.UserPassword.StartsWith("SHA256$"))
                 {

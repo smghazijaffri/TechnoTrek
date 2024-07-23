@@ -45,14 +45,12 @@
                 <HeaderContent>
                     <MudTh>Username</MudTh>
                     <MudTh>Phone</MudTh>
-                    <MudTh>Role</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Username">@context.UserName</MudTd>
                     <MudTd DataLabel="Phone">@context.UserPhone</MudTd>
-                    <MudTd DataLabel="Role">@context.Role</MudTd>
                     <MudTd DataLabel="Status">@context.Status</MudTd>
                     <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
@@ -73,7 +71,7 @@
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<Users>("SELECT UserID, UserName, UserPhone, Role, Status, CreationDate FROM Users WHERE Role != 'Customer'");
+        Elements = await db.QueryAsync<Users>("SELECT u.UserID, UserName, UserPhone, Status, u.CreationDate FROM Users u inner join UserRoles r on u.Role = r.RoleID WHERE r.RoleName != 'Customer'");
     }
 
     void OnRowClick(TableRowClickEventArgs<Users> args)
@@ -89,7 +87,6 @@
         if (string.IsNullOrWhiteSpace(searchString)) return true;
         if (element.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.UserPhone.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.Role.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
         if ($"{element.CreationDate}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 

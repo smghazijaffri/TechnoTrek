@@ -144,7 +144,7 @@
                 if (isMobile) HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
                 AppState.Username = Username;
 
-                var role = db.QueryFirstOrDefault<string>("Select Role from Users where UserName = @Username", new { Username = Username });
+                var role = db.QueryFirstOrDefault<string>("Select r.RoleName as Role from UserRoles r inner join Users u on u.Role = r.RoleID where UserName = @Username", new { Username = Username });
 
                 if (role != "Customer")
                 {

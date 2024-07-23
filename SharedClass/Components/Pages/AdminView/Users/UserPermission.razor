@@ -92,7 +92,7 @@
                 }
 
                 var parameter = new DynamicParameters(permission);
-                OutputClass output = crud.CRD3(parameter, "CreateUOM", errorMessage: true, outputMessage: true);
+                OutputClass output = crud.CRD3(parameter, "ManageUserPermissions", errorMessage: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;

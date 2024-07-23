@@ -74,7 +74,7 @@
     void OnRowClick(TableRowClickEventArgs<UserRoles> args)
     {
         user.RoleID = args.Item.RoleID;
-        NavigationManager.NavigateTo($"/user/{user.RoleID}");
+        NavigationManager.NavigateTo($"/user-role/{user.RoleID}");
     }
 
     private bool FilterFunc1(UserRoles element) => FilterFunc(element, searchString1);
