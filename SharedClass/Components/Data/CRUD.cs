@@ -2,11 +2,13 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 
 namespace SharedClass.Components.Data
 {
     public class CRUD : Login
     {
+
         public string CRD(dynamic Model, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false)
         {
             string outputValue = string.Empty;
@@ -150,6 +152,135 @@ namespace SharedClass.Components.Data
             }
 
             return output;
+        }
+        public static int CRDPOS(ProductModel Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+                
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32 (UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                DynamicParameters ObjParm = new DynamicParameters();
+                ObjParm.AddDynamicParams(Model);
+                ObjParm.Add("@Id", Model.Id, dbType: DbType.Int32, direction: ParameterDirection.InputOutput);
+                var res = db.Execute("Evs_Sp_Product2", ObjParm, commandType: CommandType.StoredProcedure);
+                Model.Id = ObjParm.Get<int>("@Id");
+                return res;
+            }
+        }
+        public static int VariantsStock(ProductVariantsStock Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                return db.Execute("Evs_Sp_Product_Variants_Stock", Model, commandType: CommandType.StoredProcedure);
+            }
+        }
+        public static int Variants(ProductVariants Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                DynamicParameters ObjParm = new DynamicParameters();
+                ObjParm.AddDynamicParams(Model);
+                ObjParm.Add("@Id", Model.Id, dbType: DbType.Int32, direction: ParameterDirection.InputOutput);
+                var res = db.Execute("Evs_Sp_Product_Variants", ObjParm, commandType: CommandType.StoredProcedure);
+                Model.Id = ObjParm.Get<int>("@Id");
+                return res;
+            }
+        }
+        public static int Location(ProductLocation Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                return db.Execute("Evs_Sp_Product_Location", Model, commandType: CommandType.StoredProcedure);
+            }
+        }
+        public static int VariantsPrice(ProductVariantsPrice Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                return db.Execute("Evs_Sp_Product_Variants_Price", Model, commandType: CommandType.StoredProcedure);
+            }
+        }
+        public static int VariantsStockHistory(ProductVariantsStockHistory Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                return db.Execute("Evs_Sp_Product_Variants_Stock_History", Model, commandType: CommandType.StoredProcedure);
+            }
+        }
+        public static int Tax(ProductTax Model, bool IsDelete = false)
+        {
+            Model.Insert = 1;
+            if (IsDelete) { Model.Insert = 0; }
+
+            Model.ModifiedOn = DateTime.Now;
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
+            if (Model.Id == 0)
+            {
+                Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
+                Model.CreatedOn = DateTime.Now;
+            }
+            using (SqlConnection db = new(connectionStringPOS))
+            {
+                return db.Execute("Evs_Sp_Product_Tax", Model, commandType: CommandType.StoredProcedure);
+            }
         }
     }
 }

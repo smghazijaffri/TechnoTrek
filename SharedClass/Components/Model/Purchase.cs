@@ -187,6 +187,7 @@
         public string? Status { get; set; }
         public bool Compatible { get; set; }
         public bool Alternate { get; set; }
+        public bool IsPOS { get; set; }
     }
 
     public class ItemUOM : BaseRecord

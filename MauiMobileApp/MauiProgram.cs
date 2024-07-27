@@ -79,6 +79,16 @@ public static class MauiProgram
         builder.Services.AddScoped<PurchaseRequisition>();
         builder.Services.AddScoped<PurchaseRequisition>();
         builder.Services.AddScoped<PurchaseOrderAnalysis>();
+        builder.Services.AddScoped<SimpleProductModel>();
+        builder.Services.AddScoped<ProductModel>();
+        builder.Services.AddScoped<ProductVariantsPrice>();
+        builder.Services.AddScoped<SimpleProductStock>();
+        builder.Services.AddScoped<ProductVariantsStockHistory>();
+        builder.Services.AddScoped<ProductVariantsStock>();
+        builder.Services.AddScoped<ProductVariants>();
+        builder.Services.AddScoped<ProductLocation>();
+        builder.Services.AddScoped<ProductTax>();
+        builder.Services.AddScoped<BaseRecordPOS>();
 
         builder.Services.AddSyncfusionBlazor();
 

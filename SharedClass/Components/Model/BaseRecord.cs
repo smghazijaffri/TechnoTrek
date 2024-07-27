@@ -1,4 +1,6 @@
-﻿namespace SharedClass.Components.Model
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SharedClass.Components.Model
 {
     public class BaseRecord
     {
@@ -6,7 +8,14 @@
         public DateTime CreationDate { get; set; }
         public string? Output { get; set; }
     }
-
+    public class BaseRecordPOS 
+    {
+        public int CreatedBy { get; set; }
+        public Nullable<DateTime> CreatedOn { get; set; }
+        public int ModifiedBy { get; set; }
+        public Nullable<DateTime> ModifiedOn { get; set; }
+        public int Insert { get; set; }
+    }
     public class OutputClass
     {
         public string? Output { get; set; }
@@ -30,6 +39,7 @@
         public required string? Gender { get; set; }
         public required DateTime Birthday { get; set; }
         public string? Status { get; set; }
+        public int UserIdentityID { get; set; }
     }
 
     public class UserAuth

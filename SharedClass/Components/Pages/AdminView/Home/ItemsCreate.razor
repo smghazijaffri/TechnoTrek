@@ -15,6 +15,7 @@
 @inject IDialogService DialogService;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
+@inject SimpleProductModel product
 
 <div class="row p-3 align-items-center">
     <div class="col-6">
@@ -85,6 +86,9 @@
         <div class="col-md-6">
             <label class="form-label">Mark Up %</label>
             <input type="text" inputmode="numeric" id="num2" @bind="stock.Markup" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <MudCheckBox @bind-Value="@items.IsPOS" Size="Size.Small" Dense="true" Label="Add in POS"></MudCheckBox>
         </div>
         <div class="col-md-6">
             <MudCheckBox @bind-Value="@Disabled" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
@@ -299,9 +303,19 @@
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
             itemsFromDatabase = await db.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' AND Status != 'Disabled' ORDER BY ItemCode");
-            try
+        }
+        try
+        {
+            product = new SimpleProductModel
+                    {
+                        ProductModel = new ProductModel(), // Ensure ProductModel is initialized
+                        productVariantsPrice = new List<ProductVariantsPrice>(),
+                        productVariants = new ProductVariants(),
+                        simpleProductStocks = new List<SimpleProductStock>()
+                    };
+            if (ItemID != null)
             {
-                if (ItemID != null)
+                using (SqlConnection db = new SqlConnection(con.connectionString))
                 {
                     items = db.QueryFirstOrDefault<ItemClass>("Select * from Items where ItemCode= @ItemID", new { ItemID = ItemID });
                     ItemUOM = db.Query<ItemUOM>("Select iu.* from ItemUOM iu inner join Items it on it.ItemCode = iu.ItemID where iu.ItemID = @ItemID", new { ItemID = ItemID }).ToList();
@@ -327,35 +341,44 @@
                                                    it.Status,
                                                    it.CreationDate,
                                                    it.Brand,
-                                                   it.UserID", new { ItemID = ItemID });
-                    if (items == null)
-                        NavigationManager.NavigateTo("/item/");
-                    header = items.ItemName;
-                    if (items.Status == PurchaseStatuses.Enabled)
-                    {
-                        IsEnabled = true;
-                        IsSaving = false;
-                    }
-                    else if (items.Status == PurchaseStatuses.Disabled)
-                    {
-                        Disabled = true;
-                        IsDisabled = true;
-                        IsSaving = false;
-                    }
+                                                   it.UserID,
+												   it.IsPOS", new { ItemID = ItemID });
                 }
-                else
+                if (items.IsPOS == true)
                 {
-                    AddRow();
+                    GetPOS();
                 }
-                DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM WHERE Status = 'Enabled'").ToList();
-                StateHasChanged();
+                if (items == null)
+                    NavigationManager.NavigateTo("/item/");
+                header = items.ItemName;
+                if (items.Status == PurchaseStatuses.Enabled)
+                {
+                    IsEnabled = true;
+                    IsSaving = false;
+                }
+                else if (items.Status == PurchaseStatuses.Disabled)
+                {
+                    Disabled = true;
+                    IsDisabled = true;
+                    IsSaving = false;
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Clear();
-                Snackbar.Add(ex.Message, Severity.Error);
+                AddRow();
             }
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                DropDownUOM.Options = db.Query<Option>("select UOMName as Text, UOMID as Value from UOM WHERE Status = 'Enabled'").ToList();
+            }
+            StateHasChanged();
         }
+        catch (Exception ex)
+        {
+            Snackbar.Clear();
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
 
         base.OnInitialized();
     }
@@ -422,14 +445,40 @@
                 parameters.Add("@Markup", stock.Markup);
                 OutputClass output = new OutputClass();
                 output = crud.CRD3(parameters, "Add_Item", outputMessage: true, errorMessage: true);
-                items.ItemCode = output.Output;
-                string ErrorMessage = output.ErrorMessage;
+                string ErrorMessage = output.ErrorMessage;  
                 if (!string.IsNullOrWhiteSpace(ErrorMessage))
                 {
                     return ErrorMessage;
                 }
+                items.ItemCode = output.Output;
 
                 ItemDelete.Clear();
+                if (items.IsPOS == true)
+                {
+                    stock = db.Query<Stock>("Select Rate,SellingPrice,Markup from Stock where ItemID = @ItemID", new { ItemID = items.ItemCode }).FirstOrDefault();
+
+                    product.ProductModel.Name = items.ItemName;
+                    product.ProductModel.ReceiptName = items.ItemName;
+                    product.ProductModel.ErpProductID = items.ItemCode;
+                    if (product.productVariantsPrice.Count > 0)
+                    {
+                        product.productVariantsPrice[0].CostPrice = stock.Rate;
+                        product.productVariantsPrice[0].CostPrice = stock.Rate;
+                        product.productVariantsPrice[0].MarkUp = stock.Markup;
+                        product.productVariantsPrice[0].SellingPrice = stock.SellingPrice;
+                    }
+                    else
+                    {
+                        product.productVariantsPrice.Add(new ProductVariantsPrice { CostPrice = stock.Rate, MarkUp = stock.Markup, SellingPrice = stock.SellingPrice });
+                    }
+
+                    string pos = InsertPOS(product);
+                    if (pos != "Success")
+                    {
+                        return pos;
+                    }
+                }
+
 
                 if (!Disabled) { IsEnabled = true; IsDisabled = false; IsSaving = false; }
                 if (Disabled) { IsEnabled = false; IsDisabled = true; IsSaving = false; }
@@ -474,6 +523,155 @@
             Snackbar.Clear();
             Snackbar.Add(notification, Severity.Error);
         }
+    }
+    public async void GetPOS()
+    {
+        using (SqlConnection db = new(Connection.connectionStringPOS))
+        {
+            product.ProductModel = await db.QueryFirstOrDefaultAsync<ProductModel>("select * from Evs_Tbl_Product where ErpProductID=@id", new { id = ItemID });
+            product.ProductLocation = db.Query<int>("select LocationId from Evs_Tbl_Product_Location where ProductId=@id", new { id = product.ProductModel.Id }).ToList();
+            product.productTax = db.Query<int>("select TaxId from Evs_Tbl_Product_Tax where ProductId=@id", new { id = product.ProductModel.Id }).ToList();
+            product.productVariants = await db.QueryFirstOrDefaultAsync<ProductVariants>("select * from Evs_Tbl_Product_Variants where ProductId=@id", new { id = product.ProductModel.Id });
+            product.productVariantsPrice = db.Query<ProductVariantsPrice>("select * from Evs_Tbl_Product_Variants_Price where ProductId=@id and VariantId=@vid", new { id = product.ProductModel.Id, vid = product.productVariants.Id }).ToList();
+            List<SimpleProductStock> listSimpleProductStock = new List<SimpleProductStock>();
+            foreach (var location in product.ProductLocation)
+            {
+                SimpleProductStock simpleProductStock = new SimpleProductStock();
+                simpleProductStock.ProductVariantsStock = await db.QueryFirstOrDefaultAsync<ProductVariantsStock>("select * from Evs_Tbl_Product_Variants_Stock where ProductId=@id and VariantId=@VariantId and LocationId=@LocationId", new { id = product.ProductModel.Id, VariantId = product.productVariants.Id, LocationId = location });
+                if (simpleProductStock.ProductVariantsStock != null)
+                {
+                    listSimpleProductStock.Add(simpleProductStock);
+                }
+            }
+            product.simpleProductStocks = listSimpleProductStock;
+
+        }
+    }
+    public string InsertPOS(SimpleProductModel product)
+    {
+        string Response = "";   
+        try
+        {
+            if (CRUD.CRDPOS(product.ProductModel) > 0)
+            {
+                product.productVariants.ProductId = product.ProductModel.Id;
+                product.productVariants.Name = "Regular";
+                product.productVariants.Barcode = product.productVariants.Barcode;
+                product.productVariants.AdditionalCode = product.productVariants.AdditionalCode;
+                CRUD.Variants(product.productVariants);
+                if (product.ProductLocation != null)
+                {
+                    ProductLocation pl = new ProductLocation();
+                    pl.ProductId = product.ProductModel.Id;
+                    CRUD.Location(pl, true);
+                    foreach (var location in product.ProductLocation)
+                    {
+                        ProductLocation productLocation = new ProductLocation();
+                        productLocation.LocationId = location;
+                        productLocation.ProductId = product.ProductModel.Id;
+                        CRUD.Location(productLocation);
+                    }
+                }
+                if (product.simpleProductStocks != null)
+                {
+                    foreach (var productStock in product.simpleProductStocks)
+                    {
+                        if (productStock.ProductVariantsStockHistory != null)
+                        {
+                            if (productStock.ProductVariantsStockHistory.StockAction == 1 || productStock.ProductVariantsStockHistory.StockAction == 6)
+                            {
+                                productStock.ProductVariantsStock.CurrentStockQty = productStock.ProductVariantsStockHistory.ActionQty + productStock.ProductVariantsStock.CurrentStockQty;
+                            }
+                            else if (productStock.ProductVariantsStockHistory.StockAction == 3 || productStock.ProductVariantsStockHistory.StockAction == 4 || productStock.ProductVariantsStockHistory.StockAction == 5)
+                            {
+                                productStock.ProductVariantsStock.CurrentStockQty = productStock.ProductVariantsStock.CurrentStockQty - productStock.ProductVariantsStockHistory.ActionQty;
+                            }
+                            else
+                            {
+                                productStock.ProductVariantsStock.CurrentStockQty = productStock.ProductVariantsStockHistory.ActionQty;
+                            }
+                            productStock.ProductVariantsStock.ProductId = product.ProductModel.Id;
+                            productStock.ProductVariantsStock.VariantId = product.productVariants.Id;
+                            CRUD.VariantsStock(productStock.ProductVariantsStock);
+                            if (productStock.QtyChange > 0)
+                            {
+                                productStock.ProductVariantsStockHistory.ProductId = product.ProductModel.Id;
+                                productStock.ProductVariantsStockHistory.VariantId = product.productVariants.Id;
+                                productStock.ProductVariantsStockHistory.LocationId = productStock.ProductVariantsStock.LocationId;
+                                CRUD.VariantsStockHistory(productStock.ProductVariantsStockHistory);
+                            }
+                        }
+                    }
+                }
+                foreach (var productVariantsPrice in product.productVariantsPrice)
+                {
+                    productVariantsPrice.ProductId = product.ProductModel.Id;
+                    productVariantsPrice.VariantId = product.productVariants.Id;
+                    productVariantsPrice.LocationId = productVariantsPrice.LocationId;
+                    if (!productVariantsPrice.IsOverride)
+                    {
+                        productVariantsPrice.CostPrice = product.productVariantsPrice[0].CostPrice;
+                        productVariantsPrice.MarkUp = product.productVariantsPrice[0].MarkUp;
+                        productVariantsPrice.SellingPrice = product.productVariantsPrice[0].SellingPrice;
+                    }
+                    else
+                    {
+                        productVariantsPrice.CostPrice = product.productVariantsPrice[0].CostPrice;
+                        productVariantsPrice.MarkUp = productVariantsPrice.MarkUp;
+                        productVariantsPrice.SellingPrice = productVariantsPrice.SellingPrice;
+                    }
+                    CRUD.VariantsPrice(productVariantsPrice);
+                    if (product.productVariantsPrice.Count == 1)
+                    {
+                        productVariantsPrice.ProductId = product.ProductModel.Id;
+                        productVariantsPrice.VariantId = product.productVariants.Id;
+                        if (product.ProductLocation != null)
+                        {
+                            productVariantsPrice.LocationId = product.ProductLocation[0];
+                        }
+                        else
+                        {
+                            productVariantsPrice.LocationId = productVariantsPrice.LocationId;
+                        }
+                        if (!productVariantsPrice.IsOverride)
+                        {
+                            productVariantsPrice.CostPrice = product.productVariantsPrice[0].CostPrice;
+                            productVariantsPrice.MarkUp = product.productVariantsPrice[0].MarkUp;
+                            productVariantsPrice.SellingPrice = product.productVariantsPrice[0].SellingPrice;
+                        }
+                        else
+                        {
+                            productVariantsPrice.CostPrice = product.productVariantsPrice[0].CostPrice;
+                            productVariantsPrice.MarkUp = productVariantsPrice.MarkUp;
+                            productVariantsPrice.SellingPrice = productVariantsPrice.SellingPrice;
+                        }
+                        CRUD.VariantsPrice(productVariantsPrice);
+                    }
+                }
+                ProductTax productTax = new ProductTax();
+                productTax.ProductId = product.ProductModel.Id;
+                CRUD.Tax(productTax, true);
+                if (product.productTax != null)
+                {
+                    foreach (var Tax in product.productTax)
+                    {
+                        ProductTax tax = new ProductTax();
+                        tax.ProductId = product.ProductModel.Id;
+                        tax.TaxId = Tax;
+                        CRUD.Tax(tax);
+                    }
+                }
+            }
+
+           return Response = "Success";
+
+        }
+        catch (Exception ex)
+        {
+
+            return Response = ex.Message;
+        }
+
     }
 
     public string ValidateItem()

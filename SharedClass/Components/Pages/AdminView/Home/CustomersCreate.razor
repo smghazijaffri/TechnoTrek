@@ -102,7 +102,8 @@
                 header = customer.Name;
 
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(customer, "CreateCustomer_Admin", outputMessage: true, errorMessage: true);
+                var parameter = new DynamicParameters(customer);
+                output = crud.CRD3(parameter, "CreateCustomer_Admin", outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;
