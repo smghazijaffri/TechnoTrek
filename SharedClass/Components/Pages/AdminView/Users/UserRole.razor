@@ -49,7 +49,7 @@
                 @if (item.PermissionID != rolepermission.PermissionID)
                 {
                     <div>
-                        <MudCheckBox @bind-Value="@item.PermissionID" Color="Color.Info" Label="@item.PermissionName"></MudCheckBox>
+                        <MudCheckBox @bind-Value="@item.selected" Color="Color.Info" Label="@item.PermissionName"></MudCheckBox>
                     </div>
                 }
             }
@@ -78,12 +78,14 @@
                 if (RoleID != null)
                 {
                     role = db.QueryFirstOrDefault<UserRoles>("Select * from UserRoles where RoleID = @RoleID", new { RoleID = RoleID });
-                    RolePermissions = db.Query<RolePermissions>("Select * from RolePermissions where RoleID = @RoleID", new { RoleID = RoleID }).ToList();
+                    Permissions = db.Query<UserPermissions>(@"select u.* , CASE WHEN r.PermissionID IS NOT NULL THEN 1 ELSE 0 END AS selected
+                                   from UserPermissions u left join RolePermissions r on u.PermissionID = r.PermissionID").ToList();
                     if (role == null) NavigationManager.NavigateTo("/user-role/");
 
                     header = role.RoleName;
                     IsSaving = false;
                 }
+                else
                 Permissions = db.Query<UserPermissions>("Select * from UserPermissions").ToList();
             }
         }
@@ -115,9 +117,20 @@
                 {
                     IsSaving = false;
                 }
+                DataTable ItemTable = new DataTable();
+                ItemTable.Columns.Add("PermissionID", typeof(int));
+                foreach (var PO in Permissions)
+                {
+                    if (PO.selected)
+                    {
+                        ItemTable.Rows.Add(PO.PermissionID);
+                    }
+                   
+                }
 
                 var parameter = new DynamicParameters(role);
-                OutputClass output = crud.CRD3(parameter, "ManageUserRoles", errorMessage: true, outputMessage: true);
+                parameter.Add("@RolePermission", ItemTable.AsTableValuedParameter("RolePermissionType"));
+                OutputClass output = crud.CRD3(parameter, "CreateUserRole", errorMessage: true, outputMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     return output.ErrorMessage;

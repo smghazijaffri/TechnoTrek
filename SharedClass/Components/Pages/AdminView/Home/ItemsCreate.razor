@@ -306,6 +306,7 @@
         }
         try
         {
+
             product = new SimpleProductModel
                     {
                         ProductModel = new ProductModel(), // Ensure ProductModel is initialized
@@ -378,9 +379,12 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
 
-
-        base.OnInitialized();
     }
 
     public string createItem()

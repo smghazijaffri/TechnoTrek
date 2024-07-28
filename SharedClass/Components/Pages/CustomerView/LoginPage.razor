@@ -154,13 +154,14 @@
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
                     string useridint = db.QueryFirstOrDefault<string>("select cast(UserIdentityID as varchar(50)) as UserIdentityID  from Users where UserName = @Username", new { Username = AppState.Username });
                     UserIDSession.UserID = useridint;
+                    UserIDSession.PermissionList = db.Query<int>("Select PermissionID from RolePermissions r inner join Users u on u.Role = r.RoleID  where UserID = @UserID", new { UserID = userid }).ToList();
                     NavigationManager.NavigateTo("/dashboard");
                 }
                 else
                 {
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
                     string useridint = db.QueryFirstOrDefault<string>("select cast(UserIdentityID as varchar(50)) as UserIdentityID  from Users where UserName = @Username", new { Username = AppState.Username });
-                    UserIDSession.UserID = useridint;
+                  
 
                     var result = await Select.RetrieveCartItems(userid);
 

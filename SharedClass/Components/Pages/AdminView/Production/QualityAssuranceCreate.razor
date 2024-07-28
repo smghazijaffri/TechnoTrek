@@ -133,8 +133,7 @@
                 @for (int index = 0; index < Items.Count; index++)
                 {
                     var item = Items[index];
-                    item.RowID = index + 1;
-                    var rowIndex = item.RowID - 1;
+                    var rowIndex = index;
                     <tr>
                         <td style="vertical-align: middle;">
                             <div style="display: flex; justify-content: center;">
@@ -145,7 +144,7 @@
                         <td><input type="text" class="form-control" @bind="UOMName[rowIndex]" readonly /></td>
                         <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@(item.Status != "Fail")" /></td>
                         <td>
-                            <select class="form-select" aria-label="Item Status" @onchange="(e) => OnStatusChange(e, item)">
+                            <select class="form-select" aria-label="Item Status" @bind= "item.Status">
                                 <option value=""></option>
                                 <option value="Pass">Pass</option>
                                 <option value="Fail">Fail</option>
@@ -296,12 +295,29 @@
                 }
                 else if (IsSubmitted)
                 {
-                    qualityassurance.Status = ProductionStatus.Approved;
+                    if (Items.Any(item => item.Status == "Fail"))
+                    {
+                        qualityassurance.Status = ProductionStatus.Rejected;
+                    }
+                    else
+                    {
+                        qualityassurance.Status = ProductionStatus.Approved;
+                    }
                 }
-
+                DataTable ItemTable = new DataTable();
+                ItemTable.Columns.Add("RowID", typeof(int));
+                ItemTable.Columns.Add("Item", typeof(string));
+                ItemTable.Columns.Add("Quantity", typeof(int));
+                ItemTable.Columns.Add("UOM", typeof(string));
+                ItemTable.Columns.Add("Status", typeof(string));
+                foreach (var PO in Items)
+                {
+                    ItemTable.Rows.Add(PO.RowID, PO.Item, PO.Quantity, PO.UOM, PO.Status);
+                }
                 OutputClass output = new OutputClass();
                 var parameter = new DynamicParameters(qualityassurance);
-                output = crud.CRD3(parameter, "Create_ProductionOrder", outputMessage: true, errorMessage: true);
+                parameter.Add("@QAItems", ItemTable.AsTableValuedParameter("QAItemType"));
+                output = crud.CRD3(parameter, "CreateQualityAssurance", outputMessage: true, errorMessage: true);
 
                 if (output.ErrorMessage != null)
                 {
@@ -316,7 +332,7 @@
 
                 if (QAID == null)
                 {
-                    NavigationManager.NavigateTo($"/productionorder/{qualityassurance.QAID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/qualityassurance/{qualityassurance.QAID}", forceLoad: true);
                 }
                 else
                 {
@@ -540,7 +556,7 @@
             qualityassurance.ProductionOrderID = options.Value;
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                Items = db.Query<QA_Items>("select * from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
+                Items = db.Query<QA_Items>("select ProductionOrderID,Item,Quantity,UOM,Rate,CreationDate,UserID from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
                 ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on Item = ItemCode where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
                 UOMName = db.Query<string>("select UOMName from PRO_Items inner join UOM on UOMID = UOM where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = options.Value }).ToList();
             }

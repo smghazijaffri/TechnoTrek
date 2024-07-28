@@ -67,12 +67,14 @@ namespace SharedClass.Components.Model
     public static class UserIDSession
     {
         public static string? UserID { get; set; }
+        public static List<int> PermissionList { get; set; } = new List<int>();
     }
 
     public class UserPermissions : BaseRecord
     {
         public string? PermissionID { get; set; }
         public string? PermissionName { get; set; }
+        public bool selected { get; set; }
     }
 
     public class UserRoles : BaseRecord

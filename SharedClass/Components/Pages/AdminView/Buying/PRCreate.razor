@@ -253,6 +253,12 @@
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
 
+        if (!crud.CheckPermission(1))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/",forceLoad:true);
+        }
         var BulkOrderID = string.Empty;
         var SaleOrderID = string.Empty;
         var GoodsIssueID = string.Empty;

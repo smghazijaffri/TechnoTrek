@@ -282,5 +282,16 @@ namespace SharedClass.Components.Data
                 return db.Execute("Evs_Sp_Product_Tax", Model, commandType: CommandType.StoredProcedure);
             }
         }
+        public bool CheckPermission(int permission)
+        {
+            if (UserIDSession.PermissionList.Contains(permission))
+            {
+                return true;
+            }   
+            else
+            {
+                return false;
+            }
+        }
     }
 }
