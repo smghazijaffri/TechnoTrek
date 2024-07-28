@@ -79,7 +79,8 @@
                 {
                     role = db.QueryFirstOrDefault<UserRoles>("Select * from UserRoles where RoleID = @RoleID", new { RoleID = RoleID });
                     Permissions = db.Query<UserPermissions>(@"select u.* , CASE WHEN r.PermissionID IS NOT NULL THEN 1 ELSE 0 END AS selected
-                                   from UserPermissions u left join RolePermissions r on u.PermissionID = r.PermissionID").ToList();
+                        from UserPermissions u left join RolePermissions r on u.PermissionID = r.PermissionID
+                        AND r.RoleID = @RoleID",new { RoleID = RoleID}).ToList();
                     if (role == null) NavigationManager.NavigateTo("/user-role/");
 
                     header = role.RoleName;

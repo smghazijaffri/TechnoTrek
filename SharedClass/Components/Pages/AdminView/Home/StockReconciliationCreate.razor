@@ -175,7 +175,7 @@
             if (StockReconciliationID != null)
             {
                 reconciliation = db.QueryFirstOrDefault<StockReconciliation>("select * from StockReconciliation where StockReconciliationID = @StockReconciliationID", new { StockReconciliationID = StockReconciliationID });
-                Items = db.Query<SR_Items>("Select RowID, StockReconciliationID, ItemID, Quantity, Rate, CreationDate from SR_Items where StockReconciliationID = @StockReconciliationID ", new { StockReconciliationID = StockReconciliationID }).ToList();
+                Items = db.Query<SR_Items>("Select RowID, StockReconciliationID, ItemID, Quantity, Rate, CreationDate,SellingPrice from SR_Items where StockReconciliationID = @StockReconciliationID ", new { StockReconciliationID = StockReconciliationID }).ToList();
                 ItemName = db.Query<string>("SELECT I1.ItemName FROM SR_Items SE INNER JOIN Items I1 ON SE.ItemID = I1.ItemCode WHERE SE.StockReconciliationID = @StockReconciliationID", new { StockReconciliationID = StockReconciliationID }).ToList();
                 if (reconciliation == null || Items.Count == 0) NavigationManager.NavigateTo("/stock-reconciliation");
                 DisplayPR = false;
@@ -212,14 +212,11 @@
                 DataTable ItemTable = Select.ItemTable();
                 foreach (var PO in Items)
                 {
-                    ItemTable.Rows.Add(PO.RowID, PO.ItemID, PO.Quantity, null, PO.Rate, null, null);
+                    ItemTable.Rows.Add(PO.RowID, PO.ItemID, PO.Quantity, null, PO.Rate, PO.SellingPrice, null);
                 }
                 var parameters = new DynamicParameters(reconciliation);
-                parameters.Add("@StockEntryItem", ItemTable.AsTableValuedParameter("Purhcase"));
-                parameters.Add("@DeleteSTItems", Delete.AsTableValuedParameter("DeleteType"));
-
-
-                OutputClass output = crud.CRD3(parameters, "Create_StockEntry", outputMessage: true, errorMessage: true);
+                parameters.Add("@SRItem", ItemTable.AsTableValuedParameter("Purhcase"));
+                OutputClass output = crud.CRD3(parameters, "CreateStockRecon", outputMessage: true, errorMessage: true);
 
                 if (output.ErrorMessage != null)
                 {
@@ -232,7 +229,7 @@
 
                 if (StockReconciliationID == null)
                 {
-                    NavigationManager.NavigateTo($"/reconciliation-entry/{reconciliation.StockReconciliationID}", forceLoad: true);
+                    NavigationManager.NavigateTo($"/stock-reconciliation/{reconciliation.StockReconciliationID}", forceLoad: true);
                 }
 
 
