@@ -53,6 +53,15 @@
         </ul>
         </div>
         } *@
+        @if (IsApproved)
+        {
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePI">Purchase Invoice</li>
+                </ul>
+            </div>
+        }
         @if (IsApproved || IsSubmitted)
         {
             <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
@@ -626,6 +635,29 @@
             }
             _protectedLocalStore.SetLocalAsync("QAID", qualityassurance.QAID);
             NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
+        }
+    }
+
+    public void CreatePI()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from QualityAssurance where QAID = @QAID", new { QAID = qualityassurance.QAID });
+
+            if (GetStatus != ProductionStatus.Rejected)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Cannot Create Purchase Invoice, Quality Assurance has already been " + GetStatus, Severity.Error);
+                return;
+            }
+            else if (GetStatus == null)
+            {
+                Snackbar.Clear();
+                Snackbar.Add("Quality Assurance ID does not exist", Severity.Error);
+                return;
+            }
+            _protectedLocalStore.SetLocalAsync("QAID", qualityassurance.QAID);
+            NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }
 }
