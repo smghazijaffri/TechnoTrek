@@ -3,19 +3,19 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
+@inject Stock stock;
 @inject Select select;
 @inject Connection con;
 @inject ItemUOM itemuom;
 @inject ItemClass items;
-@inject Stock stock;
 @inject ISnackbar Snackbar;
 @inject IJSRuntime JSRuntime;
+@inject SimpleProductModel product;
 @inject Compatibility compatibility;
 @inject AlternateItem alternateitem;
 @inject IDialogService DialogService;
 @inject NavigationManager NavigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
-@inject SimpleProductModel product
 
 <div class="row p-3 align-items-center">
     <div class="col-6">
@@ -304,16 +304,24 @@
         {
             itemsFromDatabase = await db.QueryAsync<ItemClass>("SELECT * FROM Items WHERE ItemType != 'Accessories' AND ItemType != 'Laptop' AND Status != 'Disabled' ORDER BY ItemCode");
         }
+
+        if (!crud.CheckPermission(9))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/", forceLoad: true);
+            return;
+        }
+
         try
         {
-
             product = new SimpleProductModel
-                    {
-                        ProductModel = new ProductModel(), // Ensure ProductModel is initialized
-                        productVariantsPrice = new List<ProductVariantsPrice>(),
-                        productVariants = new ProductVariants(),
-                        simpleProductStocks = new List<SimpleProductStock>()
-                    };
+                {
+                    ProductModel = new ProductModel(), // Ensure ProductModel is initialized
+                    productVariantsPrice = new List<ProductVariantsPrice>(),
+                    productVariants = new ProductVariants(),
+                    simpleProductStocks = new List<SimpleProductStock>()
+                };
             if (ItemID != null)
             {
                 using (SqlConnection db = new SqlConnection(con.connectionString))
@@ -449,7 +457,7 @@
                 parameters.Add("@Markup", stock.Markup);
                 OutputClass output = new OutputClass();
                 output = crud.CRD3(parameters, "Add_Item", outputMessage: true, errorMessage: true);
-                string ErrorMessage = output.ErrorMessage;  
+                string ErrorMessage = output.ErrorMessage;
                 if (!string.IsNullOrWhiteSpace(ErrorMessage))
                 {
                     return ErrorMessage;
@@ -553,7 +561,7 @@
     }
     public string InsertPOS(SimpleProductModel product)
     {
-        string Response = "";   
+        string Response = "";
         try
         {
             if (CRUD.CRDPOS(product.ProductModel) > 0)
@@ -667,7 +675,7 @@
                 }
             }
 
-           return Response = "Success";
+            return Response = "Success";
 
         }
         catch (Exception ex)

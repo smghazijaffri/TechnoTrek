@@ -94,6 +94,14 @@
 
     protected override void OnInitialized()
     {
+        if (!crud.CheckPermission(12))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/", forceLoad: true);
+            return;
+        }
+
         try
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))

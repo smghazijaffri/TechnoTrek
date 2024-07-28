@@ -307,6 +307,13 @@
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
 
+        if (!crud.CheckPermission(6))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/", forceLoad: true);
+        }
+
         var PRNumber = string.Empty;
         if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PRNumber"))
         {

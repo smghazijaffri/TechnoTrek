@@ -55,32 +55,12 @@
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
 
-        if (!string.IsNullOrEmpty(AppState.Username) && !string.IsNullOrEmpty(AppState.Role))
+        if (!string.IsNullOrEmpty(AppState.Username))
         {
             userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-            var role = db.QueryFirstOrDefault<string>("Select Role from Users where UserName = @Username", new { Username = AppState.Username });
             if (string.IsNullOrEmpty(userid))
             {
                 Snackbar.Add("User does not exist", Severity.Error);
-                await Task.Delay(1000);
-                NavigationManager.NavigateTo("/login", forceLoad: true);
-                return;
-            }
-            else if (AppState.Role == "Customer" && role != "Customer")
-            {
-                AppState.Authorized = false;
-                AppState.Role = string.Empty;
-                AppState.Username = string.Empty;
-                AppState.CustomerAuthorized = false;
-                UserIDSession.UserID = string.Empty;
-                Snackbar.Add("Authentication failure, please login again", Severity.Error);
-                await Task.Delay(1000);
-                NavigationManager.NavigateTo("/login");
-                return;
-            }
-            else if (AppState.Role != "Customer")
-            {
-                Snackbar.Add("Please login as a Customer", Severity.Error);
                 await Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;

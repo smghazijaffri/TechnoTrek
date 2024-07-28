@@ -295,6 +295,13 @@
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
 
+        if (!crud.CheckPermission(7))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/", forceLoad: true);
+        }
+
         var RFQNumber = string.Empty;
         var VendorID = string.Empty;
 

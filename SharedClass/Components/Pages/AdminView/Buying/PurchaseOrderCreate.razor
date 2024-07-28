@@ -333,6 +333,13 @@
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
 
+        if (!crud.CheckPermission(3))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/", forceLoad: true);
+        }
+
         var PRNumber = string.Empty;
         var QuotationID = string.Empty;
 

@@ -78,7 +78,7 @@ namespace SharedClass.Components.Data
             return output;
         }
 
-        public OutputClass CRD3(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false, bool Remainingamount = false )
+        public OutputClass CRD3(DynamicParameters parameters, string SP, CommandType commandType = CommandType.StoredProcedure, bool IsDelete = false, bool outputMessage = false, bool errorMessage = false, bool Remainingamount = false)
         {
             OutputClass output = new();
 
@@ -92,7 +92,7 @@ namespace SharedClass.Components.Data
                 {
                     parameters.Add("@ForInsert", 1);
                 }
-               
+
                 parameters.Add("@CreationDate", DateTime.Now);
                 parameters.Add("@UserID", UserIDSession.UserID);
 
@@ -153,13 +153,14 @@ namespace SharedClass.Components.Data
 
             return output;
         }
+
         public static int CRDPOS(ProductModel Model, bool IsDelete = false)
         {
             Model.Insert = 1;
             if (IsDelete) { Model.Insert = 0; }
-                
+
             Model.ModifiedOn = DateTime.Now;
-            Model.ModifiedBy = Convert.ToInt32 (UserIDSession.UserID);
+            Model.ModifiedBy = Convert.ToInt32(UserIDSession.UserID);
             if (Model.Id == 0)
             {
                 Model.CreatedBy = Convert.ToInt32(UserIDSession.UserID);
@@ -175,6 +176,7 @@ namespace SharedClass.Components.Data
                 return res;
             }
         }
+
         public static int VariantsStock(ProductVariantsStock Model, bool IsDelete = false)
         {
             Model.Insert = 1;
@@ -192,6 +194,7 @@ namespace SharedClass.Components.Data
                 return db.Execute("Evs_Sp_Product_Variants_Stock", Model, commandType: CommandType.StoredProcedure);
             }
         }
+
         public static int Variants(ProductVariants Model, bool IsDelete = false)
         {
             Model.Insert = 1;
@@ -214,6 +217,7 @@ namespace SharedClass.Components.Data
                 return res;
             }
         }
+
         public static int Location(ProductLocation Model, bool IsDelete = false)
         {
             Model.Insert = 1;
@@ -231,6 +235,7 @@ namespace SharedClass.Components.Data
                 return db.Execute("Evs_Sp_Product_Location", Model, commandType: CommandType.StoredProcedure);
             }
         }
+
         public static int VariantsPrice(ProductVariantsPrice Model, bool IsDelete = false)
         {
             Model.Insert = 1;
@@ -248,6 +253,7 @@ namespace SharedClass.Components.Data
                 return db.Execute("Evs_Sp_Product_Variants_Price", Model, commandType: CommandType.StoredProcedure);
             }
         }
+
         public static int VariantsStockHistory(ProductVariantsStockHistory Model, bool IsDelete = false)
         {
             Model.Insert = 1;
@@ -265,6 +271,7 @@ namespace SharedClass.Components.Data
                 return db.Execute("Evs_Sp_Product_Variants_Stock_History", Model, commandType: CommandType.StoredProcedure);
             }
         }
+
         public static int Tax(ProductTax Model, bool IsDelete = false)
         {
             Model.Insert = 1;
@@ -282,12 +289,17 @@ namespace SharedClass.Components.Data
                 return db.Execute("Evs_Sp_Product_Tax", Model, commandType: CommandType.StoredProcedure);
             }
         }
+
         public bool CheckPermission(int permission)
         {
-            if (UserIDSession.PermissionList.Contains(permission))
+            if (UserIDSession.PermissionList.Contains(1))
             {
                 return true;
-            }   
+            }
+            else if (UserIDSession.PermissionList.Contains(permission))
+            {
+                return true;
+            }
             else
             {
                 return false;
