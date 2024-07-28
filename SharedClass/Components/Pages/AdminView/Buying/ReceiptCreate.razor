@@ -297,6 +297,13 @@
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
 
+        if (!crud.CheckPermission(4))
+        {
+            Snackbar.Clear();
+            Snackbar.Add("Access Denied", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/", forceLoad: true);
+        }
+
         var PurchaseOrderID = string.Empty;
         if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "PurchaseOrderID"))
         {
@@ -362,7 +369,7 @@
                     AddRow();
                 }
                 DropDownVendor.Options = db.Query<Option>("Select VendorID as Value, VendorName as Text, VendorType as Type from Vendor WHERE Status = 'Enabled'").ToList();
-                DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
+                DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled' and ItemType != 'Custom PC'").ToList();
             }
         }
         catch (Exception ex)
@@ -795,10 +802,12 @@
             NavigationManager.NavigateTo("/purchaseinvoice/new-purchase-invoice");
         }
     }
+
     public void NavigateUOM()
     {
         NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
     }
+
     public void NavigateVendor()
     {
         NavigationManager.NavigateTo($"/vendors/new-vendor", forceLoad: true);

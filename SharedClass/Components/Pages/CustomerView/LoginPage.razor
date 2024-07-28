@@ -146,6 +146,13 @@
 
                 var role = db.QueryFirstOrDefault<string>("Select r.RoleName as Role from UserRoles r inner join Users u on u.Role = r.RoleID where UserName = @Username", new { Username = Username });
 
+                if (string.IsNullOrEmpty(role))
+                {
+                    AppState.Username = string.Empty;
+                    Snackbar.Add("User has not been assigned a role. Cannot login In", Severity.Error);
+                    return;
+                }
+
                 if (role != "Customer")
                 {
                     AppState.Authorized = true;
@@ -161,7 +168,7 @@
                 {
                     string userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
                     string useridint = db.QueryFirstOrDefault<string>("select cast(UserIdentityID as varchar(50)) as UserIdentityID  from Users where UserName = @Username", new { Username = AppState.Username });
-                  
+
 
                     var result = await Select.RetrieveCartItems(userid);
 

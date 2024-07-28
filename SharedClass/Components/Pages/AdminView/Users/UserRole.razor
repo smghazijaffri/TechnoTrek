@@ -87,7 +87,7 @@
                     IsSaving = false;
                 }
                 else
-                Permissions = db.Query<UserPermissions>("Select * from UserPermissions").ToList();
+                    Permissions = db.Query<UserPermissions>("Select * from UserPermissions").ToList();
             }
         }
         catch (Exception ex)
@@ -126,7 +126,7 @@
                     {
                         ItemTable.Rows.Add(PO.PermissionID);
                     }
-                   
+
                 }
 
                 var parameter = new DynamicParameters(role);

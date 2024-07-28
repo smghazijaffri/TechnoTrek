@@ -65,7 +65,6 @@
 }
 
 @code {
-    string? Role { get; set; }
     string? userid { get; set; }
     string? Username { get; set; }
 
@@ -74,20 +73,12 @@
         using SqlConnection db = new SqlConnection(con.connectionString);
 
         Username = AppState.Username;
-        Role = AppState.Role;
-        if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
+        if (!string.IsNullOrEmpty(Username))
         {
             userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
             if (string.IsNullOrEmpty(userid))
             {
                 Snackbar.Add("User does not exist", Severity.Error);
-                await Task.Delay(1000);
-                NavigationManager.NavigateTo("/login", forceLoad: true);
-                return;
-            }
-            else if (Role != "Customer")
-            {
-                Snackbar.Add("Please login as a Customer", Severity.Error);
                 await Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;

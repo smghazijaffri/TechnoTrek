@@ -76,7 +76,7 @@ builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseOrderAnalysis>();
-builder.Services.AddScoped<SharedClass.Components.Data.Email>();
+builder.Services.AddScoped<Email>();
 builder.Services.AddScoped<SimpleProductModel>();
 builder.Services.AddScoped<ProductModel>();
 builder.Services.AddScoped<ProductVariantsPrice>();
