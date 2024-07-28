@@ -59,7 +59,7 @@
                 Cancel
             </button>
         }
-        @if (!IsApproved && !IsCancelled)
+        @if (!IsRejected && !IsApproved && !IsCancelled)
         {
             <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveQA">
                 @GetSubmitButtonText()
@@ -144,7 +144,7 @@
                         <td><input type="text" class="form-control" @bind="UOMName[rowIndex]" readonly /></td>
                         <td><input type="text" class="form-control" @bind="item.Quantity" readonly="@(item.Status != "Fail")" /></td>
                         <td>
-                            <select class="form-select" aria-label="Item Status" @bind= "item.Status">
+                            <select class="form-select" aria-label="Item Status" @bind="item.Status">
                                 <option value=""></option>
                                 <option value="Pass">Pass</option>
                                 <option value="Fail">Fail</option>
@@ -238,11 +238,13 @@
                     else if (qualityassurance.Status == ProductionStatus.Approved)
                     {
                         IsApproved = true;
+                        IsRejected = false;
                         IsSaving = false;
                     }
                     else if (qualityassurance.Status == ProductionStatus.Rejected)
                     {
                         IsRejected = true;
+                        IsApproved = false;
                         IsSaving = false;
                     }
                     else if (qualityassurance.Status == ProductionStatus.Cancelled)
@@ -305,10 +307,12 @@
                 {
                     if (Items.Any(item => item.Status == "Fail"))
                     {
+                        IsRejected = true;
                         qualityassurance.Status = ProductionStatus.Rejected;
                     }
                     else
                     {
+                        IsApproved = true;
                         qualityassurance.Status = ProductionStatus.Approved;
                     }
                 }
@@ -358,12 +362,12 @@
 
                 else if (IsApproved)
                 {
-                    return "Quality Assurance has Approved Successfully";
+                    return "Quality Assurance Approved Successfully";
                 }
 
                 else if (IsRejected)
                 {
-                    return "Quality Assurance has Rejected Successfully";
+                    return "Quality Assurance Rejected Successfully";
                 }
 
                 else if (IsCancelled)
@@ -432,18 +436,10 @@
 
             // if (!DropDownProduction.Options.Any(option => option.Text == BOM.ItemName)) return "Please Select Valid BOM";
 
-            // foreach (var PO in Items)
-            // {
-            //     if (string.IsNullOrWhiteSpace(PO.Item)) return $"Please Enter Item on Row: {PO.RowID}";
-
-            //     if (string.IsNullOrWhiteSpace(ItemName[PO.RowID - 1])) return $"Please Enter Item on Row: {PO.RowID}";
-
-            //     if (string.IsNullOrWhiteSpace(PO.UOM)) return $"Please Enter UOM on Row: {PO.RowID}";
-
-            //     if (PO.Rate <= 0) return $"Row {PO.RowID}: Rate cannot be less than or equal to 0";
-
-            //     if (PO.Quantity <= 0) return $"Row {PO.RowID}: Quantity cannot be less than or equal to 0";
-            // }
+            foreach (var PO in Items)
+            {
+                if (string.IsNullOrWhiteSpace(PO.Status)) return $"Please Select Status on Row: {PO.RowID}";
+            }
 
             return null;
         }
@@ -495,21 +491,9 @@
         }
         else if (IsSubmitted)
         {
-            IsApproved = true;
+            IsDraft = false;
             IsSaving = false;
             IsSubmitted = false;
-        }
-        else if (IsApproved)
-        {
-            IsCancelled = true;
-            IsSaving = false;
-            IsApproved = false;
-        }
-        else if (IsRejected)
-        {
-            IsCancelled = true;
-            IsSaving = false;
-            IsRejected = false;
         }
     }
 
@@ -603,6 +587,7 @@
             cancelall.type = "Quality Assurance";
             crud.CRD(cancelall, "CancelAll");
             IsCancelled = true;
+            IsApproved = false;
         }
         catch (Exception ex)
         {
