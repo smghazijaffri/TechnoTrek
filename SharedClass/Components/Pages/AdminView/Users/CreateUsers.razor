@@ -63,15 +63,15 @@
             <label class="form-label">Role</label>
             <select class="form-select" aria-label="Role" disabled="@notAdmin" @bind="users.Role">
                 <option value=""></option>
-                <option value="Administrator">Administrator</option>
-                <option value="Purchase">Purchase</option>
-                <option value="Sale">Sale</option>
-                <option value="Production">Production</option>
+                @foreach(var role in Roles)
+                {
+                    <option value="@role.Value">@role.Text</option>
+                }
             </select>
         </div>
         <div class="col-md-6">
             <label class="form-label"></label>
-            <MudCheckBox @bind-Value="@Disabled" Disabled="!notAdmin" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
+            <MudCheckBox @bind-Value="@Disabled" Disabled="notAdmin" Size="Size.Small" Dense="true" Label="Disabled"></MudCheckBox>
         </div>
     </form>
 </div>
@@ -126,6 +126,8 @@
     bool IsEnabled = false;
     bool IsDisabled = false;
 
+    List<Option> Roles = new List<Option>();
+
     protected override void OnInitialized()
     {
         try
@@ -136,9 +138,10 @@
                 if (UserID != null)
                 {
                     users = db.QueryFirstOrDefault<Users>("Select * from Users where UserID = @UserID", new { UserID = UserID });
+                    string? userRole = db.QueryFirstOrDefault<string>("Select RoleName from UserRoles where RoleID = @RoleID", new { RoleID = users.Role });
                     if (users == null) NavigationManager.NavigateTo("/users/");
 
-                    if (users.Role != "Administrator") notAdmin = true;
+                    if (userRole != "Administrator") notAdmin = true;
                     header = users.FirstName + ' ' + users.LastName;
 
                     if (users.Status == PurchaseStatuses.Enabled)
@@ -153,15 +156,18 @@
                         IsSaving = false;
                     }
                 }
+                Roles = db.Query<Option>("Select RoleID as Value, RoleName as Text from UserRoles").ToList();
             }
-            StateHasChanged();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
-
-        base.OnInitialized();
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public string createUser()

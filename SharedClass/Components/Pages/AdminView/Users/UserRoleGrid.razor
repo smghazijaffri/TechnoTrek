@@ -1,18 +1,17 @@
-﻿@page "/users"
+﻿@page "/user-role"
 
 @inject CRUD crud;
-@inject Users users;
 @layout AdminLayout;
 @inject Connection con;
+@inject UserRoles user;
 @inject ISnackbar Snackbar;
 @inject NavigationManager NavigationManager;
-@inject ProtectedLocalStorage _protectedLocalStore;
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between">
-                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/home">Home</MudChip>
+                <MudChip Variant="Variant.Text" Icon="@Icons.Material.Outlined.ArrowBackIos" Color="Color.Info" Href="/user-settings">User Settings</MudChip>
                 <div>
                     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info"
                                Style="text-transform:none; margin-bottom: 20px;" OnClick="Create" Size="Size.Large">
@@ -31,29 +30,25 @@
 
     <div class="row">
         <div class="col-md-12">
-            <MudTable @ref="_table" T="Users" Items="@Elements" MultiSelection="true"
+            <MudTable @ref="_table" T="UserRoles" Items="@Elements" MultiSelection="true"
                       @bind-SelectedItems="selectedItems" Hover="true" Style="border-radius:20px" OnRowClick="@OnRowClick" Virtualize="true"
-                      Filter="new Func<Users,bool>(FilterFunc1)" Elevation="4">
+                      Filter="new Func<UserRoles,bool>(FilterFunc1)" Elevation="4">
 
                 <ToolBarContent>
-                    <MudText Typo="Typo.h6">Employees</MudText>
+                    <MudText Typo="Typo.h6">Roles</MudText>
                     <MudSpacer />
                     <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
                 </ToolBarContent>
 
                 <HeaderContent>
-                    <MudTh>Username</MudTh>
-                    <MudTh>Phone</MudTh>
-                    <MudTh>Role</MudTh>
-                    <MudTh>Status</MudTh>
+                    <MudTh>Role ID</MudTh>
+                    <MudTh>Role Name</MudTh>
                     <MudTh>Creation Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Username">@context.UserName</MudTd>
-                    <MudTd DataLabel="Phone">@context.UserPhone</MudTd>
-                    <MudTd DataLabel="Role">@context.Role</MudTd>
-                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Role ID">@context.RoleID</MudTd>
+                    <MudTd DataLabel="Role Name">@context.RoleName</MudTd>
                     <MudTd DataLabel="Creation Date">@context.CreationDate.ToString("MM/dd/yyyy")</MudTd>
                 </RowTemplate>
                 <PagerContent>
@@ -65,63 +60,54 @@
 </div>
 
 @code {
-    private MudTable<Users> _table;
     private string searchString1 = "";
-    private IEnumerable<Users> Elements = new List<Users>();
-    private HashSet<Users> selectedItems = new HashSet<Users>();
+    private MudTable<UserRoles> _table;
+    private IEnumerable<UserRoles> Elements = new List<UserRoles>();
+    private HashSet<UserRoles> selectedItems = new HashSet<UserRoles>();
 
     protected override async Task OnInitializedAsync()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
-        Elements = await db.QueryAsync<Users>("SELECT UserID, UserName, UserPhone, Role, Status, CreationDate FROM Users WHERE Role != 'Customer'");
+        Elements = await db.QueryAsync<UserRoles>("SELECT * FROM UserRoles");
     }
 
-    void OnRowClick(TableRowClickEventArgs<Users> args)
+    void OnRowClick(TableRowClickEventArgs<UserRoles> args)
     {
-        users.UserID = args.Item.UserID;
-        NavigationManager.NavigateTo($"/users/{users.UserID}");
+        user.RoleID = args.Item.RoleID;
+        NavigationManager.NavigateTo($"/user-role/{user.RoleID}");
     }
 
-    private bool FilterFunc1(Users element) => FilterFunc(element, searchString1);
+    private bool FilterFunc1(UserRoles element) => FilterFunc(element, searchString1);
 
-    private bool FilterFunc(Users element, string searchString)
+    private bool FilterFunc(UserRoles element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (element.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.UserPhone.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.Role.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if ($"{element.CreationDate}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.RoleName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if ($"{element.CreationDate} {element.RoleID}".Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }
 
     private void Create()
     {
-        NavigationManager.NavigateTo($"/users/createuser", forceLoad: true);
+        NavigationManager.NavigateTo($"/user-role/new", forceLoad: true);
     }
 
     private void DeleteSelectedItems()
     {
         if (selectedItems == null || !selectedItems.Any())
         {
-            Snackbar.Add("No users selected to delete", Severity.Info);
-            return;
-        }
-
-        var itemsToDelete = selectedItems.Where(item => item.Status == "Disabled").ToList();
-        if (itemsToDelete.Count == 0)
-        {
-            Snackbar.Add("No users with status 'Disabled' to delete", Severity.Info);
+            Snackbar.Add("No items selected to delete", Severity.Info);
             return;
         }
 
         try
         {
-            foreach (var item in itemsToDelete)
+            foreach (var item in selectedItems)
             {
                 OutputClass output = new OutputClass();
-                output = crud.CRD2(item, "CreateUpdateDeleteUser", IsDelete: true, outputMessage: true, errorMessage: true);
+                var parameter = new DynamicParameters(item);
+                output = crud.CRD3(parameter, "CreateUOM", IsDelete: true, outputMessage: true, errorMessage: true);
                 if (output.ErrorMessage != null)
                 {
                     Snackbar.Add(output.ErrorMessage, Severity.Error);
@@ -129,12 +115,24 @@
                 }
             }
 
-            Elements = Elements.Where(e => !itemsToDelete.Any(d => d.UserID == e.UserID)).ToList();
-            Snackbar.Add($"{itemsToDelete.Count} users deleted", Severity.Success);
+            Elements = Elements.Where(e => !selectedItems.Any(d => d.RoleID == e.RoleID)).ToList();
+            Snackbar.Add($"{selectedItems.Count} items deleted", Severity.Success);
+        }
+        catch (SqlException ex)
+        {
+            if (ex.Number == 547)
+            {
+                Snackbar.Add("Role cannot be deleted it is in use", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
+
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Error deleting users: " + ex.Message, Severity.Error);
+            Snackbar.Add("Error deleting items: " + ex.Message, Severity.Error);
         }
 
         selectedItems.Clear();

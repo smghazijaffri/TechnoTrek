@@ -37,4 +37,25 @@
         public string? ItemID { get; set; }
         public int Quantity { get; set; }
     }
+
+    public class QualityAssurance : BaseRecord
+    {
+        public string? QAID { get; set; }
+        public string? QualityAssuranceName { get; set; }
+        public string? ProductionOrderID { get; set; }
+        public string? UserID { get; set; }
+        public string? Status { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    public class QA_Items : BaseRecord
+    {
+        public bool Selected { get; set; }
+        public string? QAID { get; set; }
+        public string? Item { get; set; }
+        public string? UOM { get; set; }
+        public int RowID { get; set; }
+        public int Quantity { get; set; }
+        public string? Status { get; set; }
+    }
 }

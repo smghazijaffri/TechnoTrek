@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SharedClass.Components.Data
+﻿namespace SharedClass.Components.Data
 {
     public class PCComponent
     {

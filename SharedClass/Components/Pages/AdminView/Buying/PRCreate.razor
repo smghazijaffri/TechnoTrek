@@ -28,56 +28,56 @@
             @header
             @if (IsSaving)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
             }
             @if (IsDraft)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Error">Draft</MudChip>
             }
             @if (IsApproved)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Pending</MudChip>
             }
             @if (IsCancelled)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
             }
             @if (IsOrdered)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Ordered</MudChip>
             }
             @if (IsReceived)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Received</MudChip>
             }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
         @if (!IsApproved && !IsCancelled && !IsOrdered && !IsReceived)
         {
-                <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SavePR">
                 @GetSubmitButtonText()
-                </button>
+            </button>
         }
         @if (IsApproved && !IsCancelled)
         {
-                <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
-                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Purchase Order</li>
-                        <hr class="m-1 border-primary" />
-                        <li @onclick="CreateRFQ" class="btn ms-2 m-1 text-sm-start">Request For Quotation</li>
-                    </ul>
-                </div>
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                    Cancel
-                </button>
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePO">Purchase Order</li>
+                    <hr class="m-1 border-primary" />
+                    <li @onclick="CreateRFQ" class="btn ms-2 m-1 text-sm-start">Request For Quotation</li>
+                </ul>
+            </div>
+            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                Cancel
+            </button>
         }
         @if (!IsReceived && IsOrdered && !IsCancelled)
         {
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                    Cancel
-                </button>
+            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                Cancel
+            </button>
         }
     </div>
 </div>
@@ -129,64 +129,64 @@
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     var rowIndex = index;
 
-                        <tr>
-                            <td style="vertical-align: middle;">
-                                <div style="display: flex; justify-content: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
-                                    <b>@(index + 1)</b>
-                                </div>
-                            </td>
-                            <td hidden>
-                                <input type="text" class="me-1" @bind="item.RowID" />
-                            </td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                        <li>
+                    <tr>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
+                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@ReadonlyHidden" />
+                                <b>@(index + 1)</b>
+                            </div>
+                        </td>
+                        <td hidden>
+                            <input type="text" class="me-1" @bind="item.RowID" />
+                        </td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                       placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                    <li>
                                         @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
                                         {
                                             @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                            <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
-                                                            <hr class="m-1 border-primary" />
+                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
+                                                <hr class="m-1 border-primary" />
                                             }
                                         }
-                                            <button @onclick="NavigateItem" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex]"
-                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                        style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
-                                        <li>
-                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                        <button @onclick="NavigateItem" class="text-info" hidden="@ReadonlyHidden"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td><input type="text" inputmode="numeric" id="quantity" min="1" class="form-control" @bind="item.Quantity" readonly="@ReadonlyHidden" /></td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@ReadonlyHidden" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex,true)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@ReadonlyHidden">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
                                             @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
                                             {
                                                 @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                                <hr class="m-1 border-primary" />
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="date" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
-                            </td>
-                        </tr>
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="date" class="form-control" @bind="item.RequiredBy" readonly="@ReadonlyHidden" />
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>
@@ -252,129 +252,139 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+
+        var BulkOrderID = string.Empty;
+        var SaleOrderID = string.Empty;
+        var GoodsIssueID = string.Empty;
+        var ProductionOrderID = string.Empty;
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodsIssueID"))
         {
-            var BulkOrderID = string.Empty;
-            var SaleOrderID = string.Empty;
-            var GoodsIssueID = string.Empty;
-            var ProductionOrderID = string.Empty;
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "GoodsIssueID"))
-            {
-                GoodsIssueID = await _protectedLocalStore.GetLocalAsync<string>("GoodsIssueID");
-            }
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "ProductionOrderID"))
-            {
-                ProductionOrderID = await _protectedLocalStore.GetLocalAsync<string>("ProductionOrderID");
-            }
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BulkOrderID"))
-            {
-                BulkOrderID = await _protectedLocalStore.GetLocalAsync<string>("BulkOrderID");
-            }
-            if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleOrderID"))
-            {
-                SaleOrderID = await _protectedLocalStore.GetLocalAsync<string>("SaleOrderID");
-            }
-
-            purchase.DocumentDate = DateTime.Now;
-            if (PRNumber != null)
-            {
-                purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
-                Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
-                getUOM(Items);
-                if (purchase == null || Items.Count == 0)
-                {
-                    NavigationManager.NavigateTo("/purchaserequisition/");
-                    return;
-                }
-
-                DisplayPR = false;
-                header = purchase.PRname;
-                if (purchase.Status == PurchaseStatuses.Pending)
-                {
-                    IsApproved = true;
-                    IsSaving = false;
-                }
-                else if (purchase.Status == PurchaseStatuses.Draft)
-                {
-                    IsDraft = true;
-                    IsSaving = false;
-                }
-                else if (purchase.Status == PurchaseStatuses.Cancelled)
-                {
-                    IsCancelled = true;
-                    IsSaving = false;
-                }
-                else if (purchase.Status == PurchaseStatuses.Ordered)
-                {
-                    IsOrdered = true;
-                    IsSaving = false;
-                }
-                else if (purchase.Status == PurchaseStatuses.Received)
-                {
-                    IsReceived = true;
-                    IsSaving = false;
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(GoodsIssueID))
-            {
-                Items = db.Query<PR_Items>("select Item,UOM,Quantity,Rate,Amount from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
-                ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
-                UOMName = db.Query<string>("select UOMName from GI_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
-                getUOM(Items);
-                foreach (var item in Items)
-                {
-                    item.RequiredBy = DateTime.Today;
-                }
-                await _protectedLocalStore.SetLocalAsync("GoodsIssueID", "");
-            }
-            else if (!string.IsNullOrWhiteSpace(ProductionOrderID))
-            {
-                Items = db.Query<PR_Items>("select Quantity,ItemID as Item,UOMID as UOM,Rate from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
-                ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
-                UOMName = db.Query<string>("select UOMName from PRO_Items pr inner join UOM u on pr.UOMID = u.UOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
-                getUOM(Items);
-                foreach (var item in Items)
-                {
-                    item.RequiredBy = DateTime.Today;
-                }
-                await _protectedLocalStore.SetLocalAsync("ProductionOrderID", "");
-            }
-            else if (!string.IsNullOrWhiteSpace(BulkOrderID))
-            {
-                Items = db.Query<PR_Items>("select Item,UOM,Quantity,Rate,Amount from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                ItemName = db.Query<string>("select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                getUOM(Items);
-                foreach (var item in Items)
-                {
-                    item.RequiredBy = DateTime.Today;
-                }
-                await _protectedLocalStore.SetLocalAsync("BulkOrderID", "");
-            }
-            else if (!string.IsNullOrWhiteSpace(SaleOrderID))
-            {
-                Items = db.Query<PR_Items>("select Item,UOM,Quantity,Rate,Amount from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
-                getUOM(Items);
-                foreach (var item in Items)
-                {
-                    item.RequiredBy = DateTime.Today;
-                }
-                await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
-            }
-            else
-            {
-                AddRow();
-            }
-
-            DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
+            GoodsIssueID = await _protectedLocalStore.GetLocalAsync<string>("GoodsIssueID");
         }
-        StateHasChanged();
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "ProductionOrderID"))
+        {
+            ProductionOrderID = await _protectedLocalStore.GetLocalAsync<string>("ProductionOrderID");
+        }
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "BulkOrderID"))
+        {
+            BulkOrderID = await _protectedLocalStore.GetLocalAsync<string>("BulkOrderID");
+        }
+        if (await JSRuntime.InvokeAsync<bool>("localStorage.hasOwnProperty", "SaleOrderID"))
+        {
+            SaleOrderID = await _protectedLocalStore.GetLocalAsync<string>("SaleOrderID");
+        }
 
-        base.OnInitialized();
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                purchase.DocumentDate = DateTime.Now;
+                if (PRNumber != null)
+                {
+                    purchase = db.QueryFirstOrDefault<PurchaseRequisition>("select * from PurchaseRequest where PRnumber = @PRnumber", new { PRNumber = PRNumber });
+                    Items = db.Query<PR_Items>("Select * from PR_Items where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PR_Items pr inner join UOM u on pr.UOM = u.UOMID where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PR_Items inner join Items on Item = ItemCode  where PRNumber = @PRNumber", new { PRNumber = PRNumber }).ToList();
+                    getUOM(Items);
+                    if (purchase == null || Items.Count == 0)
+                    {
+                        NavigationManager.NavigateTo("/purchaserequisition/");
+                        return;
+                    }
+
+                    DisplayPR = false;
+                    header = purchase.PRname;
+                    if (purchase.Status == PurchaseStatuses.Pending)
+                    {
+                        IsApproved = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Draft)
+                    {
+                        IsDraft = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Cancelled)
+                    {
+                        IsCancelled = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Ordered)
+                    {
+                        IsOrdered = true;
+                        IsSaving = false;
+                    }
+                    else if (purchase.Status == PurchaseStatuses.Received)
+                    {
+                        IsReceived = true;
+                        IsSaving = false;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(GoodsIssueID))
+                {
+                    Items = db.Query<PR_Items>("select Item,UOM,Quantity,Rate,Amount from GI_Items where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from GI_Items inner join Items on Item = ItemCode where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from GI_Items pr inner join UOM u on pr.UOM = u.UOMID where GoodsIssueID = @GoodsIssueID", new { GoodsIssueID = GoodsIssueID }).ToList();
+                    getUOM(Items);
+                    foreach (var item in Items)
+                    {
+                        item.RequiredBy = DateTime.Today;
+                    }
+                    await _protectedLocalStore.SetLocalAsync("GoodsIssueID", "");
+                }
+                else if (!string.IsNullOrWhiteSpace(ProductionOrderID))
+                {
+                    Items = db.Query<PR_Items>("select Quantity,ItemID as Item,UOMID as UOM,Rate from PRO_Items where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from PRO_Items inner join Items on ItemID = ItemCode where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from PRO_Items pr inner join UOM u on pr.UOMID = u.UOMID where ProductionOrderID = @ProductionOrderID", new { ProductionOrderID = ProductionOrderID }).ToList();
+                    getUOM(Items);
+                    foreach (var item in Items)
+                    {
+                        item.RequiredBy = DateTime.Today;
+                    }
+                    await _protectedLocalStore.SetLocalAsync("ProductionOrderID", "");
+                }
+                else if (!string.IsNullOrWhiteSpace(BulkOrderID))
+                {
+                    Items = db.Query<PR_Items>("select Item,UOM,Quantity,Rate,Amount from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    getUOM(Items);
+                    foreach (var item in Items)
+                    {
+                        item.RequiredBy = DateTime.Today;
+                    }
+                    await _protectedLocalStore.SetLocalAsync("BulkOrderID", "");
+                }
+                else if (!string.IsNullOrWhiteSpace(SaleOrderID))
+                {
+                    Items = db.Query<PR_Items>("select Item,UOM,Quantity,Rate,Amount from SO_Item where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    ItemName = db.Query<string>("select ItemName from SO_Item inner join Items on Item = ItemCode where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    UOMName = db.Query<string>("select UOMName from SO_Item pr inner join UOM u on pr.UOM = u.UOMID where SaleOrderID = @SaleOrderID", new { SaleOrderID = SaleOrderID }).ToList();
+                    getUOM(Items);
+                    foreach (var item in Items)
+                    {
+                        item.RequiredBy = DateTime.Today;
+                    }
+                    await _protectedLocalStore.SetLocalAsync("SaleOrderID", "");
+                }
+                else
+                {
+                    AddRow();
+                }
+
+                DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public string createPurchase()

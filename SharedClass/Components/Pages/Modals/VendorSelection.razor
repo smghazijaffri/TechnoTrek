@@ -1,5 +1,6 @@
 ﻿@inject Vendor vendor;
 @inject Connection con;
+@inject ISnackbar Snackbar;
 @inject RequestForQuotation rfq;
 @inject NavigationManager navigationManager;
 @inject ProtectedLocalStorage _protectedLocalStore;
@@ -54,13 +55,25 @@
 
     protected override void OnInitialized()
     {
-        LoadVendors();
+        try
+        {
+            LoadVendors();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Success);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public void LoadVendors()
     {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        { DropDownVendor.Options = db.Query<Option>("Select v.VendorID as Value, VendorName as Text, VendorType as Type from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList(); }
+        using SqlConnection db = new SqlConnection(con.connectionString);
+        DropDownVendor.Options = db.Query<Option>("Select v.VendorID as Value, VendorName as Text, VendorType as Type from Vendor v inner join RFQVendor r on r.VendorID = v.VendorID where RFQNumber = @RFQNumber", new { RFQNumber = RFQNumber }).ToList();
     }
 
     private void CloseModal()

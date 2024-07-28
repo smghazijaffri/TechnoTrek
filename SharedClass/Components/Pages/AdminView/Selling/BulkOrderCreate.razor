@@ -2,7 +2,6 @@
 
 @inject CRUD crud;
 @layout AdminLayout;
-@inject Select select;
 @inject Connection con;
 @inject BO_Items boItem;
 @inject Customer customer;
@@ -19,41 +18,41 @@
             @header
             @if (IsReceived)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Received</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Error">Received</MudChip>
             }
             @if (IsConfirmed)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Success">Confirmed</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Success">Confirmed</MudChip>
             }
             @if (IsCancelled)
             {
-                    <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
+                <MudChip Variant="Variant.Text" Color="Color.Error">Cancelled</MudChip>
             }
         </h3>
     </div>
     <div class="col-6 d-flex justify-content-end">
         @if (IsConfirmed)
         {
-                <div class="dropdown m-1" id="dropdown">
-                    <button type="reset" class="btn btn-primary rounded-3 text-white text-sm-center" onclick="toggleDropdown()">Create</button>
-                    <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
-                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
-                        <hr class="m-1 border-primary" />
-                        <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateSO">Sale Order</li>
-                    </ul>
-                </div>
+            <div class="dropdown m-1" id="dropdown">
+                <button type="reset" class="btn btn-primary rounded-3 text-white text-sm-center" onclick="toggleDropdown()">Create</button>
+                <ul class="dropdown-menu w-100 list-group mt-1" id="dropdownMenu" style="display: none;">
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreatePR">Purchase Request</li>
+                    <hr class="m-1 border-primary" />
+                    <li class="btn ms-2 m-1 text-sm-start" @onclick="CreateSO">Sale Order</li>
+                </ul>
+            </div>
         }
         @if (IsReceived && !IsConfirmed && !IsCancelled)
         {
-                <button type="submit" class="btn btn-info m-1 rounded-3 text-white text-sm-center" @onclick="SaveBO">
-                    Confirm
-                </button>
+            <button type="submit" class="btn btn-info m-1 rounded-3 text-white text-sm-center" @onclick="SaveBO">
+                Confirm
+            </button>
         }
         @if (!IsCancelled)
         {
-                <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
-                    Cancel
-                </button>
+            <button type="reset" class="btn btn-danger m-1 rounded-3 text-sm-center" @onclick="OpenDialog">
+                Cancel
+            </button>
         }
     </div>
 </div>
@@ -119,70 +118,70 @@
                     DropDownItem.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     DropDownUOM.ListItems.Add(new BindDropdown { IsDropdownOpen = false });
                     item.Amount = (item.Rate * (item.Quantity * quantity[index]));
-                        <tr>
-                            <td style="vertical-align: middle;">
-                                <div style="display: flex; justify-content: center;">
-                                    <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@Readonly" />
+                    <tr>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; justify-content: center;">
+                                <input type="checkbox" class="me-1" @bind="item.Selected" hidden="@Readonly" />
                                 @(index + 1)
-                                </div>
-                            </td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@Readonly" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
-                                           placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@Readonly">
-                                        <li>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownItem.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@Readonly" @onclick="() => DropDownItem.ToggleDropdown(rowIndex)" @bind="ItemName[rowIndex]"
+                                       placeholder="Select an Item" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterItemOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownItem.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@Readonly">
+                                    <li>
                                         @if (DropDownItem.ListItems[rowIndex].FilteredOptions != null)
                                         {
                                             @foreach (var option in DropDownItem.ListItems[rowIndex].FilteredOptions)
                                             {
-                                                            <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
-                                                            <hr class="m-1 border-primary" />
+                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectItemOption(option, rowIndex)">@option.Text<br /><label style="font-size: 12px;">@option.Type</label></a>
+                                                <hr class="m-1 border-primary" />
                                             }
                                         }
-                                            <button @onclick="NavigateItem" class="text-info" hidden="@Readonly"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@Readonly" /></td>
-                            <td>
-                                <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
-                                    <input type="text" id="Item" readonly="@Readonly" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex, true)" @bind="UOMName[rowIndex]"
-                                           placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
-                                    <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
-                                        style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
-                                        aria-labelledby="dropdownMenuButton" hidden="@Readonly">
-                                        <li>
-                                            <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
+                                        <button @onclick="NavigateItem" class="text-info" hidden="@Readonly"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Quantity" readonly="@Readonly" /></td>
+                        <td>
+                            <div class="dropdown" id="dropdown" @onkeydown="e => DropDownUOM.CloseDropdown(e, rowIndex)">
+                                <input type="text" id="Item" readonly="@Readonly" @onclick="() => DropDownUOM.ToggleDropdown(rowIndex, true)" @bind="UOMName[rowIndex]"
+                                       placeholder="Select UOM" class="w-100 text-start btn dropdown-toggle bg-white border" @oninput="e => FilterUOMOptions(e, rowIndex)" />
+                                <ul class="dropdown-menu w-100" id="ul" @onclick="() =>DropDownItem.HandleDropdownFocusOut(rowIndex)"
+                                    style="position: @(isMobile? "relative" : ""); max-height: 200px; overflow-y: auto; display: @(DropDownUOM.ListItems[rowIndex].IsDropdownOpen ? "block" : "none");"
+                                    aria-labelledby="dropdownMenuButton" hidden="@Readonly">
+                                    <li>
+                                        <div @onfocusout="() =>DropDownUOM.HandleDropdownFocusOut(rowIndex)">
                                             @if (DropDownUOM.ListItems[rowIndex].FilteredOptions != null)
                                             {
                                                 @foreach (var option in DropDownUOM.ListItems[rowIndex].FilteredOptions)
                                                 {
-                                                                <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
-                                                                <hr class="m-1 border-primary" />
+                                                    <a class="dropdown-item" bind="@item.Item" @onclick="() => SelectUOMOption(option, rowIndex)">@option.Text</a>
+                                                    <hr class="m-1 border-primary" />
                                                 }
                                             }
-                                                <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly= /></td>
-                            <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
-                        </tr>
+                                            <button @onclick="NavigateUOM" class="text-info"><i class="bi bi-plus h5 ms-2 m-1" />Create new UOM</button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Rate" readonly= /></td>
+                        <td><input type="text" inputmode="numeric" class="form-control" @bind="item.Amount" readonly /></td>
+                    </tr>
                 }
             </tbody>
         </table>
     </form>
     @if (IsReceived)
     {
-            <div class="col-12 d-flex justify-content-start p-0">
-                <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@Readonly">Add Row</button>
-                <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow" hidden="@Readonly">Delete</button>
-            </div>
+        <div class="col-12 d-flex justify-content-start p-0">
+            <button class="btn btn-primary rounded-3 me-2" @onclick="AddRow" hidden="@Readonly">Add Row</button>
+            <button class="btn btn-danger rounded-3" style="display: @(IsAnyItemSelected ? "block" : "none")" @onclick="DeleteRow" hidden="@Readonly">Delete</button>
+        </div>
     }
 </div>
 
@@ -231,38 +230,48 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+
+        try
         {
-            if (BulkOrderID != null)
+            using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                bulkorder = db.QueryFirstOrDefault<BulkOrder>("Select * from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
-                Items = db.Query<BO_Items>("Select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                ItemName = db.Query<string>("Select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                customer = db.QueryFirstOrDefault<Customer>("Select c.* from Customer c inner join BulkOrder bo on c.CustomerID = bo.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
-                UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                quantity = db.Query<int>("select StockQuantity from UOM Inner Join BO_Items on UOM = UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
-                getUOM(Items);
-                if (bulkorder == null || Items.Count == 0) NavigationManager.NavigateTo("/bulk-order/");
+                if (BulkOrderID != null)
+                {
+                    bulkorder = db.QueryFirstOrDefault<BulkOrder>("Select * from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
+                    Items = db.Query<BO_Items>("Select * from BO_Items where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    ItemName = db.Query<string>("Select ItemName from BO_Items inner join Items on Item = ItemCode where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    customer = db.QueryFirstOrDefault<Customer>("Select c.* from Customer c inner join BulkOrder bo on c.CustomerID = bo.CustomerID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
+                    UOMName = db.Query<string>("select UOMName from BO_Items pr inner join UOM u on pr.UOM = u.UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    quantity = db.Query<int>("select StockQuantity from UOM Inner Join BO_Items on UOM = UOMID where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID }).ToList();
+                    getUOM(Items);
+                    if (bulkorder == null || Items.Count == 0) NavigationManager.NavigateTo("/bulk-order/");
 
-                header = bulkorder.BulkOrderName;
-                if (bulkorder.Status == SaleStatus.Received)
-                {
-                    IsReceived = true;
+                    header = bulkorder.BulkOrderName;
+                    if (bulkorder.Status == SaleStatus.Received)
+                    {
+                        IsReceived = true;
+                    }
+                    else if (bulkorder.Status == SaleStatus.Cancelled)
+                    {
+                        IsCancelled = true;
+                    }
+                    else if (bulkorder.Status == SaleStatus.Confirmed)
+                    {
+                        IsConfirmed = true;
+                    }
                 }
-                else if (bulkorder.Status == SaleStatus.Cancelled)
-                {
-                    IsCancelled = true;
-                }
-                else if (bulkorder.Status == SaleStatus.Confirmed)
-                {
-                    IsConfirmed = true;
-                }
+                DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
             }
-            DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items WHERE Status = 'Enabled'").ToList();
         }
-        StateHasChanged();
-
-        base.OnInitialized();
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public int SumAmounts

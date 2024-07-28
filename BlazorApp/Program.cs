@@ -1,3 +1,4 @@
+using Email = SharedClass.Components.Data.Email;
 using SharedClass.Components.Model;
 using SharedClass.Components.State;
 using SharedClass.Components.Data;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<CRUD>();
 builder.Services.AddScoped<Stock>();
 builder.Services.AddScoped<Login>();
 builder.Services.AddScoped<Users>();
+builder.Services.AddScoped<Email>();
 builder.Services.AddScoped<Select>();
 builder.Services.AddScoped<Vendor>();
 builder.Services.AddScoped<Report>();
@@ -28,8 +30,10 @@ builder.Services.AddScoped<SO_Item>();
 builder.Services.AddScoped<SI_Item>();
 builder.Services.AddScoped<ItemUOM>();
 builder.Services.AddScoped<SI_Item>();
+builder.Services.AddScoped<SR_Items>();
 builder.Services.AddScoped<UserAuth>();
 builder.Services.AddScoped<GI_Items>();
+builder.Services.AddScoped<QA_Items>();
 builder.Services.AddScoped<BOM_Item>();
 builder.Services.AddScoped<PR_Items>();
 builder.Services.AddScoped<Customer>();
@@ -39,6 +43,7 @@ builder.Services.AddScoped<GR_Items>();
 builder.Services.AddScoped<QU_Items>();
 builder.Services.AddScoped<PI_Items>();
 builder.Services.AddScoped<BO_Items>();
+builder.Services.AddScoped<UserRoles>();
 builder.Services.AddScoped<ItemClass>();
 builder.Services.AddScoped<SaleOrder>();
 builder.Services.AddScoped<BulkOrder>();
@@ -58,11 +63,15 @@ builder.Services.AddScoped<AlternateItem>();
 builder.Services.AddScoped<UnitofMeasure>();
 builder.Services.AddScoped<SingleDropDown>();
 builder.Services.AddScoped<PurchaseOrders>();
+builder.Services.AddScoped<RolePermissions>();
+builder.Services.AddScoped<UserPermissions>();
 builder.Services.AddScoped<ProductionOrder>();
 builder.Services.AddScoped<PurchaseInvoice>();
 builder.Services.AddScoped<StockEntry_Items>();
 builder.Services.AddScoped<ExampleJsInterop>();
+builder.Services.AddScoped<QualityAssurance>();
 builder.Services.AddScoped<ReportParameters>();
+builder.Services.AddScoped<StockReconciliation>();
 builder.Services.AddScoped<RequestForQuotation>();
 builder.Services.AddScoped<PurchaseRequisition>();
 builder.Services.AddScoped<PurchaseRequisition>();
@@ -102,7 +111,7 @@ builder.Services.AddProtectedLocalStore(new EncryptionService(
 
 Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCeUx0RXxbf1x0ZF1MY19bRH5PMyBoS35RckVkWHxeeHdWRmhbVEF+");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXhfd3RdRGVfUUN1VkA=");
 
 var app = builder.Build();
 

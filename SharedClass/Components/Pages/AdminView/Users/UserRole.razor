@@ -1,0 +1,187 @@
+﻿@page "/user-role/new"
+@page "/user-role/{RoleID?}"
+
+@inject CRUD crud;
+@layout AdminLayout;
+@inject Connection con;
+@inject ISnackbar Snackbar;
+@inject UserRoles role;
+@inject UserPermissions rolepermission;
+@inject NavigationManager NavigationManager;
+
+<div class="row p-3 align-items-center">
+    <div class="col-6">
+        <h3>
+            @header
+            @if (IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Warning">Not Saved</MudChip>
+            }
+            @if (!IsSaving)
+            {
+                <MudChip Variant="Variant.Text" Color="Color.Success">Saved</MudChip>
+            }
+        </h3>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary m-1 rounded-3 text-sm-center" @onclick="SaveUOM">
+            Save
+        </button>
+    </div>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6">
+            <label class="form-label">Role Name</label>
+            <input type="text" @bind="role.RoleName" class="form-control">
+        </div>
+    </form>
+</div>
+
+<div class="row m-3 p-3 rounded-3 shadow-sm bg-light">
+    <h5>Permissions</h5>
+    <label class="form-label">Check Role Permissions</label>
+    <form class="row g-3" @oninput="HandleFormInput" autocomplete="off">
+        <div class="col-md-6">
+            @foreach (var item in Permissions)
+            {
+                @if (item.PermissionID != rolepermission.PermissionID)
+                {
+                    <div>
+                        <MudCheckBox @bind-Value="@item.PermissionID" Color="Color.Info" Label="@item.PermissionName"></MudCheckBox>
+                    </div>
+                }
+            }
+        </div>
+    </form>
+</div>
+
+@code {
+    [Parameter]
+    public string? RoleID { get; set; }
+
+    string header = "New Role";
+
+    bool IsSaving = true;
+
+    List<UserPermissions> Permissions = new List<UserPermissions>();
+
+    List<RolePermissions> RolePermissions = new List<RolePermissions>();
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                if (RoleID != null)
+                {
+                    role = db.QueryFirstOrDefault<UserRoles>("Select * from UserRoles where RoleID = @RoleID", new { RoleID = RoleID });
+                    RolePermissions = db.Query<RolePermissions>("Select * from RolePermissions where RoleID = @RoleID", new { RoleID = RoleID }).ToList();
+                    if (role == null) NavigationManager.NavigateTo("/user-role/");
+
+                    header = role.RoleName;
+                    IsSaving = false;
+                }
+                Permissions = db.Query<UserPermissions>("Select * from UserPermissions").ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
+    }
+
+    public string createUOM()
+    {
+        try
+        {
+            using (SqlConnection db = new SqlConnection(con.connectionString))
+            {
+                string validate = ValidateUOM();
+                if (validate != null)
+                {
+                    IsSaving = true;
+                    return validate;
+                }
+
+                if (IsSaving)
+                {
+                    IsSaving = false;
+                }
+
+                var parameter = new DynamicParameters(role);
+                OutputClass output = crud.CRD3(parameter, "ManageUserRoles", errorMessage: true, outputMessage: true);
+                if (output.ErrorMessage != null)
+                {
+                    return output.ErrorMessage;
+                }
+
+                header = role.RoleName;
+
+                role.RoleID = output.Output;
+
+                if (RoleID == null)
+                {
+                    NavigationManager.NavigateTo($"/user-role/{role.RoleID}", forceLoad: true);
+                }
+                if (IsSaving)
+                {
+                    return "Role Created Successfully";
+                }
+                else if (!IsSaving)
+                {
+                    return "Role Saved Successfully";
+                }
+                else
+                {
+                    return "Error in saving request";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public void SaveUOM()
+    {
+        string notification = createUOM();
+        if (notification.Contains("Successfully"))
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Success);
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add(notification, Severity.Error);
+        }
+    }
+
+    public string ValidateUOM()
+    {
+        using (SqlConnection db = new SqlConnection(con.connectionString))
+        {
+            if (string.IsNullOrWhiteSpace(role.RoleName)) { return $"Please enter Role Name"; }
+
+            return null;
+        }
+    }
+
+    private void HandleFormInput()
+    {
+        if (!IsSaving)
+        {
+            IsSaving = true;
+            StateHasChanged();
+        }
+    }
+}

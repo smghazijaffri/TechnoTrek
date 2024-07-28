@@ -278,7 +278,7 @@
 
     bool isConfirming = false;
 
-    protected async override void OnInitialized()
+    protected override async void OnInitialized()
     {
         using SqlConnection db = new SqlConnection(con.connectionString);
 
@@ -287,23 +287,26 @@
         if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Role))
         {
             userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = Username });
-            if (Role != "Customer")
-            {
-                Snackbar.Add("Please login as a Customer", Severity.Error);
-                NavigationManager.NavigateTo("/login", forceLoad: true);
-                return;
-            }
             if (string.IsNullOrEmpty(userid))
             {
                 Snackbar.Add("User does not exist", Severity.Error);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+            else if (Role != "Customer")
+            {
+                Snackbar.Add("Please login as a Customer", Severity.Error);
+                await Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
             }
         }
         else
         {
-            Snackbar.Add("Please login to continue", Severity.Error);
+            Snackbar.Add("Please login as a Customer", Severity.Error);
             AppState.Authorized = false;
+            await Task.Delay(1000);
             NavigationManager.NavigateTo("/login", forceLoad: true);
             return;
         }

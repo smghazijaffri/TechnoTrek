@@ -33,7 +33,7 @@ namespace SharedClass.Components.Model
         public required string? UserPassword { get; set; }
         public required string? UserEmail { get; set; }
         public required string? UserPhone { get; set; }
-        public required string? Role { get; set; }
+        public required int? Role { get; set; }
         public required string? Address { get; set; }
         public required string? UserIdentity { get; set; }
         public required string? Gender { get; set; }
@@ -63,8 +63,28 @@ namespace SharedClass.Components.Model
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
-    public static class UserIDSession 
-    { 
+
+    public static class UserIDSession
+    {
         public static string? UserID { get; set; }
+    }
+
+    public class UserPermissions : BaseRecord
+    {
+        public string? PermissionID { get; set; }
+        public string? PermissionName { get; set; }
+    }
+
+    public class UserRoles : BaseRecord
+    {
+        public string? RoleID { get; set; }
+        public string? RoleName { get; set; }
+    }
+
+    public class RolePermissions : BaseRecord
+    {
+        public int ID { get; set; }
+        public string? RoleID { get; set; }
+        public string? PermissionID { get; set; }
     }
 }

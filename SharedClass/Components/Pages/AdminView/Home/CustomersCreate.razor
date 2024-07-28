@@ -77,14 +77,16 @@
                     IsSaving = false;
                 }
             }
-            StateHasChanged();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
-
-        base.OnInitialized();
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public string createCustomer()

@@ -40,8 +40,10 @@ public static class MauiProgram
         builder.Services.AddScoped<SI_Item>();
         builder.Services.AddScoped<ItemUOM>();
         builder.Services.AddScoped<SI_Item>();
+        builder.Services.AddScoped<SR_Items>();
         builder.Services.AddScoped<UserAuth>();
         builder.Services.AddScoped<GI_Items>();
+        builder.Services.AddScoped<QA_Items>();
         builder.Services.AddScoped<BOM_Item>();
         builder.Services.AddScoped<PR_Items>();
         builder.Services.AddScoped<Customer>();
@@ -51,6 +53,7 @@ public static class MauiProgram
         builder.Services.AddScoped<QU_Items>();
         builder.Services.AddScoped<PI_Items>();
         builder.Services.AddScoped<BO_Items>();
+        builder.Services.AddScoped<UserRoles>();
         builder.Services.AddScoped<ItemClass>();
         builder.Services.AddScoped<SaleOrder>();
         builder.Services.AddScoped<BulkOrder>();
@@ -70,11 +73,15 @@ public static class MauiProgram
         builder.Services.AddScoped<UnitofMeasure>();
         builder.Services.AddScoped<SingleDropDown>();
         builder.Services.AddScoped<PurchaseOrders>();
+        builder.Services.AddScoped<UserPermissions>();
+        builder.Services.AddScoped<RolePermissions>();
         builder.Services.AddScoped<ProductionOrder>();
         builder.Services.AddScoped<PurchaseInvoice>();
         builder.Services.AddScoped<StockEntry_Items>();
         builder.Services.AddScoped<ExampleJsInterop>();
+        builder.Services.AddScoped<QualityAssurance>();
         builder.Services.AddScoped<ReportParameters>();
+        builder.Services.AddScoped<StockReconciliation>();
         builder.Services.AddScoped<RequestForQuotation>();
         builder.Services.AddScoped<PurchaseRequisition>();
         builder.Services.AddScoped<PurchaseRequisition>();
@@ -110,7 +117,7 @@ public static class MauiProgram
 
         Bold.Licensing.BoldLicenseProvider.RegisterLicense("ulYGC1wHCO/8VYJG0pb0PJe4kr8N6TWzMHAbhJkJfPM=");
 
-        Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCeUx0RXxbf1x0ZF1MY19bRH5PMyBoS35RckVkWHxeeHdWRmhbVEF+");
+        Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXhfd3RdRGVfUUN1VkA=");
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

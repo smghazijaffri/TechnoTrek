@@ -33,13 +33,13 @@
     <div class="col-6 d-flex justify-content-end">
         @if (IsReceived && !isEditing)
         {
-            <button type="submit" class="btn btn-info m-1 rounded-3 text-white text-sm-center" @onclick="EditOrder">
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-white text-sm-center" @onclick="EditOrder">
                 Edit
             </button>
         }
         @if (isEditing && !IsConfirmed && !IsCancelled)
         {
-            <button type="submit" class="btn btn-info m-1 rounded-3 text-white text-sm-center" @onclick="SaveBO">
+            <button type="submit" class="btn btn-primary m-1 rounded-3 text-white text-sm-center" @onclick="SaveBO">
                 Confirm
             </button>
         }
@@ -116,7 +116,6 @@
                                                 <hr class="m-1 border-primary" />
                                             }
                                         }
-                                        <button @onclick="NavigateItem" class="text-info" hidden="@Readonly"><i class="bi bi-plus h5 ms-2 m-1" />Create a new Item</button>
                                     </li>
                                 </ul>
                             </div>
@@ -182,34 +181,37 @@
     {
         DeviceType = await JSRuntime.InvokeAsync<string>("detectDeviceType");
         if (DeviceType == "Mobile") isMobile = true;
-        using (SqlConnection db = new SqlConnection(con.connectionString))
+
+        using SqlConnection db = new SqlConnection(con.connectionString);
+
+        if (!string.IsNullOrEmpty(AppState.Username) && !string.IsNullOrEmpty(AppState.Role))
         {
-            if (!string.IsNullOrEmpty(AppState.Username) && !string.IsNullOrEmpty(AppState.Role))
+            string? userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
+            if (string.IsNullOrEmpty(userid))
             {
-                string? userid = db.QueryFirstOrDefault<string>("Select UserID from Users where UserName = @Username", new { Username = AppState.Username });
-
-                if (AppState.Role != "Customer")
-                {
-                    Snackbar.Add("Please login as a Customer", Severity.Error);
-                    NavigationManager.NavigateTo("/login", forceLoad: true);
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(userid))
-                {
-                    Snackbar.Add("User does not exist", Severity.Error);
-                    NavigationManager.NavigateTo("/login", forceLoad: true);
-                    return;
-                }
-            }
-            else
-            {
-                Snackbar.Add("Please login as a Customer", Severity.Error);
-                AppState.Authorized = false;
+                Snackbar.Add("User does not exist", Severity.Error);
+                await Task.Delay(1000);
                 NavigationManager.NavigateTo("/login", forceLoad: true);
                 return;
             }
+            else if (AppState.Role != "Customer")
+            {
+                Snackbar.Add("Please login as a Customer", Severity.Error);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+        }
+        else
+        {
+            Snackbar.Add("Please login as a Customer", Severity.Error);
+            AppState.Authorized = false;
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+            return;
+        }
 
+        try
+        {
             if (BulkOrderID != null)
             {
                 bulkorder = db.QueryFirstOrDefault<BulkOrder>("Select * from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = BulkOrderID });
@@ -233,9 +235,15 @@
             }
             DropDownItem.Options = db.Query<Option>("select ItemCode as Value, ItemName as Text, ItemType as Type from Items").ToList();
         }
-        StateHasChanged();
-
-        base.OnInitialized();
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+            base.OnInitialized();
+        }
     }
 
     public int SumAmounts
@@ -254,7 +262,7 @@
         {
             using (SqlConnection db = new SqlConnection(con.connectionString))
             {
-                string validate = ValidatePR();
+                string validate = ValidateBO();
                 if (validate != null)
                 {
                     return validate;
@@ -325,7 +333,7 @@
         }
     }
 
-    public string ValidatePR()
+    public string ValidateBO()
     {
         using (SqlConnection db = new SqlConnection(con.connectionString))
         {
@@ -394,29 +402,6 @@
             Snackbar.Add(notification, Severity.Error);
         }
         StateHasChanged();
-    }
-
-    public void CreatePR()
-    {
-        using (SqlConnection db = new SqlConnection(con.connectionString))
-        {
-            string? GetStatus = db.QueryFirstOrDefault<string?>("Select Status from BulkOrder where BulkOrderID = @BulkOrderID", new { BulkOrderID = bulkorder.BulkOrderID });
-
-            if (GetStatus == SaleStatus.ToBill)
-            {
-                Snackbar.Clear();
-                Snackbar.Add("Cannot create Purchase Request, Bulk Order has already been " + GetStatus, Severity.Error);
-                return;
-            }
-            else if (GetStatus == null)
-            {
-                Snackbar.Clear();
-                Snackbar.Add("Bulk Order ID does not exist", Severity.Error);
-                return;
-            }
-            _protectedLocalStore.SetLocalAsync("BulkOrderID", bulkorder.BulkOrderID);
-            NavigationManager.NavigateTo("/purchaserequisition/new-purchase-request");
-        }
     }
 
     private void ToggleApproval()
@@ -539,15 +524,5 @@
             Snackbar.Clear();
             Snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    public void NavigateUOM()
-    {
-        NavigationManager.NavigateTo("/uom/new-uom", forceLoad: true);
-    }
-
-    public void NavigateItem()
-    {
-        NavigationManager.NavigateTo($"/item/new-item", forceLoad: true);
     }
 }
