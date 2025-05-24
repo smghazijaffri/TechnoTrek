@@ -1,0 +1,349 @@
+@page "/pos"
+@layout POSLayout
+@inject CRUD crud // Or a new POSService later
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+@using SharedClass.Components.Model // For POS.cs models
+@using Dapper // For DynamicParameters
+@using System.Data // For DataTable
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    @if (showReceipt)
+    {
+        <MudPaper Class="pa-4 my-4">
+            <MudText Typo="Typo.h5" GutterBottom="true">Receipt</MudText>
+            <MudText>Sale ID: <strong>@lastSaleId</strong></MudText>
+            <MudText>Date: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</MudText>
+            <MudText Typo="Typo.h6" Class="mt-2 mb-1">Items Purchased:</MudText>
+            <MudList Dense="true">
+                @foreach (var item in lastSaleCartItemsForReceipt)
+                {
+                    <MudListItem>@item.Quantity x @item.ProductName (@item.Price.ToString("C") each) - @((item.Quantity * item.Price).ToString("C"))</MudListItem>
+                }
+            </MudList>
+            <MudText Typo="Typo.h6" Align="Align.Right" Class="mt-2">Total Paid: @lastSaleTotalForReceipt.ToString("C")</MudText>
+            <MudDivider Class="my-2"/>
+            <MudText Typo="Typo.body2" Align="Align.Center">Thank you for your purchase!</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="CloseReceipt" Class="mt-3" FullWidth="true">New Sale (Close Receipt)</MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+            @* Left Side: Product Search and Results *@
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudTextField @bind-Value="searchTerm" Label="Search Products (Name, Code, or ID)" Variant="Variant.Outlined"
+                                  OnAdornmentClick="SearchProducts" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" @onkeyup="HandleSearchKeyup"
+                                  Immediate="true" DebounceInterval="300" />
+
+                    <MudList Class="mt-4" Style="max-height: 400px; overflow-y: auto; border: 1px solid var(--mud-palette-lines-default);">
+                        @if (isSearching)
+                        {
+                            <MudListItem><MudProgressCircular Indeterminate="true" Size="Size.Small" /></MudListItem>
+                        }
+                        else if (searchResults != null && searchResults.Any())
+                        {
+                            foreach (var product in searchResults)
+                            {
+                                <MudListItemButton @onclick="() => AddToCart(product)">
+                                    <MudListItemText Primary="@product.Name (@product.ProductId)" Secondary="@($"Price: {product.SellingPrice:C} | Stock: {product.CurrentStockQty}")" />
+                                </MudListItemButton>
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(searchTerm) && !isSearching && hasSearched)
+                        {
+                            <MudListItem><MudText>No products found matching "@searchTerm".</MudText></MudListItem>
+                        }
+                        else if (!hasSearched)
+                        {
+                            <MudListItem><MudText Typo="Typo.caption">Enter search term to find products.</MudText></MudListItem>
+                        }
+                    </MudList>
+                </MudPaper>
+            </MudItem>
+
+            @* Right Side: Cart *@
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText Typo="Typo.h5" GutterBottom="true">Current Sale</MudText>
+                    @if (cartItems.Any())
+                    {
+                        <MudList Class="mt-2" Style="max-height: 400px; overflow-y: auto; border: 1px solid var(--mud-palette-lines-default);">
+                            @foreach (var item in cartItems)
+                            {
+                                <MudListItem>
+                                    <MudGrid Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudItem xs="5" Style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" Title="@item.ProductName">@item.ProductName</MudItem>
+                                        <MudItem xs="3">
+                                            <MudNumericField @bind-Value="item.Quantity" Min="1" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                             ValueChanged="(qty) => UpdateCartItemQuantity(item.ProductId, qty)" />
+                                        </MudItem>
+                                        <MudItem xs="2" Class="text-right">@((item.Price * item.Quantity).ToString("C"))</MudItem>
+                                        <MudItem xs="2" Class="text-center">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => RemoveFromCart(item.ProductId)" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudListItem>
+                            }
+                        </MudList>
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.h6" Align="Align.Right">Total: @cartTotal.ToString("C")</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4" OnClick="ProceedToPayment" Disabled="@(!cartItems.Any() || isProcessingPayment)">
+                            @if (isProcessingPayment)
+                            {
+                                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                                @("Processing...")
+                            }
+                            else
+                            {
+                                @("Finalize Sale (Cash)")
+                            }
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body1">Cart is empty. Add products by searching.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private string searchTerm = "";
+    private bool isSearching = false;
+    private bool hasSearched = false; // To track if a search has been attempted
+    private List<POSProductSearchResult> searchResults = new List<POSProductSearchResult>();
+    private List<CartItem> cartItems = new List<CartItem>();
+    private decimal cartTotal => cartItems.Sum(item => item.Price * item.Quantity);
+
+    private bool isProcessingPayment = false;
+    private bool showReceipt = false;
+    private string lastSaleId = "";
+    private List<CartItem> lastSaleCartItemsForReceipt = new List<CartItem>(); // Store cart items for receipt
+    private decimal lastSaleTotalForReceipt = 0;
+
+
+    public class POSProductSearchResult
+    {
+        public int ProductId { get; set; }
+        public string Name { get; set; }
+        public string ReceiptName { get; set; }
+        public decimal SellingPrice { get; set; }
+        public decimal CurrentStockQty { get; set; }
+    }
+
+    public class CartItem
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    private async Task HandleSearchKeyup(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await SearchProducts();
+        }
+        else if (searchTerm.Length > 2 || searchTerm.Length == 0) // Trigger search on type or clear
+        {
+           // Debounce is handled by MudTextField's DebounceInterval, direct call can be an option
+           // await SearchProducts(); 
+        }
+    }
+
+    private async Task SearchProducts()
+    {
+        hasSearched = true;
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchResults?.Clear();
+            // Snackbar.Add("Please enter a search term.", Severity.Normal); // Can be noisy
+            StateHasChanged();
+            return;
+        }
+
+        isSearching = true;
+        StateHasChanged();
+
+        // MOCK SEARCH LOGIC (Actual logic will call CRUD service for SP: Sp_SearchPOS_Products)
+        await Task.Delay(400); // Simulate network latency
+        var allMockProducts = new List<POSProductSearchResult>
+        {
+            new POSProductSearchResult { ProductId = 101, Name = "Dell XPS 13 Laptop", ReceiptName = "Dell XPS 13", SellingPrice = 1299.99m, CurrentStockQty = 15 },
+            new POSProductSearchResult { ProductId = 102, Name = "Logitech MX Master 3 Mouse", ReceiptName = "Logitech MX3", SellingPrice = 99.50m, CurrentStockQty = 45 },
+            new POSProductSearchResult { ProductId = 103, Name = "Samsung 27inch QHD Monitor", ReceiptName = "Samsung QHD27", SellingPrice = 349.75m, CurrentStockQty = 22 },
+            new POSProductSearchResult { ProductId = 104, Name = "Corsair K70 RGB Keyboard", ReceiptName = "Corsair K70", SellingPrice = 159.00m, CurrentStockQty = 30 },
+            new POSProductSearchResult { ProductId = 205, Name = "AMD Ryzen 7 5800X CPU", ReceiptName = "Ryzen 7 5800X", SellingPrice = 449.00m, CurrentStockQty = 8 },
+            new POSProductSearchResult { ProductId = 206, Name = "NVIDIA GeForce RTX 3070 GPU", ReceiptName = "RTX 3070", SellingPrice = 499.00m, CurrentStockQty = 5 },
+            new POSProductSearchResult { ProductId = 207, Name = "WD Black SN750 1TB NVMe SSD", ReceiptName = "WD SN750 1TB", SellingPrice = 129.99m, CurrentStockQty = 40 }
+        };
+        searchResults = allMockProducts.Where(p =>
+            p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            p.ReceiptName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            p.ProductId.ToString().Contains(searchTerm)
+        ).ToList();
+
+        if (!searchResults.Any() && !string.IsNullOrWhiteSpace(searchTerm))
+        {
+            Snackbar.Add($"No products found matching '{searchTerm}'.", Severity.Info);
+        }
+        
+        isSearching = false;
+        StateHasChanged();
+    }
+
+    private void AddToCart(POSProductSearchResult product)
+    {
+        if (showReceipt) // Don't allow adding to cart if receipt is shown
+        {
+            Snackbar.Add("Please close the current receipt before starting a new sale.", Severity.Info);
+            return;
+        }
+
+        var cartItem = cartItems.FirstOrDefault(item => item.ProductId == product.ProductId);
+        if (cartItem != null)
+        {
+            if (cartItem.Quantity < product.CurrentStockQty)
+            {
+                cartItem.Quantity++;
+            }
+            else
+            {
+                Snackbar.Add($"Maximum stock ({product.CurrentStockQty}) for {product.Name} already in cart.", Severity.Warning);
+            }
+        }
+        else
+        {
+            if (product.CurrentStockQty > 0)
+            {
+                cartItems.Add(new CartItem
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.Name,
+                    Price = product.SellingPrice,
+                    Quantity = 1
+                });
+            }
+            else
+            {
+                Snackbar.Add($"{product.Name} is out of stock.", Severity.Warning);
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void UpdateCartItemQuantity(int productId, int newQuantity)
+    {
+        var item = cartItems.FirstOrDefault(ci => ci.ProductId == productId);
+        if (item == null) return;
+
+        // For stock check, ideally fetch latest stock. Using searchResults for mock.
+        var productInfo = searchResults.FirstOrDefault(p => p.ProductId == productId);
+        // If not in searchResults, assume it was added earlier. Allow decrease or use its own current quantity as 'stock'.
+        decimal currentStock = productInfo?.CurrentStockQty ?? item.Quantity; 
+
+        if (newQuantity <= 0)
+        {
+            RemoveFromCart(productId);
+        }
+        else if (newQuantity <= currentStock)
+        {
+            item.Quantity = newQuantity;
+        }
+        else // newQuantity > currentStock
+        {
+            item.Quantity = (int)currentStock; // Set to max available from (potentially stale) search result
+            Snackbar.Add($"Only {currentStock} of {item.ProductName} currently shown in stock. Cart updated.", Severity.Warning);
+        }
+        StateHasChanged();
+    }
+
+    private void RemoveFromCart(int productId)
+    {
+        cartItems.RemoveAll(item => item.ProductId == productId);
+        StateHasChanged();
+    }
+
+    private async Task ProceedToPayment()
+    {
+        if (!cartItems.Any())
+        {
+            Snackbar.Add("Cart is empty.", Severity.Warning);
+            return;
+        }
+
+        isProcessingPayment = true;
+        StateHasChanged();
+
+        // --- Stored Procedure Call Section (Currently Mocked) ---
+        // 1. Prepare DataTable for TVP
+        var saleItemsTable = new DataTable("POS_SaleItemType_Table"); // This type needs to exist in DB for real call
+        saleItemsTable.Columns.Add("ProductId", typeof(int));
+        saleItemsTable.Columns.Add("Quantity", typeof(int));
+        saleItemsTable.Columns.Add("UnitPrice", typeof(decimal));
+        saleItemsTable.Columns.Add("LineTotal", typeof(decimal));
+
+        foreach (var item in cartItems)
+        {
+            saleItemsTable.Rows.Add(item.ProductId, item.Quantity, item.Price, item.Price * item.Quantity);
+        }
+
+        // 2. Setup DynamicParameters
+        var parameters = new DynamicParameters();
+        // string cashierId = await GetCurrentCashierId(); // Implement this to get ID from auth state
+        parameters.Add("@CashierID", "CASH001"); // Mocked Cashier ID. TODO: Replace with actual logged-in user ID.
+        parameters.Add("@TotalAmount", cartTotal);
+        // The following line requires the SQL type "dbo.POS_SaleItemType_Table" to be defined in the database.
+        // parameters.Add("@SaleItems", saleItemsTable.AsTableValuedParameter("dbo.POS_SaleItemType_Table"));
+        // parameters.Add("@SaleID_Out", dbType: DbType.String, direction: ParameterDirection.Output, size: 50); // Example: If SP returns SaleID
+
+        // 3. Call the Stored Procedure (Mocked)
+        // OutputClass spResult = await crud.CRD3(parameters, "Sp_RecordPOS_Sale", outputMessage: true, errorMessage: true);
+        // bool success = string.IsNullOrEmpty(spResult.ErrorMessage);
+        // string actualSaleId = success ? spResult.Output : null; // Assuming SP returns SaleID in @Output on success
+
+        // --- Mocking the SP call result ---
+        await Task.Delay(1200); // Simulate database processing time
+        bool mockSuccess = true; // Simulate a successful transaction
+        string mockSaleId = "SALE" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+        // --- End Mock ---
+
+        if (mockSuccess) // Replace with 'success' from actual SP call
+        {
+            lastSaleCartItemsForReceipt = new List<CartItem>(cartItems.Select(ci => new CartItem { ProductName = ci.ProductName, Quantity = ci.Quantity, Price = ci.Price })); // Deep copy for receipt
+            lastSaleTotalForReceipt = cartTotal;
+            lastSaleId = mockSaleId; // Replace with 'actualSaleId'
+            
+            Snackbar.Add($"Sale {lastSaleId} recorded successfully!", Severity.Success);
+            
+            cartItems.Clear();
+            searchTerm = "";
+            searchResults?.Clear();
+            hasSearched = false;
+            showReceipt = true; // Display the receipt section
+        }
+        else
+        {
+            // Snackbar.Add($"Error recording sale: {spResult.ErrorMessage}", Severity.Error);
+            Snackbar.Add("Error recording sale (Mock Error). Please try again or contact support.", Severity.Error);
+        }
+
+        isProcessingPayment = false;
+        StateHasChanged();
+    }
+
+    private void CloseReceipt()
+    {
+        showReceipt = false;
+        lastSaleId = "";
+        lastSaleCartItemsForReceipt.Clear();
+        lastSaleTotalForReceipt = 0;
+        StateHasChanged();
+    }
+}

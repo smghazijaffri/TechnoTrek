@@ -1,0 +1,45 @@
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
+<div class="pos-layout">
+    <header class="pos-header">
+        <h1>TechnoTrek POS</h1>
+        @* Potentially add user info or logout button here later *@
+    </header>
+    <main class="pos-main-content">
+        @Body
+    </main>
+    <footer class="pos-footer">
+        <p>&copy; @DateTime.Now.Year TechnoTrek - POS System</p>
+    </footer>
+</div>
+
+<style>
+    .pos-layout {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .pos-header {
+        background-color: #333;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .pos-main-content {
+        flex-grow: 1;
+        padding: 1rem;
+    }
+
+    .pos-footer {
+        background-color: #f5f5f5;
+        padding: 1rem;
+        text-align: center;
+        border-top: 1px solid #ddd;
+    }
+</style>
+@code {
+    // Layout specific code can go here
+}
